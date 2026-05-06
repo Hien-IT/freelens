@@ -21,6 +21,7 @@
   display: flex;
   position: relative;
   background: var(--sidebarBackground);
+  border-left: 1px solid var(--borderColor);
 }
 
 .contents {
