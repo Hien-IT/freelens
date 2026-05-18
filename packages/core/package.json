@@ -57,7 +57,7 @@
   },
   "config": {
     "bundledHelmVersion": "4.1.4",
-    "bundledKubectlVersion": "1.36.0",
+    "bundledKubectlVersion": "1.36.1",
     "contentSecurityPolicy": "script-src 'unsafe-eval' 'self'; frame-src https://*.renderer.freelens.app:*/; img-src * data:",
     "k8sProxyVersion": "1.6.0",
     "welcomeRoute": "/welcome"
@@ -147,7 +147,7 @@
     "monaco-editor": "^0.54.0",
     "node-pty": "1.2.0-beta.12",
     "path-to-regexp": "^6.3.0",
-    "pnpm": "^10.33.2",
+    "pnpm": "^10.33.4",
     "proper-lockfile": "^4.1.2",
     "query-string": "^7.1.3",
     "randomcolor": "^0.6.2",
@@ -222,7 +222,7 @@
     "@types/ws": "^8.18.1",
     "circular-dependency-plugin": "^5.2.2",
     "css-loader": "^6.11.0",
-    "electron": "^41.5.1",
+    "electron": "^41.5.2",
     "fork-ts-checker-webpack-plugin": "^9.1.0",
     "glob": "^13.0.6",
     "identity-obj-proxy": "^3.0.0",
