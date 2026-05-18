@@ -31,6 +31,9 @@ interface Dependencies {
   ingressStore: IngressStore;
 }
 
+const maxVisibleRoutes = 1;
+const ingressRuleSpacing = 6;
+
 function showLoadBalancers(loadBalancers: (string | undefined)[], max: number) {
   return (
     <>
@@ -100,15 +103,18 @@ const NonInjectedIngresses = observer((props: Dependencies) => {
             <WithTooltip tooltip={showLoadBalancers(loadBalancers, 20)}>
               {showLoadBalancers(loadBalancers, 1)}
             </WithTooltip>,
-            <WithTooltip tooltip={showRoutes(routes, 20)}>{showRoutes(routes, 1)}</WithTooltip>,
+            <WithTooltip tooltip={showRoutes(routes, 20)}>{showRoutes(routes, maxVisibleRoutes)}</WithTooltip>,
             <KubeObjectAge key="age" object={ingress} />,
           ];
         }}
         tableProps={{
           customRowHeights: (item, lineHeight, paddings) => {
-            const lines = item.getRoutes().length || 1;
+            const routesCount = item.getRoutes().length;
+            const visibleRouteLines = Math.min(routesCount, maxVisibleRoutes);
+            const ellipsisLine = routesCount > maxVisibleRoutes ? 1 : 0;
+            const lines = visibleRouteLines + ellipsisLine || 1;
 
-            return lines * lineHeight + paddings;
+            return lines * lineHeight + paddings + (lines - 1) * ingressRuleSpacing;
           },
         }}
       />
