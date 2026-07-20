@@ -5,10 +5,10 @@
  */
 
 import { withInjectables } from "@ogre-tools/injectable-react";
-import { mapValues } from "lodash";
+import { mapValues } from "es-toolkit";
 import { toJS } from "mobx";
 import { observer } from "mobx-react";
-import React, { useContext } from "react";
+import { useContext } from "react";
 import { getItemMetrics, isMetricsEmpty, normalizeMetrics } from "../../../common/k8s-api/endpoints/metrics.api";
 import activeThemeInjectable from "../../themes/active.injectable";
 import { BarChart } from "../chart";

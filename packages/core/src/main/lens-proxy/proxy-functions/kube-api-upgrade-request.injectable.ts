@@ -4,15 +4,15 @@
  * Licensed under MIT License. See LICENSE in root directory for more information.
  */
 
+import { connect } from "node:tls";
+import url from "node:url";
 import { getInjectable } from "@ogre-tools/injectable";
-import { chunk } from "lodash";
-import { connect } from "tls";
-import url from "url";
+import { chunk } from "es-toolkit";
 import { apiKubePrefix } from "../../../common/vars";
 import clusterApiUrlInjectable from "../../../features/cluster/connections/main/api-url.injectable";
 import kubeAuthProxyServerInjectable from "../../cluster/kube-auth-proxy-server.injectable";
 import kubeAuthProxyCertificateInjectable from "../../kube-auth-proxy/kube-auth-proxy-certificate.injectable";
-import type { ConnectionOptions } from "tls";
+import type { ConnectionOptions } from "node:tls";
 
 import type { LensProxyApiRequest } from "../lens-proxy";
 
@@ -25,7 +25,7 @@ const kubeApiUpgradeRequestInjectable = getInjectable({
     async ({ req, socket, head, cluster }) => {
       const clusterApiUrl = await di.inject(clusterApiUrlInjectable, cluster)();
       const kubeAuthProxyServer = di.inject(kubeAuthProxyServerInjectable, cluster);
-      const kubeAuthProxyCertificate = di.inject(kubeAuthProxyCertificateInjectable, clusterApiUrl.hostname);
+      const kubeAuthProxyCertificate = await di.inject(kubeAuthProxyCertificateInjectable, clusterApiUrl.hostname);
 
       const proxyUrl = (await kubeAuthProxyServer.ensureAuthProxyUrl()) + req.url.replace(apiKubePrefix, "");
       const pUrl = url.parse(proxyUrl);

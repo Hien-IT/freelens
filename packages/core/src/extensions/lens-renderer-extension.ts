@@ -4,10 +4,7 @@
  * Licensed under MIT License. See LICENSE in root directory for more information.
  */
 
-import { getEnvironmentSpecificLegacyGlobalDiForExtensionApi } from "@freelensapp/legacy-global-di";
 import { loggerInjectionToken } from "@freelensapp/logger";
-import { pipeline } from "@ogre-tools/fp";
-import { fromPairs, map, matches, toPairs } from "lodash/fp";
 import catalogCategoryRegistryInjectable from "../common/catalog/category-registry.injectable";
 import navigateToPreferencesInjectable from "../features/preferences/common/navigate-to-preferences.injectable";
 import catalogEntityRegistryInjectable from "../renderer/api/catalog/entity/registry.injectable";
@@ -15,6 +12,7 @@ import { getExtensionRoutePath } from "../renderer/routes/for-extension";
 import getExtensionPageParametersInjectable from "../renderer/routes/get-extension-page-parameters.injectable";
 import navigateToRouteInjectable from "../renderer/routes/navigate-to-route.injectable";
 import routesInjectable from "../renderer/routes/routes.injectable";
+import { getEnvironmentSpecificDiForExtensionApi } from "./extension-api-di";
 import ensureHashedDirectoryForExtensionInjectable from "./extension-loader/file-system-provisioner-store/ensure-hashed-directory-for-extension.injectable";
 import { Disposers, LensExtension } from "./lens-extension";
 
@@ -27,8 +25,8 @@ import type { CatalogCategoryRegistry, CatalogEntity, CategoryFilter } from "../
 import type { KubernetesCluster } from "../common/catalog-entities";
 import type { Route } from "../common/front-end-routing/front-end-route-injection-token";
 import type { NavigateToRoute } from "../common/front-end-routing/navigate-to-route-injection-token";
-import type { AppPreferenceRegistration } from "../features/preferences/renderer/compliance-for-legacy-extension-api/app-preference-registration";
-import type { AppPreferenceTabRegistration } from "../features/preferences/renderer/compliance-for-legacy-extension-api/app-preference-tab-registration";
+import type { AppPreferenceRegistration } from "../features/preferences/renderer/extension-preferences/app-preference-registration";
+import type { AppPreferenceTabRegistration } from "../features/preferences/renderer/extension-preferences/app-preference-tab-registration";
 import type { CatalogEntityRegistry, EntityFilter } from "../renderer/api/catalog/entity/registry";
 import type { AdditionalCategoryColumnRegistration } from "../renderer/components/catalog/custom-category-columns";
 import type { CustomCategoryViewRegistration } from "../renderer/components/catalog/custom-views";
@@ -83,7 +81,7 @@ export class LensRendererExtension extends LensExtension {
   protected declare readonly dependencies: LensRendererExtensionDependencies;
 
   constructor(extension: InstalledExtension) {
-    const di = getEnvironmentSpecificLegacyGlobalDiForExtensionApi("renderer");
+    const di = getEnvironmentSpecificDiForExtensionApi("renderer");
     const deps: LensRendererExtensionDependencies = {
       getExtensionPageParameters: di.inject(getExtensionPageParametersInjectable),
       navigateToRoute: di.inject(navigateToRouteInjectable),
@@ -109,7 +107,7 @@ export class LensRendererExtension extends LensExtension {
     }
 
     const targetRoutePath = getExtensionRoutePath(this, targetRegistration.id);
-    const targetRoute = routes.find(matches({ path: targetRoutePath }));
+    const targetRoute = routes.find((route) => route.path === targetRoutePath);
 
     if (!targetRoute) {
       return;
@@ -119,12 +117,12 @@ export class LensRendererExtension extends LensExtension {
       extension: this,
       registration: targetRegistration,
     });
-    const query = pipeline(
-      params,
-      toPairs,
-      map(([key, value]) => [key, normalizedParams[key].stringify(value)]),
-      fromPairs,
-    );
+    // NOTE: stringify() returns string[], preserved verbatim from the previous
+    // lodash/fp pipeline whose types resolved to `any`; the query type is
+    // intentionally loosened as before.
+    const query = Object.fromEntries(
+      Object.entries(params).map(([key, value]) => [key, normalizedParams[key].stringify(value)]),
+    ) as unknown as Record<string, string>;
 
     this.dependencies.navigateToRoute(targetRoute, {
       query,

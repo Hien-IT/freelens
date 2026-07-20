@@ -4,13 +4,13 @@
  * Licensed under MIT License. See LICENSE in root directory for more information.
  */
 
+import { nextTick } from "node:process";
 import { loggerInjectionToken } from "@freelensapp/logger";
 import { enlistMessageChannelListenerInjectionToken, sendMessageToChannelInjectionToken } from "@freelensapp/messaging";
 import { disposer, isPromiseLike } from "@freelensapp/utilities";
 import { getInjectable } from "@ogre-tools/injectable";
-import { isEqual, kebabCase } from "lodash";
+import { isEqual, kebabCase } from "es-toolkit";
 import { reaction } from "mobx";
-import { nextTick } from "process";
 import directoryForUserDataInjectable from "../../../common/app-paths/directory-for-user-data/directory-for-user-data.injectable";
 import getConfigurationFileModelInjectable from "../../../common/get-configuration-file-model/get-configuration-file-model.injectable";
 import getBasenameOfPathInjectable from "../../../common/path/get-basename.injectable";
@@ -20,7 +20,8 @@ import { persistStateToConfigInjectionToken } from "./save-to-file";
 
 import type { MessageChannel } from "@freelensapp/messaging";
 
-import type { Options } from "conf/dist/source";
+import type Config from "conf";
+import type { Options } from "conf";
 import type { IEqualsComparer } from "mobx";
 
 import type { Migrations } from "./migrations.injectable";
@@ -33,7 +34,8 @@ export interface PersistentStorage {
   loadAndStartSyncing: () => void;
 }
 
-export interface PersistentStorageParams<T extends object = any> extends Omit<Options<T>, "migrations"> {
+export interface PersistentStorageParams<T extends object = any>
+  extends Omit<Options<T & Record<string, unknown>>, "migrations"> {
   readonly syncOptions?: {
     readonly fireImmediately?: boolean;
     equals?: IEqualsComparer<T>;
@@ -83,12 +85,12 @@ const createPersistentStorageInjectable = getInjectable({
       const loadAndStartSyncing = () => {
         logger.info(`[${displayName}]: LOADING ...`);
 
-        const config = getConfigurationFileModel({
+        const config = getConfigurationFileModel<T & Record<string, unknown>>({
           projectName: "lens",
           cwd,
-          migrations: migrations as Options<T>["migrations"],
+          migrations: migrations as Options<T & Record<string, unknown>>["migrations"],
           ...params,
-        });
+        }) as Config<T>;
 
         const res = fromStore(config.store);
 

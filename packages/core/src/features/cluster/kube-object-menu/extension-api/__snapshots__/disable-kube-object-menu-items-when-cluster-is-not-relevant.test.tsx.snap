@@ -1,11 +1,49 @@
-// Jest Snapshot v1, https://goo.gl/fbAQLP
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
-exports[`disable kube object menu items when cluster is not relevant given extension should be enabled for the cluster renders 1`] = `
+exports[`disable kube object menu items when cluster is not relevant > given extension should be enabled for the cluster > renders 1`] = `
 <body>
   <div>
     <div
-      class="Notifications flex column align-flex-end"
+      class="Notifications"
     />
+    <div
+      class="Animate slide-right Drawer KubeObjectDetails flex flex-col right enter leave"
+      style="--size: 725px; --enter-duration: 100ms; --leave-duration: 100ms;"
+    >
+      <div
+        class="drawer-wrapper flex flex-col"
+      >
+        <div
+          class="drawer-title flex items-center"
+        >
+          <div
+            class="drawer-title-text flex gap-2 items-center"
+          >
+            
+          </div>
+          <i
+            class="Icon material interactive focusable"
+            tabindex="0"
+          >
+            <span
+              class="icon"
+              data-icon-name="close"
+            >
+              close
+            </span>
+          </i>
+          <div>
+            Close
+          </div>
+        </div>
+        <div
+          class="drawer-content flex flex-col grow shrink-0 basis-0"
+        />
+      </div>
+      <div
+        class="ResizingAnchor horizontal leading"
+      />
+    </div>
     <div
       class="mainLayout"
       style="--sidebar-width: 200px;"
@@ -22,7 +60,7 @@ exports[`disable kube object menu items when cluster is not relevant given exten
           >
             <div
               class="Avatar rounded loadingAvatar"
-              style="width: 40px; height: 40px;"
+              style="width: 40px; height: 40px; background: var(--halfGray);"
             >
               ??
             </div>
@@ -360,7 +398,7 @@ exports[`disable kube object menu items when cluster is not relevant given exten
               aria-live="assertive"
               id="DndLiveRegion-4"
               role="status"
-              style="position: fixed; top: 0px; left: 0px; width: 1px; height: 1px; margin: -1px; border: 0px; padding: 0px; overflow: hidden; clip-path: inset(100%); white-space: nowrap;"
+              style="position: fixed; top: 0px; left: 0px; width: 1px; height: 1px; margin: -1px; border: 0px; padding: 0px; overflow: hidden; clip: rect(0px); clip-path: inset(100%); white-space: nowrap;"
             />
           </div>
         </div>
@@ -370,9 +408,10 @@ exports[`disable kube object menu items when cluster is not relevant given exten
       </div>
       <div
         class="contents"
+        style="position: relative;"
       >
         <ul
-          class="Menu MenuActions flex KubeObjectMenu toolbar gaps right bottom"
+          class="Menu MenuActions flex KubeObjectMenu toolbar right bottom"
           data-testid="menu-actions-for-kube-object-menu-for-some-uid"
           id="menu-actions-for-kube-object-menu-for-some-uid"
         >
@@ -394,7 +433,7 @@ exports[`disable kube object menu items when cluster is not relevant given exten
             class="ResizingAnchor vertical leading"
           />
           <div
-            class="tabs-container flex align-center"
+            class="tabs-container flex items-center"
           >
             <div
               class="dockTabs"
@@ -404,7 +443,7 @@ exports[`disable kube object menu items when cluster is not relevant given exten
                 class="Tabs tabs"
               >
                 <div
-                  class="Tab flex gaps align-center DockTab TerminalTab active"
+                  class="Tab flex gap-2 items-center DockTab TerminalTab active"
                   data-testid="dock-tab-for-terminal"
                   id="tab-terminal"
                   role="tab"
@@ -424,7 +463,7 @@ exports[`disable kube object menu items when cluster is not relevant given exten
                     class="label"
                   >
                     <div
-                      class="flex align-center"
+                      class="flex items-center"
                     >
                       <span
                         class="title"
@@ -458,10 +497,10 @@ exports[`disable kube object menu items when cluster is not relevant given exten
               </div>
             </div>
             <div
-              class="toolbar flex gaps align-center box grow"
+              class="toolbar flex gap-2 items-center grow shrink-0 basis-0"
             >
               <div
-                class="dock-menu box grow"
+                class="dock-menu grow shrink-0 basis-0"
               >
                 <i
                   class="Icon new-dock-tab material interactive focusable"
@@ -512,18 +551,28 @@ exports[`disable kube object menu items when cluster is not relevant given exten
         </div>
       </div>
     </div>
+  </div>
+</body>
+`;
+
+exports[`disable kube object menu items when cluster is not relevant > given extension shouldn't be enabled for the cluster > renders 1`] = `
+<body>
+  <div>
     <div
-      class="Animate slide-right Drawer KubeObjectDetails flex column right enter leave"
+      class="Notifications"
+    />
+    <div
+      class="Animate slide-right Drawer KubeObjectDetails flex flex-col right enter leave"
       style="--size: 725px; --enter-duration: 100ms; --leave-duration: 100ms;"
     >
       <div
-        class="drawer-wrapper flex column"
+        class="drawer-wrapper flex flex-col"
       >
         <div
-          class="drawer-title flex align-center"
+          class="drawer-title flex items-center"
         >
           <div
-            class="drawer-title-text flex gaps align-center"
+            class="drawer-title-text flex gap-2 items-center"
           >
             
           </div>
@@ -543,23 +592,13 @@ exports[`disable kube object menu items when cluster is not relevant given exten
           </div>
         </div>
         <div
-          class="drawer-content flex column box grow"
+          class="drawer-content flex flex-col grow shrink-0 basis-0"
         />
       </div>
       <div
         class="ResizingAnchor horizontal leading"
       />
     </div>
-  </div>
-</body>
-`;
-
-exports[`disable kube object menu items when cluster is not relevant given extension shouldn't be enabled for the cluster renders 1`] = `
-<body>
-  <div>
-    <div
-      class="Notifications flex column align-flex-end"
-    />
     <div
       class="mainLayout"
       style="--sidebar-width: 200px;"
@@ -576,7 +615,7 @@ exports[`disable kube object menu items when cluster is not relevant given exten
           >
             <div
               class="Avatar rounded loadingAvatar"
-              style="width: 40px; height: 40px;"
+              style="width: 40px; height: 40px; background: var(--halfGray);"
             >
               ??
             </div>
@@ -914,7 +953,7 @@ exports[`disable kube object menu items when cluster is not relevant given exten
               aria-live="assertive"
               id="DndLiveRegion-2"
               role="status"
-              style="position: fixed; top: 0px; left: 0px; width: 1px; height: 1px; margin: -1px; border: 0px; padding: 0px; overflow: hidden; clip-path: inset(100%); white-space: nowrap;"
+              style="position: fixed; top: 0px; left: 0px; width: 1px; height: 1px; margin: -1px; border: 0px; padding: 0px; overflow: hidden; clip: rect(0px); clip-path: inset(100%); white-space: nowrap;"
             />
           </div>
         </div>
@@ -924,9 +963,10 @@ exports[`disable kube object menu items when cluster is not relevant given exten
       </div>
       <div
         class="contents"
+        style="position: relative;"
       >
         <ul
-          class="Menu MenuActions flex KubeObjectMenu toolbar gaps right bottom"
+          class="Menu MenuActions flex KubeObjectMenu toolbar right bottom"
           data-testid="menu-actions-for-kube-object-menu-for-some-uid"
           id="menu-actions-for-kube-object-menu-for-some-uid"
         />
@@ -942,7 +982,7 @@ exports[`disable kube object menu items when cluster is not relevant given exten
             class="ResizingAnchor vertical leading"
           />
           <div
-            class="tabs-container flex align-center"
+            class="tabs-container flex items-center"
           >
             <div
               class="dockTabs"
@@ -952,7 +992,7 @@ exports[`disable kube object menu items when cluster is not relevant given exten
                 class="Tabs tabs"
               >
                 <div
-                  class="Tab flex gaps align-center DockTab TerminalTab active"
+                  class="Tab flex gap-2 items-center DockTab TerminalTab active"
                   data-testid="dock-tab-for-terminal"
                   id="tab-terminal"
                   role="tab"
@@ -972,7 +1012,7 @@ exports[`disable kube object menu items when cluster is not relevant given exten
                     class="label"
                   >
                     <div
-                      class="flex align-center"
+                      class="flex items-center"
                     >
                       <span
                         class="title"
@@ -1006,10 +1046,10 @@ exports[`disable kube object menu items when cluster is not relevant given exten
               </div>
             </div>
             <div
-              class="toolbar flex gaps align-center box grow"
+              class="toolbar flex gap-2 items-center grow shrink-0 basis-0"
             >
               <div
-                class="dock-menu box grow"
+                class="dock-menu grow shrink-0 basis-0"
               >
                 <i
                   class="Icon new-dock-tab material interactive focusable"
@@ -1060,18 +1100,28 @@ exports[`disable kube object menu items when cluster is not relevant given exten
         </div>
       </div>
     </div>
+  </div>
+</body>
+`;
+
+exports[`disable kube object menu items when cluster is not relevant > given not yet known if extension should be enabled for the cluster > renders 1`] = `
+<body>
+  <div>
     <div
-      class="Animate slide-right Drawer KubeObjectDetails flex column right enter leave"
+      class="Notifications"
+    />
+    <div
+      class="Animate slide-right Drawer KubeObjectDetails flex flex-col right enter leave"
       style="--size: 725px; --enter-duration: 100ms; --leave-duration: 100ms;"
     >
       <div
-        class="drawer-wrapper flex column"
+        class="drawer-wrapper flex flex-col"
       >
         <div
-          class="drawer-title flex align-center"
+          class="drawer-title flex items-center"
         >
           <div
-            class="drawer-title-text flex gaps align-center"
+            class="drawer-title-text flex gap-2 items-center"
           >
             
           </div>
@@ -1091,23 +1141,13 @@ exports[`disable kube object menu items when cluster is not relevant given exten
           </div>
         </div>
         <div
-          class="drawer-content flex column box grow"
+          class="drawer-content flex flex-col grow shrink-0 basis-0"
         />
       </div>
       <div
         class="ResizingAnchor horizontal leading"
       />
     </div>
-  </div>
-</body>
-`;
-
-exports[`disable kube object menu items when cluster is not relevant given not yet known if extension should be enabled for the cluster renders 1`] = `
-<body>
-  <div>
-    <div
-      class="Notifications flex column align-flex-end"
-    />
     <div
       class="mainLayout"
       style="--sidebar-width: 200px;"
@@ -1124,7 +1164,7 @@ exports[`disable kube object menu items when cluster is not relevant given not y
           >
             <div
               class="Avatar rounded loadingAvatar"
-              style="width: 40px; height: 40px;"
+              style="width: 40px; height: 40px; background: var(--halfGray);"
             >
               ??
             </div>
@@ -1462,7 +1502,7 @@ exports[`disable kube object menu items when cluster is not relevant given not y
               aria-live="assertive"
               id="DndLiveRegion-0"
               role="status"
-              style="position: fixed; top: 0px; left: 0px; width: 1px; height: 1px; margin: -1px; border: 0px; padding: 0px; overflow: hidden; clip-path: inset(100%); white-space: nowrap;"
+              style="position: fixed; top: 0px; left: 0px; width: 1px; height: 1px; margin: -1px; border: 0px; padding: 0px; overflow: hidden; clip: rect(0px); clip-path: inset(100%); white-space: nowrap;"
             />
           </div>
         </div>
@@ -1472,9 +1512,10 @@ exports[`disable kube object menu items when cluster is not relevant given not y
       </div>
       <div
         class="contents"
+        style="position: relative;"
       >
         <ul
-          class="Menu MenuActions flex KubeObjectMenu toolbar gaps right bottom"
+          class="Menu MenuActions flex KubeObjectMenu toolbar right bottom"
           data-testid="menu-actions-for-kube-object-menu-for-some-uid"
           id="menu-actions-for-kube-object-menu-for-some-uid"
         />
@@ -1490,7 +1531,7 @@ exports[`disable kube object menu items when cluster is not relevant given not y
             class="ResizingAnchor vertical leading"
           />
           <div
-            class="tabs-container flex align-center"
+            class="tabs-container flex items-center"
           >
             <div
               class="dockTabs"
@@ -1500,7 +1541,7 @@ exports[`disable kube object menu items when cluster is not relevant given not y
                 class="Tabs tabs"
               >
                 <div
-                  class="Tab flex gaps align-center DockTab TerminalTab active"
+                  class="Tab flex gap-2 items-center DockTab TerminalTab active"
                   data-testid="dock-tab-for-terminal"
                   id="tab-terminal"
                   role="tab"
@@ -1520,7 +1561,7 @@ exports[`disable kube object menu items when cluster is not relevant given not y
                     class="label"
                   >
                     <div
-                      class="flex align-center"
+                      class="flex items-center"
                     >
                       <span
                         class="title"
@@ -1554,10 +1595,10 @@ exports[`disable kube object menu items when cluster is not relevant given not y
               </div>
             </div>
             <div
-              class="toolbar flex gaps align-center box grow"
+              class="toolbar flex gap-2 items-center grow shrink-0 basis-0"
             >
               <div
-                class="dock-menu box grow"
+                class="dock-menu grow shrink-0 basis-0"
               >
                 <i
                   class="Icon new-dock-tab material interactive focusable"
@@ -1607,44 +1648,6 @@ exports[`disable kube object menu items when cluster is not relevant given not y
           </div>
         </div>
       </div>
-    </div>
-    <div
-      class="Animate slide-right Drawer KubeObjectDetails flex column right enter leave"
-      style="--size: 725px; --enter-duration: 100ms; --leave-duration: 100ms;"
-    >
-      <div
-        class="drawer-wrapper flex column"
-      >
-        <div
-          class="drawer-title flex align-center"
-        >
-          <div
-            class="drawer-title-text flex gaps align-center"
-          >
-            
-          </div>
-          <i
-            class="Icon material interactive focusable"
-            tabindex="0"
-          >
-            <span
-              class="icon"
-              data-icon-name="close"
-            >
-              close
-            </span>
-          </i>
-          <div>
-            Close
-          </div>
-        </div>
-        <div
-          class="drawer-content flex column box grow"
-        />
-      </div>
-      <div
-        class="ResizingAnchor horizontal leading"
-      />
     </div>
   </div>
 </body>

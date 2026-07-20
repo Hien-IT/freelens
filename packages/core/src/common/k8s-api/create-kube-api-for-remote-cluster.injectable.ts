@@ -4,6 +4,7 @@
  * Licensed under MIT License. See LICENSE in root directory for more information.
  */
 
+import { Agent } from "node:https";
 import { KubeApi } from "@freelensapp/kube-api";
 import {
   logDebugInjectionToken,
@@ -12,14 +13,14 @@ import {
   logWarningInjectionToken,
 } from "@freelensapp/logger";
 import { getInjectable } from "@ogre-tools/injectable";
-import { Agent } from "https";
 import isDevelopmentInjectable from "../vars/is-development.injectable";
 import createKubeJsonApiInjectable from "./create-kube-json-api.injectable";
-import type { AgentOptions } from "https";
+import type { AgentOptions } from "node:https";
 
 import type { KubeApiOptions } from "@freelensapp/kube-api";
 import type { KubeJsonApiDataFor, KubeObject, KubeObjectConstructor } from "@freelensapp/kube-object";
-import type { RequestInit } from "@freelensapp/node-fetch";
+
+import type { RequestInit } from "node-fetch";
 
 export interface CreateKubeApiForRemoteClusterConfig {
   cluster: {

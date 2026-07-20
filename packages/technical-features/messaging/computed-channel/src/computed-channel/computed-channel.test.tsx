@@ -1,3 +1,4 @@
+import "@testing-library/jest-dom/vitest";
 import { startApplicationInjectionToken } from "@freelensapp/application";
 import { registerFeature } from "@freelensapp/feature-core";
 import { getMessageChannelListenerInjectable, testUtils } from "@freelensapp/messaging";
@@ -8,7 +9,6 @@ import { registerMobX } from "@ogre-tools/injectable-extension-for-mobx";
 import { act, RenderResult } from "@testing-library/react";
 import { computed, IComputedValue, IObservableValue, observable, reaction, runInAction } from "mobx";
 import { observer } from "mobx-react";
-import React from "react";
 import { computedChannelFeature } from "../feature";
 import { computedChannelInjectionToken, computedChannelObserverInjectionToken } from "./computed-channel.injectable";
 import {
@@ -121,11 +121,9 @@ const TestComponent = observer(({ someComputed }: { someComputed: IComputedValue
           const scenarioName = scenarioIsAsync ? "when all messages are propagated" : "immediately";
 
           describe(scenarioName, () => {
-            beforeEach((done) => {
+            beforeEach(async () => {
               if (scenarioIsAsync) {
-                messageBridgeFake.messagePropagationRecursive(act).then(done);
-              } else {
-                done();
+                await messageBridgeFake.messagePropagationRecursive(act);
               }
             });
 
@@ -162,11 +160,9 @@ const TestComponent = observer(({ someComputed }: { someComputed: IComputedValue
           const scenarioName = scenarioIsAsync ? "when admin messages are propagated" : "immediately";
 
           describe(scenarioName, () => {
-            beforeEach((done) => {
+            beforeEach(async () => {
               if (scenarioIsAsync) {
-                void messageBridgeFake.messagePropagation().then(done);
-              } else {
-                done();
+                await messageBridgeFake.messagePropagation();
               }
             });
 
@@ -180,11 +176,9 @@ const TestComponent = observer(({ someComputed }: { someComputed: IComputedValue
             const scenarioName = scenarioIsAsync ? "when returning value-messages propagate" : "immediately";
 
             describe(scenarioName, () => {
-              beforeEach((done) => {
+              beforeEach(async () => {
                 if (scenarioIsAsync) {
-                  void messageBridgeFake.messagePropagation().then(done);
-                } else {
-                  done();
+                  await messageBridgeFake.messagePropagation();
                 }
               });
 
@@ -208,11 +202,9 @@ const TestComponent = observer(({ someComputed }: { someComputed: IComputedValue
                 const scenarioName = scenarioIsAsync ? "when value-messages propagate" : "immediately";
 
                 describe(scenarioName, () => {
-                  beforeEach((done) => {
+                  beforeEach(async () => {
                     if (scenarioIsAsync) {
-                      void messageBridgeFake.messagePropagation().then(done);
-                    } else {
-                      done();
+                      await messageBridgeFake.messagePropagation();
                     }
                   });
 
@@ -236,11 +228,9 @@ const TestComponent = observer(({ someComputed }: { someComputed: IComputedValue
                 const scenarioName = scenarioIsAsync ? "when admin-messages propagate" : "immediately";
 
                 describe(scenarioName, () => {
-                  beforeEach((done) => {
+                  beforeEach(async () => {
                     if (scenarioIsAsync) {
-                      void messageBridgeFake.messagePropagation().then(done);
-                    } else {
-                      done();
+                      await messageBridgeFake.messagePropagation();
                     }
                   });
 
@@ -292,13 +282,11 @@ const TestComponent = observer(({ someComputed }: { someComputed: IComputedValue
                       const scenarioName = scenarioIsAsync ? "when admin messages propagate" : "immediately";
 
                       describe(scenarioName, () => {
-                        beforeEach((done) => {
+                        beforeEach(async () => {
                           if (scenarioIsAsync) {
                             latestAdminMessage = undefined;
 
-                            void messageBridgeFake.messagePropagation().then(done);
-                          } else {
-                            done();
+                            await messageBridgeFake.messagePropagation();
                           }
                         });
 
@@ -317,13 +305,11 @@ const TestComponent = observer(({ someComputed }: { someComputed: IComputedValue
                         const scenarioTitle = scenarioIsAsync ? "when value-messages propagate back" : "immediately";
 
                         describe(scenarioTitle, () => {
-                          beforeEach((done) => {
+                          beforeEach(async () => {
                             if (scenarioIsAsync) {
                               latestValueMessage = undefined;
 
-                              void messageBridgeFake.messagePropagation().then(done);
-                            } else {
-                              done();
+                              await messageBridgeFake.messagePropagation();
                             }
                           });
 
@@ -435,11 +421,9 @@ const TestComponent = observer(({ someComputed }: { someComputed: IComputedValue
                 const scenarioName = scenarioIsAsync ? "when messages would be propagated" : "immediately";
 
                 describe(scenarioName, () => {
-                  beforeEach((done) => {
+                  beforeEach(async () => {
                     if (scenarioIsAsync) {
-                      void messageBridgeFake.messagePropagation().then(done);
-                    } else {
-                      done();
+                      await messageBridgeFake.messagePropagation();
                     }
                   });
 

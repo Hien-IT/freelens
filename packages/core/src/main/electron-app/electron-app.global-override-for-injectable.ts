@@ -4,10 +4,10 @@
  * Licensed under MIT License. See LICENSE in root directory for more information.
  */
 
+import EventEmitter from "node:events";
 import { getGlobalOverride } from "@freelensapp/test-utils";
 import { getOrInsert } from "@freelensapp/utilities";
-import EventEmitter from "events";
-import { kebabCase } from "lodash";
+import { kebabCase } from "es-toolkit";
 import electronAppInjectable from "./electron-app.injectable";
 
 import type { ClientCertRequestParams, ProxyConfig } from "electron";
@@ -101,6 +101,9 @@ export default getGlobalOverride(electronAppInjectable, () => {
       throw new Error("Method not implemented.");
     }
     isAccessibilitySupportEnabled(): boolean {
+      throw new Error("Method not implemented.");
+    }
+    isActive(): boolean {
       throw new Error("Method not implemented.");
     }
     isDefaultProtocolClient(protocol: string, path?: string | undefined, args?: string[] | undefined): boolean {

@@ -10,7 +10,6 @@ import { disposer } from "@freelensapp/utilities";
 import { getInjectable } from "@ogre-tools/injectable";
 import { shell } from "electron";
 import { remove as removeDir } from "fs-extra";
-import React from "react";
 import { ExtensionInstallationState } from "../../../../extensions/extension-installation-state-store/extension-installation-state-store";
 import extensionInstallationStateStoreInjectable from "../../../../extensions/extension-installation-state-store/extension-installation-state-store.injectable";
 import extensionLoaderInjectable from "../../../../extensions/extension-loader/extension-loader.injectable";
@@ -19,12 +18,12 @@ import createTempFilesAndValidateInjectable from "./create-temp-files-and-valida
 import getExtensionDestFolderInjectable from "./get-extension-dest-folder.injectable";
 import unpackExtensionInjectable from "./unpack-extension.injectable";
 
-import type { LensExtensionId } from "@freelensapp/legacy-extensions";
 import type { ShowNotification } from "@freelensapp/notifications";
 import type { Disposer } from "@freelensapp/utilities";
 
 import type { ExtensionInstallationStateStore } from "../../../../extensions/extension-installation-state-store/extension-installation-state-store";
 import type { ExtensionLoader } from "../../../../extensions/extension-loader";
+import type { LensExtensionId } from "../../../../extensions/installed-extension";
 import type { CreateTempFilesAndValidate } from "./create-temp-files-and-validate.injectable";
 import type { GetExtensionDestFolder } from "./get-extension-dest-folder.injectable";
 import type { UnpackExtension } from "./unpack-extension.injectable";
@@ -74,7 +73,7 @@ const attemptInstall =
       dispose();
 
       return void showErrorNotification(
-        <div className="flex column gaps">
+        <div className="flex flex-col gap-2">
           <b>Extension Install Collision:</b>
           <p>
             {"The "}
@@ -94,8 +93,8 @@ const attemptInstall =
 
       // confirm to uninstall old version before installing new version
       const removeNotification = showInfoNotification(
-        <div className="InstallingExtensionNotification flex gaps align-center">
-          <div className="flex column gaps">
+        <div className="InstallingExtensionNotification flex gap-2 items-center">
+          <div className="flex flex-col gap-2">
             <p>
               {"Install extension "}
               <b>{`${name}@${version}`}</b>?

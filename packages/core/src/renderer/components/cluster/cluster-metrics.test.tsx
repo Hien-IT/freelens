@@ -4,10 +4,9 @@
  * Licensed under MIT License. See LICENSE in root directory for more information.
  */
 
-import "@testing-library/jest-dom";
+import "@testing-library/jest-dom/vitest";
 import { act, screen } from "@testing-library/react";
 import { computed, observable } from "mobx";
-import React from "react";
 import { getDiForUnitTesting } from "../../getDiForUnitTesting";
 import { renderFor } from "../test-utils/renderFor";
 import { ClusterMetrics } from "./cluster-metrics";
@@ -18,10 +17,10 @@ import selectedNodeRoleForMetricsInjectable from "./overview/selected-node-role-
 
 import type { MetricData } from "../../../common/k8s-api/endpoints/metrics.api";
 
-const barChartMock = jest.fn();
-const switchersMock = jest.fn();
+const barChartMock = vi.fn();
+const switchersMock = vi.fn();
 
-jest.mock("../chart", () => ({
+vi.mock("../chart", () => ({
   BarChart: (props: unknown) => {
     barChartMock(props);
 
@@ -29,11 +28,11 @@ jest.mock("../chart", () => ({
   },
 }));
 
-jest.mock("@freelensapp/spinner", () => ({
+vi.mock("@freelensapp/spinner", () => ({
   Spinner: () => <div data-testid="spinner" />,
 }));
 
-jest.mock("./cluster-metric-switchers", () => ({
+vi.mock("./cluster-metric-switchers", () => ({
   ClusterMetricSwitchers: (props: unknown) => {
     switchersMock(props);
 
@@ -89,11 +88,11 @@ describe("ClusterMetrics", () => {
     );
     di.override(selectedMetricsTypeInjectable, () => ({
       value: computed(() => "cpu" as const),
-      set: jest.fn(),
+      set: vi.fn(),
     }));
     di.override(selectedNodeRoleForMetricsInjectable, () => ({
       value: computed(() => "worker" as const),
-      set: jest.fn(),
+      set: vi.fn(),
       nodes: computed(() => [{ getName: () => "worker-1" }] as never),
       hasMasterNodes: computed(() => true),
       hasWorkerNodes: computed(() => true),
@@ -143,11 +142,11 @@ describe("ClusterMetrics", () => {
     );
     di.override(selectedMetricsTypeInjectable, () => ({
       value: computed(() => "cpu" as const),
-      set: jest.fn(),
+      set: vi.fn(),
     }));
     di.override(selectedNodeRoleForMetricsInjectable, () => ({
       value: computed(() => "worker" as const),
-      set: jest.fn(),
+      set: vi.fn(),
       nodes: computed(() => [{ getName: () => "worker-1" }] as never),
       hasMasterNodes: computed(() => true),
       hasWorkerNodes: computed(() => true),
@@ -205,11 +204,11 @@ describe("ClusterMetrics", () => {
     );
     di.override(selectedMetricsTypeInjectable, () => ({
       value: computed(() => "memory" as const),
-      set: jest.fn(),
+      set: vi.fn(),
     }));
     di.override(selectedNodeRoleForMetricsInjectable, () => ({
       value: computed(() => "worker" as const),
-      set: jest.fn(),
+      set: vi.fn(),
       nodes: computed(() => [{ getName: () => "worker-1" }] as never),
       hasMasterNodes: computed(() => true),
       hasWorkerNodes: computed(() => true),

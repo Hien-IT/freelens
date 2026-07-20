@@ -4,11 +4,12 @@
  * Licensed under MIT License. See LICENSE in root directory for more information.
  */
 
+import assert from "node:assert";
+import { createRequire } from "node:module";
 import { EventEmitter } from "@freelensapp/event-emitter";
 import { isDefined, iter } from "@freelensapp/utilities";
-import assert from "assert";
 import { ipcMain, ipcRenderer } from "electron";
-import { isEqual } from "lodash";
+import { isEqual } from "es-toolkit";
 import { action, computed, observable, reaction, runInAction, toJS, when } from "mobx";
 import { broadcastMessage, ipcMainHandle, ipcMainOn, ipcRendererOn } from "../../common/ipc";
 import {
@@ -17,36 +18,44 @@ import {
 } from "../../common/ipc/extension-handling";
 import { requestExtensionLoaderInitialState } from "../../renderer/ipc";
 
-import type {
-  BundledExtension,
-  BundledInstalledExtension,
-  ExternalInstalledExtension,
-  InstalledExtension,
-  LegacyLensExtension,
-  LensExtensionConstructor,
-  LensExtensionId,
-} from "@freelensapp/legacy-extensions";
 import type { Logger } from "@freelensapp/logger";
 
 import type { ObservableMap } from "mobx";
 
+import type { PathExists } from "../../common/fs/path-exists.injectable";
+import type { ReadFile } from "../../common/fs/read-file.injectable";
 import type { GetDirnameOfPath } from "../../common/path/get-dirname.injectable";
 import type { JoinPaths } from "../../common/path/join-paths.injectable";
 import type { UpdateExtensionsState } from "../../features/extensions/enabled/common/update-state.injectable";
+import type {
+  InstalledExtension,
+  LensExtensionConstructor,
+  LensExtensionId,
+  LensExtensionInstance,
+} from "../installed-extension";
 import type { LensExtension } from "../lens-extension";
 import type { Extension } from "./extension/extension.injectable";
 
 const logModule = "[EXTENSIONS-LOADER]";
 
+// v2 (plan D2/D6): the bundles are ESM, where the main process has no
+// `require` global; the node-integrated renderer keeps it. Node 24's
+// require(esm) loads both CJS and ESM extension entry points synchronously
+// (verified empirically in #1718), so a sync loader keeps working for both
+// module formats in both processes. Entry points with top-level await would
+// need an async import() path in the main process; not supported for now.
+const extensionRequire = globalThis.require ?? createRequire(import.meta.url);
+
 interface Dependencies {
-  readonly extensionInstances: ObservableMap<LensExtensionId, LegacyLensExtension>;
-  readonly bundledExtensions: BundledExtension[];
+  readonly extensionInstances: ObservableMap<LensExtensionId, LensExtensionInstance>;
   readonly logger: Logger;
   readonly extensionEntryPointName: "main" | "renderer";
   updateExtensionsState: UpdateExtensionsState;
-  getExtension: (instance: LegacyLensExtension) => Extension;
+  getExtension: (instance: LensExtensionInstance) => Extension;
   joinPaths: JoinPaths;
   getDirnameOfPath: GetDirnameOfPath;
+  readFile: ReadFile;
+  pathExists: PathExists;
 }
 
 interface ExtensionBeingActivated {
@@ -56,7 +65,6 @@ interface ExtensionBeingActivated {
 }
 
 export interface ExtensionLoading {
-  isBundled: boolean;
   loaded: Promise<void>;
 }
 
@@ -82,13 +90,16 @@ export class ExtensionLoader {
 
   private readonly onRemoveExtensionId = new EventEmitter<[string]>();
 
+  // Absolute paths of extension stylesheets already injected into the renderer
+  // document, so a reload (the toJSON reaction re-requires user extensions)
+  // does not append the same <style> twice.
+  private readonly injectedStylePaths = new Set<string>();
+
   readonly isLoaded = observable.box(false);
 
   constructor(protected readonly dependencies: Dependencies) {}
 
-  readonly userExtensions = computed(
-    () => new Map(this.extensions.toJSON().filter(([, extension]) => !extension.isBundled)),
-  );
+  readonly userExtensions = computed(() => new Map(this.extensions.toJSON()));
 
   /**
    * Get the extension instance by its manifest name
@@ -99,7 +110,7 @@ export class ExtensionLoader {
    * - `null` if no class definition is provided for the current process
    * - `undefined` if the name is not known about
    */
-  getInstanceByName(name: string): LegacyLensExtension | null | undefined {
+  getInstanceByName(name: string): LensExtensionInstance | null | undefined {
     if (this.nonInstancesByName.has(name)) {
       return null;
     }
@@ -192,7 +203,6 @@ export class ExtensionLoader {
     const extension = this.extensions.get(lensExtensionId);
 
     assert(extension, `Extension "${lensExtensionId}" must be registered before it can be enabled.`);
-    assert(!extension.isBundled, `Cannot change the enabled state of a bundled extension`);
 
     extension.isEnabled = isEnabled;
   }
@@ -248,45 +258,6 @@ export class ExtensionLoader {
     });
   }
 
-  protected async loadBundledExtensions() {
-    const bundledExtensions = await Promise.all(
-      this.dependencies.bundledExtensions.map(async (extension) => {
-        try {
-          const LensExtensionClass = await extension[this.dependencies.extensionEntryPointName]();
-
-          if (!LensExtensionClass) {
-            return null;
-          }
-
-          const installedExtension: BundledInstalledExtension = {
-            absolutePath: "irrelevant",
-            id: extension.manifest.name,
-            isBundled: true,
-            isCompatible: true,
-            isEnabled: true,
-            manifest: extension.manifest,
-            manifestPath: "irrelevant",
-          };
-          const instance = new LensExtensionClass(installedExtension);
-
-          this.dependencies.extensionInstances.set(extension.manifest.name, instance);
-
-          return {
-            instance,
-            installedExtension,
-            activated: instance.activate(),
-          } as ExtensionBeingActivated;
-        } catch (err) {
-          this.dependencies.logger.error(`${logModule}: error loading extension`, { ext: extension, err });
-
-          return null;
-        }
-      }),
-    );
-
-    return bundledExtensions.filter(isDefined);
-  }
-
   protected async loadExtensions(extensions: ExtensionBeingActivated[]): Promise<ExtensionLoading[]> {
     // We first need to wait until each extension's `onActivate` is resolved or rejected,
     // as this might register new catalog categories. Afterwards we can safely .enable the extension.
@@ -313,10 +284,7 @@ export class ExtensionLoader {
         this.dependencies.logger.error(`${logModule}: failed to enable`, { ext: extension, err });
       });
 
-      return {
-        isBundled: extension.installedExtension.isBundled,
-        loaded,
-      };
+      return { loaded };
     });
   }
 
@@ -328,7 +296,6 @@ export class ExtensionLoader {
     // 4. Return ExtensionLoading[]
 
     return [...installedExtensions.entries()]
-      .filter((entry): entry is [string, ExternalInstalledExtension] => !entry[1].isBundled)
       .map(([extId, installedExtension]) => {
         const alreadyInit =
           this.dependencies.extensionInstances.has(extId) ||
@@ -368,9 +335,8 @@ export class ExtensionLoader {
   async autoInitExtensions() {
     this.dependencies.logger.info(`${logModule}: auto initializing extensions`);
 
-    const bundledExtensions = await this.loadBundledExtensions();
     const userExtensions = await this.loadUserExtensions(this.toJSON());
-    const loadedExtensions = await this.loadExtensions([...bundledExtensions, ...userExtensions]);
+    const loadedExtensions = await this.loadExtensions(userExtensions);
 
     // Setup reaction to load extensions on JSON changes
     reaction(
@@ -387,7 +353,7 @@ export class ExtensionLoader {
     return loadedExtensions;
   }
 
-  protected requireExtension(extension: ExternalInstalledExtension): LensExtensionConstructor | null {
+  protected requireExtension(extension: InstalledExtension): LensExtensionConstructor | null {
     const extRelativePath = extension.manifest[this.dependencies.extensionEntryPointName];
 
     if (!extRelativePath) {
@@ -400,7 +366,17 @@ export class ExtensionLoader {
     );
 
     try {
-      return require(/* webpackIgnore: true */ extAbsolutePath).default;
+      const extensionModule = extensionRequire(extAbsolutePath);
+
+      // Load the extension's renderer stylesheet, if any. Extensions are built
+      // in Vite library mode, which extracts CSS to a sibling asset and injects
+      // nothing (unlike the host's own application build). Without this, an
+      // extension has to import its SCSS twice and inline it through a manual
+      // `<style>` tag (see docs/v2-extension-migration.md). Fire-and-forget:
+      // requiring the entry is synchronous, style injection is a side effect.
+      void this.injectRendererStyles(extAbsolutePath, extension);
+
+      return extensionModule.default;
     } catch (error) {
       const message = (error instanceof Error ? error.stack : undefined) || error;
 
@@ -413,6 +389,69 @@ export class ExtensionLoader {
     return null;
   }
 
+  /**
+   * Inject an extension's renderer stylesheet into the host document.
+   *
+   * Vite library builds emit the extension's CSS as an asset next to the
+   * renderer entry (either `<entry>.css` or a `style.css` in the same folder)
+   * but, unlike an application build, do not inject it. The host loads the
+   * entry with `require()` and would otherwise never load that CSS. This reads
+   * the sibling stylesheet and appends it as a `<style>` element, so plain
+   * side-effect and CSS-module imports in an extension "just work" without the
+   * `?inline` + `<style>` workaround.
+   *
+   * A no-op when there is no sibling stylesheet, so existing extensions are
+   * unaffected. Renderer-only: guarded on the entry-point name and on the
+   * presence of `document`.
+   */
+  private async injectRendererStyles(extEntryPath: string, extension: InstalledExtension): Promise<void> {
+    if (this.dependencies.extensionEntryPointName !== "renderer" || typeof document === "undefined") {
+      return;
+    }
+
+    const entryDir = this.dependencies.getDirnameOfPath(extEntryPath);
+    // Prefer a stylesheet named after the entry (renderer.js -> renderer.css),
+    // then Vite's default library CSS asset name (style.css).
+    const candidates = [
+      extEntryPath.replace(/\.[^./\\]+$/, ".css"),
+      this.dependencies.joinPaths(entryDir, "style.css"),
+    ];
+
+    for (const cssPath of candidates) {
+      if (cssPath === extEntryPath || this.injectedStylePaths.has(cssPath)) {
+        continue;
+      }
+
+      try {
+        if (!(await this.dependencies.pathExists(cssPath))) {
+          continue;
+        }
+
+        const css = await this.dependencies.readFile(cssPath);
+
+        // Guard again: another async candidate may have won the race meanwhile.
+        if (this.injectedStylePaths.has(cssPath)) {
+          continue;
+        }
+        this.injectedStylePaths.add(cssPath);
+
+        const style = document.createElement("style");
+
+        style.dataset.freelensExtension = extension.manifest.name;
+        style.textContent = css;
+        document.head.appendChild(style);
+
+        this.dependencies.logger.debug(
+          `${logModule}: injected stylesheet "${cssPath}" for "${extension.manifest.name}"`,
+        );
+      } catch (error) {
+        this.dependencies.logger.warn(
+          `${logModule}: failed to inject stylesheet "${cssPath}" for "${extension.manifest.name}": ${error}`,
+        );
+      }
+    }
+  }
+
   getExtensionById(extId: LensExtensionId) {
     return this.extensions.get(extId);
   }
@@ -422,6 +461,8 @@ export class ExtensionLoader {
   }
 
   toJSON(): Map<LensExtensionId, InstalledExtension> {
-    return toJS(this.extensions);
+    // toJS is typed T -> T, so its runtime ObservableMap-to-Map conversion is
+    // invisible to the checker; the Map copy makes the declared type true.
+    return new Map(toJS(this.extensions));
   }
 }

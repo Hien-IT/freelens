@@ -9,7 +9,7 @@ import "./wizard.scss";
 import { Button } from "@freelensapp/button";
 import { Spinner } from "@freelensapp/spinner";
 import { cssNames, prevDefault } from "@freelensapp/utilities";
-import { debounce } from "lodash";
+import { debounce } from "es-toolkit/compat";
 import React from "react";
 import { SubTitle } from "../layout/sub-title";
 import { Stepper } from "../stepper";
@@ -196,7 +196,7 @@ export class WizardStep<D> extends React.Component<WizardStepProps<D>, WizardSte
 
   renderLoading() {
     return (
-      <div className="step-loading flex center">
+      <div className="step-loading flex items-center justify-center">
         <Spinner />
       </div>
     );
@@ -256,7 +256,7 @@ export class WizardStep<D> extends React.Component<WizardStepProps<D>, WizardSte
           {loading ? this.renderLoading() : children}
         </div>
         {customButtons ?? (
-          <div className="buttons flex gaps align-center">
+          <div className="buttons flex items-center gap-2">
             {moreButtons}
             <Button
               className="back-btn"

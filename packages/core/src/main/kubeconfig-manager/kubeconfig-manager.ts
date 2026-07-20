@@ -7,12 +7,12 @@
 import { isErrnoException } from "@freelensapp/utilities";
 import { dumpConfigYaml } from "../../common/kube-helpers";
 
-import type { KubeConfig } from "@freelensapp/kubernetes-client-node";
 import type { Logger } from "@freelensapp/logger";
 
-import type { SelfSignedCert } from "selfsigned";
+import type { KubeConfig } from "@kubernetes/client-node";
 import type { PartialDeep } from "type-fest";
 
+import type { SelfSignedCert } from "../../common/certificate/certificate";
 import type { Cluster } from "../../common/cluster/cluster";
 import type { LoadKubeconfig } from "../../common/cluster/load-kubeconfig.injectable";
 import type { PathExists } from "../../common/fs/path-exists.injectable";

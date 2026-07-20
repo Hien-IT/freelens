@@ -4,10 +4,9 @@
  * Licensed under MIT License. See LICENSE in root directory for more information.
  */
 
+import assert from "node:assert";
 import { KubeObject } from "@freelensapp/kube-object";
-import assert from "assert";
 import { computed, observable, runInAction } from "mobx";
-import React from "react";
 import apiManagerInjectable from "../../../../common/k8s-api/api-manager/manager.injectable";
 import showDetailsInjectable from "../../../../renderer/components/kube-detail-params/show-details.injectable";
 import { getApplicationBuilder } from "../../../../renderer/components/test-utils/get-application-builder";

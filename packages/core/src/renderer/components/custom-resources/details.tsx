@@ -10,7 +10,7 @@ import { CustomResourceDefinition, KubeObject } from "@freelensapp/kube-object";
 import { loggerInjectionToken } from "@freelensapp/logger";
 import { cssNames, safeJSONPathValue } from "@freelensapp/utilities";
 import { withInjectables } from "@ogre-tools/injectable-react";
-import { startCase } from "lodash/fp";
+import { startCase } from "es-toolkit";
 import { observer } from "mobx-react";
 import React from "react";
 import { BadgeBoolean } from "../badge";
@@ -40,7 +40,15 @@ function convertSpecValue(value: unknown): StrictReactNode {
   }
 
   if (typeof value === "object") {
-    return <Input readOnly multiLine theme="round-black" className="box grow" value={JSON.stringify(value, null, 2)} />;
+    return (
+      <Input
+        readOnly
+        multiLine
+        theme="round-black"
+        className="grow shrink-0 basis-0"
+        value={JSON.stringify(value, null, 2)}
+      />
+    );
   }
 
   if (typeof value === "boolean") {

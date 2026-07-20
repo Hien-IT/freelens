@@ -6,7 +6,6 @@
 
 import { Namespace } from "@freelensapp/kube-object";
 import { fireEvent } from "@testing-library/react";
-import React from "react";
 import { getDiForUnitTesting } from "../../getDiForUnitTesting";
 import { renderFor } from "../test-utils/renderFor";
 import hierarchicalNamespacesInjectable from "./hierarchical-namespaces.injectable";
@@ -19,7 +18,7 @@ import type { DiContainer } from "@ogre-tools/injectable";
 import type { DiRender } from "../test-utils/renderFor";
 import type { NamespaceTree } from "./store";
 
-jest.mock("react-router-dom", () => ({
+vi.mock("react-router-dom", () => ({
   Link: ({ children }: { children: StrictReactNode }) => children,
 }));
 

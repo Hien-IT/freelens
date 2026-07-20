@@ -9,10 +9,10 @@ import "./list.scss";
 import { Spinner } from "@freelensapp/spinner";
 import { array, cssNames } from "@freelensapp/utilities";
 import { withInjectables } from "@ogre-tools/injectable-react";
-import AnsiUp from "ansi_up";
+import { AnsiUp } from "ansi_up";
 import autoBindReact from "auto-bind/react";
 import DOMPurify from "dompurify";
-import debounce from "lodash/debounce";
+import { debounce } from "es-toolkit/compat";
 import { action, computed, makeObservable, observable, reaction } from "mobx";
 import { disposeOnUnmount, observer } from "mobx-react";
 import moment from "moment-timezone";
@@ -145,6 +145,14 @@ class NonForwardedLogList extends React.Component<
           this.onUserScrolledUp(logs, prevLogs);
         },
       ),
+      reaction(
+        () => this.props.model.logTabData.get()?.showTimestamps,
+        () => {
+          this.measuredRowHeights.clear();
+          this.overlapVersion++;
+          this.virtualListRef.current?.resetAfterIndex(0);
+        },
+      ),
     ]);
     this.bindInnerRef({
       scrollToItem: this.scrollToItem,
@@ -202,15 +210,18 @@ class NonForwardedLogList extends React.Component<
       return;
     }
 
-    // The wrapped row uses `height: auto`, so its rendered box is the true height
-    // the row needs. Measuring it directly avoids the empty space left over when the
-    // character-count estimate over- or under-shoots the real wrapped line count.
-    const measuredHeight = Math.ceil(element.getBoundingClientRect().height);
+    // `element` is the row's inner content wrapper, which lays out in normal flow and
+    // therefore reflects the natural height of the wrapped text. The outer `.LogRow`
+    // cannot be measured for this: react-window pins its inline `height` to the current
+    // item size, so its bounding box always equals the estimate being verified. Adding
+    // the row's vertical padding yields the border-box height the row needs.
+    const contentHeight = element.getBoundingClientRect().height;
 
-    if (measuredHeight <= 0) {
+    if (contentHeight <= 0) {
       return;
     }
 
+    const measuredHeight = Math.ceil(contentHeight) + this.rowVerticalPadding;
     const currentHeight = this.measuredRowHeights.get(rowIndex);
 
     if (currentHeight === measuredHeight) {
@@ -418,10 +429,12 @@ class NonForwardedLogList extends React.Component<
     }
 
     return (
-      <div ref={this.onRowRendered(rowIndex)} className={cssNames("LogRow", { wordWrap: this.showWordWrap })}>
-        {contents.length > 1 ? contents : <span dangerouslySetInnerHTML={{ __html: ansiToHtml(item) }} />}
-        {/* For preserving copy-paste experience and keeping line breaks */}
-        <br />
+      <div className={cssNames("LogRow", { wordWrap: this.showWordWrap })}>
+        <div ref={this.onRowRendered(rowIndex)}>
+          {contents.length > 1 ? contents : <span dangerouslySetInnerHTML={{ __html: ansiToHtml(item) }} />}
+          {/* For preserving copy-paste experience and keeping line breaks */}
+          <br />
+        </div>
       </div>
     );
   };
@@ -429,7 +442,7 @@ class NonForwardedLogList extends React.Component<
   render() {
     if (this.props.model.isLoading.get()) {
       return (
-        <div className="LogList flex box grow align-center justify-center">
+        <div className="LogList flex grow shrink-0 basis-0 items-center justify-center">
           <Spinner />
         </div>
       );
@@ -437,7 +450,7 @@ class NonForwardedLogList extends React.Component<
 
     if (!this.logs.length) {
       return (
-        <div className="LogList flex box grow align-center justify-center">
+        <div className="LogList flex grow shrink-0 basis-0 items-center justify-center">
           There are no logs available for container {this.props.model.logTabData.get()?.selectedContainer}
         </div>
       );
@@ -452,7 +465,7 @@ class NonForwardedLogList extends React.Component<
           onScroll={this.onScroll}
           outerRef={this.virtualListDiv}
           ref={this.virtualListRef}
-          className="box grow"
+          className="grow shrink-0 basis-0"
         />
         {this.isJumpButtonVisible && <ToBottom onClick={this.scrollToBottom} />}
       </div>

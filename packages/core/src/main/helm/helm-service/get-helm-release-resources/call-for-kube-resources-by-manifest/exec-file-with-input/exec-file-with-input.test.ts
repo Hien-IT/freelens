@@ -4,19 +4,21 @@
  * Licensed under MIT License. See LICENSE in root directory for more information.
  */
 
+import EventEmitter from "node:events";
 import { getPromiseStatus } from "@freelensapp/test-utils";
-import EventEmitter from "events";
 import { getDiForUnitTesting } from "../../../../../getDiForUnitTesting";
 import execFileWithInputInjectable from "./exec-file-with-input.injectable";
 import nonPromiseExecFileInjectable from "./non-promise-exec-file.injectable";
 
 import type { AsyncResult } from "@freelensapp/utilities";
 
+import type { Mock } from "vitest";
+
 import type { ExecFileWithInput } from "./exec-file-with-input.injectable";
 
 describe("exec-file-with-input", () => {
   let execFileWithInput: ExecFileWithInput;
-  let execFileMock: jest.Mock;
+  let execFileMock: Mock;
 
   let executionStub: EventEmitter & {
     stdin: { end: (chunk: any) => void };
@@ -30,12 +32,12 @@ describe("exec-file-with-input", () => {
     di.unoverride(execFileWithInputInjectable);
 
     executionStub = Object.assign(new EventEmitter(), {
-      stdin: { end: jest.fn() },
+      stdin: { end: vi.fn() },
       stdout: new EventEmitter(),
       stderr: new EventEmitter(),
     });
 
-    execFileMock = jest.fn(() => executionStub);
+    execFileMock = vi.fn(() => executionStub);
 
     di.override(nonPromiseExecFileInjectable, () => execFileMock as any);
 

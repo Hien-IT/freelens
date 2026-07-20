@@ -4,14 +4,13 @@
  * Licensed under MIT License. See LICENSE in root directory for more information.
  */
 
+import assert from "node:assert";
 import { createKubeApiURL, parseKubeApi } from "@freelensapp/kube-api";
 import { showErrorNotificationInjectable, showSuccessNotificationInjectable } from "@freelensapp/notifications";
 import { waitUntilDefined } from "@freelensapp/utilities";
 import { getInjectable, lifecycleEnum } from "@ogre-tools/injectable";
-import assert from "assert";
 import * as yaml from "js-yaml";
 import { action, computed, observable, runInAction } from "mobx";
-import React from "react";
 import { createPatch, type Operation } from "rfc6902";
 import { defaultYamlDumpOptions } from "../../../../../common/kube-helpers";
 import editResourceTabStoreInjectable from "../store.injectable";

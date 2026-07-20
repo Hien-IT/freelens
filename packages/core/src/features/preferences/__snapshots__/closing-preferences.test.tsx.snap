@@ -1,9 +1,9 @@
-// Jest Snapshot v1, https://goo.gl/fbAQLP
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
-exports[`preferences - closing-preferences given accessing preferences directly renders 1`] = `
+exports[`preferences - closing-preferences > given accessing preferences directly > renders 1`] = `
 <div>
   <div
-    class="Notifications flex column align-flex-end"
+    class="Notifications"
   />
   <div
     class="ClusterManager"
@@ -85,7 +85,7 @@ exports[`preferences - closing-preferences given accessing preferences directly 
             class="sidebar"
           >
             <div
-              class="Tabs flex column"
+              class="Tabs flex flex-col"
             >
               <div
                 data-preference-tab-group-test="general-tab-group"
@@ -96,7 +96,7 @@ exports[`preferences - closing-preferences given accessing preferences directly 
                   Preferences
                 </div>
                 <div
-                  class="Tab flex gaps align-center active"
+                  class="Tab flex gap-2 items-center active"
                   data-preference-tab-link-test="app"
                   role="tab"
                   tabindex="0"
@@ -108,7 +108,7 @@ exports[`preferences - closing-preferences given accessing preferences directly 
                   </div>
                 </div>
                 <div
-                  class="Tab flex gaps align-center"
+                  class="Tab flex gap-2 items-center"
                   data-preference-tab-link-test="proxy"
                   role="tab"
                   tabindex="0"
@@ -120,7 +120,7 @@ exports[`preferences - closing-preferences given accessing preferences directly 
                   </div>
                 </div>
                 <div
-                  class="Tab flex gaps align-center"
+                  class="Tab flex gap-2 items-center"
                   data-preference-tab-link-test="kubernetes"
                   role="tab"
                   tabindex="0"
@@ -132,7 +132,7 @@ exports[`preferences - closing-preferences given accessing preferences directly 
                   </div>
                 </div>
                 <div
-                  class="Tab flex gaps align-center"
+                  class="Tab flex gap-2 items-center"
                   data-preference-tab-link-test="editor"
                   role="tab"
                   tabindex="0"
@@ -144,7 +144,7 @@ exports[`preferences - closing-preferences given accessing preferences directly 
                   </div>
                 </div>
                 <div
-                  class="Tab flex gaps align-center"
+                  class="Tab flex gap-2 items-center"
                   data-preference-tab-link-test="terminal"
                   role="tab"
                   tabindex="0"
@@ -156,7 +156,7 @@ exports[`preferences - closing-preferences given accessing preferences directly 
                   </div>
                 </div>
                 <div
-                  class="Tab flex gaps align-center"
+                  class="Tab flex gap-2 items-center"
                   data-preference-tab-link-test="some-path-id-for-some-test-tab-id"
                   role="tab"
                   tabindex="0"
@@ -240,7 +240,7 @@ exports[`preferences - closing-preferences given accessing preferences directly 
                             id="theme-input"
                             role="combobox"
                             spellcheck="false"
-                            style="opacity: 1; width: 100%; grid-area: 1 / 2; min-width: 2px; border: 0px; margin: 0px; outline: 0; padding: 0px;"
+                            style="color: inherit; background: 0px center; opacity: 1; width: 100%; grid-area: 1 / 2; font: inherit; min-width: 2px; border: 0px; margin: 0px; outline: 0px; padding: 0px;"
                             tabindex="0"
                             type="text"
                             value=""
@@ -331,7 +331,7 @@ exports[`preferences - closing-preferences given accessing preferences directly 
                             id="extension-install-registry-input"
                             role="combobox"
                             spellcheck="false"
-                            style="opacity: 1; width: 100%; grid-area: 1 / 2; min-width: 2px; border: 0px; margin: 0px; outline: 0; padding: 0px;"
+                            style="color: inherit; background: 0px center; opacity: 1; width: 100%; grid-area: 1 / 2; font: inherit; min-width: 2px; border: 0px; margin: 0px; outline: 0px; padding: 0px;"
                             tabindex="0"
                             type="text"
                             value=""
@@ -378,11 +378,11 @@ exports[`preferences - closing-preferences given accessing preferences directly 
                     class="Input theme round black disabled invalid"
                   >
                     <label
-                      class="input-area flex gaps align-center"
+                      class="input-area flex items-center gap-2"
                       id=""
                     >
                       <input
-                        class="input box grow"
+                        class="input grow"
                         disabled=""
                         placeholder="Custom Extension Registry URL..."
                         spellcheck="false"
@@ -390,7 +390,7 @@ exports[`preferences - closing-preferences given accessing preferences directly 
                       />
                     </label>
                     <div
-                      class="input-info flex gaps"
+                      class="input-info flex gap-2"
                     />
                   </div>
                 </section>
@@ -563,7 +563,7 @@ exports[`preferences - closing-preferences given accessing preferences directly 
                             id="timezone-input"
                             role="combobox"
                             spellcheck="false"
-                            style="opacity: 1; width: 100%; grid-area: 1 / 2; min-width: 2px; border: 0px; margin: 0px; outline: 0; padding: 0px;"
+                            style="color: inherit; background: 0px center; opacity: 1; width: 100%; grid-area: 1 / 2; font: inherit; min-width: 2px; border: 0px; margin: 0px; outline: 0px; padding: 0px;"
                             tabindex="0"
                             type="text"
                             value=""
@@ -638,17 +638,22 @@ exports[`preferences - closing-preferences given accessing preferences directly 
       </div>
     </main>
     <div
-      class="HotbarMenu flex column"
+      class="HotbarMenu flex flex-col"
     >
       <div
-        class="HotbarItems flex column gaps"
+        class="HotbarItems flex flex-col"
       >
         <div
-          class="HotbarCell isDraggingOwner animateDown"
+          class="HotbarCell animateDown"
           index="0"
         >
           <div
-            style="z-index: 12; position: absolute;"
+            aria-describedby="DndDescribedBy-8"
+            aria-disabled="false"
+            aria-roledescription="draggable"
+            role="button"
+            style="z-index: 12; position: absolute; opacity: 1; pointer-events: auto;"
+            tabindex="0"
           >
             <div
               class="HotbarIcon contextMenuAvailable"
@@ -664,11 +669,16 @@ exports[`preferences - closing-preferences given accessing preferences directly 
           </div>
         </div>
         <div
-          class="HotbarCell isDraggingOwner animateDown"
+          class="HotbarCell animateDown"
           index="1"
         >
           <div
-            style="z-index: 11; position: absolute;"
+            aria-describedby="DndDescribedBy-8"
+            aria-disabled="false"
+            aria-roledescription="draggable"
+            role="button"
+            style="z-index: 11; position: absolute; opacity: 1; pointer-events: auto;"
+            tabindex="0"
           >
             <div
               class="HotbarIcon contextMenuAvailable"
@@ -684,44 +694,61 @@ exports[`preferences - closing-preferences given accessing preferences directly 
           </div>
         </div>
         <div
-          class="HotbarCell isDraggingOwner animateDown"
+          class="HotbarCell animateDown"
           index="2"
         />
         <div
-          class="HotbarCell isDraggingOwner animateDown"
+          class="HotbarCell animateDown"
           index="3"
         />
         <div
-          class="HotbarCell isDraggingOwner animateDown"
+          class="HotbarCell animateDown"
           index="4"
         />
         <div
-          class="HotbarCell isDraggingOwner animateDown"
+          class="HotbarCell animateDown"
           index="5"
         />
         <div
-          class="HotbarCell isDraggingOwner animateDown"
+          class="HotbarCell animateDown"
           index="6"
         />
         <div
-          class="HotbarCell isDraggingOwner animateDown"
+          class="HotbarCell animateDown"
           index="7"
         />
         <div
-          class="HotbarCell isDraggingOwner animateDown"
+          class="HotbarCell animateDown"
           index="8"
         />
         <div
-          class="HotbarCell isDraggingOwner animateDown"
+          class="HotbarCell animateDown"
           index="9"
         />
         <div
-          class="HotbarCell isDraggingOwner animateDown"
+          class="HotbarCell animateDown"
           index="10"
         />
         <div
-          class="HotbarCell isDraggingOwner animateDown"
+          class="HotbarCell animateDown"
           index="11"
+        />
+        <div
+          id="DndDescribedBy-8"
+          style="display: none;"
+        >
+          
+    To pick up a draggable item, press the space bar.
+    While dragging, use the arrow keys to move the item.
+    Press space again to drop the item in its new position, or press escape to cancel.
+  
+        </div>
+        <div
+          aria-atomic="true"
+          aria-live="assertive"
+          id="DndLiveRegion-8"
+          role="status"
+          style="position: fixed; top: 0px; left: 0px; width: 1px; height: 1px; margin: -1px; border: 0px; padding: 0px; overflow: hidden; clip: rect(0px); clip-path: inset(100%); white-space: nowrap;"
         />
       </div>
       <div
@@ -779,10 +806,10 @@ exports[`preferences - closing-preferences given accessing preferences directly 
 </div>
 `;
 
-exports[`preferences - closing-preferences given accessing preferences directly when navigating to a tab in preferences renders 1`] = `
+exports[`preferences - closing-preferences > given accessing preferences directly > when navigating to a tab in preferences > renders 1`] = `
 <div>
   <div
-    class="Notifications flex column align-flex-end"
+    class="Notifications"
   />
   <div
     class="ClusterManager"
@@ -864,7 +891,7 @@ exports[`preferences - closing-preferences given accessing preferences directly 
             class="sidebar"
           >
             <div
-              class="Tabs flex column"
+              class="Tabs flex flex-col"
             >
               <div
                 data-preference-tab-group-test="general-tab-group"
@@ -875,7 +902,7 @@ exports[`preferences - closing-preferences given accessing preferences directly 
                   Preferences
                 </div>
                 <div
-                  class="Tab flex gaps align-center"
+                  class="Tab flex gap-2 items-center"
                   data-preference-tab-link-test="app"
                   role="tab"
                   tabindex="0"
@@ -887,7 +914,7 @@ exports[`preferences - closing-preferences given accessing preferences directly 
                   </div>
                 </div>
                 <div
-                  class="Tab flex gaps align-center"
+                  class="Tab flex gap-2 items-center"
                   data-preference-tab-link-test="proxy"
                   role="tab"
                   tabindex="0"
@@ -899,7 +926,7 @@ exports[`preferences - closing-preferences given accessing preferences directly 
                   </div>
                 </div>
                 <div
-                  class="Tab flex gaps align-center"
+                  class="Tab flex gap-2 items-center"
                   data-preference-tab-link-test="kubernetes"
                   role="tab"
                   tabindex="0"
@@ -911,7 +938,7 @@ exports[`preferences - closing-preferences given accessing preferences directly 
                   </div>
                 </div>
                 <div
-                  class="Tab flex gaps align-center"
+                  class="Tab flex gap-2 items-center"
                   data-preference-tab-link-test="editor"
                   role="tab"
                   tabindex="0"
@@ -923,7 +950,7 @@ exports[`preferences - closing-preferences given accessing preferences directly 
                   </div>
                 </div>
                 <div
-                  class="Tab flex gaps align-center"
+                  class="Tab flex gap-2 items-center"
                   data-preference-tab-link-test="terminal"
                   role="tab"
                   tabindex="0"
@@ -935,7 +962,7 @@ exports[`preferences - closing-preferences given accessing preferences directly 
                   </div>
                 </div>
                 <div
-                  class="Tab flex gaps align-center active"
+                  class="Tab flex gap-2 items-center active"
                   data-preference-tab-link-test="some-path-id-for-some-test-tab-id"
                   role="tab"
                   tabindex="0"
@@ -1003,17 +1030,22 @@ exports[`preferences - closing-preferences given accessing preferences directly 
       </div>
     </main>
     <div
-      class="HotbarMenu flex column"
+      class="HotbarMenu flex flex-col"
     >
       <div
-        class="HotbarItems flex column gaps"
+        class="HotbarItems flex flex-col"
       >
         <div
-          class="HotbarCell isDraggingOwner animateDown"
+          class="HotbarCell animateDown"
           index="0"
         >
           <div
-            style="z-index: 12; position: absolute;"
+            aria-describedby="DndDescribedBy-12"
+            aria-disabled="false"
+            aria-roledescription="draggable"
+            role="button"
+            style="z-index: 12; position: absolute; opacity: 1; pointer-events: auto;"
+            tabindex="0"
           >
             <div
               class="HotbarIcon contextMenuAvailable"
@@ -1029,11 +1061,16 @@ exports[`preferences - closing-preferences given accessing preferences directly 
           </div>
         </div>
         <div
-          class="HotbarCell isDraggingOwner animateDown"
+          class="HotbarCell animateDown"
           index="1"
         >
           <div
-            style="z-index: 11; position: absolute;"
+            aria-describedby="DndDescribedBy-12"
+            aria-disabled="false"
+            aria-roledescription="draggable"
+            role="button"
+            style="z-index: 11; position: absolute; opacity: 1; pointer-events: auto;"
+            tabindex="0"
           >
             <div
               class="HotbarIcon contextMenuAvailable"
@@ -1049,44 +1086,61 @@ exports[`preferences - closing-preferences given accessing preferences directly 
           </div>
         </div>
         <div
-          class="HotbarCell isDraggingOwner animateDown"
+          class="HotbarCell animateDown"
           index="2"
         />
         <div
-          class="HotbarCell isDraggingOwner animateDown"
+          class="HotbarCell animateDown"
           index="3"
         />
         <div
-          class="HotbarCell isDraggingOwner animateDown"
+          class="HotbarCell animateDown"
           index="4"
         />
         <div
-          class="HotbarCell isDraggingOwner animateDown"
+          class="HotbarCell animateDown"
           index="5"
         />
         <div
-          class="HotbarCell isDraggingOwner animateDown"
+          class="HotbarCell animateDown"
           index="6"
         />
         <div
-          class="HotbarCell isDraggingOwner animateDown"
+          class="HotbarCell animateDown"
           index="7"
         />
         <div
-          class="HotbarCell isDraggingOwner animateDown"
+          class="HotbarCell animateDown"
           index="8"
         />
         <div
-          class="HotbarCell isDraggingOwner animateDown"
+          class="HotbarCell animateDown"
           index="9"
         />
         <div
-          class="HotbarCell isDraggingOwner animateDown"
+          class="HotbarCell animateDown"
           index="10"
         />
         <div
-          class="HotbarCell isDraggingOwner animateDown"
+          class="HotbarCell animateDown"
           index="11"
+        />
+        <div
+          id="DndDescribedBy-12"
+          style="display: none;"
+        >
+          
+    To pick up a draggable item, press the space bar.
+    While dragging, use the arrow keys to move the item.
+    Press space again to drop the item in its new position, or press escape to cancel.
+  
+        </div>
+        <div
+          aria-atomic="true"
+          aria-live="assertive"
+          id="DndLiveRegion-12"
+          role="status"
+          style="position: fixed; top: 0px; left: 0px; width: 1px; height: 1px; margin: -1px; border: 0px; padding: 0px; overflow: hidden; clip: rect(0px); clip-path: inset(100%); white-space: nowrap;"
         />
       </div>
       <div
@@ -1144,10 +1198,10 @@ exports[`preferences - closing-preferences given accessing preferences directly 
 </div>
 `;
 
-exports[`preferences - closing-preferences given accessing preferences directly when navigating to a tab in preferences when preferences are closed renders 1`] = `
+exports[`preferences - closing-preferences > given accessing preferences directly > when navigating to a tab in preferences > when preferences are closed > renders 1`] = `
 <div>
   <div
-    class="Notifications flex column align-flex-end"
+    class="Notifications"
   />
   <div
     class="ClusterManager"
@@ -1226,17 +1280,22 @@ exports[`preferences - closing-preferences given accessing preferences directly 
       </div>
     </main>
     <div
-      class="HotbarMenu flex column"
+      class="HotbarMenu flex flex-col"
     >
       <div
-        class="HotbarItems flex column gaps"
+        class="HotbarItems flex flex-col"
       >
         <div
-          class="HotbarCell isDraggingOwner animateDown"
+          class="HotbarCell animateDown"
           index="0"
         >
           <div
-            style="z-index: 12; position: absolute;"
+            aria-describedby="DndDescribedBy-13"
+            aria-disabled="false"
+            aria-roledescription="draggable"
+            role="button"
+            style="z-index: 12; position: absolute; opacity: 1; pointer-events: auto;"
+            tabindex="0"
           >
             <div
               class="HotbarIcon contextMenuAvailable"
@@ -1252,11 +1311,16 @@ exports[`preferences - closing-preferences given accessing preferences directly 
           </div>
         </div>
         <div
-          class="HotbarCell isDraggingOwner animateDown"
+          class="HotbarCell animateDown"
           index="1"
         >
           <div
-            style="z-index: 11; position: absolute;"
+            aria-describedby="DndDescribedBy-13"
+            aria-disabled="false"
+            aria-roledescription="draggable"
+            role="button"
+            style="z-index: 11; position: absolute; opacity: 1; pointer-events: auto;"
+            tabindex="0"
           >
             <div
               class="HotbarIcon contextMenuAvailable"
@@ -1272,44 +1336,61 @@ exports[`preferences - closing-preferences given accessing preferences directly 
           </div>
         </div>
         <div
-          class="HotbarCell isDraggingOwner animateDown"
+          class="HotbarCell animateDown"
           index="2"
         />
         <div
-          class="HotbarCell isDraggingOwner animateDown"
+          class="HotbarCell animateDown"
           index="3"
         />
         <div
-          class="HotbarCell isDraggingOwner animateDown"
+          class="HotbarCell animateDown"
           index="4"
         />
         <div
-          class="HotbarCell isDraggingOwner animateDown"
+          class="HotbarCell animateDown"
           index="5"
         />
         <div
-          class="HotbarCell isDraggingOwner animateDown"
+          class="HotbarCell animateDown"
           index="6"
         />
         <div
-          class="HotbarCell isDraggingOwner animateDown"
+          class="HotbarCell animateDown"
           index="7"
         />
         <div
-          class="HotbarCell isDraggingOwner animateDown"
+          class="HotbarCell animateDown"
           index="8"
         />
         <div
-          class="HotbarCell isDraggingOwner animateDown"
+          class="HotbarCell animateDown"
           index="9"
         />
         <div
-          class="HotbarCell isDraggingOwner animateDown"
+          class="HotbarCell animateDown"
           index="10"
         />
         <div
-          class="HotbarCell isDraggingOwner animateDown"
+          class="HotbarCell animateDown"
           index="11"
+        />
+        <div
+          id="DndDescribedBy-13"
+          style="display: none;"
+        >
+          
+    To pick up a draggable item, press the space bar.
+    While dragging, use the arrow keys to move the item.
+    Press space again to drop the item in its new position, or press escape to cancel.
+  
+        </div>
+        <div
+          aria-atomic="true"
+          aria-live="assertive"
+          id="DndLiveRegion-13"
+          role="status"
+          style="position: fixed; top: 0px; left: 0px; width: 1px; height: 1px; margin: -1px; border: 0px; padding: 0px; overflow: hidden; clip: rect(0px); clip-path: inset(100%); white-space: nowrap;"
         />
       </div>
       <div
@@ -1367,10 +1448,10 @@ exports[`preferences - closing-preferences given accessing preferences directly 
 </div>
 `;
 
-exports[`preferences - closing-preferences given accessing preferences directly when preferences are closed renders 1`] = `
+exports[`preferences - closing-preferences > given accessing preferences directly > when preferences are closed > renders 1`] = `
 <div>
   <div
-    class="Notifications flex column align-flex-end"
+    class="Notifications"
   />
   <div
     class="ClusterManager"
@@ -1449,17 +1530,22 @@ exports[`preferences - closing-preferences given accessing preferences directly 
       </div>
     </main>
     <div
-      class="HotbarMenu flex column"
+      class="HotbarMenu flex flex-col"
     >
       <div
-        class="HotbarItems flex column gaps"
+        class="HotbarItems flex flex-col"
       >
         <div
-          class="HotbarCell isDraggingOwner animateDown"
+          class="HotbarCell animateDown"
           index="0"
         >
           <div
-            style="z-index: 12; position: absolute;"
+            aria-describedby="DndDescribedBy-9"
+            aria-disabled="false"
+            aria-roledescription="draggable"
+            role="button"
+            style="z-index: 12; position: absolute; opacity: 1; pointer-events: auto;"
+            tabindex="0"
           >
             <div
               class="HotbarIcon contextMenuAvailable"
@@ -1475,11 +1561,16 @@ exports[`preferences - closing-preferences given accessing preferences directly 
           </div>
         </div>
         <div
-          class="HotbarCell isDraggingOwner animateDown"
+          class="HotbarCell animateDown"
           index="1"
         >
           <div
-            style="z-index: 11; position: absolute;"
+            aria-describedby="DndDescribedBy-9"
+            aria-disabled="false"
+            aria-roledescription="draggable"
+            role="button"
+            style="z-index: 11; position: absolute; opacity: 1; pointer-events: auto;"
+            tabindex="0"
           >
             <div
               class="HotbarIcon contextMenuAvailable"
@@ -1495,44 +1586,61 @@ exports[`preferences - closing-preferences given accessing preferences directly 
           </div>
         </div>
         <div
-          class="HotbarCell isDraggingOwner animateDown"
+          class="HotbarCell animateDown"
           index="2"
         />
         <div
-          class="HotbarCell isDraggingOwner animateDown"
+          class="HotbarCell animateDown"
           index="3"
         />
         <div
-          class="HotbarCell isDraggingOwner animateDown"
+          class="HotbarCell animateDown"
           index="4"
         />
         <div
-          class="HotbarCell isDraggingOwner animateDown"
+          class="HotbarCell animateDown"
           index="5"
         />
         <div
-          class="HotbarCell isDraggingOwner animateDown"
+          class="HotbarCell animateDown"
           index="6"
         />
         <div
-          class="HotbarCell isDraggingOwner animateDown"
+          class="HotbarCell animateDown"
           index="7"
         />
         <div
-          class="HotbarCell isDraggingOwner animateDown"
+          class="HotbarCell animateDown"
           index="8"
         />
         <div
-          class="HotbarCell isDraggingOwner animateDown"
+          class="HotbarCell animateDown"
           index="9"
         />
         <div
-          class="HotbarCell isDraggingOwner animateDown"
+          class="HotbarCell animateDown"
           index="10"
         />
         <div
-          class="HotbarCell isDraggingOwner animateDown"
+          class="HotbarCell animateDown"
           index="11"
+        />
+        <div
+          id="DndDescribedBy-9"
+          style="display: none;"
+        >
+          
+    To pick up a draggable item, press the space bar.
+    While dragging, use the arrow keys to move the item.
+    Press space again to drop the item in its new position, or press escape to cancel.
+  
+        </div>
+        <div
+          aria-atomic="true"
+          aria-live="assertive"
+          id="DndLiveRegion-9"
+          role="status"
+          style="position: fixed; top: 0px; left: 0px; width: 1px; height: 1px; margin: -1px; border: 0px; padding: 0px; overflow: hidden; clip: rect(0px); clip-path: inset(100%); white-space: nowrap;"
         />
       </div>
       <div
@@ -1590,10 +1698,10 @@ exports[`preferences - closing-preferences given accessing preferences directly 
 </div>
 `;
 
-exports[`preferences - closing-preferences given already in a page and then navigated to preferences renders 1`] = `
+exports[`preferences - closing-preferences > given already in a page and then navigated to preferences > renders 1`] = `
 <div>
   <div
-    class="Notifications flex column align-flex-end"
+    class="Notifications"
   />
   <div
     class="ClusterManager"
@@ -1675,7 +1783,7 @@ exports[`preferences - closing-preferences given already in a page and then navi
             class="sidebar"
           >
             <div
-              class="Tabs flex column"
+              class="Tabs flex flex-col"
             >
               <div
                 data-preference-tab-group-test="general-tab-group"
@@ -1686,7 +1794,7 @@ exports[`preferences - closing-preferences given already in a page and then navi
                   Preferences
                 </div>
                 <div
-                  class="Tab flex gaps align-center active"
+                  class="Tab flex gap-2 items-center active"
                   data-preference-tab-link-test="app"
                   role="tab"
                   tabindex="0"
@@ -1698,7 +1806,7 @@ exports[`preferences - closing-preferences given already in a page and then navi
                   </div>
                 </div>
                 <div
-                  class="Tab flex gaps align-center"
+                  class="Tab flex gap-2 items-center"
                   data-preference-tab-link-test="proxy"
                   role="tab"
                   tabindex="0"
@@ -1710,7 +1818,7 @@ exports[`preferences - closing-preferences given already in a page and then navi
                   </div>
                 </div>
                 <div
-                  class="Tab flex gaps align-center"
+                  class="Tab flex gap-2 items-center"
                   data-preference-tab-link-test="kubernetes"
                   role="tab"
                   tabindex="0"
@@ -1722,7 +1830,7 @@ exports[`preferences - closing-preferences given already in a page and then navi
                   </div>
                 </div>
                 <div
-                  class="Tab flex gaps align-center"
+                  class="Tab flex gap-2 items-center"
                   data-preference-tab-link-test="editor"
                   role="tab"
                   tabindex="0"
@@ -1734,7 +1842,7 @@ exports[`preferences - closing-preferences given already in a page and then navi
                   </div>
                 </div>
                 <div
-                  class="Tab flex gaps align-center"
+                  class="Tab flex gap-2 items-center"
                   data-preference-tab-link-test="terminal"
                   role="tab"
                   tabindex="0"
@@ -1746,7 +1854,7 @@ exports[`preferences - closing-preferences given already in a page and then navi
                   </div>
                 </div>
                 <div
-                  class="Tab flex gaps align-center"
+                  class="Tab flex gap-2 items-center"
                   data-preference-tab-link-test="some-path-id-for-some-test-tab-id"
                   role="tab"
                   tabindex="0"
@@ -1830,7 +1938,7 @@ exports[`preferences - closing-preferences given already in a page and then navi
                             id="theme-input"
                             role="combobox"
                             spellcheck="false"
-                            style="opacity: 1; width: 100%; grid-area: 1 / 2; min-width: 2px; border: 0px; margin: 0px; outline: 0; padding: 0px;"
+                            style="color: inherit; background: 0px center; opacity: 1; width: 100%; grid-area: 1 / 2; font: inherit; min-width: 2px; border: 0px; margin: 0px; outline: 0px; padding: 0px;"
                             tabindex="0"
                             type="text"
                             value=""
@@ -1921,7 +2029,7 @@ exports[`preferences - closing-preferences given already in a page and then navi
                             id="extension-install-registry-input"
                             role="combobox"
                             spellcheck="false"
-                            style="opacity: 1; width: 100%; grid-area: 1 / 2; min-width: 2px; border: 0px; margin: 0px; outline: 0; padding: 0px;"
+                            style="color: inherit; background: 0px center; opacity: 1; width: 100%; grid-area: 1 / 2; font: inherit; min-width: 2px; border: 0px; margin: 0px; outline: 0px; padding: 0px;"
                             tabindex="0"
                             type="text"
                             value=""
@@ -1968,11 +2076,11 @@ exports[`preferences - closing-preferences given already in a page and then navi
                     class="Input theme round black disabled invalid"
                   >
                     <label
-                      class="input-area flex gaps align-center"
+                      class="input-area flex items-center gap-2"
                       id=""
                     >
                       <input
-                        class="input box grow"
+                        class="input grow"
                         disabled=""
                         placeholder="Custom Extension Registry URL..."
                         spellcheck="false"
@@ -1980,7 +2088,7 @@ exports[`preferences - closing-preferences given already in a page and then navi
                       />
                     </label>
                     <div
-                      class="input-info flex gaps"
+                      class="input-info flex gap-2"
                     />
                   </div>
                 </section>
@@ -2153,7 +2261,7 @@ exports[`preferences - closing-preferences given already in a page and then navi
                             id="timezone-input"
                             role="combobox"
                             spellcheck="false"
-                            style="opacity: 1; width: 100%; grid-area: 1 / 2; min-width: 2px; border: 0px; margin: 0px; outline: 0; padding: 0px;"
+                            style="color: inherit; background: 0px center; opacity: 1; width: 100%; grid-area: 1 / 2; font: inherit; min-width: 2px; border: 0px; margin: 0px; outline: 0px; padding: 0px;"
                             tabindex="0"
                             type="text"
                             value=""
@@ -2228,17 +2336,22 @@ exports[`preferences - closing-preferences given already in a page and then navi
       </div>
     </main>
     <div
-      class="HotbarMenu flex column"
+      class="HotbarMenu flex flex-col"
     >
       <div
-        class="HotbarItems flex column gaps"
+        class="HotbarItems flex flex-col"
       >
         <div
-          class="HotbarCell isDraggingOwner animateDown"
+          class="HotbarCell animateDown"
           index="0"
         >
           <div
-            style="z-index: 12; position: absolute;"
+            aria-describedby="DndDescribedBy-0"
+            aria-disabled="false"
+            aria-roledescription="draggable"
+            role="button"
+            style="z-index: 12; position: absolute; opacity: 1; pointer-events: auto;"
+            tabindex="0"
           >
             <div
               class="HotbarIcon contextMenuAvailable"
@@ -2254,11 +2367,16 @@ exports[`preferences - closing-preferences given already in a page and then navi
           </div>
         </div>
         <div
-          class="HotbarCell isDraggingOwner animateDown"
+          class="HotbarCell animateDown"
           index="1"
         >
           <div
-            style="z-index: 11; position: absolute;"
+            aria-describedby="DndDescribedBy-0"
+            aria-disabled="false"
+            aria-roledescription="draggable"
+            role="button"
+            style="z-index: 11; position: absolute; opacity: 1; pointer-events: auto;"
+            tabindex="0"
           >
             <div
               class="HotbarIcon contextMenuAvailable"
@@ -2274,44 +2392,61 @@ exports[`preferences - closing-preferences given already in a page and then navi
           </div>
         </div>
         <div
-          class="HotbarCell isDraggingOwner animateDown"
+          class="HotbarCell animateDown"
           index="2"
         />
         <div
-          class="HotbarCell isDraggingOwner animateDown"
+          class="HotbarCell animateDown"
           index="3"
         />
         <div
-          class="HotbarCell isDraggingOwner animateDown"
+          class="HotbarCell animateDown"
           index="4"
         />
         <div
-          class="HotbarCell isDraggingOwner animateDown"
+          class="HotbarCell animateDown"
           index="5"
         />
         <div
-          class="HotbarCell isDraggingOwner animateDown"
+          class="HotbarCell animateDown"
           index="6"
         />
         <div
-          class="HotbarCell isDraggingOwner animateDown"
+          class="HotbarCell animateDown"
           index="7"
         />
         <div
-          class="HotbarCell isDraggingOwner animateDown"
+          class="HotbarCell animateDown"
           index="8"
         />
         <div
-          class="HotbarCell isDraggingOwner animateDown"
+          class="HotbarCell animateDown"
           index="9"
         />
         <div
-          class="HotbarCell isDraggingOwner animateDown"
+          class="HotbarCell animateDown"
           index="10"
         />
         <div
-          class="HotbarCell isDraggingOwner animateDown"
+          class="HotbarCell animateDown"
           index="11"
+        />
+        <div
+          id="DndDescribedBy-0"
+          style="display: none;"
+        >
+          
+    To pick up a draggable item, press the space bar.
+    While dragging, use the arrow keys to move the item.
+    Press space again to drop the item in its new position, or press escape to cancel.
+  
+        </div>
+        <div
+          aria-atomic="true"
+          aria-live="assertive"
+          id="DndLiveRegion-0"
+          role="status"
+          style="position: fixed; top: 0px; left: 0px; width: 1px; height: 1px; margin: -1px; border: 0px; padding: 0px; overflow: hidden; clip: rect(0px); clip-path: inset(100%); white-space: nowrap;"
         />
       </div>
       <div
@@ -2369,10 +2504,10 @@ exports[`preferences - closing-preferences given already in a page and then navi
 </div>
 `;
 
-exports[`preferences - closing-preferences given already in a page and then navigated to preferences when navigating to a tab in preferences renders 1`] = `
+exports[`preferences - closing-preferences > given already in a page and then navigated to preferences > when navigating to a tab in preferences > renders 1`] = `
 <div>
   <div
-    class="Notifications flex column align-flex-end"
+    class="Notifications"
   />
   <div
     class="ClusterManager"
@@ -2454,7 +2589,7 @@ exports[`preferences - closing-preferences given already in a page and then navi
             class="sidebar"
           >
             <div
-              class="Tabs flex column"
+              class="Tabs flex flex-col"
             >
               <div
                 data-preference-tab-group-test="general-tab-group"
@@ -2465,7 +2600,7 @@ exports[`preferences - closing-preferences given already in a page and then navi
                   Preferences
                 </div>
                 <div
-                  class="Tab flex gaps align-center"
+                  class="Tab flex gap-2 items-center"
                   data-preference-tab-link-test="app"
                   role="tab"
                   tabindex="0"
@@ -2477,7 +2612,7 @@ exports[`preferences - closing-preferences given already in a page and then navi
                   </div>
                 </div>
                 <div
-                  class="Tab flex gaps align-center"
+                  class="Tab flex gap-2 items-center"
                   data-preference-tab-link-test="proxy"
                   role="tab"
                   tabindex="0"
@@ -2489,7 +2624,7 @@ exports[`preferences - closing-preferences given already in a page and then navi
                   </div>
                 </div>
                 <div
-                  class="Tab flex gaps align-center"
+                  class="Tab flex gap-2 items-center"
                   data-preference-tab-link-test="kubernetes"
                   role="tab"
                   tabindex="0"
@@ -2501,7 +2636,7 @@ exports[`preferences - closing-preferences given already in a page and then navi
                   </div>
                 </div>
                 <div
-                  class="Tab flex gaps align-center"
+                  class="Tab flex gap-2 items-center"
                   data-preference-tab-link-test="editor"
                   role="tab"
                   tabindex="0"
@@ -2513,7 +2648,7 @@ exports[`preferences - closing-preferences given already in a page and then navi
                   </div>
                 </div>
                 <div
-                  class="Tab flex gaps align-center"
+                  class="Tab flex gap-2 items-center"
                   data-preference-tab-link-test="terminal"
                   role="tab"
                   tabindex="0"
@@ -2525,7 +2660,7 @@ exports[`preferences - closing-preferences given already in a page and then navi
                   </div>
                 </div>
                 <div
-                  class="Tab flex gaps align-center active"
+                  class="Tab flex gap-2 items-center active"
                   data-preference-tab-link-test="some-path-id-for-some-test-tab-id"
                   role="tab"
                   tabindex="0"
@@ -2593,17 +2728,22 @@ exports[`preferences - closing-preferences given already in a page and then navi
       </div>
     </main>
     <div
-      class="HotbarMenu flex column"
+      class="HotbarMenu flex flex-col"
     >
       <div
-        class="HotbarItems flex column gaps"
+        class="HotbarItems flex flex-col"
       >
         <div
-          class="HotbarCell isDraggingOwner animateDown"
+          class="HotbarCell animateDown"
           index="0"
         >
           <div
-            style="z-index: 12; position: absolute;"
+            aria-describedby="DndDescribedBy-4"
+            aria-disabled="false"
+            aria-roledescription="draggable"
+            role="button"
+            style="z-index: 12; position: absolute; opacity: 1; pointer-events: auto;"
+            tabindex="0"
           >
             <div
               class="HotbarIcon contextMenuAvailable"
@@ -2619,11 +2759,16 @@ exports[`preferences - closing-preferences given already in a page and then navi
           </div>
         </div>
         <div
-          class="HotbarCell isDraggingOwner animateDown"
+          class="HotbarCell animateDown"
           index="1"
         >
           <div
-            style="z-index: 11; position: absolute;"
+            aria-describedby="DndDescribedBy-4"
+            aria-disabled="false"
+            aria-roledescription="draggable"
+            role="button"
+            style="z-index: 11; position: absolute; opacity: 1; pointer-events: auto;"
+            tabindex="0"
           >
             <div
               class="HotbarIcon contextMenuAvailable"
@@ -2639,44 +2784,61 @@ exports[`preferences - closing-preferences given already in a page and then navi
           </div>
         </div>
         <div
-          class="HotbarCell isDraggingOwner animateDown"
+          class="HotbarCell animateDown"
           index="2"
         />
         <div
-          class="HotbarCell isDraggingOwner animateDown"
+          class="HotbarCell animateDown"
           index="3"
         />
         <div
-          class="HotbarCell isDraggingOwner animateDown"
+          class="HotbarCell animateDown"
           index="4"
         />
         <div
-          class="HotbarCell isDraggingOwner animateDown"
+          class="HotbarCell animateDown"
           index="5"
         />
         <div
-          class="HotbarCell isDraggingOwner animateDown"
+          class="HotbarCell animateDown"
           index="6"
         />
         <div
-          class="HotbarCell isDraggingOwner animateDown"
+          class="HotbarCell animateDown"
           index="7"
         />
         <div
-          class="HotbarCell isDraggingOwner animateDown"
+          class="HotbarCell animateDown"
           index="8"
         />
         <div
-          class="HotbarCell isDraggingOwner animateDown"
+          class="HotbarCell animateDown"
           index="9"
         />
         <div
-          class="HotbarCell isDraggingOwner animateDown"
+          class="HotbarCell animateDown"
           index="10"
         />
         <div
-          class="HotbarCell isDraggingOwner animateDown"
+          class="HotbarCell animateDown"
           index="11"
+        />
+        <div
+          id="DndDescribedBy-4"
+          style="display: none;"
+        >
+          
+    To pick up a draggable item, press the space bar.
+    While dragging, use the arrow keys to move the item.
+    Press space again to drop the item in its new position, or press escape to cancel.
+  
+        </div>
+        <div
+          aria-atomic="true"
+          aria-live="assertive"
+          id="DndLiveRegion-4"
+          role="status"
+          style="position: fixed; top: 0px; left: 0px; width: 1px; height: 1px; margin: -1px; border: 0px; padding: 0px; overflow: hidden; clip: rect(0px); clip-path: inset(100%); white-space: nowrap;"
         />
       </div>
       <div
@@ -2734,10 +2896,10 @@ exports[`preferences - closing-preferences given already in a page and then navi
 </div>
 `;
 
-exports[`preferences - closing-preferences given already in a page and then navigated to preferences when navigating to a tab in preferences when preferences are closed renders 1`] = `
+exports[`preferences - closing-preferences > given already in a page and then navigated to preferences > when navigating to a tab in preferences > when preferences are closed > renders 1`] = `
 <div>
   <div
-    class="Notifications flex column align-flex-end"
+    class="Notifications"
   />
   <div
     class="ClusterManager"
@@ -2816,17 +2978,22 @@ exports[`preferences - closing-preferences given already in a page and then navi
       </div>
     </main>
     <div
-      class="HotbarMenu flex column"
+      class="HotbarMenu flex flex-col"
     >
       <div
-        class="HotbarItems flex column gaps"
+        class="HotbarItems flex flex-col"
       >
         <div
-          class="HotbarCell isDraggingOwner animateDown"
+          class="HotbarCell animateDown"
           index="0"
         >
           <div
-            style="z-index: 12; position: absolute;"
+            aria-describedby="DndDescribedBy-5"
+            aria-disabled="false"
+            aria-roledescription="draggable"
+            role="button"
+            style="z-index: 12; position: absolute; opacity: 1; pointer-events: auto;"
+            tabindex="0"
           >
             <div
               class="HotbarIcon contextMenuAvailable"
@@ -2842,11 +3009,16 @@ exports[`preferences - closing-preferences given already in a page and then navi
           </div>
         </div>
         <div
-          class="HotbarCell isDraggingOwner animateDown"
+          class="HotbarCell animateDown"
           index="1"
         >
           <div
-            style="z-index: 11; position: absolute;"
+            aria-describedby="DndDescribedBy-5"
+            aria-disabled="false"
+            aria-roledescription="draggable"
+            role="button"
+            style="z-index: 11; position: absolute; opacity: 1; pointer-events: auto;"
+            tabindex="0"
           >
             <div
               class="HotbarIcon contextMenuAvailable"
@@ -2862,44 +3034,61 @@ exports[`preferences - closing-preferences given already in a page and then navi
           </div>
         </div>
         <div
-          class="HotbarCell isDraggingOwner animateDown"
+          class="HotbarCell animateDown"
           index="2"
         />
         <div
-          class="HotbarCell isDraggingOwner animateDown"
+          class="HotbarCell animateDown"
           index="3"
         />
         <div
-          class="HotbarCell isDraggingOwner animateDown"
+          class="HotbarCell animateDown"
           index="4"
         />
         <div
-          class="HotbarCell isDraggingOwner animateDown"
+          class="HotbarCell animateDown"
           index="5"
         />
         <div
-          class="HotbarCell isDraggingOwner animateDown"
+          class="HotbarCell animateDown"
           index="6"
         />
         <div
-          class="HotbarCell isDraggingOwner animateDown"
+          class="HotbarCell animateDown"
           index="7"
         />
         <div
-          class="HotbarCell isDraggingOwner animateDown"
+          class="HotbarCell animateDown"
           index="8"
         />
         <div
-          class="HotbarCell isDraggingOwner animateDown"
+          class="HotbarCell animateDown"
           index="9"
         />
         <div
-          class="HotbarCell isDraggingOwner animateDown"
+          class="HotbarCell animateDown"
           index="10"
         />
         <div
-          class="HotbarCell isDraggingOwner animateDown"
+          class="HotbarCell animateDown"
           index="11"
+        />
+        <div
+          id="DndDescribedBy-5"
+          style="display: none;"
+        >
+          
+    To pick up a draggable item, press the space bar.
+    While dragging, use the arrow keys to move the item.
+    Press space again to drop the item in its new position, or press escape to cancel.
+  
+        </div>
+        <div
+          aria-atomic="true"
+          aria-live="assertive"
+          id="DndLiveRegion-5"
+          role="status"
+          style="position: fixed; top: 0px; left: 0px; width: 1px; height: 1px; margin: -1px; border: 0px; padding: 0px; overflow: hidden; clip: rect(0px); clip-path: inset(100%); white-space: nowrap;"
         />
       </div>
       <div
@@ -2957,10 +3146,10 @@ exports[`preferences - closing-preferences given already in a page and then navi
 </div>
 `;
 
-exports[`preferences - closing-preferences given already in a page and then navigated to preferences when preferences are closed renders 1`] = `
+exports[`preferences - closing-preferences > given already in a page and then navigated to preferences > when preferences are closed > renders 1`] = `
 <div>
   <div
-    class="Notifications flex column align-flex-end"
+    class="Notifications"
   />
   <div
     class="ClusterManager"
@@ -3039,17 +3228,22 @@ exports[`preferences - closing-preferences given already in a page and then navi
       </div>
     </main>
     <div
-      class="HotbarMenu flex column"
+      class="HotbarMenu flex flex-col"
     >
       <div
-        class="HotbarItems flex column gaps"
+        class="HotbarItems flex flex-col"
       >
         <div
-          class="HotbarCell isDraggingOwner animateDown"
+          class="HotbarCell animateDown"
           index="0"
         >
           <div
-            style="z-index: 12; position: absolute;"
+            aria-describedby="DndDescribedBy-1"
+            aria-disabled="false"
+            aria-roledescription="draggable"
+            role="button"
+            style="z-index: 12; position: absolute; opacity: 1; pointer-events: auto;"
+            tabindex="0"
           >
             <div
               class="HotbarIcon contextMenuAvailable"
@@ -3065,11 +3259,16 @@ exports[`preferences - closing-preferences given already in a page and then navi
           </div>
         </div>
         <div
-          class="HotbarCell isDraggingOwner animateDown"
+          class="HotbarCell animateDown"
           index="1"
         >
           <div
-            style="z-index: 11; position: absolute;"
+            aria-describedby="DndDescribedBy-1"
+            aria-disabled="false"
+            aria-roledescription="draggable"
+            role="button"
+            style="z-index: 11; position: absolute; opacity: 1; pointer-events: auto;"
+            tabindex="0"
           >
             <div
               class="HotbarIcon contextMenuAvailable"
@@ -3085,44 +3284,61 @@ exports[`preferences - closing-preferences given already in a page and then navi
           </div>
         </div>
         <div
-          class="HotbarCell isDraggingOwner animateDown"
+          class="HotbarCell animateDown"
           index="2"
         />
         <div
-          class="HotbarCell isDraggingOwner animateDown"
+          class="HotbarCell animateDown"
           index="3"
         />
         <div
-          class="HotbarCell isDraggingOwner animateDown"
+          class="HotbarCell animateDown"
           index="4"
         />
         <div
-          class="HotbarCell isDraggingOwner animateDown"
+          class="HotbarCell animateDown"
           index="5"
         />
         <div
-          class="HotbarCell isDraggingOwner animateDown"
+          class="HotbarCell animateDown"
           index="6"
         />
         <div
-          class="HotbarCell isDraggingOwner animateDown"
+          class="HotbarCell animateDown"
           index="7"
         />
         <div
-          class="HotbarCell isDraggingOwner animateDown"
+          class="HotbarCell animateDown"
           index="8"
         />
         <div
-          class="HotbarCell isDraggingOwner animateDown"
+          class="HotbarCell animateDown"
           index="9"
         />
         <div
-          class="HotbarCell isDraggingOwner animateDown"
+          class="HotbarCell animateDown"
           index="10"
         />
         <div
-          class="HotbarCell isDraggingOwner animateDown"
+          class="HotbarCell animateDown"
           index="11"
+        />
+        <div
+          id="DndDescribedBy-1"
+          style="display: none;"
+        >
+          
+    To pick up a draggable item, press the space bar.
+    While dragging, use the arrow keys to move the item.
+    Press space again to drop the item in its new position, or press escape to cancel.
+  
+        </div>
+        <div
+          aria-atomic="true"
+          aria-live="assertive"
+          id="DndLiveRegion-1"
+          role="status"
+          style="position: fixed; top: 0px; left: 0px; width: 1px; height: 1px; margin: -1px; border: 0px; padding: 0px; overflow: hidden; clip: rect(0px); clip-path: inset(100%); white-space: nowrap;"
         />
       </div>
       <div

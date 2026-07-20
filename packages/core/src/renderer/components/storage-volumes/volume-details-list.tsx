@@ -9,7 +9,7 @@ import "./volume-details-list.scss";
 import { Spinner } from "@freelensapp/spinner";
 import { cssNames, prevDefault } from "@freelensapp/utilities";
 import { withInjectables } from "@ogre-tools/injectable-react";
-import kebabCase from "lodash/kebabCase";
+import { kebabCase } from "es-toolkit";
 import { observer } from "mobx-react";
 import React from "react";
 import { DrawerTitle } from "../drawer/drawer-title";
@@ -79,7 +79,7 @@ class NonInjectedVolumeDetailsList extends React.Component<VolumeDetailsListProp
     }
 
     return (
-      <div className="VolumeDetailsList flex column">
+      <div className="VolumeDetailsList flex flex-col">
         <DrawerTitle>Persistent Volumes</DrawerTitle>
         <Table
           tableId="storage_volume_details_list"
@@ -90,7 +90,7 @@ class NonInjectedVolumeDetailsList extends React.Component<VolumeDetailsListProp
           sortByDefault={{ sortBy: sortBy.name, orderBy: "desc" }}
           sortSyncWithUrl={false}
           getTableRow={this.getTableRow}
-          className="box grow"
+          className="grow shrink-0 basis-0"
         >
           <TableHead>
             <TableCell className="name" sortBy={sortBy.name}>

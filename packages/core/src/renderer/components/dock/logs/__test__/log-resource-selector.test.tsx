@@ -4,10 +4,11 @@
  * Licensed under MIT License. See LICENSE in root directory for more information.
  */
 
-import React from "react";
-import "@testing-library/jest-dom";
+
+import type { MockedFunction } from "vitest";
+import "@testing-library/jest-dom/vitest";
+import assert from "node:assert";
 import userEvent from "@testing-library/user-event";
-import assert from "assert";
 import * as selectEvent from "react-select-event";
 import directoryForUserDataInjectable from "../../../../../common/app-paths/directory-for-user-data/directory-for-user-data.injectable";
 import fsInjectable from "../../../../../common/fs/fs.injectable";
@@ -146,10 +147,10 @@ describe("<LogResourceSelector />", () => {
 
   describe("with several pods", () => {
     let model: LogTabViewModel;
-    let renameTab: jest.MockedFunction<LogTabViewModelDependencies["renameTab"]>;
+    let renameTab: MockedFunction<LogTabViewModelDependencies["renameTab"]>;
 
     beforeEach(() => {
-      renameTab = jest.fn();
+      renameTab = vi.fn();
       model = getFewPodsTabData("foobar", userPreferencesState, { renameTab });
     });
 

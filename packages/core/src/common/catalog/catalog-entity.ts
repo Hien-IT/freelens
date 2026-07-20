@@ -4,9 +4,9 @@
  * Licensed under MIT License. See LICENSE in root directory for more information.
  */
 
+import EventEmitter from "node:events";
 import { iter } from "@freelensapp/utilities";
-import EventEmitter from "events";
-import { once } from "lodash";
+import { once } from "es-toolkit";
 import { makeObservable, observable } from "mobx";
 
 import type { Disposer, StrictReactNode } from "@freelensapp/utilities";
@@ -96,7 +96,7 @@ export interface CatalogCategorySpec {
  */
 export type AddMenuFilter = (menu: CatalogEntityAddMenu) => any;
 
-export interface CatalogCategoryEvents {
+export type CatalogCategoryEvents = {
   /**
    * This event will be emitted when the category is loaded in the catalog
    * view.
@@ -114,7 +114,7 @@ export interface CatalogCategoryEvents {
    * by this category is opened.
    */
   contextMenuOpen: (entity: CatalogEntity, context: CatalogEntityContextMenuContext) => void;
-}
+};
 
 export interface CatalogCategoryMetadata {
   /**

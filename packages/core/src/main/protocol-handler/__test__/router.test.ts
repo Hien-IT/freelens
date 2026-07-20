@@ -20,10 +20,10 @@ import enabledExtensionsStateInjectable from "../../../features/extensions/enabl
 import { getDiForUnitTesting } from "../../getDiForUnitTesting";
 import lensProtocolRouterMainInjectable from "../lens-protocol-router-main/lens-protocol-router-main.injectable";
 
-import type { LegacyLensExtension, LensExtensionId } from "@freelensapp/legacy-extensions";
-
 import type { ObservableMap } from "mobx";
+import type { Mock } from "vitest";
 
+import type { LensExtensionId, LensExtensionInstance } from "../../../extensions/installed-extension";
 import type { LensExtensionState } from "../../../features/extensions/enabled/common/state.injectable";
 import type { LensProtocolRouterMain } from "../lens-protocol-router-main/lens-protocol-router-main";
 
@@ -34,10 +34,10 @@ function throwIfDefined(val: any): void {
 }
 
 describe("protocol router tests", () => {
-  let extensionInstances: ObservableMap<LensExtensionId, LegacyLensExtension>;
+  let extensionInstances: ObservableMap<LensExtensionId, LensExtensionInstance>;
   let lpr: LensProtocolRouterMain;
   let enabledExtensions: ObservableMap<LensExtensionId, LensExtensionState>;
-  let broadcastMessageMock: jest.Mock;
+  let broadcastMessageMock: Mock;
 
   beforeEach(async () => {
     const di = getDiForUnitTesting();
@@ -45,7 +45,7 @@ describe("protocol router tests", () => {
     enabledExtensions = di.inject(enabledExtensionsStateInjectable);
     di.override(directoryForUserDataInjectable, () => "/some-directory-for-user-data");
 
-    broadcastMessageMock = jest.fn();
+    broadcastMessageMock = vi.fn();
     di.override(broadcastMessageInjectable, () => broadcastMessageMock);
 
     extensionInstances = di.inject(extensionInstancesInjectable);
@@ -88,7 +88,6 @@ describe("protocol router tests", () => {
         version: "0.1.1",
         engines: { freelens: "^0.1.0" },
       },
-      isBundled: false,
       isEnabled: true,
       isCompatible: true,
       absolutePath: "/foo/bar",
@@ -174,7 +173,6 @@ describe("protocol router tests", () => {
         version: "0.1.1",
         engines: { freelens: "^0.1.0" },
       },
-      isBundled: false,
       isEnabled: true,
       isCompatible: true,
       absolutePath: "/foo/bar",
@@ -225,7 +223,6 @@ describe("protocol router tests", () => {
           version: "0.1.1",
           engines: { freelens: "^0.1.0" },
         },
-        isBundled: false,
         isEnabled: true,
         isCompatible: true,
         absolutePath: "/foo/bar",
@@ -252,7 +249,6 @@ describe("protocol router tests", () => {
           version: "0.1.1",
           engines: { freelens: "^0.1.0" },
         },
-        isBundled: false,
         isEnabled: true,
         isCompatible: true,
         absolutePath: "/foo/bar",
@@ -285,6 +281,15 @@ describe("protocol router tests", () => {
 
   it("should throw if urlSchema is invalid", () => {
     expect(() => lpr.addInternalHandler("/:@", noop)).toThrowError();
+  });
+
+  it("should accept a react-router v5 schema with an inline optional custom pattern", () => {
+    expect(() =>
+      lpr.addInternalHandler(
+        "/extensions/install/:LENS_INTERNAL_EXTENSION_PUBLISHER_MATCH(@[A-Za-z0-9_]+)?/:LENS_INTERNAL_EXTENSION_NAME_MATCH",
+        noop,
+      ),
+    ).not.toThrow();
   });
 
   it("should call most exact handler with 3 found handlers", async () => {

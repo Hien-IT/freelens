@@ -4,14 +4,14 @@
  * Licensed under MIT License. See LICENSE in root directory for more information.
  */
 
+import assert from "node:assert";
 import { disposer } from "@freelensapp/utilities";
 import { FitAddon } from "@xterm/addon-fit";
 import { WebLinksAddon } from "@xterm/addon-web-links";
 import { Terminal as XTerm } from "@xterm/xterm";
-import assert from "assert";
 import { clipboard } from "electron";
-import { once } from "lodash";
-import debounce from "lodash/debounce";
+import { once } from "es-toolkit";
+import { debounce } from "es-toolkit/compat";
 import { reaction } from "mobx";
 import { TerminalChannels } from "../../../../common/terminal/channels";
 

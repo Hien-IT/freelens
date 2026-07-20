@@ -6,11 +6,10 @@
 
 import { RenderResult, render } from "@testing-library/react";
 import userEvent, { UserEvent } from "@testing-library/user-event";
-import React from "react";
 import { withTooltip } from "./withTooltip";
 
 import type { StrictReactNode } from "@freelensapp/utilities";
-import "@testing-library/jest-dom";
+import "@testing-library/jest-dom/vitest";
 
 type MyComponentProps = {
   text: string;

@@ -7,7 +7,6 @@
 import { loggerInjectionToken } from "@freelensapp/logger";
 import { showErrorNotificationInjectable } from "@freelensapp/notifications";
 import { getInjectable } from "@ogre-tools/injectable";
-import React from "react";
 import writeFileInjectable from "../../../../common/fs/write-file.injectable";
 import tempDirectoryPathInjectable from "../../../../common/os/temp-directory-path.injectable";
 import joinPathsInjectable from "../../../../common/path/join-paths.injectable";
@@ -15,8 +14,7 @@ import extensionDiscoveryInjectable from "../../../../extensions/extension-disco
 import { getMessageFromError } from "../get-message-from-error/get-message-from-error";
 import { validatePackage } from "./validate-package";
 
-import type { LensExtensionId, LensExtensionManifest } from "@freelensapp/legacy-extensions";
-
+import type { LensExtensionId, LensExtensionManifest } from "../../../../extensions/installed-extension";
 import type { InstallRequest } from "./attempt-install.injectable";
 
 export interface InstallRequestValidated {
@@ -62,7 +60,7 @@ const createTempFilesAndValidateInjectable = getInjectable({
 
         logger.info(`[EXTENSION-INSTALLATION]: installing ${fileName} has failed: ${message}`, { error });
         showErrorNotification(
-          <div className="flex column gaps">
+          <div className="flex flex-col gap-2">
             <p>
               {"Installing "}
               <em>{fileName}</em>

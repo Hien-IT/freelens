@@ -4,7 +4,7 @@
  * Licensed under MIT License. See LICENSE in root directory for more information.
  */
 
-import React, { useState } from "react";
+import { useState } from "react";
 import { SearchInput } from "../input";
 import { ReactTable } from "../table/react-table";
 import styles from "./list.module.scss";
@@ -31,7 +31,7 @@ export function List<T>({ columns, data, title, items, filters }: ListProps<T>) 
 
   return (
     <>
-      <div className="flex align-center justify-between mb-6">
+      <div className="flex items-center justify-between mb-6">
         <div className="mr-6">{title}</div>
         <div>
           <SearchInput value={search} theme="round-black" onChange={setSearch} className={styles.searchInput} />

@@ -4,8 +4,8 @@
  * Licensed under MIT License. See LICENSE in root directory for more information.
  */
 
-import { asLegacyGlobalForExtensionApi } from "@freelensapp/legacy-global-di";
 import { loggerInjectionToken } from "@freelensapp/logger";
+import { asLazyInjectedForExtensionApi } from "../extension-api-di";
 
 // APIs
 export { App } from "./app";
@@ -17,11 +17,16 @@ export * as Store from "./stores";
 export * as Types from "./types";
 export { Util } from "./utils";
 
-export type { InstalledExtension, LensExtensionManifest } from "@freelensapp/legacy-extensions";
 export type { Logger } from "@freelensapp/logger";
 
-export type { PackageJson } from "type-fest";
+export type { InstalledExtension, LensExtensionManifest } from "../installed-extension";
+
+// A plain alias instead of a re-export: type-fest declares PackageJson as a
+// type plus a same-named namespace, and rollup-plugin-dts turns a namespace
+// re-export into `declare const ...: typeof PackageJson`, which is invalid
+// for a type-only namespace (TS2708 for consumers of the bundled d.ts).
+export type PackageJson = import("type-fest").PackageJson;
 
 export type { LensExtension } from "../lens-extension";
 
-export const logger = asLegacyGlobalForExtensionApi(loggerInjectionToken);
+export const logger = asLazyInjectedForExtensionApi(loggerInjectionToken);

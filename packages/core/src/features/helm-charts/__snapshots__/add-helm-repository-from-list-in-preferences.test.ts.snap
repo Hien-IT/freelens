@@ -1,10 +1,10 @@
-// Jest Snapshot v1, https://goo.gl/fbAQLP
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
-exports[`add helm repository from list in preferences when navigating to preferences containing helm repositories renders 1`] = `
+exports[`add helm repository from list in preferences > when navigating to preferences containing helm repositories > renders 1`] = `
 <body>
   <div>
     <div
-      class="Notifications flex column align-flex-end"
+      class="Notifications"
     />
     <div
       class="ClusterManager"
@@ -86,7 +86,7 @@ exports[`add helm repository from list in preferences when navigating to prefere
               class="sidebar"
             >
               <div
-                class="Tabs flex column"
+                class="Tabs flex flex-col"
               >
                 <div
                   data-preference-tab-group-test="general-tab-group"
@@ -97,7 +97,7 @@ exports[`add helm repository from list in preferences when navigating to prefere
                     Preferences
                   </div>
                   <div
-                    class="Tab flex gaps align-center"
+                    class="Tab flex gap-2 items-center"
                     data-preference-tab-link-test="app"
                     role="tab"
                     tabindex="0"
@@ -109,7 +109,7 @@ exports[`add helm repository from list in preferences when navigating to prefere
                     </div>
                   </div>
                   <div
-                    class="Tab flex gaps align-center"
+                    class="Tab flex gap-2 items-center"
                     data-preference-tab-link-test="proxy"
                     role="tab"
                     tabindex="0"
@@ -121,7 +121,7 @@ exports[`add helm repository from list in preferences when navigating to prefere
                     </div>
                   </div>
                   <div
-                    class="Tab flex gaps align-center active"
+                    class="Tab flex gap-2 items-center active"
                     data-preference-tab-link-test="kubernetes"
                     role="tab"
                     tabindex="0"
@@ -133,7 +133,7 @@ exports[`add helm repository from list in preferences when navigating to prefere
                     </div>
                   </div>
                   <div
-                    class="Tab flex gaps align-center"
+                    class="Tab flex gap-2 items-center"
                     data-preference-tab-link-test="editor"
                     role="tab"
                     tabindex="0"
@@ -145,7 +145,7 @@ exports[`add helm repository from list in preferences when navigating to prefere
                     </div>
                   </div>
                   <div
-                    class="Tab flex gaps align-center"
+                    class="Tab flex gap-2 items-center"
                     data-preference-tab-link-test="terminal"
                     role="tab"
                     tabindex="0"
@@ -259,7 +259,7 @@ exports[`add helm repository from list in preferences when navigating to prefere
                                   id="download-mirror-input"
                                   role="combobox"
                                   spellcheck="false"
-                                  style="opacity: 1; width: 100%; grid-area: 1 / 2; min-width: 2px; border: 0px; margin: 0px; outline: 0; padding: 0px;"
+                                  style="color: inherit; background: 0px center; opacity: 1; width: 100%; grid-area: 1 / 2; font: inherit; min-width: 2px; border: 0px; margin: 0px; outline: 0px; padding: 0px;"
                                   tabindex="0"
                                   type="text"
                                   value=""
@@ -311,18 +311,18 @@ exports[`add helm repository from list in preferences when navigating to prefere
                           class="Input theme round black"
                         >
                           <label
-                            class="input-area flex gaps align-center"
+                            class="input-area flex items-center gap-2"
                             id=""
                           >
                             <input
-                              class="input box grow"
+                              class="input grow"
                               placeholder="/some-directory-for-app-data/some-product-name/binaries"
                               spellcheck="false"
                               value=""
                             />
                           </label>
                           <div
-                            class="input-info flex gaps"
+                            class="input-info flex gap-2"
                           />
                         </div>
                         <div
@@ -349,11 +349,11 @@ exports[`add helm repository from list in preferences when navigating to prefere
                           class="Input theme round black disabled"
                         >
                           <label
-                            class="input-area flex gaps align-center"
+                            class="input-area flex items-center gap-2"
                             id=""
                           >
                             <input
-                              class="input box grow"
+                              class="input grow"
                               disabled=""
                               placeholder="/some-directory-for-app-data/some-product-name/binaries/kubectl"
                               spellcheck="false"
@@ -361,7 +361,7 @@ exports[`add helm repository from list in preferences when navigating to prefere
                             />
                           </label>
                           <div
-                            class="input-info flex gaps"
+                            class="input-info flex gap-2"
                           />
                         </div>
                         <div
@@ -399,18 +399,18 @@ exports[`add helm repository from list in preferences when navigating to prefere
                           class="Input theme round black"
                         >
                           <label
-                            class="input-area flex gaps align-center"
+                            class="input-area flex items-center gap-2"
                             id=""
                           >
                             <input
-                              class="input box grow"
+                              class="input grow"
                               placeholder="/irrelavent-dir-for-lens-resources/x64/helm"
                               spellcheck="false"
                               value=""
                             />
                           </label>
                           <div
-                            class="input-info flex gaps"
+                            class="input-info flex gap-2"
                           />
                         </div>
                         <div
@@ -457,45 +457,6 @@ exports[`add helm repository from list in preferences when navigating to prefere
                   class="HorizontalLine size-xl"
                 />
                 <div
-                  data-preference-item-test="kubeconfig-sync"
-                >
-                  <section
-                    id="kube-sync"
-                  >
-                    <h2
-                      data-testid="kubernetes-sync-header"
-                    >
-                      Kubeconfig Syncs
-                    </h2>
-                    <div
-                      class="self-start mb-5"
-                    >
-                      <button
-                        class="Button PathPicker primary"
-                        type="button"
-                      >
-                        Sync Files and Folders
-                      </button>
-                    </div>
-                    <div
-                      class="SubTitle pt-5"
-                    >
-                      Synced Items
-                       
-                    </div>
-                    <div
-                      class="loading-spinner"
-                    >
-                      <div
-                        class="Spinner singleColor"
-                      />
-                    </div>
-                  </section>
-                </div>
-                <div
-                  class="HorizontalLine size-xl"
-                />
-                <div
                   data-preference-item-test="helm-charts"
                 >
                   <section
@@ -509,10 +470,10 @@ exports[`add helm repository from list in preferences when navigating to prefere
                         data-testid="helm-controls"
                       >
                         <div
-                          class="flex gaps"
+                          class="flex gap-2"
                         >
                           <div
-                            class="Select theme-lens box grow Select--is-disabled css-3iigni-container"
+                            class="Select theme-lens grow shrink-0 basis-0 Select--is-disabled css-3iigni-container"
                           >
                             <span
                               class="css-1f43avz-a11yText-A11yText"
@@ -556,7 +517,7 @@ exports[`add helm repository from list in preferences when navigating to prefere
                                     id="selection-of-active-public-helm-repository"
                                     role="combobox"
                                     spellcheck="false"
-                                    style="opacity: 1; width: 100%; grid-area: 1 / 2; min-width: 2px; border: 0px; margin: 0px; outline: 0; padding: 0px;"
+                                    style="color: inherit; background: 0px center; opacity: 1; width: 100%; grid-area: 1 / 2; font: inherit; min-width: 2px; border: 0px; margin: 0px; outline: 0px; padding: 0px;"
                                     tabindex="0"
                                     type="text"
                                     value=""
@@ -628,6 +589,73 @@ exports[`add helm repository from list in preferences when navigating to prefere
                     </div>
                   </section>
                 </div>
+                <div
+                  class="HorizontalLine size-xl"
+                />
+                <div
+                  data-preference-item-test="kubeconfig-sync"
+                >
+                  <section
+                    id="kube-sync"
+                  >
+                    <h2
+                      data-testid="kubernetes-sync-header"
+                    >
+                      Kubeconfig Syncs
+                    </h2>
+                    <div
+                      class="self-start mb-5"
+                    >
+                      <button
+                        class="Button PathPicker primary"
+                        type="button"
+                      >
+                        Sync Files and Folders
+                      </button>
+                    </div>
+                    <div
+                      class="SubTitle pt-5"
+                    >
+                      Synced Items
+                       
+                    </div>
+                    <div>
+                      <div
+                        class="item flex gap-2 items-center justify-between mt-3"
+                      >
+                        <i
+                          class="Icon material focusable"
+                        >
+                          <span
+                            class="icon"
+                            data-icon-name="folder"
+                          >
+                            folder
+                          </span>
+                        </i>
+                        <div
+                          class="flex-grow break-all"
+                        >
+                          /some-home-dir/.kube
+                        </div>
+                        <i
+                          class="Icon material interactive focusable"
+                          tabindex="0"
+                        >
+                          <span
+                            class="icon"
+                            data-icon-name="delete"
+                          >
+                            delete
+                          </span>
+                        </i>
+                        <div>
+                          Remove
+                        </div>
+                      </div>
+                    </div>
+                  </section>
+                </div>
               </section>
             </div>
             <div
@@ -668,17 +696,22 @@ exports[`add helm repository from list in preferences when navigating to prefere
         </div>
       </main>
       <div
-        class="HotbarMenu flex column"
+        class="HotbarMenu flex flex-col"
       >
         <div
-          class="HotbarItems flex column gaps"
+          class="HotbarItems flex flex-col"
         >
           <div
-            class="HotbarCell isDraggingOwner animateDown"
+            class="HotbarCell animateDown"
             index="0"
           >
             <div
-              style="z-index: 12; position: absolute;"
+              aria-describedby="DndDescribedBy-0"
+              aria-disabled="false"
+              aria-roledescription="draggable"
+              role="button"
+              style="z-index: 12; position: absolute; opacity: 1; pointer-events: auto;"
+              tabindex="0"
             >
               <div
                 class="HotbarIcon contextMenuAvailable"
@@ -694,11 +727,16 @@ exports[`add helm repository from list in preferences when navigating to prefere
             </div>
           </div>
           <div
-            class="HotbarCell isDraggingOwner animateDown"
+            class="HotbarCell animateDown"
             index="1"
           >
             <div
-              style="z-index: 11; position: absolute;"
+              aria-describedby="DndDescribedBy-0"
+              aria-disabled="false"
+              aria-roledescription="draggable"
+              role="button"
+              style="z-index: 11; position: absolute; opacity: 1; pointer-events: auto;"
+              tabindex="0"
             >
               <div
                 class="HotbarIcon contextMenuAvailable"
@@ -714,44 +752,61 @@ exports[`add helm repository from list in preferences when navigating to prefere
             </div>
           </div>
           <div
-            class="HotbarCell isDraggingOwner animateDown"
+            class="HotbarCell animateDown"
             index="2"
           />
           <div
-            class="HotbarCell isDraggingOwner animateDown"
+            class="HotbarCell animateDown"
             index="3"
           />
           <div
-            class="HotbarCell isDraggingOwner animateDown"
+            class="HotbarCell animateDown"
             index="4"
           />
           <div
-            class="HotbarCell isDraggingOwner animateDown"
+            class="HotbarCell animateDown"
             index="5"
           />
           <div
-            class="HotbarCell isDraggingOwner animateDown"
+            class="HotbarCell animateDown"
             index="6"
           />
           <div
-            class="HotbarCell isDraggingOwner animateDown"
+            class="HotbarCell animateDown"
             index="7"
           />
           <div
-            class="HotbarCell isDraggingOwner animateDown"
+            class="HotbarCell animateDown"
             index="8"
           />
           <div
-            class="HotbarCell isDraggingOwner animateDown"
+            class="HotbarCell animateDown"
             index="9"
           />
           <div
-            class="HotbarCell isDraggingOwner animateDown"
+            class="HotbarCell animateDown"
             index="10"
           />
           <div
-            class="HotbarCell isDraggingOwner animateDown"
+            class="HotbarCell animateDown"
             index="11"
+          />
+          <div
+            id="DndDescribedBy-0"
+            style="display: none;"
+          >
+            
+    To pick up a draggable item, press the space bar.
+    While dragging, use the arrow keys to move the item.
+    Press space again to drop the item in its new position, or press escape to cancel.
+  
+          </div>
+          <div
+            aria-atomic="true"
+            aria-live="assertive"
+            id="DndLiveRegion-0"
+            role="status"
+            style="position: fixed; top: 0px; left: 0px; width: 1px; height: 1px; margin: -1px; border: 0px; padding: 0px; overflow: hidden; clip: rect(0px); clip-path: inset(100%); white-space: nowrap;"
           />
         </div>
         <div
@@ -810,11 +865,11 @@ exports[`add helm repository from list in preferences when navigating to prefere
 </body>
 `;
 
-exports[`add helm repository from list in preferences when navigating to preferences containing helm repositories when both active and public repositories resolve renders 1`] = `
+exports[`add helm repository from list in preferences > when navigating to preferences containing helm repositories > when both active and public repositories resolve > renders 1`] = `
 <body>
   <div>
     <div
-      class="Notifications flex column align-flex-end"
+      class="Notifications"
     />
     <div
       class="ClusterManager"
@@ -896,7 +951,7 @@ exports[`add helm repository from list in preferences when navigating to prefere
               class="sidebar"
             >
               <div
-                class="Tabs flex column"
+                class="Tabs flex flex-col"
               >
                 <div
                   data-preference-tab-group-test="general-tab-group"
@@ -907,7 +962,7 @@ exports[`add helm repository from list in preferences when navigating to prefere
                     Preferences
                   </div>
                   <div
-                    class="Tab flex gaps align-center"
+                    class="Tab flex gap-2 items-center"
                     data-preference-tab-link-test="app"
                     role="tab"
                     tabindex="0"
@@ -919,7 +974,7 @@ exports[`add helm repository from list in preferences when navigating to prefere
                     </div>
                   </div>
                   <div
-                    class="Tab flex gaps align-center"
+                    class="Tab flex gap-2 items-center"
                     data-preference-tab-link-test="proxy"
                     role="tab"
                     tabindex="0"
@@ -931,7 +986,7 @@ exports[`add helm repository from list in preferences when navigating to prefere
                     </div>
                   </div>
                   <div
-                    class="Tab flex gaps align-center active"
+                    class="Tab flex gap-2 items-center active"
                     data-preference-tab-link-test="kubernetes"
                     role="tab"
                     tabindex="0"
@@ -943,7 +998,7 @@ exports[`add helm repository from list in preferences when navigating to prefere
                     </div>
                   </div>
                   <div
-                    class="Tab flex gaps align-center"
+                    class="Tab flex gap-2 items-center"
                     data-preference-tab-link-test="editor"
                     role="tab"
                     tabindex="0"
@@ -955,7 +1010,7 @@ exports[`add helm repository from list in preferences when navigating to prefere
                     </div>
                   </div>
                   <div
-                    class="Tab flex gaps align-center"
+                    class="Tab flex gap-2 items-center"
                     data-preference-tab-link-test="terminal"
                     role="tab"
                     tabindex="0"
@@ -1069,7 +1124,7 @@ exports[`add helm repository from list in preferences when navigating to prefere
                                   id="download-mirror-input"
                                   role="combobox"
                                   spellcheck="false"
-                                  style="opacity: 1; width: 100%; grid-area: 1 / 2; min-width: 2px; border: 0px; margin: 0px; outline: 0; padding: 0px;"
+                                  style="color: inherit; background: 0px center; opacity: 1; width: 100%; grid-area: 1 / 2; font: inherit; min-width: 2px; border: 0px; margin: 0px; outline: 0px; padding: 0px;"
                                   tabindex="0"
                                   type="text"
                                   value=""
@@ -1121,18 +1176,18 @@ exports[`add helm repository from list in preferences when navigating to prefere
                           class="Input theme round black"
                         >
                           <label
-                            class="input-area flex gaps align-center"
+                            class="input-area flex items-center gap-2"
                             id=""
                           >
                             <input
-                              class="input box grow"
+                              class="input grow"
                               placeholder="/some-directory-for-app-data/some-product-name/binaries"
                               spellcheck="false"
                               value=""
                             />
                           </label>
                           <div
-                            class="input-info flex gaps"
+                            class="input-info flex gap-2"
                           />
                         </div>
                         <div
@@ -1159,11 +1214,11 @@ exports[`add helm repository from list in preferences when navigating to prefere
                           class="Input theme round black disabled"
                         >
                           <label
-                            class="input-area flex gaps align-center"
+                            class="input-area flex items-center gap-2"
                             id=""
                           >
                             <input
-                              class="input box grow"
+                              class="input grow"
                               disabled=""
                               placeholder="/some-directory-for-app-data/some-product-name/binaries/kubectl"
                               spellcheck="false"
@@ -1171,7 +1226,7 @@ exports[`add helm repository from list in preferences when navigating to prefere
                             />
                           </label>
                           <div
-                            class="input-info flex gaps"
+                            class="input-info flex gap-2"
                           />
                         </div>
                         <div
@@ -1209,18 +1264,18 @@ exports[`add helm repository from list in preferences when navigating to prefere
                           class="Input theme round black"
                         >
                           <label
-                            class="input-area flex gaps align-center"
+                            class="input-area flex items-center gap-2"
                             id=""
                           >
                             <input
-                              class="input box grow"
+                              class="input grow"
                               placeholder="/irrelavent-dir-for-lens-resources/x64/helm"
                               spellcheck="false"
                               value=""
                             />
                           </label>
                           <div
-                            class="input-info flex gaps"
+                            class="input-info flex gap-2"
                           />
                         </div>
                         <div
@@ -1267,73 +1322,6 @@ exports[`add helm repository from list in preferences when navigating to prefere
                   class="HorizontalLine size-xl"
                 />
                 <div
-                  data-preference-item-test="kubeconfig-sync"
-                >
-                  <section
-                    id="kube-sync"
-                  >
-                    <h2
-                      data-testid="kubernetes-sync-header"
-                    >
-                      Kubeconfig Syncs
-                    </h2>
-                    <div
-                      class="self-start mb-5"
-                    >
-                      <button
-                        class="Button PathPicker primary"
-                        type="button"
-                      >
-                        Sync Files and Folders
-                      </button>
-                    </div>
-                    <div
-                      class="SubTitle pt-5"
-                    >
-                      Synced Items
-                       
-                    </div>
-                    <div>
-                      <div
-                        class="item flex gaps align-center justify-space-between mt-3"
-                      >
-                        <i
-                          class="Icon material focusable"
-                        >
-                          <span
-                            class="icon"
-                            data-icon-name="folder"
-                          >
-                            folder
-                          </span>
-                        </i>
-                        <div
-                          class="flex-grow break-all"
-                        >
-                          /some-home-dir/.kube
-                        </div>
-                        <i
-                          class="Icon material interactive focusable"
-                          tabindex="0"
-                        >
-                          <span
-                            class="icon"
-                            data-icon-name="delete"
-                          >
-                            delete
-                          </span>
-                        </i>
-                        <div>
-                          Remove
-                        </div>
-                      </div>
-                    </div>
-                  </section>
-                </div>
-                <div
-                  class="HorizontalLine size-xl"
-                />
-                <div
                   data-preference-item-test="helm-charts"
                 >
                   <section
@@ -1347,10 +1335,10 @@ exports[`add helm repository from list in preferences when navigating to prefere
                         data-testid="helm-controls"
                       >
                         <div
-                          class="flex gaps"
+                          class="flex gap-2"
                         >
                           <div
-                            class="Select theme-lens box grow css-b62m3t-container"
+                            class="Select theme-lens grow shrink-0 basis-0 css-b62m3t-container"
                           >
                             <span
                               class="css-1f43avz-a11yText-A11yText"
@@ -1392,7 +1380,7 @@ exports[`add helm repository from list in preferences when navigating to prefere
                                     id="selection-of-active-public-helm-repository"
                                     role="combobox"
                                     spellcheck="false"
-                                    style="opacity: 1; width: 100%; grid-area: 1 / 2; min-width: 2px; border: 0px; margin: 0px; outline: 0; padding: 0px;"
+                                    style="color: inherit; background: 0px center; opacity: 1; width: 100%; grid-area: 1 / 2; font: inherit; min-width: 2px; border: 0px; margin: 0px; outline: 0px; padding: 0px;"
                                     tabindex="0"
                                     type="text"
                                     value=""
@@ -1437,7 +1425,7 @@ exports[`add helm repository from list in preferences when navigating to prefere
                           class="repos"
                         >
                           <div
-                            class="item flex gaps align-center justify-space-between repo"
+                            class="item flex gap-2 items-center justify-between repo"
                           >
                             <div>
                               <div
@@ -1472,6 +1460,73 @@ exports[`add helm repository from list in preferences when navigating to prefere
                           </div>
                         </div>
                         <div />
+                      </div>
+                    </div>
+                  </section>
+                </div>
+                <div
+                  class="HorizontalLine size-xl"
+                />
+                <div
+                  data-preference-item-test="kubeconfig-sync"
+                >
+                  <section
+                    id="kube-sync"
+                  >
+                    <h2
+                      data-testid="kubernetes-sync-header"
+                    >
+                      Kubeconfig Syncs
+                    </h2>
+                    <div
+                      class="self-start mb-5"
+                    >
+                      <button
+                        class="Button PathPicker primary"
+                        type="button"
+                      >
+                        Sync Files and Folders
+                      </button>
+                    </div>
+                    <div
+                      class="SubTitle pt-5"
+                    >
+                      Synced Items
+                       
+                    </div>
+                    <div>
+                      <div
+                        class="item flex gap-2 items-center justify-between mt-3"
+                      >
+                        <i
+                          class="Icon material focusable"
+                        >
+                          <span
+                            class="icon"
+                            data-icon-name="folder"
+                          >
+                            folder
+                          </span>
+                        </i>
+                        <div
+                          class="flex-grow break-all"
+                        >
+                          /some-home-dir/.kube
+                        </div>
+                        <i
+                          class="Icon material interactive focusable"
+                          tabindex="0"
+                        >
+                          <span
+                            class="icon"
+                            data-icon-name="delete"
+                          >
+                            delete
+                          </span>
+                        </i>
+                        <div>
+                          Remove
+                        </div>
                       </div>
                     </div>
                   </section>
@@ -1516,17 +1571,22 @@ exports[`add helm repository from list in preferences when navigating to prefere
         </div>
       </main>
       <div
-        class="HotbarMenu flex column"
+        class="HotbarMenu flex flex-col"
       >
         <div
-          class="HotbarItems flex column gaps"
+          class="HotbarItems flex flex-col"
         >
           <div
-            class="HotbarCell isDraggingOwner animateDown"
+            class="HotbarCell animateDown"
             index="0"
           >
             <div
-              style="z-index: 12; position: absolute;"
+              aria-describedby="DndDescribedBy-3"
+              aria-disabled="false"
+              aria-roledescription="draggable"
+              role="button"
+              style="z-index: 12; position: absolute; opacity: 1; pointer-events: auto;"
+              tabindex="0"
             >
               <div
                 class="HotbarIcon contextMenuAvailable"
@@ -1542,11 +1602,16 @@ exports[`add helm repository from list in preferences when navigating to prefere
             </div>
           </div>
           <div
-            class="HotbarCell isDraggingOwner animateDown"
+            class="HotbarCell animateDown"
             index="1"
           >
             <div
-              style="z-index: 11; position: absolute;"
+              aria-describedby="DndDescribedBy-3"
+              aria-disabled="false"
+              aria-roledescription="draggable"
+              role="button"
+              style="z-index: 11; position: absolute; opacity: 1; pointer-events: auto;"
+              tabindex="0"
             >
               <div
                 class="HotbarIcon contextMenuAvailable"
@@ -1562,44 +1627,61 @@ exports[`add helm repository from list in preferences when navigating to prefere
             </div>
           </div>
           <div
-            class="HotbarCell isDraggingOwner animateDown"
+            class="HotbarCell animateDown"
             index="2"
           />
           <div
-            class="HotbarCell isDraggingOwner animateDown"
+            class="HotbarCell animateDown"
             index="3"
           />
           <div
-            class="HotbarCell isDraggingOwner animateDown"
+            class="HotbarCell animateDown"
             index="4"
           />
           <div
-            class="HotbarCell isDraggingOwner animateDown"
+            class="HotbarCell animateDown"
             index="5"
           />
           <div
-            class="HotbarCell isDraggingOwner animateDown"
+            class="HotbarCell animateDown"
             index="6"
           />
           <div
-            class="HotbarCell isDraggingOwner animateDown"
+            class="HotbarCell animateDown"
             index="7"
           />
           <div
-            class="HotbarCell isDraggingOwner animateDown"
+            class="HotbarCell animateDown"
             index="8"
           />
           <div
-            class="HotbarCell isDraggingOwner animateDown"
+            class="HotbarCell animateDown"
             index="9"
           />
           <div
-            class="HotbarCell isDraggingOwner animateDown"
+            class="HotbarCell animateDown"
             index="10"
           />
           <div
-            class="HotbarCell isDraggingOwner animateDown"
+            class="HotbarCell animateDown"
             index="11"
+          />
+          <div
+            id="DndDescribedBy-3"
+            style="display: none;"
+          >
+            
+    To pick up a draggable item, press the space bar.
+    While dragging, use the arrow keys to move the item.
+    Press space again to drop the item in its new position, or press escape to cancel.
+  
+          </div>
+          <div
+            aria-atomic="true"
+            aria-live="assertive"
+            id="DndLiveRegion-3"
+            role="status"
+            style="position: fixed; top: 0px; left: 0px; width: 1px; height: 1px; margin: -1px; border: 0px; padding: 0px; overflow: hidden; clip: rect(0px); clip-path: inset(100%); white-space: nowrap;"
           />
         </div>
         <div
@@ -1658,11 +1740,11 @@ exports[`add helm repository from list in preferences when navigating to prefere
 </body>
 `;
 
-exports[`add helm repository from list in preferences when navigating to preferences containing helm repositories when both active and public repositories resolve when select for adding public repositories is clicked renders 1`] = `
+exports[`add helm repository from list in preferences > when navigating to preferences containing helm repositories > when both active and public repositories resolve > when select for adding public repositories is clicked > renders 1`] = `
 <body>
   <div>
     <div
-      class="Notifications flex column align-flex-end"
+      class="Notifications"
     />
     <div
       class="ClusterManager"
@@ -1744,7 +1826,7 @@ exports[`add helm repository from list in preferences when navigating to prefere
               class="sidebar"
             >
               <div
-                class="Tabs flex column"
+                class="Tabs flex flex-col"
               >
                 <div
                   data-preference-tab-group-test="general-tab-group"
@@ -1755,7 +1837,7 @@ exports[`add helm repository from list in preferences when navigating to prefere
                     Preferences
                   </div>
                   <div
-                    class="Tab flex gaps align-center"
+                    class="Tab flex gap-2 items-center"
                     data-preference-tab-link-test="app"
                     role="tab"
                     tabindex="0"
@@ -1767,7 +1849,7 @@ exports[`add helm repository from list in preferences when navigating to prefere
                     </div>
                   </div>
                   <div
-                    class="Tab flex gaps align-center"
+                    class="Tab flex gap-2 items-center"
                     data-preference-tab-link-test="proxy"
                     role="tab"
                     tabindex="0"
@@ -1779,7 +1861,7 @@ exports[`add helm repository from list in preferences when navigating to prefere
                     </div>
                   </div>
                   <div
-                    class="Tab flex gaps align-center active"
+                    class="Tab flex gap-2 items-center active"
                     data-preference-tab-link-test="kubernetes"
                     role="tab"
                     tabindex="0"
@@ -1791,7 +1873,7 @@ exports[`add helm repository from list in preferences when navigating to prefere
                     </div>
                   </div>
                   <div
-                    class="Tab flex gaps align-center"
+                    class="Tab flex gap-2 items-center"
                     data-preference-tab-link-test="editor"
                     role="tab"
                     tabindex="0"
@@ -1803,7 +1885,7 @@ exports[`add helm repository from list in preferences when navigating to prefere
                     </div>
                   </div>
                   <div
-                    class="Tab flex gaps align-center"
+                    class="Tab flex gap-2 items-center"
                     data-preference-tab-link-test="terminal"
                     role="tab"
                     tabindex="0"
@@ -1917,7 +1999,7 @@ exports[`add helm repository from list in preferences when navigating to prefere
                                   id="download-mirror-input"
                                   role="combobox"
                                   spellcheck="false"
-                                  style="opacity: 1; width: 100%; grid-area: 1 / 2; min-width: 2px; border: 0px; margin: 0px; outline: 0; padding: 0px;"
+                                  style="color: inherit; background: 0px center; opacity: 1; width: 100%; grid-area: 1 / 2; font: inherit; min-width: 2px; border: 0px; margin: 0px; outline: 0px; padding: 0px;"
                                   tabindex="0"
                                   type="text"
                                   value=""
@@ -1969,18 +2051,18 @@ exports[`add helm repository from list in preferences when navigating to prefere
                           class="Input theme round black"
                         >
                           <label
-                            class="input-area flex gaps align-center"
+                            class="input-area flex items-center gap-2"
                             id=""
                           >
                             <input
-                              class="input box grow"
+                              class="input grow"
                               placeholder="/some-directory-for-app-data/some-product-name/binaries"
                               spellcheck="false"
                               value=""
                             />
                           </label>
                           <div
-                            class="input-info flex gaps"
+                            class="input-info flex gap-2"
                           />
                         </div>
                         <div
@@ -2007,11 +2089,11 @@ exports[`add helm repository from list in preferences when navigating to prefere
                           class="Input theme round black disabled"
                         >
                           <label
-                            class="input-area flex gaps align-center"
+                            class="input-area flex items-center gap-2"
                             id=""
                           >
                             <input
-                              class="input box grow"
+                              class="input grow"
                               disabled=""
                               placeholder="/some-directory-for-app-data/some-product-name/binaries/kubectl"
                               spellcheck="false"
@@ -2019,7 +2101,7 @@ exports[`add helm repository from list in preferences when navigating to prefere
                             />
                           </label>
                           <div
-                            class="input-info flex gaps"
+                            class="input-info flex gap-2"
                           />
                         </div>
                         <div
@@ -2057,18 +2139,18 @@ exports[`add helm repository from list in preferences when navigating to prefere
                           class="Input theme round black"
                         >
                           <label
-                            class="input-area flex gaps align-center"
+                            class="input-area flex items-center gap-2"
                             id=""
                           >
                             <input
-                              class="input box grow"
+                              class="input grow"
                               placeholder="/irrelavent-dir-for-lens-resources/x64/helm"
                               spellcheck="false"
                               value=""
                             />
                           </label>
                           <div
-                            class="input-info flex gaps"
+                            class="input-info flex gap-2"
                           />
                         </div>
                         <div
@@ -2115,73 +2197,6 @@ exports[`add helm repository from list in preferences when navigating to prefere
                   class="HorizontalLine size-xl"
                 />
                 <div
-                  data-preference-item-test="kubeconfig-sync"
-                >
-                  <section
-                    id="kube-sync"
-                  >
-                    <h2
-                      data-testid="kubernetes-sync-header"
-                    >
-                      Kubeconfig Syncs
-                    </h2>
-                    <div
-                      class="self-start mb-5"
-                    >
-                      <button
-                        class="Button PathPicker primary"
-                        type="button"
-                      >
-                        Sync Files and Folders
-                      </button>
-                    </div>
-                    <div
-                      class="SubTitle pt-5"
-                    >
-                      Synced Items
-                       
-                    </div>
-                    <div>
-                      <div
-                        class="item flex gaps align-center justify-space-between mt-3"
-                      >
-                        <i
-                          class="Icon material focusable"
-                        >
-                          <span
-                            class="icon"
-                            data-icon-name="folder"
-                          >
-                            folder
-                          </span>
-                        </i>
-                        <div
-                          class="flex-grow break-all"
-                        >
-                          /some-home-dir/.kube
-                        </div>
-                        <i
-                          class="Icon material interactive focusable"
-                          tabindex="0"
-                        >
-                          <span
-                            class="icon"
-                            data-icon-name="delete"
-                          >
-                            delete
-                          </span>
-                        </i>
-                        <div>
-                          Remove
-                        </div>
-                      </div>
-                    </div>
-                  </section>
-                </div>
-                <div
-                  class="HorizontalLine size-xl"
-                />
-                <div
                   data-preference-item-test="helm-charts"
                 >
                   <section
@@ -2195,10 +2210,10 @@ exports[`add helm repository from list in preferences when navigating to prefere
                         data-testid="helm-controls"
                       >
                         <div
-                          class="flex gaps"
+                          class="flex gap-2"
                         >
                           <div
-                            class="Select theme-lens box grow css-b62m3t-container"
+                            class="Select theme-lens grow shrink-0 basis-0 css-b62m3t-container"
                           >
                             <span
                               class="css-1f43avz-a11yText-A11yText"
@@ -2241,7 +2256,7 @@ exports[`add helm repository from list in preferences when navigating to prefere
                                     id="selection-of-active-public-helm-repository"
                                     role="combobox"
                                     spellcheck="false"
-                                    style="opacity: 1; width: 100%; grid-area: 1 / 2; min-width: 2px; border: 0px; margin: 0px; outline: 0; padding: 0px;"
+                                    style="color: inherit; background: 0px center; opacity: 1; width: 100%; grid-area: 1 / 2; font: inherit; min-width: 2px; border: 0px; margin: 0px; outline: 0px; padding: 0px;"
                                     tabindex="0"
                                     type="text"
                                     value=""
@@ -2286,7 +2301,7 @@ exports[`add helm repository from list in preferences when navigating to prefere
                           class="repos"
                         >
                           <div
-                            class="item flex gaps align-center justify-space-between repo"
+                            class="item flex gap-2 items-center justify-between repo"
                           >
                             <div>
                               <div
@@ -2321,6 +2336,73 @@ exports[`add helm repository from list in preferences when navigating to prefere
                           </div>
                         </div>
                         <div />
+                      </div>
+                    </div>
+                  </section>
+                </div>
+                <div
+                  class="HorizontalLine size-xl"
+                />
+                <div
+                  data-preference-item-test="kubeconfig-sync"
+                >
+                  <section
+                    id="kube-sync"
+                  >
+                    <h2
+                      data-testid="kubernetes-sync-header"
+                    >
+                      Kubeconfig Syncs
+                    </h2>
+                    <div
+                      class="self-start mb-5"
+                    >
+                      <button
+                        class="Button PathPicker primary"
+                        type="button"
+                      >
+                        Sync Files and Folders
+                      </button>
+                    </div>
+                    <div
+                      class="SubTitle pt-5"
+                    >
+                      Synced Items
+                       
+                    </div>
+                    <div>
+                      <div
+                        class="item flex gap-2 items-center justify-between mt-3"
+                      >
+                        <i
+                          class="Icon material focusable"
+                        >
+                          <span
+                            class="icon"
+                            data-icon-name="folder"
+                          >
+                            folder
+                          </span>
+                        </i>
+                        <div
+                          class="flex-grow break-all"
+                        >
+                          /some-home-dir/.kube
+                        </div>
+                        <i
+                          class="Icon material interactive focusable"
+                          tabindex="0"
+                        >
+                          <span
+                            class="icon"
+                            data-icon-name="delete"
+                          >
+                            delete
+                          </span>
+                        </i>
+                        <div>
+                          Remove
+                        </div>
                       </div>
                     </div>
                   </section>
@@ -2365,17 +2447,22 @@ exports[`add helm repository from list in preferences when navigating to prefere
         </div>
       </main>
       <div
-        class="HotbarMenu flex column"
+        class="HotbarMenu flex flex-col"
       >
         <div
-          class="HotbarItems flex column gaps"
+          class="HotbarItems flex flex-col"
         >
           <div
-            class="HotbarCell isDraggingOwner animateDown"
+            class="HotbarCell animateDown"
             index="0"
           >
             <div
-              style="z-index: 12; position: absolute;"
+              aria-describedby="DndDescribedBy-4"
+              aria-disabled="false"
+              aria-roledescription="draggable"
+              role="button"
+              style="z-index: 12; position: absolute; opacity: 1; pointer-events: auto;"
+              tabindex="0"
             >
               <div
                 class="HotbarIcon contextMenuAvailable"
@@ -2391,11 +2478,16 @@ exports[`add helm repository from list in preferences when navigating to prefere
             </div>
           </div>
           <div
-            class="HotbarCell isDraggingOwner animateDown"
+            class="HotbarCell animateDown"
             index="1"
           >
             <div
-              style="z-index: 11; position: absolute;"
+              aria-describedby="DndDescribedBy-4"
+              aria-disabled="false"
+              aria-roledescription="draggable"
+              role="button"
+              style="z-index: 11; position: absolute; opacity: 1; pointer-events: auto;"
+              tabindex="0"
             >
               <div
                 class="HotbarIcon contextMenuAvailable"
@@ -2411,44 +2503,61 @@ exports[`add helm repository from list in preferences when navigating to prefere
             </div>
           </div>
           <div
-            class="HotbarCell isDraggingOwner animateDown"
+            class="HotbarCell animateDown"
             index="2"
           />
           <div
-            class="HotbarCell isDraggingOwner animateDown"
+            class="HotbarCell animateDown"
             index="3"
           />
           <div
-            class="HotbarCell isDraggingOwner animateDown"
+            class="HotbarCell animateDown"
             index="4"
           />
           <div
-            class="HotbarCell isDraggingOwner animateDown"
+            class="HotbarCell animateDown"
             index="5"
           />
           <div
-            class="HotbarCell isDraggingOwner animateDown"
+            class="HotbarCell animateDown"
             index="6"
           />
           <div
-            class="HotbarCell isDraggingOwner animateDown"
+            class="HotbarCell animateDown"
             index="7"
           />
           <div
-            class="HotbarCell isDraggingOwner animateDown"
+            class="HotbarCell animateDown"
             index="8"
           />
           <div
-            class="HotbarCell isDraggingOwner animateDown"
+            class="HotbarCell animateDown"
             index="9"
           />
           <div
-            class="HotbarCell isDraggingOwner animateDown"
+            class="HotbarCell animateDown"
             index="10"
           />
           <div
-            class="HotbarCell isDraggingOwner animateDown"
+            class="HotbarCell animateDown"
             index="11"
+          />
+          <div
+            id="DndDescribedBy-4"
+            style="display: none;"
+          >
+            
+    To pick up a draggable item, press the space bar.
+    While dragging, use the arrow keys to move the item.
+    Press space again to drop the item in its new position, or press escape to cancel.
+  
+          </div>
+          <div
+            aria-atomic="true"
+            aria-live="assertive"
+            id="DndLiveRegion-4"
+            role="status"
+            style="position: fixed; top: 0px; left: 0px; width: 1px; height: 1px; margin: -1px; border: 0px; padding: 0px; overflow: hidden; clip: rect(0px); clip-path: inset(100%); white-space: nowrap;"
           />
         </div>
         <div
@@ -2525,13 +2634,13 @@ exports[`add helm repository from list in preferences when navigating to prefere
           tabindex="-1"
         >
           <div
-            class="flex gaps"
+            class="flex gap-2"
           >
             <span>
               Some already active repository
             </span>
             <i
-              class="Icon box right material focusable small"
+              class="Icon ml-auto mr-0 material focusable small"
             >
               <span
                 class="icon"
@@ -2551,7 +2660,7 @@ exports[`add helm repository from list in preferences when navigating to prefere
           tabindex="-1"
         >
           <div
-            class="flex gaps"
+            class="flex gap-2"
           >
             <span>
               Some to be added repository
@@ -2564,11 +2673,11 @@ exports[`add helm repository from list in preferences when navigating to prefere
 </body>
 `;
 
-exports[`add helm repository from list in preferences when navigating to preferences containing helm repositories when both active and public repositories resolve when select for adding public repositories is clicked when deactive public repository is selected renders 1`] = `
+exports[`add helm repository from list in preferences > when navigating to preferences containing helm repositories > when both active and public repositories resolve > when select for adding public repositories is clicked > when deactive public repository is selected > renders 1`] = `
 <body>
   <div>
     <div
-      class="Notifications flex column align-flex-end"
+      class="Notifications"
     />
     <div
       class="ClusterManager"
@@ -2650,7 +2759,7 @@ exports[`add helm repository from list in preferences when navigating to prefere
               class="sidebar"
             >
               <div
-                class="Tabs flex column"
+                class="Tabs flex flex-col"
               >
                 <div
                   data-preference-tab-group-test="general-tab-group"
@@ -2661,7 +2770,7 @@ exports[`add helm repository from list in preferences when navigating to prefere
                     Preferences
                   </div>
                   <div
-                    class="Tab flex gaps align-center"
+                    class="Tab flex gap-2 items-center"
                     data-preference-tab-link-test="app"
                     role="tab"
                     tabindex="0"
@@ -2673,7 +2782,7 @@ exports[`add helm repository from list in preferences when navigating to prefere
                     </div>
                   </div>
                   <div
-                    class="Tab flex gaps align-center"
+                    class="Tab flex gap-2 items-center"
                     data-preference-tab-link-test="proxy"
                     role="tab"
                     tabindex="0"
@@ -2685,7 +2794,7 @@ exports[`add helm repository from list in preferences when navigating to prefere
                     </div>
                   </div>
                   <div
-                    class="Tab flex gaps align-center active"
+                    class="Tab flex gap-2 items-center active"
                     data-preference-tab-link-test="kubernetes"
                     role="tab"
                     tabindex="0"
@@ -2697,7 +2806,7 @@ exports[`add helm repository from list in preferences when navigating to prefere
                     </div>
                   </div>
                   <div
-                    class="Tab flex gaps align-center"
+                    class="Tab flex gap-2 items-center"
                     data-preference-tab-link-test="editor"
                     role="tab"
                     tabindex="0"
@@ -2709,7 +2818,7 @@ exports[`add helm repository from list in preferences when navigating to prefere
                     </div>
                   </div>
                   <div
-                    class="Tab flex gaps align-center"
+                    class="Tab flex gap-2 items-center"
                     data-preference-tab-link-test="terminal"
                     role="tab"
                     tabindex="0"
@@ -2823,7 +2932,7 @@ exports[`add helm repository from list in preferences when navigating to prefere
                                   id="download-mirror-input"
                                   role="combobox"
                                   spellcheck="false"
-                                  style="opacity: 1; width: 100%; grid-area: 1 / 2; min-width: 2px; border: 0px; margin: 0px; outline: 0; padding: 0px;"
+                                  style="color: inherit; background: 0px center; opacity: 1; width: 100%; grid-area: 1 / 2; font: inherit; min-width: 2px; border: 0px; margin: 0px; outline: 0px; padding: 0px;"
                                   tabindex="0"
                                   type="text"
                                   value=""
@@ -2875,18 +2984,18 @@ exports[`add helm repository from list in preferences when navigating to prefere
                           class="Input theme round black"
                         >
                           <label
-                            class="input-area flex gaps align-center"
+                            class="input-area flex items-center gap-2"
                             id=""
                           >
                             <input
-                              class="input box grow"
+                              class="input grow"
                               placeholder="/some-directory-for-app-data/some-product-name/binaries"
                               spellcheck="false"
                               value=""
                             />
                           </label>
                           <div
-                            class="input-info flex gaps"
+                            class="input-info flex gap-2"
                           />
                         </div>
                         <div
@@ -2913,11 +3022,11 @@ exports[`add helm repository from list in preferences when navigating to prefere
                           class="Input theme round black disabled"
                         >
                           <label
-                            class="input-area flex gaps align-center"
+                            class="input-area flex items-center gap-2"
                             id=""
                           >
                             <input
-                              class="input box grow"
+                              class="input grow"
                               disabled=""
                               placeholder="/some-directory-for-app-data/some-product-name/binaries/kubectl"
                               spellcheck="false"
@@ -2925,7 +3034,7 @@ exports[`add helm repository from list in preferences when navigating to prefere
                             />
                           </label>
                           <div
-                            class="input-info flex gaps"
+                            class="input-info flex gap-2"
                           />
                         </div>
                         <div
@@ -2963,18 +3072,18 @@ exports[`add helm repository from list in preferences when navigating to prefere
                           class="Input theme round black"
                         >
                           <label
-                            class="input-area flex gaps align-center"
+                            class="input-area flex items-center gap-2"
                             id=""
                           >
                             <input
-                              class="input box grow"
+                              class="input grow"
                               placeholder="/irrelavent-dir-for-lens-resources/x64/helm"
                               spellcheck="false"
                               value=""
                             />
                           </label>
                           <div
-                            class="input-info flex gaps"
+                            class="input-info flex gap-2"
                           />
                         </div>
                         <div
@@ -3021,73 +3130,6 @@ exports[`add helm repository from list in preferences when navigating to prefere
                   class="HorizontalLine size-xl"
                 />
                 <div
-                  data-preference-item-test="kubeconfig-sync"
-                >
-                  <section
-                    id="kube-sync"
-                  >
-                    <h2
-                      data-testid="kubernetes-sync-header"
-                    >
-                      Kubeconfig Syncs
-                    </h2>
-                    <div
-                      class="self-start mb-5"
-                    >
-                      <button
-                        class="Button PathPicker primary"
-                        type="button"
-                      >
-                        Sync Files and Folders
-                      </button>
-                    </div>
-                    <div
-                      class="SubTitle pt-5"
-                    >
-                      Synced Items
-                       
-                    </div>
-                    <div>
-                      <div
-                        class="item flex gaps align-center justify-space-between mt-3"
-                      >
-                        <i
-                          class="Icon material focusable"
-                        >
-                          <span
-                            class="icon"
-                            data-icon-name="folder"
-                          >
-                            folder
-                          </span>
-                        </i>
-                        <div
-                          class="flex-grow break-all"
-                        >
-                          /some-home-dir/.kube
-                        </div>
-                        <i
-                          class="Icon material interactive focusable"
-                          tabindex="0"
-                        >
-                          <span
-                            class="icon"
-                            data-icon-name="delete"
-                          >
-                            delete
-                          </span>
-                        </i>
-                        <div>
-                          Remove
-                        </div>
-                      </div>
-                    </div>
-                  </section>
-                </div>
-                <div
-                  class="HorizontalLine size-xl"
-                />
-                <div
                   data-preference-item-test="helm-charts"
                 >
                   <section
@@ -3101,10 +3143,10 @@ exports[`add helm repository from list in preferences when navigating to prefere
                         data-testid="helm-controls"
                       >
                         <div
-                          class="flex gaps"
+                          class="flex gap-2"
                         >
                           <div
-                            class="Select theme-lens box grow css-b62m3t-container"
+                            class="Select theme-lens grow shrink-0 basis-0 css-b62m3t-container"
                           >
                             <span
                               class="css-1f43avz-a11yText-A11yText"
@@ -3146,7 +3188,7 @@ exports[`add helm repository from list in preferences when navigating to prefere
                                     id="selection-of-active-public-helm-repository"
                                     role="combobox"
                                     spellcheck="false"
-                                    style="opacity: 0; width: 100%; grid-area: 1 / 2; min-width: 2px; border: 0px; margin: 0px; outline: 0; padding: 0px;"
+                                    style="color: inherit; background: 0px center; opacity: 0; width: 100%; grid-area: 1 / 2; font: inherit; min-width: 2px; border: 0px; margin: 0px; outline: 0px; padding: 0px;"
                                     tabindex="0"
                                     type="text"
                                     value=""
@@ -3191,7 +3233,7 @@ exports[`add helm repository from list in preferences when navigating to prefere
                           class="repos"
                         >
                           <div
-                            class="item flex gaps align-center justify-space-between repo"
+                            class="item flex gap-2 items-center justify-between repo"
                           >
                             <div>
                               <div
@@ -3226,6 +3268,73 @@ exports[`add helm repository from list in preferences when navigating to prefere
                           </div>
                         </div>
                         <div />
+                      </div>
+                    </div>
+                  </section>
+                </div>
+                <div
+                  class="HorizontalLine size-xl"
+                />
+                <div
+                  data-preference-item-test="kubeconfig-sync"
+                >
+                  <section
+                    id="kube-sync"
+                  >
+                    <h2
+                      data-testid="kubernetes-sync-header"
+                    >
+                      Kubeconfig Syncs
+                    </h2>
+                    <div
+                      class="self-start mb-5"
+                    >
+                      <button
+                        class="Button PathPicker primary"
+                        type="button"
+                      >
+                        Sync Files and Folders
+                      </button>
+                    </div>
+                    <div
+                      class="SubTitle pt-5"
+                    >
+                      Synced Items
+                       
+                    </div>
+                    <div>
+                      <div
+                        class="item flex gap-2 items-center justify-between mt-3"
+                      >
+                        <i
+                          class="Icon material focusable"
+                        >
+                          <span
+                            class="icon"
+                            data-icon-name="folder"
+                          >
+                            folder
+                          </span>
+                        </i>
+                        <div
+                          class="flex-grow break-all"
+                        >
+                          /some-home-dir/.kube
+                        </div>
+                        <i
+                          class="Icon material interactive focusable"
+                          tabindex="0"
+                        >
+                          <span
+                            class="icon"
+                            data-icon-name="delete"
+                          >
+                            delete
+                          </span>
+                        </i>
+                        <div>
+                          Remove
+                        </div>
                       </div>
                     </div>
                   </section>
@@ -3270,17 +3379,22 @@ exports[`add helm repository from list in preferences when navigating to prefere
         </div>
       </main>
       <div
-        class="HotbarMenu flex column"
+        class="HotbarMenu flex flex-col"
       >
         <div
-          class="HotbarItems flex column gaps"
+          class="HotbarItems flex flex-col"
         >
           <div
-            class="HotbarCell isDraggingOwner animateDown"
+            class="HotbarCell animateDown"
             index="0"
           >
             <div
-              style="z-index: 12; position: absolute;"
+              aria-describedby="DndDescribedBy-5"
+              aria-disabled="false"
+              aria-roledescription="draggable"
+              role="button"
+              style="z-index: 12; position: absolute; opacity: 1; pointer-events: auto;"
+              tabindex="0"
             >
               <div
                 class="HotbarIcon contextMenuAvailable"
@@ -3296,11 +3410,16 @@ exports[`add helm repository from list in preferences when navigating to prefere
             </div>
           </div>
           <div
-            class="HotbarCell isDraggingOwner animateDown"
+            class="HotbarCell animateDown"
             index="1"
           >
             <div
-              style="z-index: 11; position: absolute;"
+              aria-describedby="DndDescribedBy-5"
+              aria-disabled="false"
+              aria-roledescription="draggable"
+              role="button"
+              style="z-index: 11; position: absolute; opacity: 1; pointer-events: auto;"
+              tabindex="0"
             >
               <div
                 class="HotbarIcon contextMenuAvailable"
@@ -3316,44 +3435,61 @@ exports[`add helm repository from list in preferences when navigating to prefere
             </div>
           </div>
           <div
-            class="HotbarCell isDraggingOwner animateDown"
+            class="HotbarCell animateDown"
             index="2"
           />
           <div
-            class="HotbarCell isDraggingOwner animateDown"
+            class="HotbarCell animateDown"
             index="3"
           />
           <div
-            class="HotbarCell isDraggingOwner animateDown"
+            class="HotbarCell animateDown"
             index="4"
           />
           <div
-            class="HotbarCell isDraggingOwner animateDown"
+            class="HotbarCell animateDown"
             index="5"
           />
           <div
-            class="HotbarCell isDraggingOwner animateDown"
+            class="HotbarCell animateDown"
             index="6"
           />
           <div
-            class="HotbarCell isDraggingOwner animateDown"
+            class="HotbarCell animateDown"
             index="7"
           />
           <div
-            class="HotbarCell isDraggingOwner animateDown"
+            class="HotbarCell animateDown"
             index="8"
           />
           <div
-            class="HotbarCell isDraggingOwner animateDown"
+            class="HotbarCell animateDown"
             index="9"
           />
           <div
-            class="HotbarCell isDraggingOwner animateDown"
+            class="HotbarCell animateDown"
             index="10"
           />
           <div
-            class="HotbarCell isDraggingOwner animateDown"
+            class="HotbarCell animateDown"
             index="11"
+          />
+          <div
+            id="DndDescribedBy-5"
+            style="display: none;"
+          >
+            
+    To pick up a draggable item, press the space bar.
+    While dragging, use the arrow keys to move the item.
+    Press space again to drop the item in its new position, or press escape to cancel.
+  
+          </div>
+          <div
+            aria-atomic="true"
+            aria-live="assertive"
+            id="DndLiveRegion-5"
+            role="status"
+            style="position: fixed; top: 0px; left: 0px; width: 1px; height: 1px; margin: -1px; border: 0px; padding: 0px; overflow: hidden; clip: rect(0px); clip-path: inset(100%); white-space: nowrap;"
           />
         </div>
         <div
@@ -3412,11 +3548,11 @@ exports[`add helm repository from list in preferences when navigating to prefere
 </body>
 `;
 
-exports[`add helm repository from list in preferences when navigating to preferences containing helm repositories when both active and public repositories resolve when select for adding public repositories is clicked when deactive public repository is selected when adding rejects renders 1`] = `
+exports[`add helm repository from list in preferences > when navigating to preferences containing helm repositories > when both active and public repositories resolve > when select for adding public repositories is clicked > when deactive public repository is selected > when adding rejects > renders 1`] = `
 <body>
   <div>
     <div
-      class="Notifications flex column align-flex-end"
+      class="Notifications"
     />
     <div
       class="ClusterManager"
@@ -3498,7 +3634,7 @@ exports[`add helm repository from list in preferences when navigating to prefere
               class="sidebar"
             >
               <div
-                class="Tabs flex column"
+                class="Tabs flex flex-col"
               >
                 <div
                   data-preference-tab-group-test="general-tab-group"
@@ -3509,7 +3645,7 @@ exports[`add helm repository from list in preferences when navigating to prefere
                     Preferences
                   </div>
                   <div
-                    class="Tab flex gaps align-center"
+                    class="Tab flex gap-2 items-center"
                     data-preference-tab-link-test="app"
                     role="tab"
                     tabindex="0"
@@ -3521,7 +3657,7 @@ exports[`add helm repository from list in preferences when navigating to prefere
                     </div>
                   </div>
                   <div
-                    class="Tab flex gaps align-center"
+                    class="Tab flex gap-2 items-center"
                     data-preference-tab-link-test="proxy"
                     role="tab"
                     tabindex="0"
@@ -3533,7 +3669,7 @@ exports[`add helm repository from list in preferences when navigating to prefere
                     </div>
                   </div>
                   <div
-                    class="Tab flex gaps align-center active"
+                    class="Tab flex gap-2 items-center active"
                     data-preference-tab-link-test="kubernetes"
                     role="tab"
                     tabindex="0"
@@ -3545,7 +3681,7 @@ exports[`add helm repository from list in preferences when navigating to prefere
                     </div>
                   </div>
                   <div
-                    class="Tab flex gaps align-center"
+                    class="Tab flex gap-2 items-center"
                     data-preference-tab-link-test="editor"
                     role="tab"
                     tabindex="0"
@@ -3557,7 +3693,7 @@ exports[`add helm repository from list in preferences when navigating to prefere
                     </div>
                   </div>
                   <div
-                    class="Tab flex gaps align-center"
+                    class="Tab flex gap-2 items-center"
                     data-preference-tab-link-test="terminal"
                     role="tab"
                     tabindex="0"
@@ -3671,7 +3807,7 @@ exports[`add helm repository from list in preferences when navigating to prefere
                                   id="download-mirror-input"
                                   role="combobox"
                                   spellcheck="false"
-                                  style="opacity: 1; width: 100%; grid-area: 1 / 2; min-width: 2px; border: 0px; margin: 0px; outline: 0; padding: 0px;"
+                                  style="color: inherit; background: 0px center; opacity: 1; width: 100%; grid-area: 1 / 2; font: inherit; min-width: 2px; border: 0px; margin: 0px; outline: 0px; padding: 0px;"
                                   tabindex="0"
                                   type="text"
                                   value=""
@@ -3723,18 +3859,18 @@ exports[`add helm repository from list in preferences when navigating to prefere
                           class="Input theme round black"
                         >
                           <label
-                            class="input-area flex gaps align-center"
+                            class="input-area flex items-center gap-2"
                             id=""
                           >
                             <input
-                              class="input box grow"
+                              class="input grow"
                               placeholder="/some-directory-for-app-data/some-product-name/binaries"
                               spellcheck="false"
                               value=""
                             />
                           </label>
                           <div
-                            class="input-info flex gaps"
+                            class="input-info flex gap-2"
                           />
                         </div>
                         <div
@@ -3761,11 +3897,11 @@ exports[`add helm repository from list in preferences when navigating to prefere
                           class="Input theme round black disabled"
                         >
                           <label
-                            class="input-area flex gaps align-center"
+                            class="input-area flex items-center gap-2"
                             id=""
                           >
                             <input
-                              class="input box grow"
+                              class="input grow"
                               disabled=""
                               placeholder="/some-directory-for-app-data/some-product-name/binaries/kubectl"
                               spellcheck="false"
@@ -3773,7 +3909,7 @@ exports[`add helm repository from list in preferences when navigating to prefere
                             />
                           </label>
                           <div
-                            class="input-info flex gaps"
+                            class="input-info flex gap-2"
                           />
                         </div>
                         <div
@@ -3811,18 +3947,18 @@ exports[`add helm repository from list in preferences when navigating to prefere
                           class="Input theme round black"
                         >
                           <label
-                            class="input-area flex gaps align-center"
+                            class="input-area flex items-center gap-2"
                             id=""
                           >
                             <input
-                              class="input box grow"
+                              class="input grow"
                               placeholder="/irrelavent-dir-for-lens-resources/x64/helm"
                               spellcheck="false"
                               value=""
                             />
                           </label>
                           <div
-                            class="input-info flex gaps"
+                            class="input-info flex gap-2"
                           />
                         </div>
                         <div
@@ -3869,73 +4005,6 @@ exports[`add helm repository from list in preferences when navigating to prefere
                   class="HorizontalLine size-xl"
                 />
                 <div
-                  data-preference-item-test="kubeconfig-sync"
-                >
-                  <section
-                    id="kube-sync"
-                  >
-                    <h2
-                      data-testid="kubernetes-sync-header"
-                    >
-                      Kubeconfig Syncs
-                    </h2>
-                    <div
-                      class="self-start mb-5"
-                    >
-                      <button
-                        class="Button PathPicker primary"
-                        type="button"
-                      >
-                        Sync Files and Folders
-                      </button>
-                    </div>
-                    <div
-                      class="SubTitle pt-5"
-                    >
-                      Synced Items
-                       
-                    </div>
-                    <div>
-                      <div
-                        class="item flex gaps align-center justify-space-between mt-3"
-                      >
-                        <i
-                          class="Icon material focusable"
-                        >
-                          <span
-                            class="icon"
-                            data-icon-name="folder"
-                          >
-                            folder
-                          </span>
-                        </i>
-                        <div
-                          class="flex-grow break-all"
-                        >
-                          /some-home-dir/.kube
-                        </div>
-                        <i
-                          class="Icon material interactive focusable"
-                          tabindex="0"
-                        >
-                          <span
-                            class="icon"
-                            data-icon-name="delete"
-                          >
-                            delete
-                          </span>
-                        </i>
-                        <div>
-                          Remove
-                        </div>
-                      </div>
-                    </div>
-                  </section>
-                </div>
-                <div
-                  class="HorizontalLine size-xl"
-                />
-                <div
                   data-preference-item-test="helm-charts"
                 >
                   <section
@@ -3949,10 +4018,10 @@ exports[`add helm repository from list in preferences when navigating to prefere
                         data-testid="helm-controls"
                       >
                         <div
-                          class="flex gaps"
+                          class="flex gap-2"
                         >
                           <div
-                            class="Select theme-lens box grow css-b62m3t-container"
+                            class="Select theme-lens grow shrink-0 basis-0 css-b62m3t-container"
                           >
                             <span
                               class="css-1f43avz-a11yText-A11yText"
@@ -3994,7 +4063,7 @@ exports[`add helm repository from list in preferences when navigating to prefere
                                     id="selection-of-active-public-helm-repository"
                                     role="combobox"
                                     spellcheck="false"
-                                    style="opacity: 0; width: 100%; grid-area: 1 / 2; min-width: 2px; border: 0px; margin: 0px; outline: 0; padding: 0px;"
+                                    style="color: inherit; background: 0px center; opacity: 0; width: 100%; grid-area: 1 / 2; font: inherit; min-width: 2px; border: 0px; margin: 0px; outline: 0px; padding: 0px;"
                                     tabindex="0"
                                     type="text"
                                     value=""
@@ -4039,7 +4108,7 @@ exports[`add helm repository from list in preferences when navigating to prefere
                           class="repos"
                         >
                           <div
-                            class="item flex gaps align-center justify-space-between repo"
+                            class="item flex gap-2 items-center justify-between repo"
                           >
                             <div>
                               <div
@@ -4074,6 +4143,73 @@ exports[`add helm repository from list in preferences when navigating to prefere
                           </div>
                         </div>
                         <div />
+                      </div>
+                    </div>
+                  </section>
+                </div>
+                <div
+                  class="HorizontalLine size-xl"
+                />
+                <div
+                  data-preference-item-test="kubeconfig-sync"
+                >
+                  <section
+                    id="kube-sync"
+                  >
+                    <h2
+                      data-testid="kubernetes-sync-header"
+                    >
+                      Kubeconfig Syncs
+                    </h2>
+                    <div
+                      class="self-start mb-5"
+                    >
+                      <button
+                        class="Button PathPicker primary"
+                        type="button"
+                      >
+                        Sync Files and Folders
+                      </button>
+                    </div>
+                    <div
+                      class="SubTitle pt-5"
+                    >
+                      Synced Items
+                       
+                    </div>
+                    <div>
+                      <div
+                        class="item flex gap-2 items-center justify-between mt-3"
+                      >
+                        <i
+                          class="Icon material focusable"
+                        >
+                          <span
+                            class="icon"
+                            data-icon-name="folder"
+                          >
+                            folder
+                          </span>
+                        </i>
+                        <div
+                          class="flex-grow break-all"
+                        >
+                          /some-home-dir/.kube
+                        </div>
+                        <i
+                          class="Icon material interactive focusable"
+                          tabindex="0"
+                        >
+                          <span
+                            class="icon"
+                            data-icon-name="delete"
+                          >
+                            delete
+                          </span>
+                        </i>
+                        <div>
+                          Remove
+                        </div>
                       </div>
                     </div>
                   </section>
@@ -4118,17 +4254,22 @@ exports[`add helm repository from list in preferences when navigating to prefere
         </div>
       </main>
       <div
-        class="HotbarMenu flex column"
+        class="HotbarMenu flex flex-col"
       >
         <div
-          class="HotbarItems flex column gaps"
+          class="HotbarItems flex flex-col"
         >
           <div
-            class="HotbarCell isDraggingOwner animateDown"
+            class="HotbarCell animateDown"
             index="0"
           >
             <div
-              style="z-index: 12; position: absolute;"
+              aria-describedby="DndDescribedBy-8"
+              aria-disabled="false"
+              aria-roledescription="draggable"
+              role="button"
+              style="z-index: 12; position: absolute; opacity: 1; pointer-events: auto;"
+              tabindex="0"
             >
               <div
                 class="HotbarIcon contextMenuAvailable"
@@ -4144,11 +4285,16 @@ exports[`add helm repository from list in preferences when navigating to prefere
             </div>
           </div>
           <div
-            class="HotbarCell isDraggingOwner animateDown"
+            class="HotbarCell animateDown"
             index="1"
           >
             <div
-              style="z-index: 11; position: absolute;"
+              aria-describedby="DndDescribedBy-8"
+              aria-disabled="false"
+              aria-roledescription="draggable"
+              role="button"
+              style="z-index: 11; position: absolute; opacity: 1; pointer-events: auto;"
+              tabindex="0"
             >
               <div
                 class="HotbarIcon contextMenuAvailable"
@@ -4164,44 +4310,61 @@ exports[`add helm repository from list in preferences when navigating to prefere
             </div>
           </div>
           <div
-            class="HotbarCell isDraggingOwner animateDown"
+            class="HotbarCell animateDown"
             index="2"
           />
           <div
-            class="HotbarCell isDraggingOwner animateDown"
+            class="HotbarCell animateDown"
             index="3"
           />
           <div
-            class="HotbarCell isDraggingOwner animateDown"
+            class="HotbarCell animateDown"
             index="4"
           />
           <div
-            class="HotbarCell isDraggingOwner animateDown"
+            class="HotbarCell animateDown"
             index="5"
           />
           <div
-            class="HotbarCell isDraggingOwner animateDown"
+            class="HotbarCell animateDown"
             index="6"
           />
           <div
-            class="HotbarCell isDraggingOwner animateDown"
+            class="HotbarCell animateDown"
             index="7"
           />
           <div
-            class="HotbarCell isDraggingOwner animateDown"
+            class="HotbarCell animateDown"
             index="8"
           />
           <div
-            class="HotbarCell isDraggingOwner animateDown"
+            class="HotbarCell animateDown"
             index="9"
           />
           <div
-            class="HotbarCell isDraggingOwner animateDown"
+            class="HotbarCell animateDown"
             index="10"
           />
           <div
-            class="HotbarCell isDraggingOwner animateDown"
+            class="HotbarCell animateDown"
             index="11"
+          />
+          <div
+            id="DndDescribedBy-8"
+            style="display: none;"
+          >
+            
+    To pick up a draggable item, press the space bar.
+    While dragging, use the arrow keys to move the item.
+    Press space again to drop the item in its new position, or press escape to cancel.
+  
+          </div>
+          <div
+            aria-atomic="true"
+            aria-live="assertive"
+            id="DndLiveRegion-8"
+            role="status"
+            style="position: fixed; top: 0px; left: 0px; width: 1px; height: 1px; margin: -1px; border: 0px; padding: 0px; overflow: hidden; clip: rect(0px); clip-path: inset(100%); white-space: nowrap;"
           />
         </div>
         <div
@@ -4260,11 +4423,11 @@ exports[`add helm repository from list in preferences when navigating to prefere
 </body>
 `;
 
-exports[`add helm repository from list in preferences when navigating to preferences containing helm repositories when both active and public repositories resolve when select for adding public repositories is clicked when deactive public repository is selected when adding resolves renders 1`] = `
+exports[`add helm repository from list in preferences > when navigating to preferences containing helm repositories > when both active and public repositories resolve > when select for adding public repositories is clicked > when deactive public repository is selected > when adding resolves > renders 1`] = `
 <body>
   <div>
     <div
-      class="Notifications flex column align-flex-end"
+      class="Notifications"
     />
     <div
       class="ClusterManager"
@@ -4346,7 +4509,7 @@ exports[`add helm repository from list in preferences when navigating to prefere
               class="sidebar"
             >
               <div
-                class="Tabs flex column"
+                class="Tabs flex flex-col"
               >
                 <div
                   data-preference-tab-group-test="general-tab-group"
@@ -4357,7 +4520,7 @@ exports[`add helm repository from list in preferences when navigating to prefere
                     Preferences
                   </div>
                   <div
-                    class="Tab flex gaps align-center"
+                    class="Tab flex gap-2 items-center"
                     data-preference-tab-link-test="app"
                     role="tab"
                     tabindex="0"
@@ -4369,7 +4532,7 @@ exports[`add helm repository from list in preferences when navigating to prefere
                     </div>
                   </div>
                   <div
-                    class="Tab flex gaps align-center"
+                    class="Tab flex gap-2 items-center"
                     data-preference-tab-link-test="proxy"
                     role="tab"
                     tabindex="0"
@@ -4381,7 +4544,7 @@ exports[`add helm repository from list in preferences when navigating to prefere
                     </div>
                   </div>
                   <div
-                    class="Tab flex gaps align-center active"
+                    class="Tab flex gap-2 items-center active"
                     data-preference-tab-link-test="kubernetes"
                     role="tab"
                     tabindex="0"
@@ -4393,7 +4556,7 @@ exports[`add helm repository from list in preferences when navigating to prefere
                     </div>
                   </div>
                   <div
-                    class="Tab flex gaps align-center"
+                    class="Tab flex gap-2 items-center"
                     data-preference-tab-link-test="editor"
                     role="tab"
                     tabindex="0"
@@ -4405,7 +4568,7 @@ exports[`add helm repository from list in preferences when navigating to prefere
                     </div>
                   </div>
                   <div
-                    class="Tab flex gaps align-center"
+                    class="Tab flex gap-2 items-center"
                     data-preference-tab-link-test="terminal"
                     role="tab"
                     tabindex="0"
@@ -4519,7 +4682,7 @@ exports[`add helm repository from list in preferences when navigating to prefere
                                   id="download-mirror-input"
                                   role="combobox"
                                   spellcheck="false"
-                                  style="opacity: 1; width: 100%; grid-area: 1 / 2; min-width: 2px; border: 0px; margin: 0px; outline: 0; padding: 0px;"
+                                  style="color: inherit; background: 0px center; opacity: 1; width: 100%; grid-area: 1 / 2; font: inherit; min-width: 2px; border: 0px; margin: 0px; outline: 0px; padding: 0px;"
                                   tabindex="0"
                                   type="text"
                                   value=""
@@ -4571,18 +4734,18 @@ exports[`add helm repository from list in preferences when navigating to prefere
                           class="Input theme round black"
                         >
                           <label
-                            class="input-area flex gaps align-center"
+                            class="input-area flex items-center gap-2"
                             id=""
                           >
                             <input
-                              class="input box grow"
+                              class="input grow"
                               placeholder="/some-directory-for-app-data/some-product-name/binaries"
                               spellcheck="false"
                               value=""
                             />
                           </label>
                           <div
-                            class="input-info flex gaps"
+                            class="input-info flex gap-2"
                           />
                         </div>
                         <div
@@ -4609,11 +4772,11 @@ exports[`add helm repository from list in preferences when navigating to prefere
                           class="Input theme round black disabled"
                         >
                           <label
-                            class="input-area flex gaps align-center"
+                            class="input-area flex items-center gap-2"
                             id=""
                           >
                             <input
-                              class="input box grow"
+                              class="input grow"
                               disabled=""
                               placeholder="/some-directory-for-app-data/some-product-name/binaries/kubectl"
                               spellcheck="false"
@@ -4621,7 +4784,7 @@ exports[`add helm repository from list in preferences when navigating to prefere
                             />
                           </label>
                           <div
-                            class="input-info flex gaps"
+                            class="input-info flex gap-2"
                           />
                         </div>
                         <div
@@ -4659,18 +4822,18 @@ exports[`add helm repository from list in preferences when navigating to prefere
                           class="Input theme round black"
                         >
                           <label
-                            class="input-area flex gaps align-center"
+                            class="input-area flex items-center gap-2"
                             id=""
                           >
                             <input
-                              class="input box grow"
+                              class="input grow"
                               placeholder="/irrelavent-dir-for-lens-resources/x64/helm"
                               spellcheck="false"
                               value=""
                             />
                           </label>
                           <div
-                            class="input-info flex gaps"
+                            class="input-info flex gap-2"
                           />
                         </div>
                         <div
@@ -4717,73 +4880,6 @@ exports[`add helm repository from list in preferences when navigating to prefere
                   class="HorizontalLine size-xl"
                 />
                 <div
-                  data-preference-item-test="kubeconfig-sync"
-                >
-                  <section
-                    id="kube-sync"
-                  >
-                    <h2
-                      data-testid="kubernetes-sync-header"
-                    >
-                      Kubeconfig Syncs
-                    </h2>
-                    <div
-                      class="self-start mb-5"
-                    >
-                      <button
-                        class="Button PathPicker primary"
-                        type="button"
-                      >
-                        Sync Files and Folders
-                      </button>
-                    </div>
-                    <div
-                      class="SubTitle pt-5"
-                    >
-                      Synced Items
-                       
-                    </div>
-                    <div>
-                      <div
-                        class="item flex gaps align-center justify-space-between mt-3"
-                      >
-                        <i
-                          class="Icon material focusable"
-                        >
-                          <span
-                            class="icon"
-                            data-icon-name="folder"
-                          >
-                            folder
-                          </span>
-                        </i>
-                        <div
-                          class="flex-grow break-all"
-                        >
-                          /some-home-dir/.kube
-                        </div>
-                        <i
-                          class="Icon material interactive focusable"
-                          tabindex="0"
-                        >
-                          <span
-                            class="icon"
-                            data-icon-name="delete"
-                          >
-                            delete
-                          </span>
-                        </i>
-                        <div>
-                          Remove
-                        </div>
-                      </div>
-                    </div>
-                  </section>
-                </div>
-                <div
-                  class="HorizontalLine size-xl"
-                />
-                <div
                   data-preference-item-test="helm-charts"
                 >
                   <section
@@ -4797,10 +4893,10 @@ exports[`add helm repository from list in preferences when navigating to prefere
                         data-testid="helm-controls"
                       >
                         <div
-                          class="flex gaps"
+                          class="flex gap-2"
                         >
                           <div
-                            class="Select theme-lens box grow Select--is-disabled css-3iigni-container"
+                            class="Select theme-lens grow shrink-0 basis-0 Select--is-disabled css-3iigni-container"
                           >
                             <span
                               class="css-1f43avz-a11yText-A11yText"
@@ -4844,7 +4940,7 @@ exports[`add helm repository from list in preferences when navigating to prefere
                                     id="selection-of-active-public-helm-repository"
                                     role="combobox"
                                     spellcheck="false"
-                                    style="opacity: 0; width: 100%; grid-area: 1 / 2; min-width: 2px; border: 0px; margin: 0px; outline: 0; padding: 0px;"
+                                    style="color: inherit; background: 0px center; opacity: 0; width: 100%; grid-area: 1 / 2; font: inherit; min-width: 2px; border: 0px; margin: 0px; outline: 0px; padding: 0px;"
                                     tabindex="0"
                                     type="text"
                                     value=""
@@ -4916,6 +5012,73 @@ exports[`add helm repository from list in preferences when navigating to prefere
                     </div>
                   </section>
                 </div>
+                <div
+                  class="HorizontalLine size-xl"
+                />
+                <div
+                  data-preference-item-test="kubeconfig-sync"
+                >
+                  <section
+                    id="kube-sync"
+                  >
+                    <h2
+                      data-testid="kubernetes-sync-header"
+                    >
+                      Kubeconfig Syncs
+                    </h2>
+                    <div
+                      class="self-start mb-5"
+                    >
+                      <button
+                        class="Button PathPicker primary"
+                        type="button"
+                      >
+                        Sync Files and Folders
+                      </button>
+                    </div>
+                    <div
+                      class="SubTitle pt-5"
+                    >
+                      Synced Items
+                       
+                    </div>
+                    <div>
+                      <div
+                        class="item flex gap-2 items-center justify-between mt-3"
+                      >
+                        <i
+                          class="Icon material focusable"
+                        >
+                          <span
+                            class="icon"
+                            data-icon-name="folder"
+                          >
+                            folder
+                          </span>
+                        </i>
+                        <div
+                          class="flex-grow break-all"
+                        >
+                          /some-home-dir/.kube
+                        </div>
+                        <i
+                          class="Icon material interactive focusable"
+                          tabindex="0"
+                        >
+                          <span
+                            class="icon"
+                            data-icon-name="delete"
+                          >
+                            delete
+                          </span>
+                        </i>
+                        <div>
+                          Remove
+                        </div>
+                      </div>
+                    </div>
+                  </section>
+                </div>
               </section>
             </div>
             <div
@@ -4956,17 +5119,22 @@ exports[`add helm repository from list in preferences when navigating to prefere
         </div>
       </main>
       <div
-        class="HotbarMenu flex column"
+        class="HotbarMenu flex flex-col"
       >
         <div
-          class="HotbarItems flex column gaps"
+          class="HotbarItems flex flex-col"
         >
           <div
-            class="HotbarCell isDraggingOwner animateDown"
+            class="HotbarCell animateDown"
             index="0"
           >
             <div
-              style="z-index: 12; position: absolute;"
+              aria-describedby="DndDescribedBy-13"
+              aria-disabled="false"
+              aria-roledescription="draggable"
+              role="button"
+              style="z-index: 12; position: absolute; opacity: 1; pointer-events: auto;"
+              tabindex="0"
             >
               <div
                 class="HotbarIcon contextMenuAvailable"
@@ -4982,11 +5150,16 @@ exports[`add helm repository from list in preferences when navigating to prefere
             </div>
           </div>
           <div
-            class="HotbarCell isDraggingOwner animateDown"
+            class="HotbarCell animateDown"
             index="1"
           >
             <div
-              style="z-index: 11; position: absolute;"
+              aria-describedby="DndDescribedBy-13"
+              aria-disabled="false"
+              aria-roledescription="draggable"
+              role="button"
+              style="z-index: 11; position: absolute; opacity: 1; pointer-events: auto;"
+              tabindex="0"
             >
               <div
                 class="HotbarIcon contextMenuAvailable"
@@ -5002,44 +5175,61 @@ exports[`add helm repository from list in preferences when navigating to prefere
             </div>
           </div>
           <div
-            class="HotbarCell isDraggingOwner animateDown"
+            class="HotbarCell animateDown"
             index="2"
           />
           <div
-            class="HotbarCell isDraggingOwner animateDown"
+            class="HotbarCell animateDown"
             index="3"
           />
           <div
-            class="HotbarCell isDraggingOwner animateDown"
+            class="HotbarCell animateDown"
             index="4"
           />
           <div
-            class="HotbarCell isDraggingOwner animateDown"
+            class="HotbarCell animateDown"
             index="5"
           />
           <div
-            class="HotbarCell isDraggingOwner animateDown"
+            class="HotbarCell animateDown"
             index="6"
           />
           <div
-            class="HotbarCell isDraggingOwner animateDown"
+            class="HotbarCell animateDown"
             index="7"
           />
           <div
-            class="HotbarCell isDraggingOwner animateDown"
+            class="HotbarCell animateDown"
             index="8"
           />
           <div
-            class="HotbarCell isDraggingOwner animateDown"
+            class="HotbarCell animateDown"
             index="9"
           />
           <div
-            class="HotbarCell isDraggingOwner animateDown"
+            class="HotbarCell animateDown"
             index="10"
           />
           <div
-            class="HotbarCell isDraggingOwner animateDown"
+            class="HotbarCell animateDown"
             index="11"
+          />
+          <div
+            id="DndDescribedBy-13"
+            style="display: none;"
+          >
+            
+    To pick up a draggable item, press the space bar.
+    While dragging, use the arrow keys to move the item.
+    Press space again to drop the item in its new position, or press escape to cancel.
+  
+          </div>
+          <div
+            aria-atomic="true"
+            aria-live="assertive"
+            id="DndLiveRegion-13"
+            role="status"
+            style="position: fixed; top: 0px; left: 0px; width: 1px; height: 1px; margin: -1px; border: 0px; padding: 0px; overflow: hidden; clip: rect(0px); clip-path: inset(100%); white-space: nowrap;"
           />
         </div>
         <div
@@ -5098,11 +5288,11 @@ exports[`add helm repository from list in preferences when navigating to prefere
 </body>
 `;
 
-exports[`add helm repository from list in preferences when navigating to preferences containing helm repositories when both active and public repositories resolve when select for adding public repositories is clicked when deactive public repository is selected when adding resolves when active repositories resolve again renders 1`] = `
+exports[`add helm repository from list in preferences > when navigating to preferences containing helm repositories > when both active and public repositories resolve > when select for adding public repositories is clicked > when deactive public repository is selected > when adding resolves > when active repositories resolve again > renders 1`] = `
 <body>
   <div>
     <div
-      class="Notifications flex column align-flex-end"
+      class="Notifications"
     />
     <div
       class="ClusterManager"
@@ -5184,7 +5374,7 @@ exports[`add helm repository from list in preferences when navigating to prefere
               class="sidebar"
             >
               <div
-                class="Tabs flex column"
+                class="Tabs flex flex-col"
               >
                 <div
                   data-preference-tab-group-test="general-tab-group"
@@ -5195,7 +5385,7 @@ exports[`add helm repository from list in preferences when navigating to prefere
                     Preferences
                   </div>
                   <div
-                    class="Tab flex gaps align-center"
+                    class="Tab flex gap-2 items-center"
                     data-preference-tab-link-test="app"
                     role="tab"
                     tabindex="0"
@@ -5207,7 +5397,7 @@ exports[`add helm repository from list in preferences when navigating to prefere
                     </div>
                   </div>
                   <div
-                    class="Tab flex gaps align-center"
+                    class="Tab flex gap-2 items-center"
                     data-preference-tab-link-test="proxy"
                     role="tab"
                     tabindex="0"
@@ -5219,7 +5409,7 @@ exports[`add helm repository from list in preferences when navigating to prefere
                     </div>
                   </div>
                   <div
-                    class="Tab flex gaps align-center active"
+                    class="Tab flex gap-2 items-center active"
                     data-preference-tab-link-test="kubernetes"
                     role="tab"
                     tabindex="0"
@@ -5231,7 +5421,7 @@ exports[`add helm repository from list in preferences when navigating to prefere
                     </div>
                   </div>
                   <div
-                    class="Tab flex gaps align-center"
+                    class="Tab flex gap-2 items-center"
                     data-preference-tab-link-test="editor"
                     role="tab"
                     tabindex="0"
@@ -5243,7 +5433,7 @@ exports[`add helm repository from list in preferences when navigating to prefere
                     </div>
                   </div>
                   <div
-                    class="Tab flex gaps align-center"
+                    class="Tab flex gap-2 items-center"
                     data-preference-tab-link-test="terminal"
                     role="tab"
                     tabindex="0"
@@ -5357,7 +5547,7 @@ exports[`add helm repository from list in preferences when navigating to prefere
                                   id="download-mirror-input"
                                   role="combobox"
                                   spellcheck="false"
-                                  style="opacity: 1; width: 100%; grid-area: 1 / 2; min-width: 2px; border: 0px; margin: 0px; outline: 0; padding: 0px;"
+                                  style="color: inherit; background: 0px center; opacity: 1; width: 100%; grid-area: 1 / 2; font: inherit; min-width: 2px; border: 0px; margin: 0px; outline: 0px; padding: 0px;"
                                   tabindex="0"
                                   type="text"
                                   value=""
@@ -5409,18 +5599,18 @@ exports[`add helm repository from list in preferences when navigating to prefere
                           class="Input theme round black"
                         >
                           <label
-                            class="input-area flex gaps align-center"
+                            class="input-area flex items-center gap-2"
                             id=""
                           >
                             <input
-                              class="input box grow"
+                              class="input grow"
                               placeholder="/some-directory-for-app-data/some-product-name/binaries"
                               spellcheck="false"
                               value=""
                             />
                           </label>
                           <div
-                            class="input-info flex gaps"
+                            class="input-info flex gap-2"
                           />
                         </div>
                         <div
@@ -5447,11 +5637,11 @@ exports[`add helm repository from list in preferences when navigating to prefere
                           class="Input theme round black disabled"
                         >
                           <label
-                            class="input-area flex gaps align-center"
+                            class="input-area flex items-center gap-2"
                             id=""
                           >
                             <input
-                              class="input box grow"
+                              class="input grow"
                               disabled=""
                               placeholder="/some-directory-for-app-data/some-product-name/binaries/kubectl"
                               spellcheck="false"
@@ -5459,7 +5649,7 @@ exports[`add helm repository from list in preferences when navigating to prefere
                             />
                           </label>
                           <div
-                            class="input-info flex gaps"
+                            class="input-info flex gap-2"
                           />
                         </div>
                         <div
@@ -5497,18 +5687,18 @@ exports[`add helm repository from list in preferences when navigating to prefere
                           class="Input theme round black"
                         >
                           <label
-                            class="input-area flex gaps align-center"
+                            class="input-area flex items-center gap-2"
                             id=""
                           >
                             <input
-                              class="input box grow"
+                              class="input grow"
                               placeholder="/irrelavent-dir-for-lens-resources/x64/helm"
                               spellcheck="false"
                               value=""
                             />
                           </label>
                           <div
-                            class="input-info flex gaps"
+                            class="input-info flex gap-2"
                           />
                         </div>
                         <div
@@ -5555,73 +5745,6 @@ exports[`add helm repository from list in preferences when navigating to prefere
                   class="HorizontalLine size-xl"
                 />
                 <div
-                  data-preference-item-test="kubeconfig-sync"
-                >
-                  <section
-                    id="kube-sync"
-                  >
-                    <h2
-                      data-testid="kubernetes-sync-header"
-                    >
-                      Kubeconfig Syncs
-                    </h2>
-                    <div
-                      class="self-start mb-5"
-                    >
-                      <button
-                        class="Button PathPicker primary"
-                        type="button"
-                      >
-                        Sync Files and Folders
-                      </button>
-                    </div>
-                    <div
-                      class="SubTitle pt-5"
-                    >
-                      Synced Items
-                       
-                    </div>
-                    <div>
-                      <div
-                        class="item flex gaps align-center justify-space-between mt-3"
-                      >
-                        <i
-                          class="Icon material focusable"
-                        >
-                          <span
-                            class="icon"
-                            data-icon-name="folder"
-                          >
-                            folder
-                          </span>
-                        </i>
-                        <div
-                          class="flex-grow break-all"
-                        >
-                          /some-home-dir/.kube
-                        </div>
-                        <i
-                          class="Icon material interactive focusable"
-                          tabindex="0"
-                        >
-                          <span
-                            class="icon"
-                            data-icon-name="delete"
-                          >
-                            delete
-                          </span>
-                        </i>
-                        <div>
-                          Remove
-                        </div>
-                      </div>
-                    </div>
-                  </section>
-                </div>
-                <div
-                  class="HorizontalLine size-xl"
-                />
-                <div
                   data-preference-item-test="helm-charts"
                 >
                   <section
@@ -5635,10 +5758,10 @@ exports[`add helm repository from list in preferences when navigating to prefere
                         data-testid="helm-controls"
                       >
                         <div
-                          class="flex gaps"
+                          class="flex gap-2"
                         >
                           <div
-                            class="Select theme-lens box grow css-b62m3t-container"
+                            class="Select theme-lens grow shrink-0 basis-0 css-b62m3t-container"
                           >
                             <span
                               class="css-1f43avz-a11yText-A11yText"
@@ -5680,7 +5803,7 @@ exports[`add helm repository from list in preferences when navigating to prefere
                                     id="selection-of-active-public-helm-repository"
                                     role="combobox"
                                     spellcheck="false"
-                                    style="opacity: 0; width: 100%; grid-area: 1 / 2; min-width: 2px; border: 0px; margin: 0px; outline: 0; padding: 0px;"
+                                    style="color: inherit; background: 0px center; opacity: 0; width: 100%; grid-area: 1 / 2; font: inherit; min-width: 2px; border: 0px; margin: 0px; outline: 0px; padding: 0px;"
                                     tabindex="0"
                                     type="text"
                                     value=""
@@ -5725,7 +5848,7 @@ exports[`add helm repository from list in preferences when navigating to prefere
                           class="repos"
                         >
                           <div
-                            class="item flex gaps align-center justify-space-between repo"
+                            class="item flex gap-2 items-center justify-between repo"
                           >
                             <div>
                               <div
@@ -5759,7 +5882,7 @@ exports[`add helm repository from list in preferences when navigating to prefere
                             </div>
                           </div>
                           <div
-                            class="item flex gaps align-center justify-space-between repo"
+                            class="item flex gap-2 items-center justify-between repo"
                           >
                             <div>
                               <div
@@ -5794,6 +5917,73 @@ exports[`add helm repository from list in preferences when navigating to prefere
                           </div>
                         </div>
                         <div />
+                      </div>
+                    </div>
+                  </section>
+                </div>
+                <div
+                  class="HorizontalLine size-xl"
+                />
+                <div
+                  data-preference-item-test="kubeconfig-sync"
+                >
+                  <section
+                    id="kube-sync"
+                  >
+                    <h2
+                      data-testid="kubernetes-sync-header"
+                    >
+                      Kubeconfig Syncs
+                    </h2>
+                    <div
+                      class="self-start mb-5"
+                    >
+                      <button
+                        class="Button PathPicker primary"
+                        type="button"
+                      >
+                        Sync Files and Folders
+                      </button>
+                    </div>
+                    <div
+                      class="SubTitle pt-5"
+                    >
+                      Synced Items
+                       
+                    </div>
+                    <div>
+                      <div
+                        class="item flex gap-2 items-center justify-between mt-3"
+                      >
+                        <i
+                          class="Icon material focusable"
+                        >
+                          <span
+                            class="icon"
+                            data-icon-name="folder"
+                          >
+                            folder
+                          </span>
+                        </i>
+                        <div
+                          class="flex-grow break-all"
+                        >
+                          /some-home-dir/.kube
+                        </div>
+                        <i
+                          class="Icon material interactive focusable"
+                          tabindex="0"
+                        >
+                          <span
+                            class="icon"
+                            data-icon-name="delete"
+                          >
+                            delete
+                          </span>
+                        </i>
+                        <div>
+                          Remove
+                        </div>
                       </div>
                     </div>
                   </section>
@@ -5838,17 +6028,22 @@ exports[`add helm repository from list in preferences when navigating to prefere
         </div>
       </main>
       <div
-        class="HotbarMenu flex column"
+        class="HotbarMenu flex flex-col"
       >
         <div
-          class="HotbarItems flex column gaps"
+          class="HotbarItems flex flex-col"
         >
           <div
-            class="HotbarCell isDraggingOwner animateDown"
+            class="HotbarCell animateDown"
             index="0"
           >
             <div
-              style="z-index: 12; position: absolute;"
+              aria-describedby="DndDescribedBy-16"
+              aria-disabled="false"
+              aria-roledescription="draggable"
+              role="button"
+              style="z-index: 12; position: absolute; opacity: 1; pointer-events: auto;"
+              tabindex="0"
             >
               <div
                 class="HotbarIcon contextMenuAvailable"
@@ -5864,11 +6059,16 @@ exports[`add helm repository from list in preferences when navigating to prefere
             </div>
           </div>
           <div
-            class="HotbarCell isDraggingOwner animateDown"
+            class="HotbarCell animateDown"
             index="1"
           >
             <div
-              style="z-index: 11; position: absolute;"
+              aria-describedby="DndDescribedBy-16"
+              aria-disabled="false"
+              aria-roledescription="draggable"
+              role="button"
+              style="z-index: 11; position: absolute; opacity: 1; pointer-events: auto;"
+              tabindex="0"
             >
               <div
                 class="HotbarIcon contextMenuAvailable"
@@ -5884,44 +6084,61 @@ exports[`add helm repository from list in preferences when navigating to prefere
             </div>
           </div>
           <div
-            class="HotbarCell isDraggingOwner animateDown"
+            class="HotbarCell animateDown"
             index="2"
           />
           <div
-            class="HotbarCell isDraggingOwner animateDown"
+            class="HotbarCell animateDown"
             index="3"
           />
           <div
-            class="HotbarCell isDraggingOwner animateDown"
+            class="HotbarCell animateDown"
             index="4"
           />
           <div
-            class="HotbarCell isDraggingOwner animateDown"
+            class="HotbarCell animateDown"
             index="5"
           />
           <div
-            class="HotbarCell isDraggingOwner animateDown"
+            class="HotbarCell animateDown"
             index="6"
           />
           <div
-            class="HotbarCell isDraggingOwner animateDown"
+            class="HotbarCell animateDown"
             index="7"
           />
           <div
-            class="HotbarCell isDraggingOwner animateDown"
+            class="HotbarCell animateDown"
             index="8"
           />
           <div
-            class="HotbarCell isDraggingOwner animateDown"
+            class="HotbarCell animateDown"
             index="9"
           />
           <div
-            class="HotbarCell isDraggingOwner animateDown"
+            class="HotbarCell animateDown"
             index="10"
           />
           <div
-            class="HotbarCell isDraggingOwner animateDown"
+            class="HotbarCell animateDown"
             index="11"
+          />
+          <div
+            id="DndDescribedBy-16"
+            style="display: none;"
+          >
+            
+    To pick up a draggable item, press the space bar.
+    While dragging, use the arrow keys to move the item.
+    Press space again to drop the item in its new position, or press escape to cancel.
+  
+          </div>
+          <div
+            aria-atomic="true"
+            aria-live="assertive"
+            id="DndLiveRegion-16"
+            role="status"
+            style="position: fixed; top: 0px; left: 0px; width: 1px; height: 1px; margin: -1px; border: 0px; padding: 0px; overflow: hidden; clip: rect(0px); clip-path: inset(100%); white-space: nowrap;"
           />
         </div>
         <div
@@ -5980,11 +6197,11 @@ exports[`add helm repository from list in preferences when navigating to prefere
 </body>
 `;
 
-exports[`add helm repository from list in preferences when navigating to preferences containing helm repositories when both active and public repositories resolve when select for adding public repositories is clicked when deactive public repository is selected when adding resolves when active repositories resolve again when select for selecting active repositories is clicked renders 1`] = `
+exports[`add helm repository from list in preferences > when navigating to preferences containing helm repositories > when both active and public repositories resolve > when select for adding public repositories is clicked > when deactive public repository is selected > when adding resolves > when active repositories resolve again > when select for selecting active repositories is clicked > renders 1`] = `
 <body>
   <div>
     <div
-      class="Notifications flex column align-flex-end"
+      class="Notifications"
     />
     <div
       class="ClusterManager"
@@ -6066,7 +6283,7 @@ exports[`add helm repository from list in preferences when navigating to prefere
               class="sidebar"
             >
               <div
-                class="Tabs flex column"
+                class="Tabs flex flex-col"
               >
                 <div
                   data-preference-tab-group-test="general-tab-group"
@@ -6077,7 +6294,7 @@ exports[`add helm repository from list in preferences when navigating to prefere
                     Preferences
                   </div>
                   <div
-                    class="Tab flex gaps align-center"
+                    class="Tab flex gap-2 items-center"
                     data-preference-tab-link-test="app"
                     role="tab"
                     tabindex="0"
@@ -6089,7 +6306,7 @@ exports[`add helm repository from list in preferences when navigating to prefere
                     </div>
                   </div>
                   <div
-                    class="Tab flex gaps align-center"
+                    class="Tab flex gap-2 items-center"
                     data-preference-tab-link-test="proxy"
                     role="tab"
                     tabindex="0"
@@ -6101,7 +6318,7 @@ exports[`add helm repository from list in preferences when navigating to prefere
                     </div>
                   </div>
                   <div
-                    class="Tab flex gaps align-center active"
+                    class="Tab flex gap-2 items-center active"
                     data-preference-tab-link-test="kubernetes"
                     role="tab"
                     tabindex="0"
@@ -6113,7 +6330,7 @@ exports[`add helm repository from list in preferences when navigating to prefere
                     </div>
                   </div>
                   <div
-                    class="Tab flex gaps align-center"
+                    class="Tab flex gap-2 items-center"
                     data-preference-tab-link-test="editor"
                     role="tab"
                     tabindex="0"
@@ -6125,7 +6342,7 @@ exports[`add helm repository from list in preferences when navigating to prefere
                     </div>
                   </div>
                   <div
-                    class="Tab flex gaps align-center"
+                    class="Tab flex gap-2 items-center"
                     data-preference-tab-link-test="terminal"
                     role="tab"
                     tabindex="0"
@@ -6239,7 +6456,7 @@ exports[`add helm repository from list in preferences when navigating to prefere
                                   id="download-mirror-input"
                                   role="combobox"
                                   spellcheck="false"
-                                  style="opacity: 1; width: 100%; grid-area: 1 / 2; min-width: 2px; border: 0px; margin: 0px; outline: 0; padding: 0px;"
+                                  style="color: inherit; background: 0px center; opacity: 1; width: 100%; grid-area: 1 / 2; font: inherit; min-width: 2px; border: 0px; margin: 0px; outline: 0px; padding: 0px;"
                                   tabindex="0"
                                   type="text"
                                   value=""
@@ -6291,18 +6508,18 @@ exports[`add helm repository from list in preferences when navigating to prefere
                           class="Input theme round black"
                         >
                           <label
-                            class="input-area flex gaps align-center"
+                            class="input-area flex items-center gap-2"
                             id=""
                           >
                             <input
-                              class="input box grow"
+                              class="input grow"
                               placeholder="/some-directory-for-app-data/some-product-name/binaries"
                               spellcheck="false"
                               value=""
                             />
                           </label>
                           <div
-                            class="input-info flex gaps"
+                            class="input-info flex gap-2"
                           />
                         </div>
                         <div
@@ -6329,11 +6546,11 @@ exports[`add helm repository from list in preferences when navigating to prefere
                           class="Input theme round black disabled"
                         >
                           <label
-                            class="input-area flex gaps align-center"
+                            class="input-area flex items-center gap-2"
                             id=""
                           >
                             <input
-                              class="input box grow"
+                              class="input grow"
                               disabled=""
                               placeholder="/some-directory-for-app-data/some-product-name/binaries/kubectl"
                               spellcheck="false"
@@ -6341,7 +6558,7 @@ exports[`add helm repository from list in preferences when navigating to prefere
                             />
                           </label>
                           <div
-                            class="input-info flex gaps"
+                            class="input-info flex gap-2"
                           />
                         </div>
                         <div
@@ -6379,18 +6596,18 @@ exports[`add helm repository from list in preferences when navigating to prefere
                           class="Input theme round black"
                         >
                           <label
-                            class="input-area flex gaps align-center"
+                            class="input-area flex items-center gap-2"
                             id=""
                           >
                             <input
-                              class="input box grow"
+                              class="input grow"
                               placeholder="/irrelavent-dir-for-lens-resources/x64/helm"
                               spellcheck="false"
                               value=""
                             />
                           </label>
                           <div
-                            class="input-info flex gaps"
+                            class="input-info flex gap-2"
                           />
                         </div>
                         <div
@@ -6437,73 +6654,6 @@ exports[`add helm repository from list in preferences when navigating to prefere
                   class="HorizontalLine size-xl"
                 />
                 <div
-                  data-preference-item-test="kubeconfig-sync"
-                >
-                  <section
-                    id="kube-sync"
-                  >
-                    <h2
-                      data-testid="kubernetes-sync-header"
-                    >
-                      Kubeconfig Syncs
-                    </h2>
-                    <div
-                      class="self-start mb-5"
-                    >
-                      <button
-                        class="Button PathPicker primary"
-                        type="button"
-                      >
-                        Sync Files and Folders
-                      </button>
-                    </div>
-                    <div
-                      class="SubTitle pt-5"
-                    >
-                      Synced Items
-                       
-                    </div>
-                    <div>
-                      <div
-                        class="item flex gaps align-center justify-space-between mt-3"
-                      >
-                        <i
-                          class="Icon material focusable"
-                        >
-                          <span
-                            class="icon"
-                            data-icon-name="folder"
-                          >
-                            folder
-                          </span>
-                        </i>
-                        <div
-                          class="flex-grow break-all"
-                        >
-                          /some-home-dir/.kube
-                        </div>
-                        <i
-                          class="Icon material interactive focusable"
-                          tabindex="0"
-                        >
-                          <span
-                            class="icon"
-                            data-icon-name="delete"
-                          >
-                            delete
-                          </span>
-                        </i>
-                        <div>
-                          Remove
-                        </div>
-                      </div>
-                    </div>
-                  </section>
-                </div>
-                <div
-                  class="HorizontalLine size-xl"
-                />
-                <div
                   data-preference-item-test="helm-charts"
                 >
                   <section
@@ -6517,10 +6667,10 @@ exports[`add helm repository from list in preferences when navigating to prefere
                         data-testid="helm-controls"
                       >
                         <div
-                          class="flex gaps"
+                          class="flex gap-2"
                         >
                           <div
-                            class="Select theme-lens box grow css-b62m3t-container"
+                            class="Select theme-lens grow shrink-0 basis-0 css-b62m3t-container"
                           >
                             <span
                               class="css-1f43avz-a11yText-A11yText"
@@ -6563,7 +6713,7 @@ exports[`add helm repository from list in preferences when navigating to prefere
                                     id="selection-of-active-public-helm-repository"
                                     role="combobox"
                                     spellcheck="false"
-                                    style="opacity: 1; width: 100%; grid-area: 1 / 2; min-width: 2px; border: 0px; margin: 0px; outline: 0; padding: 0px;"
+                                    style="color: inherit; background: 0px center; opacity: 1; width: 100%; grid-area: 1 / 2; font: inherit; min-width: 2px; border: 0px; margin: 0px; outline: 0px; padding: 0px;"
                                     tabindex="0"
                                     type="text"
                                     value=""
@@ -6608,7 +6758,7 @@ exports[`add helm repository from list in preferences when navigating to prefere
                           class="repos"
                         >
                           <div
-                            class="item flex gaps align-center justify-space-between repo"
+                            class="item flex gap-2 items-center justify-between repo"
                           >
                             <div>
                               <div
@@ -6642,7 +6792,7 @@ exports[`add helm repository from list in preferences when navigating to prefere
                             </div>
                           </div>
                           <div
-                            class="item flex gaps align-center justify-space-between repo"
+                            class="item flex gap-2 items-center justify-between repo"
                           >
                             <div>
                               <div
@@ -6677,6 +6827,73 @@ exports[`add helm repository from list in preferences when navigating to prefere
                           </div>
                         </div>
                         <div />
+                      </div>
+                    </div>
+                  </section>
+                </div>
+                <div
+                  class="HorizontalLine size-xl"
+                />
+                <div
+                  data-preference-item-test="kubeconfig-sync"
+                >
+                  <section
+                    id="kube-sync"
+                  >
+                    <h2
+                      data-testid="kubernetes-sync-header"
+                    >
+                      Kubeconfig Syncs
+                    </h2>
+                    <div
+                      class="self-start mb-5"
+                    >
+                      <button
+                        class="Button PathPicker primary"
+                        type="button"
+                      >
+                        Sync Files and Folders
+                      </button>
+                    </div>
+                    <div
+                      class="SubTitle pt-5"
+                    >
+                      Synced Items
+                       
+                    </div>
+                    <div>
+                      <div
+                        class="item flex gap-2 items-center justify-between mt-3"
+                      >
+                        <i
+                          class="Icon material focusable"
+                        >
+                          <span
+                            class="icon"
+                            data-icon-name="folder"
+                          >
+                            folder
+                          </span>
+                        </i>
+                        <div
+                          class="flex-grow break-all"
+                        >
+                          /some-home-dir/.kube
+                        </div>
+                        <i
+                          class="Icon material interactive focusable"
+                          tabindex="0"
+                        >
+                          <span
+                            class="icon"
+                            data-icon-name="delete"
+                          >
+                            delete
+                          </span>
+                        </i>
+                        <div>
+                          Remove
+                        </div>
                       </div>
                     </div>
                   </section>
@@ -6721,17 +6938,22 @@ exports[`add helm repository from list in preferences when navigating to prefere
         </div>
       </main>
       <div
-        class="HotbarMenu flex column"
+        class="HotbarMenu flex flex-col"
       >
         <div
-          class="HotbarItems flex column gaps"
+          class="HotbarItems flex flex-col"
         >
           <div
-            class="HotbarCell isDraggingOwner animateDown"
+            class="HotbarCell animateDown"
             index="0"
           >
             <div
-              style="z-index: 12; position: absolute;"
+              aria-describedby="DndDescribedBy-17"
+              aria-disabled="false"
+              aria-roledescription="draggable"
+              role="button"
+              style="z-index: 12; position: absolute; opacity: 1; pointer-events: auto;"
+              tabindex="0"
             >
               <div
                 class="HotbarIcon contextMenuAvailable"
@@ -6747,11 +6969,16 @@ exports[`add helm repository from list in preferences when navigating to prefere
             </div>
           </div>
           <div
-            class="HotbarCell isDraggingOwner animateDown"
+            class="HotbarCell animateDown"
             index="1"
           >
             <div
-              style="z-index: 11; position: absolute;"
+              aria-describedby="DndDescribedBy-17"
+              aria-disabled="false"
+              aria-roledescription="draggable"
+              role="button"
+              style="z-index: 11; position: absolute; opacity: 1; pointer-events: auto;"
+              tabindex="0"
             >
               <div
                 class="HotbarIcon contextMenuAvailable"
@@ -6767,44 +6994,61 @@ exports[`add helm repository from list in preferences when navigating to prefere
             </div>
           </div>
           <div
-            class="HotbarCell isDraggingOwner animateDown"
+            class="HotbarCell animateDown"
             index="2"
           />
           <div
-            class="HotbarCell isDraggingOwner animateDown"
+            class="HotbarCell animateDown"
             index="3"
           />
           <div
-            class="HotbarCell isDraggingOwner animateDown"
+            class="HotbarCell animateDown"
             index="4"
           />
           <div
-            class="HotbarCell isDraggingOwner animateDown"
+            class="HotbarCell animateDown"
             index="5"
           />
           <div
-            class="HotbarCell isDraggingOwner animateDown"
+            class="HotbarCell animateDown"
             index="6"
           />
           <div
-            class="HotbarCell isDraggingOwner animateDown"
+            class="HotbarCell animateDown"
             index="7"
           />
           <div
-            class="HotbarCell isDraggingOwner animateDown"
+            class="HotbarCell animateDown"
             index="8"
           />
           <div
-            class="HotbarCell isDraggingOwner animateDown"
+            class="HotbarCell animateDown"
             index="9"
           />
           <div
-            class="HotbarCell isDraggingOwner animateDown"
+            class="HotbarCell animateDown"
             index="10"
           />
           <div
-            class="HotbarCell isDraggingOwner animateDown"
+            class="HotbarCell animateDown"
             index="11"
+          />
+          <div
+            id="DndDescribedBy-17"
+            style="display: none;"
+          >
+            
+    To pick up a draggable item, press the space bar.
+    While dragging, use the arrow keys to move the item.
+    Press space again to drop the item in its new position, or press escape to cancel.
+  
+          </div>
+          <div
+            aria-atomic="true"
+            aria-live="assertive"
+            id="DndLiveRegion-17"
+            role="status"
+            style="position: fixed; top: 0px; left: 0px; width: 1px; height: 1px; margin: -1px; border: 0px; padding: 0px; overflow: hidden; clip: rect(0px); clip-path: inset(100%); white-space: nowrap;"
           />
         </div>
         <div
@@ -6881,13 +7125,13 @@ exports[`add helm repository from list in preferences when navigating to prefere
           tabindex="-1"
         >
           <div
-            class="flex gaps"
+            class="flex gap-2"
           >
             <span>
               Some already active repository
             </span>
             <i
-              class="Icon box right material focusable small"
+              class="Icon ml-auto mr-0 material focusable small"
             >
               <span
                 class="icon"
@@ -6907,13 +7151,13 @@ exports[`add helm repository from list in preferences when navigating to prefere
           tabindex="-1"
         >
           <div
-            class="flex gaps"
+            class="flex gap-2"
           >
             <span>
               Some to be added repository
             </span>
             <i
-              class="Icon box right material focusable small"
+              class="Icon ml-auto mr-0 material focusable small"
             >
               <span
                 class="icon"
@@ -6930,11 +7174,11 @@ exports[`add helm repository from list in preferences when navigating to prefere
 </body>
 `;
 
-exports[`add helm repository from list in preferences when navigating to preferences containing helm repositories when both active and public repositories resolve when select for adding public repositories is clicked when deactive public repository is selected when adding resolves when active repositories resolve again when select for selecting active repositories is clicked when active repository is selected renders 1`] = `
+exports[`add helm repository from list in preferences > when navigating to preferences containing helm repositories > when both active and public repositories resolve > when select for adding public repositories is clicked > when deactive public repository is selected > when adding resolves > when active repositories resolve again > when select for selecting active repositories is clicked > when active repository is selected > renders 1`] = `
 <body>
   <div>
     <div
-      class="Notifications flex column align-flex-end"
+      class="Notifications"
     />
     <div
       class="ClusterManager"
@@ -7016,7 +7260,7 @@ exports[`add helm repository from list in preferences when navigating to prefere
               class="sidebar"
             >
               <div
-                class="Tabs flex column"
+                class="Tabs flex flex-col"
               >
                 <div
                   data-preference-tab-group-test="general-tab-group"
@@ -7027,7 +7271,7 @@ exports[`add helm repository from list in preferences when navigating to prefere
                     Preferences
                   </div>
                   <div
-                    class="Tab flex gaps align-center"
+                    class="Tab flex gap-2 items-center"
                     data-preference-tab-link-test="app"
                     role="tab"
                     tabindex="0"
@@ -7039,7 +7283,7 @@ exports[`add helm repository from list in preferences when navigating to prefere
                     </div>
                   </div>
                   <div
-                    class="Tab flex gaps align-center"
+                    class="Tab flex gap-2 items-center"
                     data-preference-tab-link-test="proxy"
                     role="tab"
                     tabindex="0"
@@ -7051,7 +7295,7 @@ exports[`add helm repository from list in preferences when navigating to prefere
                     </div>
                   </div>
                   <div
-                    class="Tab flex gaps align-center active"
+                    class="Tab flex gap-2 items-center active"
                     data-preference-tab-link-test="kubernetes"
                     role="tab"
                     tabindex="0"
@@ -7063,7 +7307,7 @@ exports[`add helm repository from list in preferences when navigating to prefere
                     </div>
                   </div>
                   <div
-                    class="Tab flex gaps align-center"
+                    class="Tab flex gap-2 items-center"
                     data-preference-tab-link-test="editor"
                     role="tab"
                     tabindex="0"
@@ -7075,7 +7319,7 @@ exports[`add helm repository from list in preferences when navigating to prefere
                     </div>
                   </div>
                   <div
-                    class="Tab flex gaps align-center"
+                    class="Tab flex gap-2 items-center"
                     data-preference-tab-link-test="terminal"
                     role="tab"
                     tabindex="0"
@@ -7189,7 +7433,7 @@ exports[`add helm repository from list in preferences when navigating to prefere
                                   id="download-mirror-input"
                                   role="combobox"
                                   spellcheck="false"
-                                  style="opacity: 1; width: 100%; grid-area: 1 / 2; min-width: 2px; border: 0px; margin: 0px; outline: 0; padding: 0px;"
+                                  style="color: inherit; background: 0px center; opacity: 1; width: 100%; grid-area: 1 / 2; font: inherit; min-width: 2px; border: 0px; margin: 0px; outline: 0px; padding: 0px;"
                                   tabindex="0"
                                   type="text"
                                   value=""
@@ -7241,18 +7485,18 @@ exports[`add helm repository from list in preferences when navigating to prefere
                           class="Input theme round black"
                         >
                           <label
-                            class="input-area flex gaps align-center"
+                            class="input-area flex items-center gap-2"
                             id=""
                           >
                             <input
-                              class="input box grow"
+                              class="input grow"
                               placeholder="/some-directory-for-app-data/some-product-name/binaries"
                               spellcheck="false"
                               value=""
                             />
                           </label>
                           <div
-                            class="input-info flex gaps"
+                            class="input-info flex gap-2"
                           />
                         </div>
                         <div
@@ -7279,11 +7523,11 @@ exports[`add helm repository from list in preferences when navigating to prefere
                           class="Input theme round black disabled"
                         >
                           <label
-                            class="input-area flex gaps align-center"
+                            class="input-area flex items-center gap-2"
                             id=""
                           >
                             <input
-                              class="input box grow"
+                              class="input grow"
                               disabled=""
                               placeholder="/some-directory-for-app-data/some-product-name/binaries/kubectl"
                               spellcheck="false"
@@ -7291,7 +7535,7 @@ exports[`add helm repository from list in preferences when navigating to prefere
                             />
                           </label>
                           <div
-                            class="input-info flex gaps"
+                            class="input-info flex gap-2"
                           />
                         </div>
                         <div
@@ -7329,18 +7573,18 @@ exports[`add helm repository from list in preferences when navigating to prefere
                           class="Input theme round black"
                         >
                           <label
-                            class="input-area flex gaps align-center"
+                            class="input-area flex items-center gap-2"
                             id=""
                           >
                             <input
-                              class="input box grow"
+                              class="input grow"
                               placeholder="/irrelavent-dir-for-lens-resources/x64/helm"
                               spellcheck="false"
                               value=""
                             />
                           </label>
                           <div
-                            class="input-info flex gaps"
+                            class="input-info flex gap-2"
                           />
                         </div>
                         <div
@@ -7387,73 +7631,6 @@ exports[`add helm repository from list in preferences when navigating to prefere
                   class="HorizontalLine size-xl"
                 />
                 <div
-                  data-preference-item-test="kubeconfig-sync"
-                >
-                  <section
-                    id="kube-sync"
-                  >
-                    <h2
-                      data-testid="kubernetes-sync-header"
-                    >
-                      Kubeconfig Syncs
-                    </h2>
-                    <div
-                      class="self-start mb-5"
-                    >
-                      <button
-                        class="Button PathPicker primary"
-                        type="button"
-                      >
-                        Sync Files and Folders
-                      </button>
-                    </div>
-                    <div
-                      class="SubTitle pt-5"
-                    >
-                      Synced Items
-                       
-                    </div>
-                    <div>
-                      <div
-                        class="item flex gaps align-center justify-space-between mt-3"
-                      >
-                        <i
-                          class="Icon material focusable"
-                        >
-                          <span
-                            class="icon"
-                            data-icon-name="folder"
-                          >
-                            folder
-                          </span>
-                        </i>
-                        <div
-                          class="flex-grow break-all"
-                        >
-                          /some-home-dir/.kube
-                        </div>
-                        <i
-                          class="Icon material interactive focusable"
-                          tabindex="0"
-                        >
-                          <span
-                            class="icon"
-                            data-icon-name="delete"
-                          >
-                            delete
-                          </span>
-                        </i>
-                        <div>
-                          Remove
-                        </div>
-                      </div>
-                    </div>
-                  </section>
-                </div>
-                <div
-                  class="HorizontalLine size-xl"
-                />
-                <div
                   data-preference-item-test="helm-charts"
                 >
                   <section
@@ -7467,10 +7644,10 @@ exports[`add helm repository from list in preferences when navigating to prefere
                         data-testid="helm-controls"
                       >
                         <div
-                          class="flex gaps"
+                          class="flex gap-2"
                         >
                           <div
-                            class="Select theme-lens box grow css-b62m3t-container"
+                            class="Select theme-lens grow shrink-0 basis-0 css-b62m3t-container"
                           >
                             <span
                               class="css-1f43avz-a11yText-A11yText"
@@ -7512,7 +7689,7 @@ exports[`add helm repository from list in preferences when navigating to prefere
                                     id="selection-of-active-public-helm-repository"
                                     role="combobox"
                                     spellcheck="false"
-                                    style="opacity: 0; width: 100%; grid-area: 1 / 2; min-width: 2px; border: 0px; margin: 0px; outline: 0; padding: 0px;"
+                                    style="color: inherit; background: 0px center; opacity: 0; width: 100%; grid-area: 1 / 2; font: inherit; min-width: 2px; border: 0px; margin: 0px; outline: 0px; padding: 0px;"
                                     tabindex="0"
                                     type="text"
                                     value=""
@@ -7557,7 +7734,7 @@ exports[`add helm repository from list in preferences when navigating to prefere
                           class="repos"
                         >
                           <div
-                            class="item flex gaps align-center justify-space-between repo"
+                            class="item flex gap-2 items-center justify-between repo"
                           >
                             <div>
                               <div
@@ -7591,7 +7768,7 @@ exports[`add helm repository from list in preferences when navigating to prefere
                             </div>
                           </div>
                           <div
-                            class="item flex gaps align-center justify-space-between repo"
+                            class="item flex gap-2 items-center justify-between repo"
                           >
                             <div>
                               <div
@@ -7626,6 +7803,73 @@ exports[`add helm repository from list in preferences when navigating to prefere
                           </div>
                         </div>
                         <div />
+                      </div>
+                    </div>
+                  </section>
+                </div>
+                <div
+                  class="HorizontalLine size-xl"
+                />
+                <div
+                  data-preference-item-test="kubeconfig-sync"
+                >
+                  <section
+                    id="kube-sync"
+                  >
+                    <h2
+                      data-testid="kubernetes-sync-header"
+                    >
+                      Kubeconfig Syncs
+                    </h2>
+                    <div
+                      class="self-start mb-5"
+                    >
+                      <button
+                        class="Button PathPicker primary"
+                        type="button"
+                      >
+                        Sync Files and Folders
+                      </button>
+                    </div>
+                    <div
+                      class="SubTitle pt-5"
+                    >
+                      Synced Items
+                       
+                    </div>
+                    <div>
+                      <div
+                        class="item flex gap-2 items-center justify-between mt-3"
+                      >
+                        <i
+                          class="Icon material focusable"
+                        >
+                          <span
+                            class="icon"
+                            data-icon-name="folder"
+                          >
+                            folder
+                          </span>
+                        </i>
+                        <div
+                          class="flex-grow break-all"
+                        >
+                          /some-home-dir/.kube
+                        </div>
+                        <i
+                          class="Icon material interactive focusable"
+                          tabindex="0"
+                        >
+                          <span
+                            class="icon"
+                            data-icon-name="delete"
+                          >
+                            delete
+                          </span>
+                        </i>
+                        <div>
+                          Remove
+                        </div>
                       </div>
                     </div>
                   </section>
@@ -7670,17 +7914,22 @@ exports[`add helm repository from list in preferences when navigating to prefere
         </div>
       </main>
       <div
-        class="HotbarMenu flex column"
+        class="HotbarMenu flex flex-col"
       >
         <div
-          class="HotbarItems flex column gaps"
+          class="HotbarItems flex flex-col"
         >
           <div
-            class="HotbarCell isDraggingOwner animateDown"
+            class="HotbarCell animateDown"
             index="0"
           >
             <div
-              style="z-index: 12; position: absolute;"
+              aria-describedby="DndDescribedBy-18"
+              aria-disabled="false"
+              aria-roledescription="draggable"
+              role="button"
+              style="z-index: 12; position: absolute; opacity: 1; pointer-events: auto;"
+              tabindex="0"
             >
               <div
                 class="HotbarIcon contextMenuAvailable"
@@ -7696,11 +7945,16 @@ exports[`add helm repository from list in preferences when navigating to prefere
             </div>
           </div>
           <div
-            class="HotbarCell isDraggingOwner animateDown"
+            class="HotbarCell animateDown"
             index="1"
           >
             <div
-              style="z-index: 11; position: absolute;"
+              aria-describedby="DndDescribedBy-18"
+              aria-disabled="false"
+              aria-roledescription="draggable"
+              role="button"
+              style="z-index: 11; position: absolute; opacity: 1; pointer-events: auto;"
+              tabindex="0"
             >
               <div
                 class="HotbarIcon contextMenuAvailable"
@@ -7716,44 +7970,61 @@ exports[`add helm repository from list in preferences when navigating to prefere
             </div>
           </div>
           <div
-            class="HotbarCell isDraggingOwner animateDown"
+            class="HotbarCell animateDown"
             index="2"
           />
           <div
-            class="HotbarCell isDraggingOwner animateDown"
+            class="HotbarCell animateDown"
             index="3"
           />
           <div
-            class="HotbarCell isDraggingOwner animateDown"
+            class="HotbarCell animateDown"
             index="4"
           />
           <div
-            class="HotbarCell isDraggingOwner animateDown"
+            class="HotbarCell animateDown"
             index="5"
           />
           <div
-            class="HotbarCell isDraggingOwner animateDown"
+            class="HotbarCell animateDown"
             index="6"
           />
           <div
-            class="HotbarCell isDraggingOwner animateDown"
+            class="HotbarCell animateDown"
             index="7"
           />
           <div
-            class="HotbarCell isDraggingOwner animateDown"
+            class="HotbarCell animateDown"
             index="8"
           />
           <div
-            class="HotbarCell isDraggingOwner animateDown"
+            class="HotbarCell animateDown"
             index="9"
           />
           <div
-            class="HotbarCell isDraggingOwner animateDown"
+            class="HotbarCell animateDown"
             index="10"
           />
           <div
-            class="HotbarCell isDraggingOwner animateDown"
+            class="HotbarCell animateDown"
             index="11"
+          />
+          <div
+            id="DndDescribedBy-18"
+            style="display: none;"
+          >
+            
+    To pick up a draggable item, press the space bar.
+    While dragging, use the arrow keys to move the item.
+    Press space again to drop the item in its new position, or press escape to cancel.
+  
+          </div>
+          <div
+            aria-atomic="true"
+            aria-live="assertive"
+            id="DndLiveRegion-18"
+            role="status"
+            style="position: fixed; top: 0px; left: 0px; width: 1px; height: 1px; margin: -1px; border: 0px; padding: 0px; overflow: hidden; clip: rect(0px); clip-path: inset(100%); white-space: nowrap;"
           />
         </div>
         <div
@@ -7812,11 +8083,11 @@ exports[`add helm repository from list in preferences when navigating to prefere
 </body>
 `;
 
-exports[`add helm repository from list in preferences when navigating to preferences containing helm repositories when both active and public repositories resolve when select for adding public repositories is clicked when deactive public repository is selected when adding resolves when active repositories resolve again when select for selecting active repositories is clicked when active repository is selected when removing resolves renders 1`] = `
+exports[`add helm repository from list in preferences > when navigating to preferences containing helm repositories > when both active and public repositories resolve > when select for adding public repositories is clicked > when deactive public repository is selected > when adding resolves > when active repositories resolve again > when select for selecting active repositories is clicked > when active repository is selected > when removing resolves > renders 1`] = `
 <body>
   <div>
     <div
-      class="Notifications flex column align-flex-end"
+      class="Notifications"
     />
     <div
       class="ClusterManager"
@@ -7898,7 +8169,7 @@ exports[`add helm repository from list in preferences when navigating to prefere
               class="sidebar"
             >
               <div
-                class="Tabs flex column"
+                class="Tabs flex flex-col"
               >
                 <div
                   data-preference-tab-group-test="general-tab-group"
@@ -7909,7 +8180,7 @@ exports[`add helm repository from list in preferences when navigating to prefere
                     Preferences
                   </div>
                   <div
-                    class="Tab flex gaps align-center"
+                    class="Tab flex gap-2 items-center"
                     data-preference-tab-link-test="app"
                     role="tab"
                     tabindex="0"
@@ -7921,7 +8192,7 @@ exports[`add helm repository from list in preferences when navigating to prefere
                     </div>
                   </div>
                   <div
-                    class="Tab flex gaps align-center"
+                    class="Tab flex gap-2 items-center"
                     data-preference-tab-link-test="proxy"
                     role="tab"
                     tabindex="0"
@@ -7933,7 +8204,7 @@ exports[`add helm repository from list in preferences when navigating to prefere
                     </div>
                   </div>
                   <div
-                    class="Tab flex gaps align-center active"
+                    class="Tab flex gap-2 items-center active"
                     data-preference-tab-link-test="kubernetes"
                     role="tab"
                     tabindex="0"
@@ -7945,7 +8216,7 @@ exports[`add helm repository from list in preferences when navigating to prefere
                     </div>
                   </div>
                   <div
-                    class="Tab flex gaps align-center"
+                    class="Tab flex gap-2 items-center"
                     data-preference-tab-link-test="editor"
                     role="tab"
                     tabindex="0"
@@ -7957,7 +8228,7 @@ exports[`add helm repository from list in preferences when navigating to prefere
                     </div>
                   </div>
                   <div
-                    class="Tab flex gaps align-center"
+                    class="Tab flex gap-2 items-center"
                     data-preference-tab-link-test="terminal"
                     role="tab"
                     tabindex="0"
@@ -8071,7 +8342,7 @@ exports[`add helm repository from list in preferences when navigating to prefere
                                   id="download-mirror-input"
                                   role="combobox"
                                   spellcheck="false"
-                                  style="opacity: 1; width: 100%; grid-area: 1 / 2; min-width: 2px; border: 0px; margin: 0px; outline: 0; padding: 0px;"
+                                  style="color: inherit; background: 0px center; opacity: 1; width: 100%; grid-area: 1 / 2; font: inherit; min-width: 2px; border: 0px; margin: 0px; outline: 0px; padding: 0px;"
                                   tabindex="0"
                                   type="text"
                                   value=""
@@ -8123,18 +8394,18 @@ exports[`add helm repository from list in preferences when navigating to prefere
                           class="Input theme round black"
                         >
                           <label
-                            class="input-area flex gaps align-center"
+                            class="input-area flex items-center gap-2"
                             id=""
                           >
                             <input
-                              class="input box grow"
+                              class="input grow"
                               placeholder="/some-directory-for-app-data/some-product-name/binaries"
                               spellcheck="false"
                               value=""
                             />
                           </label>
                           <div
-                            class="input-info flex gaps"
+                            class="input-info flex gap-2"
                           />
                         </div>
                         <div
@@ -8161,11 +8432,11 @@ exports[`add helm repository from list in preferences when navigating to prefere
                           class="Input theme round black disabled"
                         >
                           <label
-                            class="input-area flex gaps align-center"
+                            class="input-area flex items-center gap-2"
                             id=""
                           >
                             <input
-                              class="input box grow"
+                              class="input grow"
                               disabled=""
                               placeholder="/some-directory-for-app-data/some-product-name/binaries/kubectl"
                               spellcheck="false"
@@ -8173,7 +8444,7 @@ exports[`add helm repository from list in preferences when navigating to prefere
                             />
                           </label>
                           <div
-                            class="input-info flex gaps"
+                            class="input-info flex gap-2"
                           />
                         </div>
                         <div
@@ -8211,18 +8482,18 @@ exports[`add helm repository from list in preferences when navigating to prefere
                           class="Input theme round black"
                         >
                           <label
-                            class="input-area flex gaps align-center"
+                            class="input-area flex items-center gap-2"
                             id=""
                           >
                             <input
-                              class="input box grow"
+                              class="input grow"
                               placeholder="/irrelavent-dir-for-lens-resources/x64/helm"
                               spellcheck="false"
                               value=""
                             />
                           </label>
                           <div
-                            class="input-info flex gaps"
+                            class="input-info flex gap-2"
                           />
                         </div>
                         <div
@@ -8269,73 +8540,6 @@ exports[`add helm repository from list in preferences when navigating to prefere
                   class="HorizontalLine size-xl"
                 />
                 <div
-                  data-preference-item-test="kubeconfig-sync"
-                >
-                  <section
-                    id="kube-sync"
-                  >
-                    <h2
-                      data-testid="kubernetes-sync-header"
-                    >
-                      Kubeconfig Syncs
-                    </h2>
-                    <div
-                      class="self-start mb-5"
-                    >
-                      <button
-                        class="Button PathPicker primary"
-                        type="button"
-                      >
-                        Sync Files and Folders
-                      </button>
-                    </div>
-                    <div
-                      class="SubTitle pt-5"
-                    >
-                      Synced Items
-                       
-                    </div>
-                    <div>
-                      <div
-                        class="item flex gaps align-center justify-space-between mt-3"
-                      >
-                        <i
-                          class="Icon material focusable"
-                        >
-                          <span
-                            class="icon"
-                            data-icon-name="folder"
-                          >
-                            folder
-                          </span>
-                        </i>
-                        <div
-                          class="flex-grow break-all"
-                        >
-                          /some-home-dir/.kube
-                        </div>
-                        <i
-                          class="Icon material interactive focusable"
-                          tabindex="0"
-                        >
-                          <span
-                            class="icon"
-                            data-icon-name="delete"
-                          >
-                            delete
-                          </span>
-                        </i>
-                        <div>
-                          Remove
-                        </div>
-                      </div>
-                    </div>
-                  </section>
-                </div>
-                <div
-                  class="HorizontalLine size-xl"
-                />
-                <div
                   data-preference-item-test="helm-charts"
                 >
                   <section
@@ -8349,10 +8553,10 @@ exports[`add helm repository from list in preferences when navigating to prefere
                         data-testid="helm-controls"
                       >
                         <div
-                          class="flex gaps"
+                          class="flex gap-2"
                         >
                           <div
-                            class="Select theme-lens box grow Select--is-disabled css-3iigni-container"
+                            class="Select theme-lens grow shrink-0 basis-0 Select--is-disabled css-3iigni-container"
                           >
                             <span
                               class="css-1f43avz-a11yText-A11yText"
@@ -8396,7 +8600,7 @@ exports[`add helm repository from list in preferences when navigating to prefere
                                     id="selection-of-active-public-helm-repository"
                                     role="combobox"
                                     spellcheck="false"
-                                    style="opacity: 0; width: 100%; grid-area: 1 / 2; min-width: 2px; border: 0px; margin: 0px; outline: 0; padding: 0px;"
+                                    style="color: inherit; background: 0px center; opacity: 0; width: 100%; grid-area: 1 / 2; font: inherit; min-width: 2px; border: 0px; margin: 0px; outline: 0px; padding: 0px;"
                                     tabindex="0"
                                     type="text"
                                     value=""
@@ -8468,6 +8672,73 @@ exports[`add helm repository from list in preferences when navigating to prefere
                     </div>
                   </section>
                 </div>
+                <div
+                  class="HorizontalLine size-xl"
+                />
+                <div
+                  data-preference-item-test="kubeconfig-sync"
+                >
+                  <section
+                    id="kube-sync"
+                  >
+                    <h2
+                      data-testid="kubernetes-sync-header"
+                    >
+                      Kubeconfig Syncs
+                    </h2>
+                    <div
+                      class="self-start mb-5"
+                    >
+                      <button
+                        class="Button PathPicker primary"
+                        type="button"
+                      >
+                        Sync Files and Folders
+                      </button>
+                    </div>
+                    <div
+                      class="SubTitle pt-5"
+                    >
+                      Synced Items
+                       
+                    </div>
+                    <div>
+                      <div
+                        class="item flex gap-2 items-center justify-between mt-3"
+                      >
+                        <i
+                          class="Icon material focusable"
+                        >
+                          <span
+                            class="icon"
+                            data-icon-name="folder"
+                          >
+                            folder
+                          </span>
+                        </i>
+                        <div
+                          class="flex-grow break-all"
+                        >
+                          /some-home-dir/.kube
+                        </div>
+                        <i
+                          class="Icon material interactive focusable"
+                          tabindex="0"
+                        >
+                          <span
+                            class="icon"
+                            data-icon-name="delete"
+                          >
+                            delete
+                          </span>
+                        </i>
+                        <div>
+                          Remove
+                        </div>
+                      </div>
+                    </div>
+                  </section>
+                </div>
               </section>
             </div>
             <div
@@ -8508,17 +8779,22 @@ exports[`add helm repository from list in preferences when navigating to prefere
         </div>
       </main>
       <div
-        class="HotbarMenu flex column"
+        class="HotbarMenu flex flex-col"
       >
         <div
-          class="HotbarItems flex column gaps"
+          class="HotbarItems flex flex-col"
         >
           <div
-            class="HotbarCell isDraggingOwner animateDown"
+            class="HotbarCell animateDown"
             index="0"
           >
             <div
-              style="z-index: 12; position: absolute;"
+              aria-describedby="DndDescribedBy-21"
+              aria-disabled="false"
+              aria-roledescription="draggable"
+              role="button"
+              style="z-index: 12; position: absolute; opacity: 1; pointer-events: auto;"
+              tabindex="0"
             >
               <div
                 class="HotbarIcon contextMenuAvailable"
@@ -8534,11 +8810,16 @@ exports[`add helm repository from list in preferences when navigating to prefere
             </div>
           </div>
           <div
-            class="HotbarCell isDraggingOwner animateDown"
+            class="HotbarCell animateDown"
             index="1"
           >
             <div
-              style="z-index: 11; position: absolute;"
+              aria-describedby="DndDescribedBy-21"
+              aria-disabled="false"
+              aria-roledescription="draggable"
+              role="button"
+              style="z-index: 11; position: absolute; opacity: 1; pointer-events: auto;"
+              tabindex="0"
             >
               <div
                 class="HotbarIcon contextMenuAvailable"
@@ -8554,44 +8835,61 @@ exports[`add helm repository from list in preferences when navigating to prefere
             </div>
           </div>
           <div
-            class="HotbarCell isDraggingOwner animateDown"
+            class="HotbarCell animateDown"
             index="2"
           />
           <div
-            class="HotbarCell isDraggingOwner animateDown"
+            class="HotbarCell animateDown"
             index="3"
           />
           <div
-            class="HotbarCell isDraggingOwner animateDown"
+            class="HotbarCell animateDown"
             index="4"
           />
           <div
-            class="HotbarCell isDraggingOwner animateDown"
+            class="HotbarCell animateDown"
             index="5"
           />
           <div
-            class="HotbarCell isDraggingOwner animateDown"
+            class="HotbarCell animateDown"
             index="6"
           />
           <div
-            class="HotbarCell isDraggingOwner animateDown"
+            class="HotbarCell animateDown"
             index="7"
           />
           <div
-            class="HotbarCell isDraggingOwner animateDown"
+            class="HotbarCell animateDown"
             index="8"
           />
           <div
-            class="HotbarCell isDraggingOwner animateDown"
+            class="HotbarCell animateDown"
             index="9"
           />
           <div
-            class="HotbarCell isDraggingOwner animateDown"
+            class="HotbarCell animateDown"
             index="10"
           />
           <div
-            class="HotbarCell isDraggingOwner animateDown"
+            class="HotbarCell animateDown"
             index="11"
+          />
+          <div
+            id="DndDescribedBy-21"
+            style="display: none;"
+          >
+            
+    To pick up a draggable item, press the space bar.
+    While dragging, use the arrow keys to move the item.
+    Press space again to drop the item in its new position, or press escape to cancel.
+  
+          </div>
+          <div
+            aria-atomic="true"
+            aria-live="assertive"
+            id="DndLiveRegion-21"
+            role="status"
+            style="position: fixed; top: 0px; left: 0px; width: 1px; height: 1px; margin: -1px; border: 0px; padding: 0px; overflow: hidden; clip: rect(0px); clip-path: inset(100%); white-space: nowrap;"
           />
         </div>
         <div

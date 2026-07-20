@@ -9,7 +9,7 @@ import "./item-list-layout.scss";
 import { cssNames, noop } from "@freelensapp/utilities";
 import { withInjectables } from "@ogre-tools/injectable-react";
 import autoBindReact from "auto-bind/react";
-import groupBy from "lodash/groupBy";
+import { groupBy } from "es-toolkit";
 import { computed, makeObservable, untracked } from "mobx";
 import { observer } from "mobx-react";
 import React from "react";
@@ -294,7 +294,7 @@ class NonInjectedItemListLayout<I extends ItemObject, PreLoadStores extends bool
     const { renderHeaderTitle, "data-testid": dataTestId } = this.props;
 
     return untracked(() => (
-      <div className={cssNames("ItemListLayout flex column", this.props.className)} data-testid={dataTestId}>
+      <div className={cssNames("ItemListLayout flex flex-col", this.props.className)} data-testid={dataTestId}>
         <ItemListLayoutHeader
           getItems={() => this.items}
           getFilters={() => this.filters}

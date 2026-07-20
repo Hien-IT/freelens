@@ -22,15 +22,16 @@ import extensionDiscoveryInjectable from "../extension-discovery/extension-disco
 import installExtensionInjectable from "../install-extension/install-extension.injectable";
 
 import type { FSWatcher } from "chokidar";
+import type { Mock } from "vitest";
 
 import type { JoinPaths } from "../../common/path/join-paths.injectable";
 import type { ExtensionDiscovery } from "../extension-discovery/extension-discovery";
 
 describe("ExtensionDiscovery", () => {
   let extensionDiscovery: ExtensionDiscovery;
-  let readJsonFileMock: jest.Mock;
-  let pathExistsMock: jest.Mock;
-  let watchMock: jest.Mock;
+  let readJsonFileMock: Mock;
+  let pathExistsMock: Mock;
+  let watchMock: Mock;
   let joinPaths: JoinPaths;
   let homeDirectoryPath: string;
 
@@ -53,13 +54,13 @@ describe("ExtensionDiscovery", () => {
     joinPaths = di.inject(joinPathsInjectable);
     homeDirectoryPath = di.inject(homeDirectoryPathInjectable);
 
-    readJsonFileMock = jest.fn();
+    readJsonFileMock = vi.fn();
     di.override(readJsonFileInjectable, () => readJsonFileMock);
 
-    pathExistsMock = jest.fn(() => Promise.resolve(true));
+    pathExistsMock = vi.fn(() => Promise.resolve(true));
     di.override(pathExistsInjectable, () => pathExistsMock);
 
-    watchMock = jest.fn();
+    watchMock = vi.fn();
     di.override(watchInjectable, () => watchMock);
 
     di.override(removePathInjectable, () => async () => {}); // allow deleting files for now
@@ -84,7 +85,7 @@ describe("ExtensionDiscovery", () => {
     });
 
     const mockWatchInstance = {
-      on: jest.fn((event: string, handler: typeof addHandler) => {
+      on: vi.fn((event: string, handler: typeof addHandler) => {
         if (event === "add") {
           addHandler = handler;
         }
@@ -104,7 +105,6 @@ describe("ExtensionDiscovery", () => {
       expect(extension).toEqual({
         absolutePath: expect.any(String),
         id: "/some-directory-for-user-data/node_modules/my-extension/package.json",
-        isBundled: false,
         isEnabled: false,
         isCompatible: true,
         manifest: {
@@ -127,7 +127,7 @@ describe("ExtensionDiscovery", () => {
     let addHandler!: (filePath: string) => void;
 
     const mockWatchInstance = {
-      on: jest.fn((event: string, handler: typeof addHandler) => {
+      on: vi.fn((event: string, handler: typeof addHandler) => {
         if (event === "add") {
           addHandler = handler;
         }
@@ -143,7 +143,7 @@ describe("ExtensionDiscovery", () => {
 
     await extensionDiscovery.watchExtensions();
 
-    const onAdd = jest.fn();
+    const onAdd = vi.fn();
 
     extensionDiscovery.events.on("add", onAdd);
 

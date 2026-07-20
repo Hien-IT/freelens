@@ -7,7 +7,6 @@
 import "./resource-selector.scss";
 
 import { observer } from "mobx-react";
-import React from "react";
 import { Badge } from "../../badge";
 import { Select } from "../../select";
 import { findOptimalDefaultContainerOfPod } from "./default-container-helper";
@@ -86,7 +85,7 @@ export const LogResourceSelector = observer(({ model }: LogResourceSelectorProps
   ];
 
   return (
-    <div className="LogResourceSelector flex gaps align-center">
+    <div className="LogResourceSelector flex gap-2 items-center">
       <span>Namespace</span> <Badge data-testid="namespace-badge" label={pod.getNs()} />
       {owner && (
         <>

@@ -6,7 +6,7 @@
 
 import { withInjectables } from "@ogre-tools/injectable-react";
 import { observer } from "mobx-react";
-import React, { useContext } from "react";
+import { useContext } from "react";
 import { isMetricsEmpty, normalizeMetrics } from "../../../common/k8s-api/endpoints/metrics.api";
 import activeThemeInjectable from "../../themes/active.injectable";
 import { BarChart, memoryOptions } from "../chart";
@@ -63,7 +63,7 @@ const NonInjectedVolumeClaimDiskChart = observer(
 
     return (
       <BarChart
-        className="VolumeClaimDiskChart flex box grow column"
+        className="VolumeClaimDiskChart flex flex-col grow shrink-0 basis-0"
         name={`pvc-${object.getName()}-disk`}
         options={memoryOptions}
         data={{ datasets }}

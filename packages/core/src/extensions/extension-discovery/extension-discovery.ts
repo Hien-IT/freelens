@@ -4,23 +4,17 @@
  * Licensed under MIT License. See LICENSE in root directory for more information.
  */
 
+import { EventEmitter } from "node:events";
 import { isErrnoException } from "@freelensapp/utilities";
-import AwaitLock from "await-lock";
 import { ipcRenderer } from "electron";
-import { EventEmitter } from "events";
 import { makeObservable, observable, reaction, when } from "mobx";
 import { broadcastMessage, ipcMainHandle, ipcRendererOn } from "../../common/ipc";
 import { extensionDiscoveryStateChannel } from "../../common/ipc/extension-handling";
 import { toJS } from "../../common/utils";
+import AwaitLock from "../../common/utils/await-lock";
 import { requestInitialExtensionDiscovery } from "../../renderer/ipc";
-import type { Stats } from "fs";
+import type { Stats } from "node:fs";
 
-import type {
-  ExternalInstalledExtension,
-  InstalledExtension,
-  LensExtensionId,
-  LensExtensionManifest,
-} from "@freelensapp/legacy-extensions";
 import type { Logger } from "@freelensapp/logger";
 
 import type TypedEventEmitter from "typed-emitter";
@@ -44,6 +38,7 @@ import type { ExtensionInstallationStateStore } from "../extension-installation-
 import type { ExtensionLoader } from "../extension-loader";
 import type { ForkPnpm } from "../install-extension/fork-pnpm.injectable";
 import type { InstallExtension } from "../install-extension/install-extension.injectable";
+import type { InstalledExtension, LensExtensionId, LensExtensionManifest } from "../installed-extension";
 
 interface Dependencies {
   readonly extensionLoader: ExtensionLoader;
@@ -89,10 +84,10 @@ interface ExtensionDiscoveryChannelMessage {
  */
 const isDirectoryLike = (lstat: Stats) => lstat.isDirectory() || lstat.isSymbolicLink();
 
-interface ExtensionDiscoveryEvents {
+type ExtensionDiscoveryEvents = {
   add: (ext: InstalledExtension) => void;
   remove: (extId: LensExtensionId) => void;
-}
+};
 
 /**
  * Discovers installed bundled and local extensions from the filesystem.
@@ -117,7 +112,8 @@ export class ExtensionDiscovery {
     return when(() => this.isLoaded);
   }
 
-  public readonly events: TypedEventEmitter<ExtensionDiscoveryEvents> = new EventEmitter();
+  public readonly events: TypedEventEmitter<ExtensionDiscoveryEvents> =
+    new EventEmitter() as unknown as TypedEventEmitter<ExtensionDiscoveryEvents>;
 
   constructor(protected readonly dependencies: Dependencies) {
     makeObservable(this);
@@ -383,7 +379,7 @@ export class ExtensionDiscovery {
    * Returns InstalledExtension from path to package.json file.
    * Also updates this.packagesJson.
    */
-  protected async loadExtensionFromFolder(folderPath: string): Promise<ExternalInstalledExtension | null> {
+  protected async loadExtensionFromFolder(folderPath: string): Promise<InstalledExtension | null> {
     const manifestPath = this.dependencies.joinPaths(folderPath, manifestFilename);
 
     try {
@@ -401,7 +397,6 @@ export class ExtensionDiscovery {
         absolutePath,
         manifestPath: id,
         manifest,
-        isBundled: false,
         isEnabled,
         isCompatible,
       };
@@ -419,14 +414,14 @@ export class ExtensionDiscovery {
     }
   }
 
-  async ensureExtensions(): Promise<Map<LensExtensionId, ExternalInstalledExtension>> {
+  async ensureExtensions(): Promise<Map<LensExtensionId, InstalledExtension>> {
     const userExtensions = await this.loadFromFolder(this.localFolderPath);
 
     return (this.extensions = new Map(userExtensions.map((extension) => [extension.id, extension])));
   }
 
-  async loadFromFolder(folderPath: string): Promise<ExternalInstalledExtension[]> {
-    const extensions: ExternalInstalledExtension[] = [];
+  async loadFromFolder(folderPath: string): Promise<InstalledExtension[]> {
+    const extensions: InstalledExtension[] = [];
     const paths = await this.dependencies.readDirectory(folderPath);
 
     for (const fileName of paths) {

@@ -1,10 +1,10 @@
-// Jest Snapshot v1, https://goo.gl/fbAQLP
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
-exports[`Command Pallet: keyboard shortcut tests when on linux renders 1`] = `
+exports[`Command Pallet: keyboard shortcut tests > when on linux > renders 1`] = `
 <body>
   <div>
     <div
-      class="Notifications flex column align-flex-end"
+      class="Notifications"
     />
     <div
       class="ClusterManager"
@@ -167,7 +167,7 @@ exports[`Command Pallet: keyboard shortcut tests when on linux renders 1`] = `
           id="lens-views"
         />
         <div
-          class="flex justify-center Welcome align-center"
+          class="flex justify-center Welcome items-center"
           data-testid="welcome-page"
         >
           <div
@@ -295,7 +295,7 @@ exports[`Command Pallet: keyboard shortcut tests when on linux renders 1`] = `
                     class="flex grid-12"
                   >
                     <i
-                      class="Icon box col-1 material focusable"
+                      class="Icon col-1 material focusable"
                     >
                       <span
                         class="icon"
@@ -305,12 +305,12 @@ exports[`Command Pallet: keyboard shortcut tests when on linux renders 1`] = `
                       </span>
                     </i>
                     <a
-                      class="box col-10"
+                      class="col-10"
                     >
                       Browse Clusters in Catalog
                     </a>
                     <i
-                      class="Icon box col-1 material focusable"
+                      class="Icon col-1 material focusable"
                     >
                       <span
                         class="icon"
@@ -327,17 +327,22 @@ exports[`Command Pallet: keyboard shortcut tests when on linux renders 1`] = `
         </div>
       </main>
       <div
-        class="HotbarMenu flex column"
+        class="HotbarMenu flex flex-col"
       >
         <div
-          class="HotbarItems flex column gaps"
+          class="HotbarItems flex flex-col"
         >
           <div
-            class="HotbarCell isDraggingOwner animateDown"
+            class="HotbarCell animateDown"
             index="0"
           >
             <div
-              style="z-index: 12; position: absolute;"
+              aria-describedby="DndDescribedBy-8"
+              aria-disabled="false"
+              aria-roledescription="draggable"
+              role="button"
+              style="z-index: 12; position: absolute; opacity: 1; pointer-events: auto;"
+              tabindex="0"
             >
               <div
                 class="HotbarIcon contextMenuAvailable"
@@ -353,11 +358,16 @@ exports[`Command Pallet: keyboard shortcut tests when on linux renders 1`] = `
             </div>
           </div>
           <div
-            class="HotbarCell isDraggingOwner animateDown"
+            class="HotbarCell animateDown"
             index="1"
           >
             <div
-              style="z-index: 11; position: absolute;"
+              aria-describedby="DndDescribedBy-8"
+              aria-disabled="false"
+              aria-roledescription="draggable"
+              role="button"
+              style="z-index: 11; position: absolute; opacity: 1; pointer-events: auto;"
+              tabindex="0"
             >
               <div
                 class="HotbarIcon contextMenuAvailable"
@@ -373,44 +383,61 @@ exports[`Command Pallet: keyboard shortcut tests when on linux renders 1`] = `
             </div>
           </div>
           <div
-            class="HotbarCell isDraggingOwner animateDown"
+            class="HotbarCell animateDown"
             index="2"
           />
           <div
-            class="HotbarCell isDraggingOwner animateDown"
+            class="HotbarCell animateDown"
             index="3"
           />
           <div
-            class="HotbarCell isDraggingOwner animateDown"
+            class="HotbarCell animateDown"
             index="4"
           />
           <div
-            class="HotbarCell isDraggingOwner animateDown"
+            class="HotbarCell animateDown"
             index="5"
           />
           <div
-            class="HotbarCell isDraggingOwner animateDown"
+            class="HotbarCell animateDown"
             index="6"
           />
           <div
-            class="HotbarCell isDraggingOwner animateDown"
+            class="HotbarCell animateDown"
             index="7"
           />
           <div
-            class="HotbarCell isDraggingOwner animateDown"
+            class="HotbarCell animateDown"
             index="8"
           />
           <div
-            class="HotbarCell isDraggingOwner animateDown"
+            class="HotbarCell animateDown"
             index="9"
           />
           <div
-            class="HotbarCell isDraggingOwner animateDown"
+            class="HotbarCell animateDown"
             index="10"
           />
           <div
-            class="HotbarCell isDraggingOwner animateDown"
+            class="HotbarCell animateDown"
             index="11"
+          />
+          <div
+            id="DndDescribedBy-8"
+            style="display: none;"
+          >
+            
+    To pick up a draggable item, press the space bar.
+    While dragging, use the arrow keys to move the item.
+    Press space again to drop the item in its new position, or press escape to cancel.
+  
+          </div>
+          <div
+            aria-atomic="true"
+            aria-live="assertive"
+            id="DndLiveRegion-8"
+            role="status"
+            style="position: fixed; top: 0px; left: 0px; width: 1px; height: 1px; margin: -1px; border: 0px; padding: 0px; overflow: hidden; clip: rect(0px); clip-path: inset(100%); white-space: nowrap;"
           />
         </div>
         <div
@@ -469,11 +496,11 @@ exports[`Command Pallet: keyboard shortcut tests when on linux renders 1`] = `
 </body>
 `;
 
-exports[`Command Pallet: keyboard shortcut tests when on linux when pressing ESC renders 1`] = `
+exports[`Command Pallet: keyboard shortcut tests > when on linux > when pressing ESC > renders 1`] = `
 <body>
   <div>
     <div
-      class="Notifications flex column align-flex-end"
+      class="Notifications"
     />
     <div
       class="ClusterManager"
@@ -636,7 +663,7 @@ exports[`Command Pallet: keyboard shortcut tests when on linux when pressing ESC
           id="lens-views"
         />
         <div
-          class="flex justify-center Welcome align-center"
+          class="flex justify-center Welcome items-center"
           data-testid="welcome-page"
         >
           <div
@@ -764,7 +791,7 @@ exports[`Command Pallet: keyboard shortcut tests when on linux when pressing ESC
                     class="flex grid-12"
                   >
                     <i
-                      class="Icon box col-1 material focusable"
+                      class="Icon col-1 material focusable"
                     >
                       <span
                         class="icon"
@@ -774,12 +801,12 @@ exports[`Command Pallet: keyboard shortcut tests when on linux when pressing ESC
                       </span>
                     </i>
                     <a
-                      class="box col-10"
+                      class="col-10"
                     >
                       Browse Clusters in Catalog
                     </a>
                     <i
-                      class="Icon box col-1 material focusable"
+                      class="Icon col-1 material focusable"
                     >
                       <span
                         class="icon"
@@ -796,17 +823,22 @@ exports[`Command Pallet: keyboard shortcut tests when on linux when pressing ESC
         </div>
       </main>
       <div
-        class="HotbarMenu flex column"
+        class="HotbarMenu flex flex-col"
       >
         <div
-          class="HotbarItems flex column gaps"
+          class="HotbarItems flex flex-col"
         >
           <div
-            class="HotbarCell isDraggingOwner animateDown"
+            class="HotbarCell animateDown"
             index="0"
           >
             <div
-              style="z-index: 12; position: absolute;"
+              aria-describedby="DndDescribedBy-10"
+              aria-disabled="false"
+              aria-roledescription="draggable"
+              role="button"
+              style="z-index: 12; position: absolute; opacity: 1; pointer-events: auto;"
+              tabindex="0"
             >
               <div
                 class="HotbarIcon contextMenuAvailable"
@@ -822,11 +854,16 @@ exports[`Command Pallet: keyboard shortcut tests when on linux when pressing ESC
             </div>
           </div>
           <div
-            class="HotbarCell isDraggingOwner animateDown"
+            class="HotbarCell animateDown"
             index="1"
           >
             <div
-              style="z-index: 11; position: absolute;"
+              aria-describedby="DndDescribedBy-10"
+              aria-disabled="false"
+              aria-roledescription="draggable"
+              role="button"
+              style="z-index: 11; position: absolute; opacity: 1; pointer-events: auto;"
+              tabindex="0"
             >
               <div
                 class="HotbarIcon contextMenuAvailable"
@@ -842,44 +879,61 @@ exports[`Command Pallet: keyboard shortcut tests when on linux when pressing ESC
             </div>
           </div>
           <div
-            class="HotbarCell isDraggingOwner animateDown"
+            class="HotbarCell animateDown"
             index="2"
           />
           <div
-            class="HotbarCell isDraggingOwner animateDown"
+            class="HotbarCell animateDown"
             index="3"
           />
           <div
-            class="HotbarCell isDraggingOwner animateDown"
+            class="HotbarCell animateDown"
             index="4"
           />
           <div
-            class="HotbarCell isDraggingOwner animateDown"
+            class="HotbarCell animateDown"
             index="5"
           />
           <div
-            class="HotbarCell isDraggingOwner animateDown"
+            class="HotbarCell animateDown"
             index="6"
           />
           <div
-            class="HotbarCell isDraggingOwner animateDown"
+            class="HotbarCell animateDown"
             index="7"
           />
           <div
-            class="HotbarCell isDraggingOwner animateDown"
+            class="HotbarCell animateDown"
             index="8"
           />
           <div
-            class="HotbarCell isDraggingOwner animateDown"
+            class="HotbarCell animateDown"
             index="9"
           />
           <div
-            class="HotbarCell isDraggingOwner animateDown"
+            class="HotbarCell animateDown"
             index="10"
           />
           <div
-            class="HotbarCell isDraggingOwner animateDown"
+            class="HotbarCell animateDown"
             index="11"
+          />
+          <div
+            id="DndDescribedBy-10"
+            style="display: none;"
+          >
+            
+    To pick up a draggable item, press the space bar.
+    While dragging, use the arrow keys to move the item.
+    Press space again to drop the item in its new position, or press escape to cancel.
+  
+          </div>
+          <div
+            aria-atomic="true"
+            aria-live="assertive"
+            id="DndLiveRegion-10"
+            role="status"
+            style="position: fixed; top: 0px; left: 0px; width: 1px; height: 1px; margin: -1px; border: 0px; padding: 0px; overflow: hidden; clip: rect(0px); clip-path: inset(100%); white-space: nowrap;"
           />
         </div>
         <div
@@ -938,11 +992,11 @@ exports[`Command Pallet: keyboard shortcut tests when on linux when pressing ESC
 </body>
 `;
 
-exports[`Command Pallet: keyboard shortcut tests when on linux when pressing SHIFT+CTRL+P renders 1`] = `
+exports[`Command Pallet: keyboard shortcut tests > when on linux > when pressing SHIFT+CTRL+P > renders 1`] = `
 <body>
   <div>
     <div
-      class="Notifications flex column align-flex-end"
+      class="Notifications"
     />
     <div
       class="ClusterManager"
@@ -1105,7 +1159,7 @@ exports[`Command Pallet: keyboard shortcut tests when on linux when pressing SHI
           id="lens-views"
         />
         <div
-          class="flex justify-center Welcome align-center"
+          class="flex justify-center Welcome items-center"
           data-testid="welcome-page"
         >
           <div
@@ -1233,7 +1287,7 @@ exports[`Command Pallet: keyboard shortcut tests when on linux when pressing SHI
                     class="flex grid-12"
                   >
                     <i
-                      class="Icon box col-1 material focusable"
+                      class="Icon col-1 material focusable"
                     >
                       <span
                         class="icon"
@@ -1243,12 +1297,12 @@ exports[`Command Pallet: keyboard shortcut tests when on linux when pressing SHI
                       </span>
                     </i>
                     <a
-                      class="box col-10"
+                      class="col-10"
                     >
                       Browse Clusters in Catalog
                     </a>
                     <i
-                      class="Icon box col-1 material focusable"
+                      class="Icon col-1 material focusable"
                     >
                       <span
                         class="icon"
@@ -1265,17 +1319,22 @@ exports[`Command Pallet: keyboard shortcut tests when on linux when pressing SHI
         </div>
       </main>
       <div
-        class="HotbarMenu flex column"
+        class="HotbarMenu flex flex-col"
       >
         <div
-          class="HotbarItems flex column gaps"
+          class="HotbarItems flex flex-col"
         >
           <div
-            class="HotbarCell isDraggingOwner animateDown"
+            class="HotbarCell animateDown"
             index="0"
           >
             <div
-              style="z-index: 12; position: absolute;"
+              aria-describedby="DndDescribedBy-12"
+              aria-disabled="false"
+              aria-roledescription="draggable"
+              role="button"
+              style="z-index: 12; position: absolute; opacity: 1; pointer-events: auto;"
+              tabindex="0"
             >
               <div
                 class="HotbarIcon contextMenuAvailable"
@@ -1291,11 +1350,16 @@ exports[`Command Pallet: keyboard shortcut tests when on linux when pressing SHI
             </div>
           </div>
           <div
-            class="HotbarCell isDraggingOwner animateDown"
+            class="HotbarCell animateDown"
             index="1"
           >
             <div
-              style="z-index: 11; position: absolute;"
+              aria-describedby="DndDescribedBy-12"
+              aria-disabled="false"
+              aria-roledescription="draggable"
+              role="button"
+              style="z-index: 11; position: absolute; opacity: 1; pointer-events: auto;"
+              tabindex="0"
             >
               <div
                 class="HotbarIcon contextMenuAvailable"
@@ -1311,44 +1375,61 @@ exports[`Command Pallet: keyboard shortcut tests when on linux when pressing SHI
             </div>
           </div>
           <div
-            class="HotbarCell isDraggingOwner animateDown"
+            class="HotbarCell animateDown"
             index="2"
           />
           <div
-            class="HotbarCell isDraggingOwner animateDown"
+            class="HotbarCell animateDown"
             index="3"
           />
           <div
-            class="HotbarCell isDraggingOwner animateDown"
+            class="HotbarCell animateDown"
             index="4"
           />
           <div
-            class="HotbarCell isDraggingOwner animateDown"
+            class="HotbarCell animateDown"
             index="5"
           />
           <div
-            class="HotbarCell isDraggingOwner animateDown"
+            class="HotbarCell animateDown"
             index="6"
           />
           <div
-            class="HotbarCell isDraggingOwner animateDown"
+            class="HotbarCell animateDown"
             index="7"
           />
           <div
-            class="HotbarCell isDraggingOwner animateDown"
+            class="HotbarCell animateDown"
             index="8"
           />
           <div
-            class="HotbarCell isDraggingOwner animateDown"
+            class="HotbarCell animateDown"
             index="9"
           />
           <div
-            class="HotbarCell isDraggingOwner animateDown"
+            class="HotbarCell animateDown"
             index="10"
           />
           <div
-            class="HotbarCell isDraggingOwner animateDown"
+            class="HotbarCell animateDown"
             index="11"
+          />
+          <div
+            id="DndDescribedBy-12"
+            style="display: none;"
+          >
+            
+    To pick up a draggable item, press the space bar.
+    While dragging, use the arrow keys to move the item.
+    Press space again to drop the item in its new position, or press escape to cancel.
+  
+          </div>
+          <div
+            aria-atomic="true"
+            aria-live="assertive"
+            id="DndLiveRegion-12"
+            role="status"
+            style="position: fixed; top: 0px; left: 0px; width: 1px; height: 1px; margin: -1px; border: 0px; padding: 0px; overflow: hidden; clip: rect(0px); clip-path: inset(100%); white-space: nowrap;"
           />
         </div>
         <div
@@ -1405,10 +1486,10 @@ exports[`Command Pallet: keyboard shortcut tests when on linux when pressing SHI
     </div>
   </div>
   <div
-    class="Dialog flex center"
+    class="Dialog flex items-center justify-center"
   >
     <div
-      class="box"
+      class="dialog-content"
     >
       <div
         class="CommandContainer"
@@ -1419,11 +1500,11 @@ exports[`Command Pallet: keyboard shortcut tests when on linux when pressing SHI
 </body>
 `;
 
-exports[`Command Pallet: keyboard shortcut tests when on linux when pressing SHIFT+CTRL+P when pressing ESC renders 1`] = `
+exports[`Command Pallet: keyboard shortcut tests > when on linux > when pressing SHIFT+CTRL+P > when pressing ESC > renders 1`] = `
 <body>
   <div>
     <div
-      class="Notifications flex column align-flex-end"
+      class="Notifications"
     />
     <div
       class="ClusterManager"
@@ -1586,7 +1667,7 @@ exports[`Command Pallet: keyboard shortcut tests when on linux when pressing SHI
           id="lens-views"
         />
         <div
-          class="flex justify-center Welcome align-center"
+          class="flex justify-center Welcome items-center"
           data-testid="welcome-page"
         >
           <div
@@ -1714,7 +1795,7 @@ exports[`Command Pallet: keyboard shortcut tests when on linux when pressing SHI
                     class="flex grid-12"
                   >
                     <i
-                      class="Icon box col-1 material focusable"
+                      class="Icon col-1 material focusable"
                     >
                       <span
                         class="icon"
@@ -1724,12 +1805,12 @@ exports[`Command Pallet: keyboard shortcut tests when on linux when pressing SHI
                       </span>
                     </i>
                     <a
-                      class="box col-10"
+                      class="col-10"
                     >
                       Browse Clusters in Catalog
                     </a>
                     <i
-                      class="Icon box col-1 material focusable"
+                      class="Icon col-1 material focusable"
                     >
                       <span
                         class="icon"
@@ -1746,17 +1827,22 @@ exports[`Command Pallet: keyboard shortcut tests when on linux when pressing SHI
         </div>
       </main>
       <div
-        class="HotbarMenu flex column"
+        class="HotbarMenu flex flex-col"
       >
         <div
-          class="HotbarItems flex column gaps"
+          class="HotbarItems flex flex-col"
         >
           <div
-            class="HotbarCell isDraggingOwner animateDown"
+            class="HotbarCell animateDown"
             index="0"
           >
             <div
-              style="z-index: 12; position: absolute;"
+              aria-describedby="DndDescribedBy-14"
+              aria-disabled="false"
+              aria-roledescription="draggable"
+              role="button"
+              style="z-index: 12; position: absolute; opacity: 1; pointer-events: auto;"
+              tabindex="0"
             >
               <div
                 class="HotbarIcon contextMenuAvailable"
@@ -1772,11 +1858,16 @@ exports[`Command Pallet: keyboard shortcut tests when on linux when pressing SHI
             </div>
           </div>
           <div
-            class="HotbarCell isDraggingOwner animateDown"
+            class="HotbarCell animateDown"
             index="1"
           >
             <div
-              style="z-index: 11; position: absolute;"
+              aria-describedby="DndDescribedBy-14"
+              aria-disabled="false"
+              aria-roledescription="draggable"
+              role="button"
+              style="z-index: 11; position: absolute; opacity: 1; pointer-events: auto;"
+              tabindex="0"
             >
               <div
                 class="HotbarIcon contextMenuAvailable"
@@ -1792,44 +1883,61 @@ exports[`Command Pallet: keyboard shortcut tests when on linux when pressing SHI
             </div>
           </div>
           <div
-            class="HotbarCell isDraggingOwner animateDown"
+            class="HotbarCell animateDown"
             index="2"
           />
           <div
-            class="HotbarCell isDraggingOwner animateDown"
+            class="HotbarCell animateDown"
             index="3"
           />
           <div
-            class="HotbarCell isDraggingOwner animateDown"
+            class="HotbarCell animateDown"
             index="4"
           />
           <div
-            class="HotbarCell isDraggingOwner animateDown"
+            class="HotbarCell animateDown"
             index="5"
           />
           <div
-            class="HotbarCell isDraggingOwner animateDown"
+            class="HotbarCell animateDown"
             index="6"
           />
           <div
-            class="HotbarCell isDraggingOwner animateDown"
+            class="HotbarCell animateDown"
             index="7"
           />
           <div
-            class="HotbarCell isDraggingOwner animateDown"
+            class="HotbarCell animateDown"
             index="8"
           />
           <div
-            class="HotbarCell isDraggingOwner animateDown"
+            class="HotbarCell animateDown"
             index="9"
           />
           <div
-            class="HotbarCell isDraggingOwner animateDown"
+            class="HotbarCell animateDown"
             index="10"
           />
           <div
-            class="HotbarCell isDraggingOwner animateDown"
+            class="HotbarCell animateDown"
             index="11"
+          />
+          <div
+            id="DndDescribedBy-14"
+            style="display: none;"
+          >
+            
+    To pick up a draggable item, press the space bar.
+    While dragging, use the arrow keys to move the item.
+    Press space again to drop the item in its new position, or press escape to cancel.
+  
+          </div>
+          <div
+            aria-atomic="true"
+            aria-live="assertive"
+            id="DndLiveRegion-14"
+            role="status"
+            style="position: fixed; top: 0px; left: 0px; width: 1px; height: 1px; margin: -1px; border: 0px; padding: 0px; overflow: hidden; clip: rect(0px); clip-path: inset(100%); white-space: nowrap;"
           />
         </div>
         <div
@@ -1888,11 +1996,11 @@ exports[`Command Pallet: keyboard shortcut tests when on linux when pressing SHI
 </body>
 `;
 
-exports[`Command Pallet: keyboard shortcut tests when on macOS renders 1`] = `
+exports[`Command Pallet: keyboard shortcut tests > when on macOS > renders 1`] = `
 <body>
   <div>
     <div
-      class="Notifications flex column align-flex-end"
+      class="Notifications"
     />
     <div
       class="ClusterManager"
@@ -1964,7 +2072,7 @@ exports[`Command Pallet: keyboard shortcut tests when on macOS renders 1`] = `
           id="lens-views"
         />
         <div
-          class="flex justify-center Welcome align-center"
+          class="flex justify-center Welcome items-center"
           data-testid="welcome-page"
         >
           <div
@@ -2092,7 +2200,7 @@ exports[`Command Pallet: keyboard shortcut tests when on macOS renders 1`] = `
                     class="flex grid-12"
                   >
                     <i
-                      class="Icon box col-1 material focusable"
+                      class="Icon col-1 material focusable"
                     >
                       <span
                         class="icon"
@@ -2102,12 +2210,12 @@ exports[`Command Pallet: keyboard shortcut tests when on macOS renders 1`] = `
                       </span>
                     </i>
                     <a
-                      class="box col-10"
+                      class="col-10"
                     >
                       Browse Clusters in Catalog
                     </a>
                     <i
-                      class="Icon box col-1 material focusable"
+                      class="Icon col-1 material focusable"
                     >
                       <span
                         class="icon"
@@ -2124,17 +2232,22 @@ exports[`Command Pallet: keyboard shortcut tests when on macOS renders 1`] = `
         </div>
       </main>
       <div
-        class="HotbarMenu flex column"
+        class="HotbarMenu flex flex-col"
       >
         <div
-          class="HotbarItems flex column gaps"
+          class="HotbarItems flex flex-col"
         >
           <div
-            class="HotbarCell isDraggingOwner animateDown"
+            class="HotbarCell animateDown"
             index="0"
           >
             <div
-              style="z-index: 12; position: absolute;"
+              aria-describedby="DndDescribedBy-0"
+              aria-disabled="false"
+              aria-roledescription="draggable"
+              role="button"
+              style="z-index: 12; position: absolute; opacity: 1; pointer-events: auto;"
+              tabindex="0"
             >
               <div
                 class="HotbarIcon contextMenuAvailable"
@@ -2150,11 +2263,16 @@ exports[`Command Pallet: keyboard shortcut tests when on macOS renders 1`] = `
             </div>
           </div>
           <div
-            class="HotbarCell isDraggingOwner animateDown"
+            class="HotbarCell animateDown"
             index="1"
           >
             <div
-              style="z-index: 11; position: absolute;"
+              aria-describedby="DndDescribedBy-0"
+              aria-disabled="false"
+              aria-roledescription="draggable"
+              role="button"
+              style="z-index: 11; position: absolute; opacity: 1; pointer-events: auto;"
+              tabindex="0"
             >
               <div
                 class="HotbarIcon contextMenuAvailable"
@@ -2170,44 +2288,61 @@ exports[`Command Pallet: keyboard shortcut tests when on macOS renders 1`] = `
             </div>
           </div>
           <div
-            class="HotbarCell isDraggingOwner animateDown"
+            class="HotbarCell animateDown"
             index="2"
           />
           <div
-            class="HotbarCell isDraggingOwner animateDown"
+            class="HotbarCell animateDown"
             index="3"
           />
           <div
-            class="HotbarCell isDraggingOwner animateDown"
+            class="HotbarCell animateDown"
             index="4"
           />
           <div
-            class="HotbarCell isDraggingOwner animateDown"
+            class="HotbarCell animateDown"
             index="5"
           />
           <div
-            class="HotbarCell isDraggingOwner animateDown"
+            class="HotbarCell animateDown"
             index="6"
           />
           <div
-            class="HotbarCell isDraggingOwner animateDown"
+            class="HotbarCell animateDown"
             index="7"
           />
           <div
-            class="HotbarCell isDraggingOwner animateDown"
+            class="HotbarCell animateDown"
             index="8"
           />
           <div
-            class="HotbarCell isDraggingOwner animateDown"
+            class="HotbarCell animateDown"
             index="9"
           />
           <div
-            class="HotbarCell isDraggingOwner animateDown"
+            class="HotbarCell animateDown"
             index="10"
           />
           <div
-            class="HotbarCell isDraggingOwner animateDown"
+            class="HotbarCell animateDown"
             index="11"
+          />
+          <div
+            id="DndDescribedBy-0"
+            style="display: none;"
+          >
+            
+    To pick up a draggable item, press the space bar.
+    While dragging, use the arrow keys to move the item.
+    Press space again to drop the item in its new position, or press escape to cancel.
+  
+          </div>
+          <div
+            aria-atomic="true"
+            aria-live="assertive"
+            id="DndLiveRegion-0"
+            role="status"
+            style="position: fixed; top: 0px; left: 0px; width: 1px; height: 1px; margin: -1px; border: 0px; padding: 0px; overflow: hidden; clip: rect(0px); clip-path: inset(100%); white-space: nowrap;"
           />
         </div>
         <div
@@ -2266,11 +2401,11 @@ exports[`Command Pallet: keyboard shortcut tests when on macOS renders 1`] = `
 </body>
 `;
 
-exports[`Command Pallet: keyboard shortcut tests when on macOS when pressing ESC renders 1`] = `
+exports[`Command Pallet: keyboard shortcut tests > when on macOS > when pressing ESC > renders 1`] = `
 <body>
   <div>
     <div
-      class="Notifications flex column align-flex-end"
+      class="Notifications"
     />
     <div
       class="ClusterManager"
@@ -2342,7 +2477,7 @@ exports[`Command Pallet: keyboard shortcut tests when on macOS when pressing ESC
           id="lens-views"
         />
         <div
-          class="flex justify-center Welcome align-center"
+          class="flex justify-center Welcome items-center"
           data-testid="welcome-page"
         >
           <div
@@ -2470,7 +2605,7 @@ exports[`Command Pallet: keyboard shortcut tests when on macOS when pressing ESC
                     class="flex grid-12"
                   >
                     <i
-                      class="Icon box col-1 material focusable"
+                      class="Icon col-1 material focusable"
                     >
                       <span
                         class="icon"
@@ -2480,12 +2615,12 @@ exports[`Command Pallet: keyboard shortcut tests when on macOS when pressing ESC
                       </span>
                     </i>
                     <a
-                      class="box col-10"
+                      class="col-10"
                     >
                       Browse Clusters in Catalog
                     </a>
                     <i
-                      class="Icon box col-1 material focusable"
+                      class="Icon col-1 material focusable"
                     >
                       <span
                         class="icon"
@@ -2502,17 +2637,22 @@ exports[`Command Pallet: keyboard shortcut tests when on macOS when pressing ESC
         </div>
       </main>
       <div
-        class="HotbarMenu flex column"
+        class="HotbarMenu flex flex-col"
       >
         <div
-          class="HotbarItems flex column gaps"
+          class="HotbarItems flex flex-col"
         >
           <div
-            class="HotbarCell isDraggingOwner animateDown"
+            class="HotbarCell animateDown"
             index="0"
           >
             <div
-              style="z-index: 12; position: absolute;"
+              aria-describedby="DndDescribedBy-2"
+              aria-disabled="false"
+              aria-roledescription="draggable"
+              role="button"
+              style="z-index: 12; position: absolute; opacity: 1; pointer-events: auto;"
+              tabindex="0"
             >
               <div
                 class="HotbarIcon contextMenuAvailable"
@@ -2528,11 +2668,16 @@ exports[`Command Pallet: keyboard shortcut tests when on macOS when pressing ESC
             </div>
           </div>
           <div
-            class="HotbarCell isDraggingOwner animateDown"
+            class="HotbarCell animateDown"
             index="1"
           >
             <div
-              style="z-index: 11; position: absolute;"
+              aria-describedby="DndDescribedBy-2"
+              aria-disabled="false"
+              aria-roledescription="draggable"
+              role="button"
+              style="z-index: 11; position: absolute; opacity: 1; pointer-events: auto;"
+              tabindex="0"
             >
               <div
                 class="HotbarIcon contextMenuAvailable"
@@ -2548,44 +2693,61 @@ exports[`Command Pallet: keyboard shortcut tests when on macOS when pressing ESC
             </div>
           </div>
           <div
-            class="HotbarCell isDraggingOwner animateDown"
+            class="HotbarCell animateDown"
             index="2"
           />
           <div
-            class="HotbarCell isDraggingOwner animateDown"
+            class="HotbarCell animateDown"
             index="3"
           />
           <div
-            class="HotbarCell isDraggingOwner animateDown"
+            class="HotbarCell animateDown"
             index="4"
           />
           <div
-            class="HotbarCell isDraggingOwner animateDown"
+            class="HotbarCell animateDown"
             index="5"
           />
           <div
-            class="HotbarCell isDraggingOwner animateDown"
+            class="HotbarCell animateDown"
             index="6"
           />
           <div
-            class="HotbarCell isDraggingOwner animateDown"
+            class="HotbarCell animateDown"
             index="7"
           />
           <div
-            class="HotbarCell isDraggingOwner animateDown"
+            class="HotbarCell animateDown"
             index="8"
           />
           <div
-            class="HotbarCell isDraggingOwner animateDown"
+            class="HotbarCell animateDown"
             index="9"
           />
           <div
-            class="HotbarCell isDraggingOwner animateDown"
+            class="HotbarCell animateDown"
             index="10"
           />
           <div
-            class="HotbarCell isDraggingOwner animateDown"
+            class="HotbarCell animateDown"
             index="11"
+          />
+          <div
+            id="DndDescribedBy-2"
+            style="display: none;"
+          >
+            
+    To pick up a draggable item, press the space bar.
+    While dragging, use the arrow keys to move the item.
+    Press space again to drop the item in its new position, or press escape to cancel.
+  
+          </div>
+          <div
+            aria-atomic="true"
+            aria-live="assertive"
+            id="DndLiveRegion-2"
+            role="status"
+            style="position: fixed; top: 0px; left: 0px; width: 1px; height: 1px; margin: -1px; border: 0px; padding: 0px; overflow: hidden; clip: rect(0px); clip-path: inset(100%); white-space: nowrap;"
           />
         </div>
         <div
@@ -2644,11 +2806,11 @@ exports[`Command Pallet: keyboard shortcut tests when on macOS when pressing ESC
 </body>
 `;
 
-exports[`Command Pallet: keyboard shortcut tests when on macOS when pressing SHIFT+CMD+P renders 1`] = `
+exports[`Command Pallet: keyboard shortcut tests > when on macOS > when pressing SHIFT+CMD+P > renders 1`] = `
 <body>
   <div>
     <div
-      class="Notifications flex column align-flex-end"
+      class="Notifications"
     />
     <div
       class="ClusterManager"
@@ -2720,7 +2882,7 @@ exports[`Command Pallet: keyboard shortcut tests when on macOS when pressing SHI
           id="lens-views"
         />
         <div
-          class="flex justify-center Welcome align-center"
+          class="flex justify-center Welcome items-center"
           data-testid="welcome-page"
         >
           <div
@@ -2848,7 +3010,7 @@ exports[`Command Pallet: keyboard shortcut tests when on macOS when pressing SHI
                     class="flex grid-12"
                   >
                     <i
-                      class="Icon box col-1 material focusable"
+                      class="Icon col-1 material focusable"
                     >
                       <span
                         class="icon"
@@ -2858,12 +3020,12 @@ exports[`Command Pallet: keyboard shortcut tests when on macOS when pressing SHI
                       </span>
                     </i>
                     <a
-                      class="box col-10"
+                      class="col-10"
                     >
                       Browse Clusters in Catalog
                     </a>
                     <i
-                      class="Icon box col-1 material focusable"
+                      class="Icon col-1 material focusable"
                     >
                       <span
                         class="icon"
@@ -2880,17 +3042,22 @@ exports[`Command Pallet: keyboard shortcut tests when on macOS when pressing SHI
         </div>
       </main>
       <div
-        class="HotbarMenu flex column"
+        class="HotbarMenu flex flex-col"
       >
         <div
-          class="HotbarItems flex column gaps"
+          class="HotbarItems flex flex-col"
         >
           <div
-            class="HotbarCell isDraggingOwner animateDown"
+            class="HotbarCell animateDown"
             index="0"
           >
             <div
-              style="z-index: 12; position: absolute;"
+              aria-describedby="DndDescribedBy-4"
+              aria-disabled="false"
+              aria-roledescription="draggable"
+              role="button"
+              style="z-index: 12; position: absolute; opacity: 1; pointer-events: auto;"
+              tabindex="0"
             >
               <div
                 class="HotbarIcon contextMenuAvailable"
@@ -2906,11 +3073,16 @@ exports[`Command Pallet: keyboard shortcut tests when on macOS when pressing SHI
             </div>
           </div>
           <div
-            class="HotbarCell isDraggingOwner animateDown"
+            class="HotbarCell animateDown"
             index="1"
           >
             <div
-              style="z-index: 11; position: absolute;"
+              aria-describedby="DndDescribedBy-4"
+              aria-disabled="false"
+              aria-roledescription="draggable"
+              role="button"
+              style="z-index: 11; position: absolute; opacity: 1; pointer-events: auto;"
+              tabindex="0"
             >
               <div
                 class="HotbarIcon contextMenuAvailable"
@@ -2926,44 +3098,61 @@ exports[`Command Pallet: keyboard shortcut tests when on macOS when pressing SHI
             </div>
           </div>
           <div
-            class="HotbarCell isDraggingOwner animateDown"
+            class="HotbarCell animateDown"
             index="2"
           />
           <div
-            class="HotbarCell isDraggingOwner animateDown"
+            class="HotbarCell animateDown"
             index="3"
           />
           <div
-            class="HotbarCell isDraggingOwner animateDown"
+            class="HotbarCell animateDown"
             index="4"
           />
           <div
-            class="HotbarCell isDraggingOwner animateDown"
+            class="HotbarCell animateDown"
             index="5"
           />
           <div
-            class="HotbarCell isDraggingOwner animateDown"
+            class="HotbarCell animateDown"
             index="6"
           />
           <div
-            class="HotbarCell isDraggingOwner animateDown"
+            class="HotbarCell animateDown"
             index="7"
           />
           <div
-            class="HotbarCell isDraggingOwner animateDown"
+            class="HotbarCell animateDown"
             index="8"
           />
           <div
-            class="HotbarCell isDraggingOwner animateDown"
+            class="HotbarCell animateDown"
             index="9"
           />
           <div
-            class="HotbarCell isDraggingOwner animateDown"
+            class="HotbarCell animateDown"
             index="10"
           />
           <div
-            class="HotbarCell isDraggingOwner animateDown"
+            class="HotbarCell animateDown"
             index="11"
+          />
+          <div
+            id="DndDescribedBy-4"
+            style="display: none;"
+          >
+            
+    To pick up a draggable item, press the space bar.
+    While dragging, use the arrow keys to move the item.
+    Press space again to drop the item in its new position, or press escape to cancel.
+  
+          </div>
+          <div
+            aria-atomic="true"
+            aria-live="assertive"
+            id="DndLiveRegion-4"
+            role="status"
+            style="position: fixed; top: 0px; left: 0px; width: 1px; height: 1px; margin: -1px; border: 0px; padding: 0px; overflow: hidden; clip: rect(0px); clip-path: inset(100%); white-space: nowrap;"
           />
         </div>
         <div
@@ -3020,10 +3209,10 @@ exports[`Command Pallet: keyboard shortcut tests when on macOS when pressing SHI
     </div>
   </div>
   <div
-    class="Dialog flex center"
+    class="Dialog flex items-center justify-center"
   >
     <div
-      class="box"
+      class="dialog-content"
     >
       <div
         class="CommandContainer"
@@ -3034,11 +3223,11 @@ exports[`Command Pallet: keyboard shortcut tests when on macOS when pressing SHI
 </body>
 `;
 
-exports[`Command Pallet: keyboard shortcut tests when on macOS when pressing SHIFT+CMD+P when pressing ESC renders 1`] = `
+exports[`Command Pallet: keyboard shortcut tests > when on macOS > when pressing SHIFT+CMD+P > when pressing ESC > renders 1`] = `
 <body>
   <div>
     <div
-      class="Notifications flex column align-flex-end"
+      class="Notifications"
     />
     <div
       class="ClusterManager"
@@ -3110,7 +3299,7 @@ exports[`Command Pallet: keyboard shortcut tests when on macOS when pressing SHI
           id="lens-views"
         />
         <div
-          class="flex justify-center Welcome align-center"
+          class="flex justify-center Welcome items-center"
           data-testid="welcome-page"
         >
           <div
@@ -3238,7 +3427,7 @@ exports[`Command Pallet: keyboard shortcut tests when on macOS when pressing SHI
                     class="flex grid-12"
                   >
                     <i
-                      class="Icon box col-1 material focusable"
+                      class="Icon col-1 material focusable"
                     >
                       <span
                         class="icon"
@@ -3248,12 +3437,12 @@ exports[`Command Pallet: keyboard shortcut tests when on macOS when pressing SHI
                       </span>
                     </i>
                     <a
-                      class="box col-10"
+                      class="col-10"
                     >
                       Browse Clusters in Catalog
                     </a>
                     <i
-                      class="Icon box col-1 material focusable"
+                      class="Icon col-1 material focusable"
                     >
                       <span
                         class="icon"
@@ -3270,17 +3459,22 @@ exports[`Command Pallet: keyboard shortcut tests when on macOS when pressing SHI
         </div>
       </main>
       <div
-        class="HotbarMenu flex column"
+        class="HotbarMenu flex flex-col"
       >
         <div
-          class="HotbarItems flex column gaps"
+          class="HotbarItems flex flex-col"
         >
           <div
-            class="HotbarCell isDraggingOwner animateDown"
+            class="HotbarCell animateDown"
             index="0"
           >
             <div
-              style="z-index: 12; position: absolute;"
+              aria-describedby="DndDescribedBy-6"
+              aria-disabled="false"
+              aria-roledescription="draggable"
+              role="button"
+              style="z-index: 12; position: absolute; opacity: 1; pointer-events: auto;"
+              tabindex="0"
             >
               <div
                 class="HotbarIcon contextMenuAvailable"
@@ -3296,11 +3490,16 @@ exports[`Command Pallet: keyboard shortcut tests when on macOS when pressing SHI
             </div>
           </div>
           <div
-            class="HotbarCell isDraggingOwner animateDown"
+            class="HotbarCell animateDown"
             index="1"
           >
             <div
-              style="z-index: 11; position: absolute;"
+              aria-describedby="DndDescribedBy-6"
+              aria-disabled="false"
+              aria-roledescription="draggable"
+              role="button"
+              style="z-index: 11; position: absolute; opacity: 1; pointer-events: auto;"
+              tabindex="0"
             >
               <div
                 class="HotbarIcon contextMenuAvailable"
@@ -3316,44 +3515,61 @@ exports[`Command Pallet: keyboard shortcut tests when on macOS when pressing SHI
             </div>
           </div>
           <div
-            class="HotbarCell isDraggingOwner animateDown"
+            class="HotbarCell animateDown"
             index="2"
           />
           <div
-            class="HotbarCell isDraggingOwner animateDown"
+            class="HotbarCell animateDown"
             index="3"
           />
           <div
-            class="HotbarCell isDraggingOwner animateDown"
+            class="HotbarCell animateDown"
             index="4"
           />
           <div
-            class="HotbarCell isDraggingOwner animateDown"
+            class="HotbarCell animateDown"
             index="5"
           />
           <div
-            class="HotbarCell isDraggingOwner animateDown"
+            class="HotbarCell animateDown"
             index="6"
           />
           <div
-            class="HotbarCell isDraggingOwner animateDown"
+            class="HotbarCell animateDown"
             index="7"
           />
           <div
-            class="HotbarCell isDraggingOwner animateDown"
+            class="HotbarCell animateDown"
             index="8"
           />
           <div
-            class="HotbarCell isDraggingOwner animateDown"
+            class="HotbarCell animateDown"
             index="9"
           />
           <div
-            class="HotbarCell isDraggingOwner animateDown"
+            class="HotbarCell animateDown"
             index="10"
           />
           <div
-            class="HotbarCell isDraggingOwner animateDown"
+            class="HotbarCell animateDown"
             index="11"
+          />
+          <div
+            id="DndDescribedBy-6"
+            style="display: none;"
+          >
+            
+    To pick up a draggable item, press the space bar.
+    While dragging, use the arrow keys to move the item.
+    Press space again to drop the item in its new position, or press escape to cancel.
+  
+          </div>
+          <div
+            aria-atomic="true"
+            aria-live="assertive"
+            id="DndLiveRegion-6"
+            role="status"
+            style="position: fixed; top: 0px; left: 0px; width: 1px; height: 1px; margin: -1px; border: 0px; padding: 0px; overflow: hidden; clip: rect(0px); clip-path: inset(100%); white-space: nowrap;"
           />
         </div>
         <div

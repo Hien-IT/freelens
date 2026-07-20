@@ -1,0 +1,62 @@
+/**
+ * Copyright (c) Freelens Authors. All rights reserved.
+ * Copyright (c) OpenLens Authors. All rights reserved.
+ * Licensed under MIT License. See LICENSE in root directory for more information.
+ */
+
+export type LensExtensionId = string;
+
+export type LensExtensionConstructor = new (ext: InstalledExtension) => LensExtensionInstance;
+
+export interface InstalledExtension {
+  readonly id: LensExtensionId;
+  // Absolute path to the non-symlinked source folder,
+  // e.g. "/Users/user/.freelens/extensions/helloworld"
+  readonly absolutePath: string;
+  // Absolute to the symlinked package.json file
+  readonly manifestPath: string;
+  readonly manifest: LensExtensionManifest;
+  readonly isCompatible: boolean;
+  isEnabled: boolean;
+}
+
+export interface LensExtensionInstance {
+  readonly id: LensExtensionId;
+  readonly manifest: LensExtensionManifest;
+  readonly manifestPath: string;
+  readonly sanitizedExtensionId: string;
+  readonly name: string;
+  readonly version: string;
+  readonly description: string | undefined;
+  readonly storeName: string;
+
+  getExtensionFileFolder(): Promise<string>;
+  enable(): Promise<void>;
+  disable(): Promise<void>;
+  activate(): Promise<void>;
+}
+
+export interface LensExtensionManifest {
+  name: string;
+  version: string;
+  description?: string;
+  publishConfig?: Partial<Record<string, string>>;
+
+  /**
+   * Specify extension name used for persisting data.
+   * Useful if extension is renamed but the data should not be lost.
+   */
+  storeName?: string;
+
+  main?: string; // path to %ext/dist/main.js
+  renderer?: string; // path to %ext/dist/renderer.js
+
+  /**
+   * Supported Lens version engine by extension could be defined in `manifest.engines.freelens`
+   * Only MAJOR.MINOR version is taken in consideration.
+   */
+  engines: {
+    freelens: string; // "semver"-package format
+    [x: string]: string | undefined;
+  };
+}

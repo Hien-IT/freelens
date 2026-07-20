@@ -1,10 +1,48 @@
-// Jest Snapshot v1, https://goo.gl/fbAQLP
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
-exports[`cluster - sidebar and tab navigation for extensions given extension with cluster pages and cluster page menus given empty state for expanded sidebar items already exists, when rendered renders without errors 1`] = `
+exports[`cluster - sidebar and tab navigation for extensions > given extension with cluster pages and cluster page menus > given empty state for expanded sidebar items already exists, when rendered > renders without errors 1`] = `
 <div>
   <div
-    class="Notifications flex column align-flex-end"
+    class="Notifications"
   />
+  <div
+    class="Animate slide-right Drawer KubeObjectDetails flex flex-col right enter leave"
+    style="--size: 725px; --enter-duration: 100ms; --leave-duration: 100ms;"
+  >
+    <div
+      class="drawer-wrapper flex flex-col"
+    >
+      <div
+        class="drawer-title flex items-center"
+      >
+        <div
+          class="drawer-title-text flex gap-2 items-center"
+        >
+          
+        </div>
+        <i
+          class="Icon material interactive focusable"
+          tabindex="0"
+        >
+          <span
+            class="icon"
+            data-icon-name="close"
+          >
+            close
+          </span>
+        </i>
+        <div>
+          Close
+        </div>
+      </div>
+      <div
+        class="drawer-content flex flex-col grow shrink-0 basis-0"
+      />
+    </div>
+    <div
+      class="ResizingAnchor horizontal leading"
+    />
+  </div>
   <div
     class="mainLayout"
     style="--sidebar-width: 200px;"
@@ -21,7 +59,7 @@ exports[`cluster - sidebar and tab navigation for extensions given extension wit
         >
           <div
             class="Avatar rounded loadingAvatar"
-            style="width: 40px; height: 40px;"
+            style="width: 40px; height: 40px; background: var(--halfGray);"
           >
             ??
           </div>
@@ -406,7 +444,7 @@ exports[`cluster - sidebar and tab navigation for extensions given extension wit
             aria-live="assertive"
             id="DndLiveRegion-9"
             role="status"
-            style="position: fixed; top: 0px; left: 0px; width: 1px; height: 1px; margin: -1px; border: 0px; padding: 0px; overflow: hidden; clip-path: inset(100%); white-space: nowrap;"
+            style="position: fixed; top: 0px; left: 0px; width: 1px; height: 1px; margin: -1px; border: 0px; padding: 0px; overflow: hidden; clip: rect(0px); clip-path: inset(100%); white-space: nowrap;"
           />
         </div>
       </div>
@@ -425,7 +463,7 @@ exports[`cluster - sidebar and tab navigation for extensions given extension wit
           class="Tabs center scrollable"
         >
           <div
-            class="Tab flex gaps align-center active"
+            class="Tab flex gap-2 items-center active"
             data-is-active-test="true"
             data-testid="tab-link-for-sidebar-item-workloads-overview"
             role="tab"
@@ -442,14 +480,14 @@ exports[`cluster - sidebar and tab navigation for extensions given extension wit
           class="scrollable"
         >
           <div
-            class="WorkloadsOverview flex column gaps"
+            class="WorkloadsOverview flex flex-col gap-4"
             data-testid="page-for-workloads-overview"
           >
             <div
-              class="header flex gaps align-center"
+              class="header flex gap-4 items-center"
             >
               <h5
-                class="box grow"
+                class="grow shrink-0 basis-0"
               >
                 Overview
               </h5>
@@ -500,7 +538,7 @@ exports[`cluster - sidebar and tab navigation for extensions given extension wit
                           id="overview-namespace-select-filter-input"
                           role="combobox"
                           spellcheck="false"
-                          style="opacity: 1; width: 100%; grid-area: 1 / 2; min-width: 2px; border: 0px; margin: 0px; outline: 0; padding: 0px;"
+                          style="color: inherit; background: 0px center; opacity: 1; width: 100%; grid-area: 1 / 2; font: inherit; min-width: 2px; border: 0px; margin: 0px; outline: 0px; padding: 0px;"
                           tabindex="0"
                           type="text"
                           value=""
@@ -557,7 +595,7 @@ exports[`cluster - sidebar and tab navigation for extensions given extension wit
           class="ResizingAnchor vertical leading"
         />
         <div
-          class="tabs-container flex align-center"
+          class="tabs-container flex items-center"
         >
           <div
             class="dockTabs"
@@ -567,7 +605,7 @@ exports[`cluster - sidebar and tab navigation for extensions given extension wit
               class="Tabs tabs"
             >
               <div
-                class="Tab flex gaps align-center DockTab TerminalTab active"
+                class="Tab flex gap-2 items-center DockTab TerminalTab active"
                 data-testid="dock-tab-for-terminal"
                 id="tab-terminal"
                 role="tab"
@@ -587,7 +625,7 @@ exports[`cluster - sidebar and tab navigation for extensions given extension wit
                   class="label"
                 >
                   <div
-                    class="flex align-center"
+                    class="flex items-center"
                   >
                     <span
                       class="title"
@@ -621,10 +659,10 @@ exports[`cluster - sidebar and tab navigation for extensions given extension wit
             </div>
           </div>
           <div
-            class="toolbar flex gaps align-center box grow"
+            class="toolbar flex gap-2 items-center grow shrink-0 basis-0"
           >
             <div
-              class="dock-menu box grow"
+              class="dock-menu grow shrink-0 basis-0"
             >
               <i
                 class="Icon new-dock-tab material interactive focusable"
@@ -675,18 +713,26 @@ exports[`cluster - sidebar and tab navigation for extensions given extension wit
       </div>
     </div>
   </div>
+</div>
+`;
+
+exports[`cluster - sidebar and tab navigation for extensions > given extension with cluster pages and cluster page menus > given no initially persisted state for sidebar items, when rendered > renders 1`] = `
+<div>
   <div
-    class="Animate slide-right Drawer KubeObjectDetails flex column right enter leave"
+    class="Notifications"
+  />
+  <div
+    class="Animate slide-right Drawer KubeObjectDetails flex flex-col right enter leave"
     style="--size: 725px; --enter-duration: 100ms; --leave-duration: 100ms;"
   >
     <div
-      class="drawer-wrapper flex column"
+      class="drawer-wrapper flex flex-col"
     >
       <div
-        class="drawer-title flex align-center"
+        class="drawer-title flex items-center"
       >
         <div
-          class="drawer-title-text flex gaps align-center"
+          class="drawer-title-text flex gap-2 items-center"
         >
           
         </div>
@@ -706,21 +752,13 @@ exports[`cluster - sidebar and tab navigation for extensions given extension wit
         </div>
       </div>
       <div
-        class="drawer-content flex column box grow"
+        class="drawer-content flex flex-col grow shrink-0 basis-0"
       />
     </div>
     <div
       class="ResizingAnchor horizontal leading"
     />
   </div>
-</div>
-`;
-
-exports[`cluster - sidebar and tab navigation for extensions given extension with cluster pages and cluster page menus given no initially persisted state for sidebar items, when rendered renders 1`] = `
-<div>
-  <div
-    class="Notifications flex column align-flex-end"
-  />
   <div
     class="mainLayout"
     style="--sidebar-width: 200px;"
@@ -737,7 +775,7 @@ exports[`cluster - sidebar and tab navigation for extensions given extension wit
         >
           <div
             class="Avatar rounded loadingAvatar"
-            style="width: 40px; height: 40px;"
+            style="width: 40px; height: 40px; background: var(--halfGray);"
           >
             ??
           </div>
@@ -1122,7 +1160,7 @@ exports[`cluster - sidebar and tab navigation for extensions given extension wit
             aria-live="assertive"
             id="DndLiveRegion-11"
             role="status"
-            style="position: fixed; top: 0px; left: 0px; width: 1px; height: 1px; margin: -1px; border: 0px; padding: 0px; overflow: hidden; clip-path: inset(100%); white-space: nowrap;"
+            style="position: fixed; top: 0px; left: 0px; width: 1px; height: 1px; margin: -1px; border: 0px; padding: 0px; overflow: hidden; clip: rect(0px); clip-path: inset(100%); white-space: nowrap;"
           />
         </div>
       </div>
@@ -1141,7 +1179,7 @@ exports[`cluster - sidebar and tab navigation for extensions given extension wit
           class="Tabs center scrollable"
         >
           <div
-            class="Tab flex gaps align-center active"
+            class="Tab flex gap-2 items-center active"
             data-is-active-test="true"
             data-testid="tab-link-for-sidebar-item-workloads-overview"
             role="tab"
@@ -1158,14 +1196,14 @@ exports[`cluster - sidebar and tab navigation for extensions given extension wit
           class="scrollable"
         >
           <div
-            class="WorkloadsOverview flex column gaps"
+            class="WorkloadsOverview flex flex-col gap-4"
             data-testid="page-for-workloads-overview"
           >
             <div
-              class="header flex gaps align-center"
+              class="header flex gap-4 items-center"
             >
               <h5
-                class="box grow"
+                class="grow shrink-0 basis-0"
               >
                 Overview
               </h5>
@@ -1216,7 +1254,7 @@ exports[`cluster - sidebar and tab navigation for extensions given extension wit
                           id="overview-namespace-select-filter-input"
                           role="combobox"
                           spellcheck="false"
-                          style="opacity: 1; width: 100%; grid-area: 1 / 2; min-width: 2px; border: 0px; margin: 0px; outline: 0; padding: 0px;"
+                          style="color: inherit; background: 0px center; opacity: 1; width: 100%; grid-area: 1 / 2; font: inherit; min-width: 2px; border: 0px; margin: 0px; outline: 0px; padding: 0px;"
                           tabindex="0"
                           type="text"
                           value=""
@@ -1273,7 +1311,7 @@ exports[`cluster - sidebar and tab navigation for extensions given extension wit
           class="ResizingAnchor vertical leading"
         />
         <div
-          class="tabs-container flex align-center"
+          class="tabs-container flex items-center"
         >
           <div
             class="dockTabs"
@@ -1283,7 +1321,7 @@ exports[`cluster - sidebar and tab navigation for extensions given extension wit
               class="Tabs tabs"
             >
               <div
-                class="Tab flex gaps align-center DockTab TerminalTab active"
+                class="Tab flex gap-2 items-center DockTab TerminalTab active"
                 data-testid="dock-tab-for-terminal"
                 id="tab-terminal"
                 role="tab"
@@ -1303,7 +1341,7 @@ exports[`cluster - sidebar and tab navigation for extensions given extension wit
                   class="label"
                 >
                   <div
-                    class="flex align-center"
+                    class="flex items-center"
                   >
                     <span
                       class="title"
@@ -1337,10 +1375,10 @@ exports[`cluster - sidebar and tab navigation for extensions given extension wit
             </div>
           </div>
           <div
-            class="toolbar flex gaps align-center box grow"
+            class="toolbar flex gap-2 items-center grow shrink-0 basis-0"
           >
             <div
-              class="dock-menu box grow"
+              class="dock-menu grow shrink-0 basis-0"
             >
               <i
                 class="Icon new-dock-tab material interactive focusable"
@@ -1391,18 +1429,26 @@ exports[`cluster - sidebar and tab navigation for extensions given extension wit
       </div>
     </div>
   </div>
+</div>
+`;
+
+exports[`cluster - sidebar and tab navigation for extensions > given extension with cluster pages and cluster page menus > given no initially persisted state for sidebar items, when rendered > when a parent sidebar item is expanded > renders 1`] = `
+<div>
   <div
-    class="Animate slide-right Drawer KubeObjectDetails flex column right enter leave"
+    class="Notifications"
+  />
+  <div
+    class="Animate slide-right Drawer KubeObjectDetails flex flex-col right enter leave"
     style="--size: 725px; --enter-duration: 100ms; --leave-duration: 100ms;"
   >
     <div
-      class="drawer-wrapper flex column"
+      class="drawer-wrapper flex flex-col"
     >
       <div
-        class="drawer-title flex align-center"
+        class="drawer-title flex items-center"
       >
         <div
-          class="drawer-title-text flex gaps align-center"
+          class="drawer-title-text flex gap-2 items-center"
         >
           
         </div>
@@ -1422,21 +1468,13 @@ exports[`cluster - sidebar and tab navigation for extensions given extension wit
         </div>
       </div>
       <div
-        class="drawer-content flex column box grow"
+        class="drawer-content flex flex-col grow shrink-0 basis-0"
       />
     </div>
     <div
       class="ResizingAnchor horizontal leading"
     />
   </div>
-</div>
-`;
-
-exports[`cluster - sidebar and tab navigation for extensions given extension with cluster pages and cluster page menus given no initially persisted state for sidebar items, when rendered when a parent sidebar item is expanded renders 1`] = `
-<div>
-  <div
-    class="Notifications flex column align-flex-end"
-  />
   <div
     class="mainLayout"
     style="--sidebar-width: 200px;"
@@ -1453,7 +1491,7 @@ exports[`cluster - sidebar and tab navigation for extensions given extension wit
         >
           <div
             class="Avatar rounded loadingAvatar"
-            style="width: 40px; height: 40px;"
+            style="width: 40px; height: 40px; background: var(--halfGray);"
           >
             ??
           </div>
@@ -1914,7 +1952,7 @@ exports[`cluster - sidebar and tab navigation for extensions given extension wit
             aria-live="assertive"
             id="DndLiveRegion-16"
             role="status"
-            style="position: fixed; top: 0px; left: 0px; width: 1px; height: 1px; margin: -1px; border: 0px; padding: 0px; overflow: hidden; clip-path: inset(100%); white-space: nowrap;"
+            style="position: fixed; top: 0px; left: 0px; width: 1px; height: 1px; margin: -1px; border: 0px; padding: 0px; overflow: hidden; clip: rect(0px); clip-path: inset(100%); white-space: nowrap;"
           />
         </div>
       </div>
@@ -1933,7 +1971,7 @@ exports[`cluster - sidebar and tab navigation for extensions given extension wit
           class="Tabs center scrollable"
         >
           <div
-            class="Tab flex gaps align-center active"
+            class="Tab flex gap-2 items-center active"
             data-is-active-test="true"
             data-testid="tab-link-for-sidebar-item-workloads-overview"
             role="tab"
@@ -1950,14 +1988,14 @@ exports[`cluster - sidebar and tab navigation for extensions given extension wit
           class="scrollable"
         >
           <div
-            class="WorkloadsOverview flex column gaps"
+            class="WorkloadsOverview flex flex-col gap-4"
             data-testid="page-for-workloads-overview"
           >
             <div
-              class="header flex gaps align-center"
+              class="header flex gap-4 items-center"
             >
               <h5
-                class="box grow"
+                class="grow shrink-0 basis-0"
               >
                 Overview
               </h5>
@@ -2008,7 +2046,7 @@ exports[`cluster - sidebar and tab navigation for extensions given extension wit
                           id="overview-namespace-select-filter-input"
                           role="combobox"
                           spellcheck="false"
-                          style="opacity: 1; width: 100%; grid-area: 1 / 2; min-width: 2px; border: 0px; margin: 0px; outline: 0; padding: 0px;"
+                          style="color: inherit; background: 0px center; opacity: 1; width: 100%; grid-area: 1 / 2; font: inherit; min-width: 2px; border: 0px; margin: 0px; outline: 0px; padding: 0px;"
                           tabindex="0"
                           type="text"
                           value=""
@@ -2065,7 +2103,7 @@ exports[`cluster - sidebar and tab navigation for extensions given extension wit
           class="ResizingAnchor vertical leading"
         />
         <div
-          class="tabs-container flex align-center"
+          class="tabs-container flex items-center"
         >
           <div
             class="dockTabs"
@@ -2075,7 +2113,7 @@ exports[`cluster - sidebar and tab navigation for extensions given extension wit
               class="Tabs tabs"
             >
               <div
-                class="Tab flex gaps align-center DockTab TerminalTab active"
+                class="Tab flex gap-2 items-center DockTab TerminalTab active"
                 data-testid="dock-tab-for-terminal"
                 id="tab-terminal"
                 role="tab"
@@ -2095,7 +2133,7 @@ exports[`cluster - sidebar and tab navigation for extensions given extension wit
                   class="label"
                 >
                   <div
-                    class="flex align-center"
+                    class="flex items-center"
                   >
                     <span
                       class="title"
@@ -2129,10 +2167,10 @@ exports[`cluster - sidebar and tab navigation for extensions given extension wit
             </div>
           </div>
           <div
-            class="toolbar flex gaps align-center box grow"
+            class="toolbar flex gap-2 items-center grow shrink-0 basis-0"
           >
             <div
-              class="dock-menu box grow"
+              class="dock-menu grow shrink-0 basis-0"
             >
               <i
                 class="Icon new-dock-tab material interactive focusable"
@@ -2183,18 +2221,26 @@ exports[`cluster - sidebar and tab navigation for extensions given extension wit
       </div>
     </div>
   </div>
+</div>
+`;
+
+exports[`cluster - sidebar and tab navigation for extensions > given extension with cluster pages and cluster page menus > given no initially persisted state for sidebar items, when rendered > when a parent sidebar item is expanded > when a child of the parent is selected > renders 1`] = `
+<div>
   <div
-    class="Animate slide-right Drawer KubeObjectDetails flex column right enter leave"
+    class="Notifications"
+  />
+  <div
+    class="Animate slide-right Drawer KubeObjectDetails flex flex-col right enter leave"
     style="--size: 725px; --enter-duration: 100ms; --leave-duration: 100ms;"
   >
     <div
-      class="drawer-wrapper flex column"
+      class="drawer-wrapper flex flex-col"
     >
       <div
-        class="drawer-title flex align-center"
+        class="drawer-title flex items-center"
       >
         <div
-          class="drawer-title-text flex gaps align-center"
+          class="drawer-title-text flex gap-2 items-center"
         >
           
         </div>
@@ -2214,21 +2260,13 @@ exports[`cluster - sidebar and tab navigation for extensions given extension wit
         </div>
       </div>
       <div
-        class="drawer-content flex column box grow"
+        class="drawer-content flex flex-col grow shrink-0 basis-0"
       />
     </div>
     <div
       class="ResizingAnchor horizontal leading"
     />
   </div>
-</div>
-`;
-
-exports[`cluster - sidebar and tab navigation for extensions given extension with cluster pages and cluster page menus given no initially persisted state for sidebar items, when rendered when a parent sidebar item is expanded when a child of the parent is selected renders 1`] = `
-<div>
-  <div
-    class="Notifications flex column align-flex-end"
-  />
   <div
     class="mainLayout"
     style="--sidebar-width: 200px;"
@@ -2245,7 +2283,7 @@ exports[`cluster - sidebar and tab navigation for extensions given extension wit
         >
           <div
             class="Avatar rounded loadingAvatar"
-            style="width: 40px; height: 40px;"
+            style="width: 40px; height: 40px; background: var(--halfGray);"
           >
             ??
           </div>
@@ -2707,7 +2745,7 @@ exports[`cluster - sidebar and tab navigation for extensions given extension wit
             aria-live="assertive"
             id="DndLiveRegion-19"
             role="status"
-            style="position: fixed; top: 0px; left: 0px; width: 1px; height: 1px; margin: -1px; border: 0px; padding: 0px; overflow: hidden; clip-path: inset(100%); white-space: nowrap;"
+            style="position: fixed; top: 0px; left: 0px; width: 1px; height: 1px; margin: -1px; border: 0px; padding: 0px; overflow: hidden; clip: rect(0px); clip-path: inset(100%); white-space: nowrap;"
           />
         </div>
       </div>
@@ -2726,7 +2764,7 @@ exports[`cluster - sidebar and tab navigation for extensions given extension wit
           class="Tabs center scrollable"
         >
           <div
-            class="Tab flex gaps align-center active"
+            class="Tab flex gap-2 items-center active"
             data-is-active-test="true"
             data-testid="tab-link-for-sidebar-item-some-extension-name-some-child-id"
             role="tab"
@@ -2739,7 +2777,7 @@ exports[`cluster - sidebar and tab navigation for extensions given extension wit
             </div>
           </div>
           <div
-            class="Tab flex gaps align-center"
+            class="Tab flex gap-2 items-center"
             data-is-active-test="false"
             data-testid="tab-link-for-sidebar-item-some-extension-name-some-other-child-id"
             role="tab"
@@ -2774,7 +2812,7 @@ exports[`cluster - sidebar and tab navigation for extensions given extension wit
           class="ResizingAnchor vertical leading"
         />
         <div
-          class="tabs-container flex align-center"
+          class="tabs-container flex items-center"
         >
           <div
             class="dockTabs"
@@ -2784,7 +2822,7 @@ exports[`cluster - sidebar and tab navigation for extensions given extension wit
               class="Tabs tabs"
             >
               <div
-                class="Tab flex gaps align-center DockTab TerminalTab active"
+                class="Tab flex gap-2 items-center DockTab TerminalTab active"
                 data-testid="dock-tab-for-terminal"
                 id="tab-terminal"
                 role="tab"
@@ -2804,7 +2842,7 @@ exports[`cluster - sidebar and tab navigation for extensions given extension wit
                   class="label"
                 >
                   <div
-                    class="flex align-center"
+                    class="flex items-center"
                   >
                     <span
                       class="title"
@@ -2838,10 +2876,10 @@ exports[`cluster - sidebar and tab navigation for extensions given extension wit
             </div>
           </div>
           <div
-            class="toolbar flex gaps align-center box grow"
+            class="toolbar flex gap-2 items-center grow shrink-0 basis-0"
           >
             <div
-              class="dock-menu box grow"
+              class="dock-menu grow shrink-0 basis-0"
             >
               <i
                 class="Icon new-dock-tab material interactive focusable"
@@ -2892,18 +2930,26 @@ exports[`cluster - sidebar and tab navigation for extensions given extension wit
       </div>
     </div>
   </div>
+</div>
+`;
+
+exports[`cluster - sidebar and tab navigation for extensions > given extension with cluster pages and cluster page menus > given no initially persisted state for sidebar items, when rendered > when a parent sidebar item is expanded > when a child of the parent is selected > when selecting sibling tab > renders 1`] = `
+<div>
   <div
-    class="Animate slide-right Drawer KubeObjectDetails flex column right enter leave"
+    class="Notifications"
+  />
+  <div
+    class="Animate slide-right Drawer KubeObjectDetails flex flex-col right enter leave"
     style="--size: 725px; --enter-duration: 100ms; --leave-duration: 100ms;"
   >
     <div
-      class="drawer-wrapper flex column"
+      class="drawer-wrapper flex flex-col"
     >
       <div
-        class="drawer-title flex align-center"
+        class="drawer-title flex items-center"
       >
         <div
-          class="drawer-title-text flex gaps align-center"
+          class="drawer-title-text flex gap-2 items-center"
         >
           
         </div>
@@ -2923,21 +2969,13 @@ exports[`cluster - sidebar and tab navigation for extensions given extension wit
         </div>
       </div>
       <div
-        class="drawer-content flex column box grow"
+        class="drawer-content flex flex-col grow shrink-0 basis-0"
       />
     </div>
     <div
       class="ResizingAnchor horizontal leading"
     />
   </div>
-</div>
-`;
-
-exports[`cluster - sidebar and tab navigation for extensions given extension with cluster pages and cluster page menus given no initially persisted state for sidebar items, when rendered when a parent sidebar item is expanded when a child of the parent is selected when selecting sibling tab renders 1`] = `
-<div>
-  <div
-    class="Notifications flex column align-flex-end"
-  />
   <div
     class="mainLayout"
     style="--sidebar-width: 200px;"
@@ -2954,7 +2992,7 @@ exports[`cluster - sidebar and tab navigation for extensions given extension wit
         >
           <div
             class="Avatar rounded loadingAvatar"
-            style="width: 40px; height: 40px;"
+            style="width: 40px; height: 40px; background: var(--halfGray);"
           >
             ??
           </div>
@@ -3416,7 +3454,7 @@ exports[`cluster - sidebar and tab navigation for extensions given extension wit
             aria-live="assertive"
             id="DndLiveRegion-28"
             role="status"
-            style="position: fixed; top: 0px; left: 0px; width: 1px; height: 1px; margin: -1px; border: 0px; padding: 0px; overflow: hidden; clip-path: inset(100%); white-space: nowrap;"
+            style="position: fixed; top: 0px; left: 0px; width: 1px; height: 1px; margin: -1px; border: 0px; padding: 0px; overflow: hidden; clip: rect(0px); clip-path: inset(100%); white-space: nowrap;"
           />
         </div>
       </div>
@@ -3435,7 +3473,7 @@ exports[`cluster - sidebar and tab navigation for extensions given extension wit
           class="Tabs center scrollable"
         >
           <div
-            class="Tab flex gaps align-center"
+            class="Tab flex gap-2 items-center"
             data-is-active-test="false"
             data-testid="tab-link-for-sidebar-item-some-extension-name-some-child-id"
             role="tab"
@@ -3448,7 +3486,7 @@ exports[`cluster - sidebar and tab navigation for extensions given extension wit
             </div>
           </div>
           <div
-            class="Tab flex gaps align-center active"
+            class="Tab flex gap-2 items-center active"
             data-is-active-test="true"
             data-testid="tab-link-for-sidebar-item-some-extension-name-some-other-child-id"
             role="tab"
@@ -3483,7 +3521,7 @@ exports[`cluster - sidebar and tab navigation for extensions given extension wit
           class="ResizingAnchor vertical leading"
         />
         <div
-          class="tabs-container flex align-center"
+          class="tabs-container flex items-center"
         >
           <div
             class="dockTabs"
@@ -3493,7 +3531,7 @@ exports[`cluster - sidebar and tab navigation for extensions given extension wit
               class="Tabs tabs"
             >
               <div
-                class="Tab flex gaps align-center DockTab TerminalTab active"
+                class="Tab flex gap-2 items-center DockTab TerminalTab active"
                 data-testid="dock-tab-for-terminal"
                 id="tab-terminal"
                 role="tab"
@@ -3513,7 +3551,7 @@ exports[`cluster - sidebar and tab navigation for extensions given extension wit
                   class="label"
                 >
                   <div
-                    class="flex align-center"
+                    class="flex items-center"
                   >
                     <span
                       class="title"
@@ -3547,10 +3585,10 @@ exports[`cluster - sidebar and tab navigation for extensions given extension wit
             </div>
           </div>
           <div
-            class="toolbar flex gaps align-center box grow"
+            class="toolbar flex gap-2 items-center grow shrink-0 basis-0"
           >
             <div
-              class="dock-menu box grow"
+              class="dock-menu grow shrink-0 basis-0"
             >
               <i
                 class="Icon new-dock-tab material interactive focusable"
@@ -3601,18 +3639,26 @@ exports[`cluster - sidebar and tab navigation for extensions given extension wit
       </div>
     </div>
   </div>
+</div>
+`;
+
+exports[`cluster - sidebar and tab navigation for extensions > given extension with cluster pages and cluster page menus > given no state for expanded sidebar items exists, and navigated to child sidebar item, when rendered > renders 1`] = `
+<div>
   <div
-    class="Animate slide-right Drawer KubeObjectDetails flex column right enter leave"
+    class="Notifications"
+  />
+  <div
+    class="Animate slide-right Drawer KubeObjectDetails flex flex-col right enter leave"
     style="--size: 725px; --enter-duration: 100ms; --leave-duration: 100ms;"
   >
     <div
-      class="drawer-wrapper flex column"
+      class="drawer-wrapper flex flex-col"
     >
       <div
-        class="drawer-title flex align-center"
+        class="drawer-title flex items-center"
       >
         <div
-          class="drawer-title-text flex gaps align-center"
+          class="drawer-title-text flex gap-2 items-center"
         >
           
         </div>
@@ -3632,21 +3678,13 @@ exports[`cluster - sidebar and tab navigation for extensions given extension wit
         </div>
       </div>
       <div
-        class="drawer-content flex column box grow"
+        class="drawer-content flex flex-col grow shrink-0 basis-0"
       />
     </div>
     <div
       class="ResizingAnchor horizontal leading"
     />
   </div>
-</div>
-`;
-
-exports[`cluster - sidebar and tab navigation for extensions given extension with cluster pages and cluster page menus given no state for expanded sidebar items exists, and navigated to child sidebar item, when rendered renders 1`] = `
-<div>
-  <div
-    class="Notifications flex column align-flex-end"
-  />
   <div
     class="mainLayout"
     style="--sidebar-width: 200px;"
@@ -3663,7 +3701,7 @@ exports[`cluster - sidebar and tab navigation for extensions given extension wit
         >
           <div
             class="Avatar rounded loadingAvatar"
-            style="width: 40px; height: 40px;"
+            style="width: 40px; height: 40px; background: var(--halfGray);"
           >
             ??
           </div>
@@ -4048,7 +4086,7 @@ exports[`cluster - sidebar and tab navigation for extensions given extension wit
             aria-live="assertive"
             id="DndLiveRegion-0"
             role="status"
-            style="position: fixed; top: 0px; left: 0px; width: 1px; height: 1px; margin: -1px; border: 0px; padding: 0px; overflow: hidden; clip-path: inset(100%); white-space: nowrap;"
+            style="position: fixed; top: 0px; left: 0px; width: 1px; height: 1px; margin: -1px; border: 0px; padding: 0px; overflow: hidden; clip: rect(0px); clip-path: inset(100%); white-space: nowrap;"
           />
         </div>
       </div>
@@ -4067,7 +4105,7 @@ exports[`cluster - sidebar and tab navigation for extensions given extension wit
           class="Tabs center scrollable"
         >
           <div
-            class="Tab flex gaps align-center active"
+            class="Tab flex gap-2 items-center active"
             data-is-active-test="true"
             data-testid="tab-link-for-sidebar-item-some-extension-name-some-child-id"
             role="tab"
@@ -4080,7 +4118,7 @@ exports[`cluster - sidebar and tab navigation for extensions given extension wit
             </div>
           </div>
           <div
-            class="Tab flex gaps align-center"
+            class="Tab flex gap-2 items-center"
             data-is-active-test="false"
             data-testid="tab-link-for-sidebar-item-some-extension-name-some-other-child-id"
             role="tab"
@@ -4115,7 +4153,7 @@ exports[`cluster - sidebar and tab navigation for extensions given extension wit
           class="ResizingAnchor vertical leading"
         />
         <div
-          class="tabs-container flex align-center"
+          class="tabs-container flex items-center"
         >
           <div
             class="dockTabs"
@@ -4125,7 +4163,7 @@ exports[`cluster - sidebar and tab navigation for extensions given extension wit
               class="Tabs tabs"
             >
               <div
-                class="Tab flex gaps align-center DockTab TerminalTab active"
+                class="Tab flex gap-2 items-center DockTab TerminalTab active"
                 data-testid="dock-tab-for-terminal"
                 id="tab-terminal"
                 role="tab"
@@ -4145,7 +4183,7 @@ exports[`cluster - sidebar and tab navigation for extensions given extension wit
                   class="label"
                 >
                   <div
-                    class="flex align-center"
+                    class="flex items-center"
                   >
                     <span
                       class="title"
@@ -4179,10 +4217,10 @@ exports[`cluster - sidebar and tab navigation for extensions given extension wit
             </div>
           </div>
           <div
-            class="toolbar flex gaps align-center box grow"
+            class="toolbar flex gap-2 items-center grow shrink-0 basis-0"
           >
             <div
-              class="dock-menu box grow"
+              class="dock-menu grow shrink-0 basis-0"
             >
               <i
                 class="Icon new-dock-tab material interactive focusable"
@@ -4233,18 +4271,26 @@ exports[`cluster - sidebar and tab navigation for extensions given extension wit
       </div>
     </div>
   </div>
+</div>
+`;
+
+exports[`cluster - sidebar and tab navigation for extensions > given extension with cluster pages and cluster page menus > given state for expanded sidebar items already exists, when rendered > renders 1`] = `
+<div>
   <div
-    class="Animate slide-right Drawer KubeObjectDetails flex column right enter leave"
+    class="Notifications"
+  />
+  <div
+    class="Animate slide-right Drawer KubeObjectDetails flex flex-col right enter leave"
     style="--size: 725px; --enter-duration: 100ms; --leave-duration: 100ms;"
   >
     <div
-      class="drawer-wrapper flex column"
+      class="drawer-wrapper flex flex-col"
     >
       <div
-        class="drawer-title flex align-center"
+        class="drawer-title flex items-center"
       >
         <div
-          class="drawer-title-text flex gaps align-center"
+          class="drawer-title-text flex gap-2 items-center"
         >
           
         </div>
@@ -4264,21 +4310,13 @@ exports[`cluster - sidebar and tab navigation for extensions given extension wit
         </div>
       </div>
       <div
-        class="drawer-content flex column box grow"
+        class="drawer-content flex flex-col grow shrink-0 basis-0"
       />
     </div>
     <div
       class="ResizingAnchor horizontal leading"
     />
   </div>
-</div>
-`;
-
-exports[`cluster - sidebar and tab navigation for extensions given extension with cluster pages and cluster page menus given state for expanded sidebar items already exists, when rendered renders 1`] = `
-<div>
-  <div
-    class="Notifications flex column align-flex-end"
-  />
   <div
     class="mainLayout"
     style="--sidebar-width: 200px;"
@@ -4295,7 +4333,7 @@ exports[`cluster - sidebar and tab navigation for extensions given extension wit
         >
           <div
             class="Avatar rounded loadingAvatar"
-            style="width: 40px; height: 40px;"
+            style="width: 40px; height: 40px; background: var(--halfGray);"
           >
             ??
           </div>
@@ -4756,7 +4794,7 @@ exports[`cluster - sidebar and tab navigation for extensions given extension wit
             aria-live="assertive"
             id="DndLiveRegion-4"
             role="status"
-            style="position: fixed; top: 0px; left: 0px; width: 1px; height: 1px; margin: -1px; border: 0px; padding: 0px; overflow: hidden; clip-path: inset(100%); white-space: nowrap;"
+            style="position: fixed; top: 0px; left: 0px; width: 1px; height: 1px; margin: -1px; border: 0px; padding: 0px; overflow: hidden; clip: rect(0px); clip-path: inset(100%); white-space: nowrap;"
           />
         </div>
       </div>
@@ -4775,7 +4813,7 @@ exports[`cluster - sidebar and tab navigation for extensions given extension wit
           class="Tabs center scrollable"
         >
           <div
-            class="Tab flex gaps align-center active"
+            class="Tab flex gap-2 items-center active"
             data-is-active-test="true"
             data-testid="tab-link-for-sidebar-item-workloads-overview"
             role="tab"
@@ -4792,14 +4830,14 @@ exports[`cluster - sidebar and tab navigation for extensions given extension wit
           class="scrollable"
         >
           <div
-            class="WorkloadsOverview flex column gaps"
+            class="WorkloadsOverview flex flex-col gap-4"
             data-testid="page-for-workloads-overview"
           >
             <div
-              class="header flex gaps align-center"
+              class="header flex gap-4 items-center"
             >
               <h5
-                class="box grow"
+                class="grow shrink-0 basis-0"
               >
                 Overview
               </h5>
@@ -4850,7 +4888,7 @@ exports[`cluster - sidebar and tab navigation for extensions given extension wit
                           id="overview-namespace-select-filter-input"
                           role="combobox"
                           spellcheck="false"
-                          style="opacity: 1; width: 100%; grid-area: 1 / 2; min-width: 2px; border: 0px; margin: 0px; outline: 0; padding: 0px;"
+                          style="color: inherit; background: 0px center; opacity: 1; width: 100%; grid-area: 1 / 2; font: inherit; min-width: 2px; border: 0px; margin: 0px; outline: 0px; padding: 0px;"
                           tabindex="0"
                           type="text"
                           value=""
@@ -4907,7 +4945,7 @@ exports[`cluster - sidebar and tab navigation for extensions given extension wit
           class="ResizingAnchor vertical leading"
         />
         <div
-          class="tabs-container flex align-center"
+          class="tabs-container flex items-center"
         >
           <div
             class="dockTabs"
@@ -4917,7 +4955,7 @@ exports[`cluster - sidebar and tab navigation for extensions given extension wit
               class="Tabs tabs"
             >
               <div
-                class="Tab flex gaps align-center DockTab TerminalTab active"
+                class="Tab flex gap-2 items-center DockTab TerminalTab active"
                 data-testid="dock-tab-for-terminal"
                 id="tab-terminal"
                 role="tab"
@@ -4937,7 +4975,7 @@ exports[`cluster - sidebar and tab navigation for extensions given extension wit
                   class="label"
                 >
                   <div
-                    class="flex align-center"
+                    class="flex items-center"
                   >
                     <span
                       class="title"
@@ -4971,10 +5009,10 @@ exports[`cluster - sidebar and tab navigation for extensions given extension wit
             </div>
           </div>
           <div
-            class="toolbar flex gaps align-center box grow"
+            class="toolbar flex gap-2 items-center grow shrink-0 basis-0"
           >
             <div
-              class="dock-menu box grow"
+              class="dock-menu grow shrink-0 basis-0"
             >
               <i
                 class="Icon new-dock-tab material interactive focusable"
@@ -5025,18 +5063,26 @@ exports[`cluster - sidebar and tab navigation for extensions given extension wit
       </div>
     </div>
   </div>
+</div>
+`;
+
+exports[`cluster - sidebar and tab navigation for extensions > given extension with cluster pages and cluster page menus > given state for expanded unknown sidebar items already exists, when rendered > renders without errors 1`] = `
+<div>
   <div
-    class="Animate slide-right Drawer KubeObjectDetails flex column right enter leave"
+    class="Notifications"
+  />
+  <div
+    class="Animate slide-right Drawer KubeObjectDetails flex flex-col right enter leave"
     style="--size: 725px; --enter-duration: 100ms; --leave-duration: 100ms;"
   >
     <div
-      class="drawer-wrapper flex column"
+      class="drawer-wrapper flex flex-col"
     >
       <div
-        class="drawer-title flex align-center"
+        class="drawer-title flex items-center"
       >
         <div
-          class="drawer-title-text flex gaps align-center"
+          class="drawer-title-text flex gap-2 items-center"
         >
           
         </div>
@@ -5056,21 +5102,13 @@ exports[`cluster - sidebar and tab navigation for extensions given extension wit
         </div>
       </div>
       <div
-        class="drawer-content flex column box grow"
+        class="drawer-content flex flex-col grow shrink-0 basis-0"
       />
     </div>
     <div
       class="ResizingAnchor horizontal leading"
     />
   </div>
-</div>
-`;
-
-exports[`cluster - sidebar and tab navigation for extensions given extension with cluster pages and cluster page menus given state for expanded unknown sidebar items already exists, when rendered renders without errors 1`] = `
-<div>
-  <div
-    class="Notifications flex column align-flex-end"
-  />
   <div
     class="mainLayout"
     style="--sidebar-width: 200px;"
@@ -5087,7 +5125,7 @@ exports[`cluster - sidebar and tab navigation for extensions given extension wit
         >
           <div
             class="Avatar rounded loadingAvatar"
-            style="width: 40px; height: 40px;"
+            style="width: 40px; height: 40px; background: var(--halfGray);"
           >
             ??
           </div>
@@ -5472,7 +5510,7 @@ exports[`cluster - sidebar and tab navigation for extensions given extension wit
             aria-live="assertive"
             id="DndLiveRegion-7"
             role="status"
-            style="position: fixed; top: 0px; left: 0px; width: 1px; height: 1px; margin: -1px; border: 0px; padding: 0px; overflow: hidden; clip-path: inset(100%); white-space: nowrap;"
+            style="position: fixed; top: 0px; left: 0px; width: 1px; height: 1px; margin: -1px; border: 0px; padding: 0px; overflow: hidden; clip: rect(0px); clip-path: inset(100%); white-space: nowrap;"
           />
         </div>
       </div>
@@ -5491,7 +5529,7 @@ exports[`cluster - sidebar and tab navigation for extensions given extension wit
           class="Tabs center scrollable"
         >
           <div
-            class="Tab flex gaps align-center active"
+            class="Tab flex gap-2 items-center active"
             data-is-active-test="true"
             data-testid="tab-link-for-sidebar-item-workloads-overview"
             role="tab"
@@ -5508,14 +5546,14 @@ exports[`cluster - sidebar and tab navigation for extensions given extension wit
           class="scrollable"
         >
           <div
-            class="WorkloadsOverview flex column gaps"
+            class="WorkloadsOverview flex flex-col gap-4"
             data-testid="page-for-workloads-overview"
           >
             <div
-              class="header flex gaps align-center"
+              class="header flex gap-4 items-center"
             >
               <h5
-                class="box grow"
+                class="grow shrink-0 basis-0"
               >
                 Overview
               </h5>
@@ -5566,7 +5604,7 @@ exports[`cluster - sidebar and tab navigation for extensions given extension wit
                           id="overview-namespace-select-filter-input"
                           role="combobox"
                           spellcheck="false"
-                          style="opacity: 1; width: 100%; grid-area: 1 / 2; min-width: 2px; border: 0px; margin: 0px; outline: 0; padding: 0px;"
+                          style="color: inherit; background: 0px center; opacity: 1; width: 100%; grid-area: 1 / 2; font: inherit; min-width: 2px; border: 0px; margin: 0px; outline: 0px; padding: 0px;"
                           tabindex="0"
                           type="text"
                           value=""
@@ -5623,7 +5661,7 @@ exports[`cluster - sidebar and tab navigation for extensions given extension wit
           class="ResizingAnchor vertical leading"
         />
         <div
-          class="tabs-container flex align-center"
+          class="tabs-container flex items-center"
         >
           <div
             class="dockTabs"
@@ -5633,7 +5671,7 @@ exports[`cluster - sidebar and tab navigation for extensions given extension wit
               class="Tabs tabs"
             >
               <div
-                class="Tab flex gaps align-center DockTab TerminalTab active"
+                class="Tab flex gap-2 items-center DockTab TerminalTab active"
                 data-testid="dock-tab-for-terminal"
                 id="tab-terminal"
                 role="tab"
@@ -5653,7 +5691,7 @@ exports[`cluster - sidebar and tab navigation for extensions given extension wit
                   class="label"
                 >
                   <div
-                    class="flex align-center"
+                    class="flex items-center"
                   >
                     <span
                       class="title"
@@ -5687,10 +5725,10 @@ exports[`cluster - sidebar and tab navigation for extensions given extension wit
             </div>
           </div>
           <div
-            class="toolbar flex gaps align-center box grow"
+            class="toolbar flex gap-2 items-center grow shrink-0 basis-0"
           >
             <div
-              class="dock-menu box grow"
+              class="dock-menu grow shrink-0 basis-0"
             >
               <i
                 class="Icon new-dock-tab material interactive focusable"
@@ -5741,18 +5779,26 @@ exports[`cluster - sidebar and tab navigation for extensions given extension wit
       </div>
     </div>
   </div>
+</div>
+`;
+
+exports[`cluster - sidebar and tab navigation for extensions > given extension with cluster pages and cluster page menus with explicit 'orderNumber' > given no state for expanded sidebar items exists, and navigated to child sidebar item, when rendered > renders 1`] = `
+<div>
   <div
-    class="Animate slide-right Drawer KubeObjectDetails flex column right enter leave"
+    class="Notifications"
+  />
+  <div
+    class="Animate slide-right Drawer KubeObjectDetails flex flex-col right enter leave"
     style="--size: 725px; --enter-duration: 100ms; --leave-duration: 100ms;"
   >
     <div
-      class="drawer-wrapper flex column"
+      class="drawer-wrapper flex flex-col"
     >
       <div
-        class="drawer-title flex align-center"
+        class="drawer-title flex items-center"
       >
         <div
-          class="drawer-title-text flex gaps align-center"
+          class="drawer-title-text flex gap-2 items-center"
         >
           
         </div>
@@ -5772,21 +5818,13 @@ exports[`cluster - sidebar and tab navigation for extensions given extension wit
         </div>
       </div>
       <div
-        class="drawer-content flex column box grow"
+        class="drawer-content flex flex-col grow shrink-0 basis-0"
       />
     </div>
     <div
       class="ResizingAnchor horizontal leading"
     />
   </div>
-</div>
-`;
-
-exports[`cluster - sidebar and tab navigation for extensions given extension with cluster pages and cluster page menus with explicit 'orderNumber' given no state for expanded sidebar items exists, and navigated to child sidebar item, when rendered renders 1`] = `
-<div>
-  <div
-    class="Notifications flex column align-flex-end"
-  />
   <div
     class="mainLayout"
     style="--sidebar-width: 200px;"
@@ -5803,7 +5841,7 @@ exports[`cluster - sidebar and tab navigation for extensions given extension wit
         >
           <div
             class="Avatar rounded loadingAvatar"
-            style="width: 40px; height: 40px;"
+            style="width: 40px; height: 40px; background: var(--halfGray);"
           >
             ??
           </div>
@@ -6188,7 +6226,7 @@ exports[`cluster - sidebar and tab navigation for extensions given extension wit
             aria-live="assertive"
             id="DndLiveRegion-32"
             role="status"
-            style="position: fixed; top: 0px; left: 0px; width: 1px; height: 1px; margin: -1px; border: 0px; padding: 0px; overflow: hidden; clip-path: inset(100%); white-space: nowrap;"
+            style="position: fixed; top: 0px; left: 0px; width: 1px; height: 1px; margin: -1px; border: 0px; padding: 0px; overflow: hidden; clip: rect(0px); clip-path: inset(100%); white-space: nowrap;"
           />
         </div>
       </div>
@@ -6207,7 +6245,7 @@ exports[`cluster - sidebar and tab navigation for extensions given extension wit
           class="Tabs center scrollable"
         >
           <div
-            class="Tab flex gaps align-center active"
+            class="Tab flex gap-2 items-center active"
             data-is-active-test="true"
             data-testid="tab-link-for-sidebar-item-some-extension-name-some-child-id"
             role="tab"
@@ -6220,7 +6258,7 @@ exports[`cluster - sidebar and tab navigation for extensions given extension wit
             </div>
           </div>
           <div
-            class="Tab flex gaps align-center"
+            class="Tab flex gap-2 items-center"
             data-is-active-test="false"
             data-testid="tab-link-for-sidebar-item-some-extension-name-some-other-child-id"
             role="tab"
@@ -6255,7 +6293,7 @@ exports[`cluster - sidebar and tab navigation for extensions given extension wit
           class="ResizingAnchor vertical leading"
         />
         <div
-          class="tabs-container flex align-center"
+          class="tabs-container flex items-center"
         >
           <div
             class="dockTabs"
@@ -6265,7 +6303,7 @@ exports[`cluster - sidebar and tab navigation for extensions given extension wit
               class="Tabs tabs"
             >
               <div
-                class="Tab flex gaps align-center DockTab TerminalTab active"
+                class="Tab flex gap-2 items-center DockTab TerminalTab active"
                 data-testid="dock-tab-for-terminal"
                 id="tab-terminal"
                 role="tab"
@@ -6285,7 +6323,7 @@ exports[`cluster - sidebar and tab navigation for extensions given extension wit
                   class="label"
                 >
                   <div
-                    class="flex align-center"
+                    class="flex items-center"
                   >
                     <span
                       class="title"
@@ -6319,10 +6357,10 @@ exports[`cluster - sidebar and tab navigation for extensions given extension wit
             </div>
           </div>
           <div
-            class="toolbar flex gaps align-center box grow"
+            class="toolbar flex gap-2 items-center grow shrink-0 basis-0"
           >
             <div
-              class="dock-menu box grow"
+              class="dock-menu grow shrink-0 basis-0"
             >
               <i
                 class="Icon new-dock-tab material interactive focusable"
@@ -6372,44 +6410,6 @@ exports[`cluster - sidebar and tab navigation for extensions given extension wit
         </div>
       </div>
     </div>
-  </div>
-  <div
-    class="Animate slide-right Drawer KubeObjectDetails flex column right enter leave"
-    style="--size: 725px; --enter-duration: 100ms; --leave-duration: 100ms;"
-  >
-    <div
-      class="drawer-wrapper flex column"
-    >
-      <div
-        class="drawer-title flex align-center"
-      >
-        <div
-          class="drawer-title-text flex gaps align-center"
-        >
-          
-        </div>
-        <i
-          class="Icon material interactive focusable"
-          tabindex="0"
-        >
-          <span
-            class="icon"
-            data-icon-name="close"
-          >
-            close
-          </span>
-        </i>
-        <div>
-          Close
-        </div>
-      </div>
-      <div
-        class="drawer-content flex column box grow"
-      />
-    </div>
-    <div
-      class="ResizingAnchor horizontal leading"
-    />
   </div>
 </div>
 `;

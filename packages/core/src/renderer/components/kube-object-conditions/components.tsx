@@ -1,8 +1,7 @@
 import { cssNames } from "@freelensapp/utilities";
+import { upperFirst } from "es-toolkit";
 import * as yaml from "js-yaml";
-import { upperFirst } from "lodash/fp";
 import moment from "moment-timezone";
-import React from "react";
 import { defaultYamlDumpOptions } from "../../../common/kube-helpers";
 import { DurationAbsoluteTimestamp } from "../events";
 
@@ -25,7 +24,7 @@ export function getTooltip(condition: Condition, id: string) {
             value = yaml.dump(value, defaultYamlDumpOptions);
           }
           return (
-            <div key={key} className="flex gaps align-center">
+            <div key={key} className="flex gap-2 items-center">
               <div className="name">{upperFirst(key)}</div>
               <div className="value">{value}</div>
             </div>

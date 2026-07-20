@@ -5,7 +5,6 @@
  */
 
 import { observer } from "mobx-react";
-import React from "react";
 import { Checkbox } from "../../checkbox";
 import styles from "./controls.module.scss";
 import { DownloadLogsDropdown } from "./download-logs-dropdown";
@@ -51,7 +50,7 @@ export const LogControls = observer(({ model }: LogControlsProps) => {
           </span>
         )}
       </div>
-      <div className="flex gaps align-center">
+      <div className="flex gap-2 items-center">
         <Checkbox
           label="Show timestamps"
           value={showTimestamps}

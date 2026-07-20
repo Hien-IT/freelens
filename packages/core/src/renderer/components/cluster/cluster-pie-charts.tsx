@@ -8,9 +8,8 @@ import { Icon } from "@freelensapp/icon";
 import { Spinner } from "@freelensapp/spinner";
 import { bytesToUnits, cssNames } from "@freelensapp/utilities";
 import { withInjectables } from "@ogre-tools/injectable-react";
-import { isNumber } from "lodash";
 import { observer } from "mobx-react";
-import React, { useRef } from "react";
+import { useRef } from "react";
 import { getMetricLastPoints } from "../../../common/k8s-api/endpoints/metrics.api";
 import activeThemeInjectable from "../../themes/active.injectable";
 import { PieChart } from "../chart";
@@ -46,7 +45,7 @@ interface Dependencies {
 }
 
 const renderLimitWarning = () => (
-  <div className="node-warning flex gaps align-center">
+  <div className="node-warning flex gap-4 items-center">
     <Icon material="info" />
     <p>Specified limits are higher than node capacity!</p>
   </div>
@@ -70,14 +69,14 @@ const renderCharts = (defaultColor: string, lastPoints: Partial<Record<keyof Clu
   } = lastPoints;
 
   if (
-    !isNumber(cpuCapacity) ||
-    !isNumber(cpuAllocatableCapacity) ||
-    !isNumber(podCapacity) ||
-    !isNumber(podAllocatableCapacity) ||
-    !isNumber(memoryAllocatableCapacity) ||
-    !isNumber(memoryCapacity) ||
-    !isNumber(memoryUsage) ||
-    !isNumber(memoryRequests)
+    typeof cpuCapacity !== "number" ||
+    typeof cpuAllocatableCapacity !== "number" ||
+    typeof podCapacity !== "number" ||
+    typeof podAllocatableCapacity !== "number" ||
+    typeof memoryAllocatableCapacity !== "number" ||
+    typeof memoryCapacity !== "number" ||
+    typeof memoryUsage !== "number" ||
+    typeof memoryRequests !== "number"
   ) {
     return null;
   }
@@ -154,8 +153,8 @@ const renderCharts = (defaultColor: string, lastPoints: Partial<Record<keyof Clu
   };
 
   return (
-    <div className="flex justify-center box grow gaps">
-      <div className={cssNames(styles.chart, "flex column align-center box grow")}>
+    <div className="flex justify-center grow shrink-0 basis-0 gap-2">
+      <div className={cssNames(styles.chart, "flex flex-col items-center grow shrink-0 basis-0")}>
         <PieChart
           data={cpuData}
           title="CPU"
@@ -163,7 +162,7 @@ const renderCharts = (defaultColor: string, lastPoints: Partial<Record<keyof Clu
         />
         {(cpuLimits ?? cpuAllocatableCapacity) > cpuAllocatableCapacity && renderLimitWarning()}
       </div>
-      <div className={cssNames(styles.chart, "flex column align-center box grow")}>
+      <div className={cssNames(styles.chart, "flex flex-col items-center grow shrink-0 basis-0")}>
         <PieChart
           data={memoryData}
           title="Memory"
@@ -171,7 +170,7 @@ const renderCharts = (defaultColor: string, lastPoints: Partial<Record<keyof Clu
         />
         {(memoryLimits ?? memoryAllocatableCapacity) > memoryAllocatableCapacity && renderLimitWarning()}
       </div>
-      <div className={cssNames(styles.chart, "flex column align-center box grow")}>
+      <div className={cssNames(styles.chart, "flex flex-col items-center grow shrink-0 basis-0")}>
         <PieChart data={podsData} title="Pods" legendColors={["#4caf50", defaultColor]} />
       </div>
     </div>
@@ -181,7 +180,7 @@ const renderCharts = (defaultColor: string, lastPoints: Partial<Record<keyof Clu
 const renderContent = (defaultColor: string, nodes: Node[], metrics: Partial<ClusterMetricData> | undefined) => {
   if (!nodes.length) {
     return (
-      <div className={cssNames(styles.empty, "flex column box grow align-center justify-center")}>
+      <div className={cssNames(styles.empty, "flex flex-col grow shrink-0 basis-0 items-center justify-center")}>
         <Icon material="info" />
         No Nodes Available.
       </div>
@@ -190,7 +189,7 @@ const renderContent = (defaultColor: string, nodes: Node[], metrics: Partial<Clu
 
   if (!metrics) {
     return (
-      <div className={cssNames(styles.empty, "flex justify-center align-center box grow")}>
+      <div className={cssNames(styles.empty, "flex justify-center items-center grow shrink-0 basis-0")}>
         <Spinner />
       </div>
     );

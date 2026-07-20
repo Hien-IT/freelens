@@ -6,17 +6,18 @@ You can build the application using this repository.
 
 ### Prerequisites
 
-Install a compiler and Python setuptools, for example:
+The only native module Freelens uses is
+[node-pty](https://www.npmjs.com/package/node-pty), which ships prebuilt,
+ABI-stable (N-API) binaries for every platform we support. There is therefore
+no need for a C/C++ compiler, Python, or Visual Studio build tools to build or
+run the app.
+
+On Linux you still need the shared libraries Electron requires at runtime, for
+example:
 
 ```sh
 # Debian/Ubuntu
-apt install build-essential python3-setuptools libnss3
-# MacOS
-brew install bash python3-setuptools
-# Windows
-winget install Microsoft.VisualStudio.2022.Community Python.Python.3.13
-& 'C:\Program Files (x86)\Microsoft Visual Studio\Installer\vs_installer.exe'
-# then install required components
+apt install libnss3
 ```
 
 Use [NVM](https://github.com/nvm-sh/nvm) or
@@ -40,7 +41,9 @@ nvm use 24.18.0
 Install Pnpm (if is not yet installed with mise-en-place):
 
 ```sh
-corepack install
+corepack enable pnpm
+# or
+mise exec -- corepack enable pnpm
 # or
 curl -fsSL https://get.pnpm.io/install.sh | sh -
 # or
@@ -75,36 +78,18 @@ pnpm build
 
 ### Cross compilation
 
-The official binary packages are build in native environment, however you can
-build arm64 binary on Linux amd64 or amd64 binary on MacOS arm64.
+The official binary packages are built in a native environment, however you can
+build an arm64 binary on Linux amd64 or an amd64 binary on macOS arm64.
 
-On Linux, install cross-compiler (macOS includes this by default):
-
-```sh
-# Debian/Ubuntu
-apt install gcc-aarch64-linux-gnu g++-aarch64-linux-gnu
-```
-
-Then set the environment with support for other architectures:
+Because node-pty ships prebuilt binaries for every architecture, no native
+recompilation is required — you only need electron-builder to download Electron
+for the foreign architecture:
 
 ```sh
-# Debian/Ubuntu
-export CC=aarch64-linux-gnu-gcc CXX=aarch64-linux-gnu-g++
-export DOWNLOAD_ALL_ARCHITECTURES=true
-# MacOS
 export DOWNLOAD_ALL_ARCHITECTURES=true
 ```
 
-And rebuild binary packages for the foreign architecture:
-
-```sh
-# Debian/Ubuntu
-pnpm electron-rebuild -a arm64
-# MacOS
-pnpm electron-rebuild -a x64
-```
-
-Finally, generate binary packages:
+Then generate the binary packages for the foreign architecture:
 
 ```sh
 # Debian/Ubuntu
@@ -143,15 +128,54 @@ pnpm trunk:check
 
 ### Daily development
 
-For active development with automatic rebuilds:
+For active development with hot module replacement:
 
 ```sh
-pnpm dev         # Starts the app with file watching
+pnpm dev         # Starts the app through electron-vite dev
 ```
 
-**Note:** `pnpm dev` is not recommended as it doesn't work correctly with
-webpack. You can use standard workflow
-`pnpm build && pnpm build:app:dir && pnpm start` instead.
+The renderer is served by the Vite dev server (port 9191, overridable with
+`FREELENS_DEV_SERVER_PORT`) through the lens proxy; the main process is
+rebuilt on change. If dev mode misbehaves, the packaged-app workflow
+`pnpm build && pnpm build:app:dir && pnpm start` always works.
+
+### Inspecting the running dev app from an AI agent (optional)
+
+The `pnpm dev` script launches Electron with `--remoteDebuggingPort 9223`, so
+the running app exposes a Chrome DevTools Protocol (CDP) endpoint. An AI coding
+agent (Claude Code, Cursor, …) can attach to it to drive and inspect the app —
+snapshot the accessibility tree, click, read the DOM, capture screenshots —
+which is useful for debugging renderer-side issues that never reach the terminal.
+
+Use a **frame-aware** CDP client. Freelens renders each cluster in a
+cross-origin `<clusterId>.renderer.freelens.app` iframe, so a tool that only
+sees the top document (e.g. `@laststance/electron-mcp-server`) can drive the
+catalog/welcome shell but is blind to everything inside a cluster (Nodes,
+Workloads, Pods, …). Playwright and Puppeteer traverse cross-origin frames and
+reach the cluster views, so prefer one of them:
+
+- [Playwright MCP](https://github.com/microsoft/playwright-mcp) — `@playwright/mcp`, connect with `--cdp-endpoint`
+- [chrome-devtools-mcp](https://github.com/ChromeDevTools/chrome-devtools-mcp) — connect with `--browser-url`
+
+This is a per-developer, opt-in tool and is intentionally **not** committed to
+`.mcp.json` (that would prompt every contributor). Add it to your own local
+Claude Code config, pointed at the dev CDP port:
+
+```sh
+# Local scope: stored per-project in ~/.claude.json, not shared
+claude mcp add playwright --scope local -- npx -y @playwright/mcp@latest --cdp-endpoint http://127.0.0.1:9223
+```
+
+Then:
+
+1. Start the app with `pnpm dev` (it must be running before the agent connects).
+2. In Claude Code, run `/mcp` to confirm the `playwright` server is connected.
+3. Ask the agent to drive the app; to reach a cluster's resources it targets the
+   `…renderer.freelens.app/…` cluster frame, not just the top page.
+
+Remove it any time with `claude mcp remove playwright --scope local`. Some MCP
+servers write runtime artifacts (screenshots, databases, keys) under `logs/` in
+the project root, which is git-ignored.
 
 ### Running tests
 

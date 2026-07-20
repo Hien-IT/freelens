@@ -6,7 +6,6 @@
 
 import { screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import React from "react";
 import userPreferencesStateInjectable from "../../../../../features/user-preferences/common/state.injectable";
 import { getDiForUnitTesting } from "../../../../getDiForUnitTesting";
 import { renderFor } from "../../../test-utils/renderFor";
@@ -91,7 +90,7 @@ describe("LogControls", () => {
   });
 
   it("updates only the tab data (not the saved preference) before reloading logs", async () => {
-    const setLogTabData = jest.fn();
+    const setLogTabData = vi.fn();
 
     model = getOnePodViewModel(
       "foobar",
@@ -100,7 +99,7 @@ describe("LogControls", () => {
       { setLogTabData },
     );
 
-    const reloadLogsSpy = jest.spyOn(model, "reloadLogs");
+    const reloadLogsSpy = vi.spyOn(model, "reloadLogs");
 
     render(<LogControls model={model} />);
 

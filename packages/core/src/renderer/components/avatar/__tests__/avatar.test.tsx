@@ -4,8 +4,7 @@
  * Licensed under MIT License. See LICENSE in root directory for more information.
  */
 
-import React from "react";
-import "@testing-library/jest-dom";
+import "@testing-library/jest-dom/vitest";
 
 import { Icon } from "@freelensapp/icon";
 import { getDiForUnitTesting } from "../../../getDiForUnitTesting";

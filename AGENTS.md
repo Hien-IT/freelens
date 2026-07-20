@@ -31,6 +31,24 @@ Never read, display, reference, or include the contents of the following files i
 - `*.pem`
 - `*.key`
 
+## Session and temporary files
+
+Files created while working on a task — scratch scripts, command output,
+screenshots, DOM/accessibility snapshots, and AI-agent / MCP-server runtime
+artifacts — must never be written into the tracked working tree, or they leak
+into git history. Write them to a system temporary directory outside the repo
+(e.g. under `$TMPDIR`, or `mktemp -d`), not to the repo root.
+
+When a tool insists on writing inside the repo, keep it out of git:
+
+- point it at a temp path if it accepts one (e.g. pass an absolute
+  `$TMPDIR/...` filename), otherwise
+- git-ignore its default output directory. Already ignored:
+  `.playwright-mcp/` (Playwright MCP), `logs/` (electron-mcp-server).
+
+Never `git add -A` / `git add .` blindly: review `git status` first and stage
+only the files your change actually touches, never these artifacts.
+
 ## Build System
 
 ### Commands
@@ -134,34 +152,42 @@ The build process automatically runs this, but you can run it manually to verify
 - Open DevTools in the app
 - Check Console tab for errors and logs
 - Use React DevTools for component inspection
+- `pnpm dev` also exposes a Chrome DevTools Protocol endpoint on port 9223
+  (`--remoteDebuggingPort`). Note that each cluster's UI renders in a
+  cross-origin `<clusterId>.renderer.freelens.app` iframe, so inspecting or
+  automating cluster views requires a frame-aware CDP client — see the
+  AI-agent inspection notes in DEVELOPMENT.md.
 
 **Common Errors:**
 - `Tried to register same injectable multiple times` - See DI section above
 - `Tried to inject non-registered injectable` - Check registration files were generated
 - Permission errors on macOS - Expected during development
 
-### Working with Webpack
+### Working with the bundler (electron-vite)
 
-The project uses Webpack for bundling:
+The project bundles with electron-vite (Vite + Rollup); the legacy Webpack
+layer was removed in #2118.
 
-- `freelens/webpack/` - Webpack configuration
-- Changes to source files auto-rebuild in dev mode
-- Changes to generated files require full rebuild
+- `freelens/electron.vite.config.ts` - main/renderer build and dev-server config
+- `pnpm dev` runs `electron-vite dev` with Vite HMR; renderer source changes
+  hot-reload, main-process changes rebuild and relaunch (via `--watch`)
+- Changes to generated files (e.g. DI registration) require a full rebuild
 
-**Cache issues:** Delete `dist` folders and rebuild
+**Cache issues:** Delete the build output and rebuild
+(`rm -rf .turbo packages/core/dist freelens/dist`)
 
 ## Troubleshooting Patterns
 
 ### Changes Not Appearing
 
 1. Check if file is in ignored directory (`dist/`, `node_modules/`)
-2. Clear webpack cache: `rm -rf packages/core/dist freelens/dist`
+2. Clear the build output: `rm -rf .turbo packages/core/dist freelens/dist`
 3. Full rebuild: `pnpm build`
 4. Restart application: `pnpm start`
 
 ### Build Failures
 
-1. Check for TypeScript errors: `pnpm type-check`
+1. Check for TypeScript errors: `pnpm type:check`
 2. Check for linting errors: `pnpm lint`
 3. Verify dependencies: `pnpm install`
 4. Check Node.js version matches `.nvmrc`
@@ -195,6 +221,25 @@ Uses pnpm workspaces for:
 - Shared code reuse
 - Faster builds
 - Type safety across packages
+
+## Styling
+
+Freelens v2 carries four styling systems (theme CSS custom properties, global
+plain SCSS, CSS Modules, and Tailwind v4). Which one to use is not a matter of
+taste — each has a defined role. Before adding or changing any stylesheet or
+`className`, read [`docs/v2-styling.md`](./docs/v2-styling.md). In short:
+
+- **Theme values** (colors, fonts): CSS custom properties from the TS theme
+  system (`var(--…)`) — the single contract every other system reads.
+- **Shared components** (`packages/ui-components`) and anything an extension
+  may restyle: global PascalCase class + plain SCSS + `var(--…)`. No Tailwind
+  (its JIT only scans core TSX), no CSS Modules (the class names are public
+  API).
+- **Core single components / full views**: CSS Modules (`*.module.scss`).
+- **Local layout inside core-only TSX**: Tailwind utilities. The legacy
+  `flexbox.scss` utilities have been removed — do not reintroduce them.
+- **Extensions**: see the styling section of
+  [`docs/v2-extension-migration.md`](./docs/v2-extension-migration.md).
 
 ## Best Practices
 
@@ -284,6 +329,20 @@ When asked to implement a change on a PR:
    separately. Do not batch multiple independent fixes into a single
    commit. This keeps the history bisectable and makes each change easy
    to revert individually.
+
+### Pushing After Every Commit
+
+The GitHub Actions job running Claude has a total timeout of 60 minutes.
+When the session times out, any commits that exist only in the runner's
+local checkout are lost. To make the work resumable in a follow-up session:
+
+1. **Push to the remote branch immediately after every commit.** Do not
+   accumulate multiple local commits before pushing — commit, push, then
+   move on to the next change.
+2. This pairs with the "one commit per fix" rule above: each completed fix
+   should land on the remote branch as soon as it is committed, so a
+   timed-out session can be resumed from the last pushed commit instead of
+   starting over.
 
 ### Modifying GitHub Actions Workflows
 

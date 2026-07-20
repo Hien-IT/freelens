@@ -6,15 +6,14 @@
 
 import { computed } from "mobx";
 import moment from "moment";
-import React from "react";
 import { getDiForUnitTesting } from "../../getDiForUnitTesting";
 import activeThemeInjectable from "../../themes/active.injectable";
 import { renderFor } from "../test-utils/renderFor";
 import { BarChart } from "./bar-chart";
 
-const chartMock = jest.fn();
+const chartMock = vi.fn();
 
-jest.mock("./chart", () => ({
+vi.mock("./chart", () => ({
   ChartKind: {
     BAR: "bar",
     LINE: "line",
@@ -64,8 +63,8 @@ describe("BarChart", () => {
     );
 
     const options = chartMock.mock.calls[0][0].options;
-    const parser = options.scales.xAxes[0].time.parser;
-    const tickCallback = options.scales.xAxes[0].ticks.callback;
+    const parser = options.scales.x.time.parser;
+    const tickCallback = options.scales.x.ticks.callback;
     const chartJsTicks = [{ value: "1710000000000", major: false }];
 
     expect(parser(1_710_000_000_000)).toBe(1_710_000_000_000);
@@ -113,14 +112,14 @@ describe("BarChart", () => {
     );
 
     const options = chartMock.mock.calls[0][0].options;
-    const tickCallback = options.scales.xAxes[0].ticks.callback;
+    const tickCallback = options.scales.x.ticks.callback;
     const chartJsTicks = [
       { value: "1704067200000", major: false },
       { value: "1704499200000", major: false },
       { value: "1704931200000", major: false },
     ];
 
-    expect(options.scales.xAxes[0].time.unit).toBe("day");
+    expect(options.scales.x.time.unit).toBe("day");
     expect(tickCallback("1704067200000", 0, chartJsTicks)).toBe(moment(1_704_067_200_000).format("MMM DD"));
     expect(tickCallback("1704499200000", 1, chartJsTicks)).toBe(moment(1_704_499_200_000).format("MMM DD"));
     expect(tickCallback("1704931200000", 2, chartJsTicks)).toBe(moment(1_704_931_200_000).format("MMM DD"));
@@ -159,11 +158,13 @@ describe("BarChart", () => {
     );
 
     const options = chartMock.mock.calls[0][0].options;
-    const tooltipTitle = options.tooltips.callbacks.title;
+    const tooltipTitle = options.plugins.tooltip.callbacks.title;
 
-    expect(tooltipTitle([{ xLabel: "1710000000000" }])).toBe(moment(1_710_000_000_000).format("MMM DD, HH:mm"));
-    expect(tooltipTitle([{ xLabel: 1_710_000_000_000 }])).toBe(moment(1_710_000_000_000).format("MMM DD, HH:mm"));
-    expect(tooltipTitle([{ xLabel: "9999999999999" }])).toBe("");
+    expect(tooltipTitle([{ parsed: { x: "1710000000000" } }])).toBe(moment(1_710_000_000_000).format("MMM DD, HH:mm"));
+    expect(tooltipTitle([{ parsed: { x: 1_710_000_000_000 } }])).toBe(
+      moment(1_710_000_000_000).format("MMM DD, HH:mm"),
+    );
+    expect(tooltipTitle([{ parsed: { x: "9999999999999" } }])).toBe("");
     expect(tooltipTitle([])).toBe("");
   });
 });

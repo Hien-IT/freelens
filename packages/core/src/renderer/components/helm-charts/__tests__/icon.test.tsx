@@ -5,7 +5,6 @@
  */
 
 import { render, screen } from "@testing-library/react";
-import React from "react";
 import { HelmChartIcon } from "../icon";
 
 const mainImageSrc = "https://example.com/main-picture.jpg";
@@ -35,7 +34,7 @@ describe("HelmChartIcon", () => {
     const mainImage = screen.getByRole<HTMLImageElement>("img");
 
     mainImage.dispatchEvent(new Event("load"));
-    expect(imageContainer.style.backgroundImage).toBe("url(https://example.com/main-picture.jpg)");
+    expect(imageContainer.style.backgroundImage).toBe('url("https://example.com/main-picture.jpg")');
   });
 
   it("renders png image when its loaded", () => {
@@ -45,7 +44,7 @@ describe("HelmChartIcon", () => {
     const mainImage = screen.getByRole<HTMLImageElement>("img");
 
     mainImage.dispatchEvent(new Event("load"));
-    expect(imageContainer.style.backgroundImage).toBe("url(https://example.com/main-picture.png)");
+    expect(imageContainer.style.backgroundImage).toBe('url("https://example.com/main-picture.png")');
   });
 
   it("does not render invalid image url", () => {

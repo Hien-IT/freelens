@@ -4,14 +4,14 @@
  * Licensed under MIT License. See LICENSE in root directory for more information.
  */
 
-import { getLegacyGlobalDiForExtensionApi } from "@freelensapp/legacy-global-di";
+import assert from "node:assert";
+import * as path from "node:path";
 import { getOrInsertWith } from "@freelensapp/utilities";
-import assert from "assert";
-import * as path from "path";
 import directoryForUserDataInjectable from "../common/app-paths/directory-for-user-data/directory-for-user-data.injectable";
 import createPersistentStorageInjectable, {
   type PersistentStorage,
 } from "../features/persistent-storage/common/create.injectable";
+import { getDiForExtensionApi } from "./extension-api-di";
 
 import type { Options } from "conf";
 
@@ -21,7 +21,7 @@ import type { LensExtension } from "./lens-extension";
 
 export interface ExtensionStoreParams<T extends object>
   extends Omit<PersistentStorageParams<T>, "migrations" | "cwd" | "fromStore" | "toJSON"> {
-  migrations?: Options<T>["migrations"];
+  migrations?: Options<T & Record<string, unknown>>["migrations"];
   cwd?: string;
 }
 
@@ -58,7 +58,7 @@ export abstract class BaseExtensionStore<M extends object = any> {
 
   protected persistentStorage?: PersistentStorage;
   private readonly dependencies = (() => {
-    const di = getLegacyGlobalDiForExtensionApi();
+    const di = getDiForExtensionApi();
 
     return {
       createPersistentStorage: di.inject(createPersistentStorageInjectable),

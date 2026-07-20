@@ -10,7 +10,7 @@ import { Spinner } from "@freelensapp/spinner";
 import { bytesToUnits, cssNames, interval, prevDefault } from "@freelensapp/utilities";
 import { withInjectables } from "@ogre-tools/injectable-react";
 import autoBindReact from "auto-bind/react";
-import kebabCase from "lodash/kebabCase";
+import { kebabCase } from "es-toolkit";
 import { reaction } from "mobx";
 import { disposeOnUnmount, observer } from "mobx-react";
 import React from "react";
@@ -173,7 +173,7 @@ class NonInjectedPodDetailsList extends React.Component<PodDetailsListProps & De
     const virtual = pods.length > 20;
 
     return (
-      <div className="PodDetailsList flex column">
+      <div className="PodDetailsList flex flex-col">
         <DrawerTitle>Pods</DrawerTitle>
         <Table
           tableId="workloads_pod_details_list"
@@ -194,7 +194,7 @@ class NonInjectedPodDetailsList extends React.Component<PodDetailsListProps & De
           sortSyncWithUrl={false}
           getTableRow={this.getTableRow}
           renderRow={virtual ? undefined : (pod) => this.getTableRow(pod.getId())}
-          className="box grow"
+          className="grow shrink-0 basis-0"
         >
           <TableHead flat sticky={virtual}>
             <TableCell className="name" sortBy={sortBy.name}>

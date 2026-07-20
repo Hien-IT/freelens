@@ -4,10 +4,10 @@
  * Licensed under MIT License. See LICENSE in root directory for more information.
  */
 
+import assert from "node:assert";
 import { parseKubeApi } from "@freelensapp/kube-api";
 import { KubeStatus } from "@freelensapp/kube-object";
 import { includes, object, rejectPromiseBy, waitUntilDefined } from "@freelensapp/utilities";
-import assert from "assert";
 import autoBind from "auto-bind";
 import { action, computed, makeObservable, observable, reaction } from "mobx";
 import { ItemStore } from "../item.store";
@@ -22,9 +22,9 @@ import type {
 } from "@freelensapp/kube-api";
 import type { KubeJsonApiDataFor, KubeObject } from "@freelensapp/kube-object";
 import type { Logger } from "@freelensapp/logger";
-import type { RequestInit } from "@freelensapp/node-fetch";
 import type { Disposer } from "@freelensapp/utilities";
 
+import type { RequestInit } from "node-fetch";
 import type { Patch } from "rfc6902";
 import type { PartialDeep } from "type-fest";
 

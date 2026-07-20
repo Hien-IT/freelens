@@ -47,7 +47,7 @@ Download either the PKG (installer) or DMG (image) package from the
 [releases](https://github.com/freelensapp/freelens/releases) page. Both arm64
 (M1 chip or newer) and amd64 (Intel) variants are available.
 
-All binary packages are built on macOS 14 and should be compatible with newer
+All binary packages are built on macOS 15 and should be compatible with newer
 systems.
 
 #### Homebrew

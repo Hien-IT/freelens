@@ -6,7 +6,6 @@
 
 import { withInjectables } from "@ogre-tools/injectable-react";
 import { observer } from "mobx-react";
-import React from "react";
 import { Radio, RadioGroup } from "../radio";
 import styles from "./cluster-metric-switchers.module.css";
 import { MetricsTimeRangeSelector } from "./metrics-time-range-selector";
@@ -33,11 +32,11 @@ const NonInjectedClusterMetricSwitchers = observer(
     hasCPUMetrics,
     hasMemoryMetrics,
   }: Dependencies & ClusterMetricSwitchersProps) => (
-    <div className={`flex gaps ${styles.container}`}>
-      <div className="box grow">
+    <div className={`flex gap-2 ${styles.container}`}>
+      <div className="grow shrink-0 basis-0">
         <RadioGroup
           asButtons
-          className="RadioGroup flex gaps"
+          className="RadioGroup flex gap-2"
           value={selectedNodeRoleForMetrics.value.get()}
           onChange={selectedNodeRoleForMetrics.set}
         >
@@ -45,13 +44,13 @@ const NonInjectedClusterMetricSwitchers = observer(
           <Radio label="Worker" value="worker" disabled={!selectedNodeRoleForMetrics.hasWorkerNodes.get()} />
         </RadioGroup>
       </div>
-      <div className={`box ${styles.timeRangeBox}`}>
+      <div className={styles.timeRangeBox}>
         <MetricsTimeRangeSelector />
       </div>
-      <div className={`box grow ${styles.metricTypeBox}`}>
+      <div className={`grow shrink-0 basis-0 ${styles.metricTypeBox}`}>
         <RadioGroup
           asButtons
-          className="RadioGroup flex gaps"
+          className="RadioGroup flex gap-2"
           value={selectedMetricsType.value.get()}
           onChange={selectedMetricsType.set}
         >

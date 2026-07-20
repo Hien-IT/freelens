@@ -4,10 +4,10 @@
  * Licensed under MIT License. See LICENSE in root directory for more information.
  */
 
+import { Agent } from "node:https";
 import { beforeApplicationIsLoadingInjectionToken } from "@freelensapp/application";
 import { loggerInjectionToken } from "@freelensapp/logger";
 import { getInjectable } from "@ogre-tools/injectable";
-import { Agent } from "https";
 import lensProxyCertificateInjectable from "../../../common/certificate/lens-proxy-certificate.injectable";
 import nodeFetchInjectable from "../../../common/fetch/node-fetch.injectable";
 import isProductionInjectable from "../../../common/vars/is-production.injectable";
@@ -18,6 +18,7 @@ import forceAppExitInjectable from "../../electron-app/features/force-app-exit.i
 import showErrorPopupInjectable from "../../electron-app/features/show-error-popup.injectable";
 import lensProxyInjectable from "../../lens-proxy/lens-proxy.injectable";
 import lensProxyPortInjectable from "../../lens-proxy/lens-proxy-port.injectable";
+import setupLensProxyCertificateInjectable from "./setup-lens-proxy-certificate.injectable";
 
 const setupLensProxyInjectable = getInjectable({
   id: "setup-lens-proxy",
@@ -116,7 +117,7 @@ const setupLensProxyInjectable = getInjectable({
         }
       }
     },
-    runAfter: buildVersionInitializationInjectable,
+    runAfter: [buildVersionInitializationInjectable, setupLensProxyCertificateInjectable],
   }),
 
   causesSideEffects: true,
