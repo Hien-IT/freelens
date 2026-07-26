@@ -19,7 +19,10 @@
 
   "workspaces": {
     ".": {
-      "ignoreBinaries": [".*Freelens.exe", "jq", "open", "powershell", "xdg-open"],
+      // Binaries the workflows and scripts call that no dependency provides:
+      // jq comes with the runner image, yq from mise (see mise.toml), the rest
+      // from the operating system.
+      "ignoreBinaries": [".*Freelens.exe", "jq", "open", "powershell", "xdg-open", "yq"],
       "ignoreDependencies": [
         // used to run pnpm in monorepo workspaces from the root
         "pnpm"
@@ -118,10 +121,7 @@
         "@mui/material",
         "@ogre-tools/injectable",
         "@ogre-tools/injectable-react",
-        "@types/history",
         "@types/react",
-        "@types/react-router",
-        "@types/react-router-dom",
         "@types/react-table",
         "@types/react-window",
         "@xterm/xterm",
@@ -130,12 +130,9 @@
         "history",
         "immer",
         "mobx",
-        "mobx-observable-history",
         "monaco-editor",
         "node-fetch",
         "react",
-        "react-router",
-        "react-router-dom",
         "react-select",
         "react-table",
         "react-window",

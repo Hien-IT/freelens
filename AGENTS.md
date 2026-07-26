@@ -132,6 +132,63 @@ Run `pnpm build:di` when:
 
 The build process automatically runs this, but you can run it manually to verify changes.
 
+### Bundled Binary Versions
+
+The versions of the bundled `freelens-k8s-proxy`, `kubectl` and `helm` live in
+the `config` block of `freelens/package.json`, and their exact digests are
+pinned in `freelens/binaries.lock.json`. The build reads the expected checksum
+from that lock rather than from the vendor, so **a version bump without
+regenerating the lock fails the build**:
+
+```sh
+pnpm update-binaries-lock
+```
+
+The generator downloads all eighteen artifacts (three tools, three platforms,
+two architectures), checks each against its publisher's signature — GitHub build
+provenance for freelens-k8s-proxy, PGP for helm, keyless cosign for kubectl —
+and only then writes the lock. `cosign` comes from mise (`mise install`), and
+`GITHUB_TOKEN` should be set unless you want to share 60 unauthenticated API
+calls per hour with the rest of your IP. Use `--only <tool>` to refresh a single
+tool while iterating.
+
+`.github/workflows/binaries-lock-check.yaml` enforces both that the lock is
+current and that no digest changed while its version stood still.
+
+### Downloaded kubectl Versions
+
+The bundled kubectl is not the only one the application runs: a cluster whose
+minor version differs gets a version-matched kubectl downloaded at runtime. The
+map of which patch to fetch per minor lives in
+`packages/kubectl-versions/build/versions.json`, and the digest of every
+artifact that map can produce is pinned in
+`packages/kubectl-versions/build/checksums.json`, keyed by version and then by
+`${platform}/${arch}`.
+
+`Kubectl.downloadKubectl()` hashes what it downloaded and refuses anything that
+does not match its pin, and `ensureKubectl()` refuses to download at all when
+there is no pin, falling back to the bundled binary. **A version added to the
+map without a pin therefore never gets downloaded**, so the two files are
+regenerated together:
+
+```sh
+pnpm --filter @freelensapp/kubectl-versions compute-versions
+pnpm update-kubectl-checksums
+```
+
+The generator reads `dl.k8s.io` only, never a mirror — pinning bytes from a
+mirror would let a compromised mirror bless its own digest. It skips versions
+already present, which makes a run incremental and an existing pin immutable,
+and it verifies each download against both the published `.sha256` and the
+keyless cosign signature before recording it. `cosign` comes from mise
+(`mise install`).
+
+Both files start at 1.22, the oldest line Kubernetes publishes a signature for,
+and coverage is not uniform below that floor's neighbours: v1.22.17 has no
+`windows/arm64` build, so the generator logs an unpublished variant and carries
+on rather than failing. `.github/workflows/kubectl-checksums-check.yaml`
+verifies added pins and asserts that no existing digest changed.
+
 ## Common Development Tasks
 
 ### Adding a New Feature
@@ -332,7 +389,7 @@ When asked to implement a change on a PR:
 
 ### Pushing After Every Commit
 
-The GitHub Actions job running Claude has a total timeout of 60 minutes.
+The GitHub Actions job running Claude has a total timeout of 120 minutes.
 When the session times out, any commits that exist only in the runner's
 local checkout are lost. To make the work resumable in a follow-up session:
 

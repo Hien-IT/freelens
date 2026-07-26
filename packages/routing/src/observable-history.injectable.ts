@@ -5,8 +5,8 @@
  */
 
 import { getInjectable, getInjectionToken } from "@ogre-tools/injectable";
-import { createObservableHistory, ObservableHistory } from "mobx-observable-history";
 import { historyInjectable } from "./history.injectable";
+import { createObservableHistory, ObservableHistory } from "./observable-history";
 import { searchParamsOptions } from "./search-params";
 
 export const observableHistoryInjectionToken = getInjectionToken<ObservableHistory<unknown>>({
@@ -18,10 +18,7 @@ export const observableHistoryInjectable = getInjectable({
 
   instantiate: (di) => {
     const history = di.inject(historyInjectable);
-    // `history` is already adapted to the history v4 surface (see
-    // `toHistoryV4`), which is what `createObservableHistory` expects at
-    // runtime. Its types still target history v4, hence the cast.
-    const navigation = createObservableHistory<unknown>(history as never, {
+    const navigation = createObservableHistory<unknown>(history, {
       searchParams: searchParamsOptions,
     });
 
