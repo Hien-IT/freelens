@@ -1,6 +1,5 @@
 /**
  * Copyright (c) Freelens Authors. All rights reserved.
- * Copyright (c) OpenLens Authors. All rights reserved.
  * Licensed under MIT License. See LICENSE in root directory for more information.
  */
 
@@ -12,6 +11,7 @@ import { Kubectl } from "./kubectl";
 
 import type { Logger } from "@freelensapp/logger";
 
+import type { DownloadProgress } from "../fetch/download-binary.injectable";
 import type { KubectlDependencies } from "./kubectl";
 
 // Fictitious on purpose: getKubectlChecksum below is a mock matching only this
@@ -114,6 +114,39 @@ describe("kubectl", () => {
 
       await expect(kubectl.downloadKubectl()).rejects.toThrow("No verified checksum is pinned");
     });
+
+    it("forwards the download progress to the caller", async () => {
+      const progress: DownloadProgress[] = [];
+
+      dependencies.downloadBinary = async (_url, opts) => {
+        opts?.onProgress?.({ transferred: 0, total: content.length });
+        opts?.onProgress?.({ transferred: content.length, total: content.length });
+
+        return { callWasSuccessful: true, response: downloaded };
+      };
+
+      await new Kubectl(dependencies, pinnedVersion).downloadKubectl({
+        onDownloadProgress: (p) => progress.push(p),
+      });
+
+      expect(progress).toEqual([
+        { transferred: 0, total: content.length },
+        { transferred: content.length, total: content.length },
+      ]);
+    });
+
+    it("gives the download a stall timeout", async () => {
+      const downloadBinary = vi.fn(async () => ({ callWasSuccessful: true, response: downloaded }) as const);
+
+      dependencies.downloadBinary = downloadBinary;
+
+      await new Kubectl(dependencies, pinnedVersion).downloadKubectl();
+
+      expect(downloadBinary).toHaveBeenCalledWith(
+        expect.any(String),
+        expect.objectContaining({ stallTimeout: expect.any(Number) }),
+      );
+    });
   });
 
   describe("ensureKubectl", () => {
@@ -131,6 +164,99 @@ describe("kubectl", () => {
       await new Kubectl(dependencies, "1.21.14").ensureKubectl();
 
       expect((await fs.stat(path.join(directory, "1.21.14"))).isDirectory()).toBe(true);
+    });
+
+    describe("reporting problems", () => {
+      let problems: string[];
+
+      beforeEach(() => {
+        problems = [];
+        // The real one rejects with ENOENT when a check unlinks a binary that
+        // was never written, which would report a second, unrelated problem.
+        dependencies.unlink = async (target) => void (await fs.unlink(target).catch(() => undefined));
+      });
+
+      const onProblem = (message: string) => problems.push(message);
+
+      it("reports a version without a pinned checksum, and its consequence", async () => {
+        await new Kubectl(dependencies, "1.21.14").ensureKubectl({ onProblem });
+
+        expect(problems).toEqual([expect.stringContaining("No verified checksum is pinned for kubectl v1.21.14")]);
+        expect(problems[0]).toContain(`using the bundled v${pinnedVersion}`);
+      });
+
+      it("reports a failed download exactly once", async () => {
+        dependencies.downloadBinary = async () => ({ callWasSuccessful: false, error: "Not Found" });
+
+        expect(await new Kubectl(dependencies, pinnedVersion).ensureKubectl({ onProblem })).toBe(false);
+
+        expect(problems).toEqual([expect.stringContaining("Failed to download kubectl v9.9.9")]);
+        expect(problems[0]).toContain("Not Found");
+        expect(problems[0]).toContain(`using the bundled v${pinnedVersion}`);
+      });
+
+      it("reports a checksum mismatch exactly once", async () => {
+        downloaded = Buffer.from("something else entirely");
+
+        expect(await new Kubectl(dependencies, pinnedVersion).ensureKubectl({ onProblem })).toBe(false);
+
+        expect(problems).toEqual([expect.stringContaining("Failed to download kubectl v9.9.9")]);
+        expect(problems[0]).toContain("Checksum mismatch");
+      });
+
+      it("says nothing when everything works", async () => {
+        dependencies.execFile = async () => ({
+          callWasSuccessful: true,
+          response: JSON.stringify({ clientVersion: { gitVersion: `v${pinnedVersion}` } }),
+        });
+
+        expect(await new Kubectl(dependencies, pinnedVersion).ensureKubectl({ onProblem })).toBe(true);
+
+        expect(problems).toEqual([]);
+      });
+    });
+
+    /**
+     * The first execution of a freshly downloaded binary blocks for seconds
+     * while the OS validates it, so the phase is what stands between a
+     * progress line frozen at 100% and something that reads as work.
+     */
+    describe("reporting the verification phase", () => {
+      let events: string[];
+
+      const onPhase = (message: string) => events.push(`phase: ${message}`);
+
+      beforeEach(() => {
+        events = [];
+        dependencies.execFile = async () => {
+          events.push("execFile");
+
+          return {
+            callWasSuccessful: true,
+            response: JSON.stringify({ clientVersion: { gitVersion: `v${pinnedVersion}` } }),
+          };
+        };
+      });
+
+      it("reports the verification once, before the downloaded binary is executed", async () => {
+        expect(await new Kubectl(dependencies, pinnedVersion).ensureKubectl({ onPhase })).toBe(true);
+
+        expect(events).toEqual([`phase: Verifying kubectl v${pinnedVersion} ...`, "execFile"]);
+      });
+
+      it("says nothing when nothing was downloaded", async () => {
+        // A binary already in place, of a version the bundle does not provide:
+        // the only check is the one the caller's "Checking kubectl ..." line
+        // already covers.
+        await fs.mkdir(path.join(directory, pinnedVersion), { recursive: true });
+        await fs.writeFile(binaryPath(), content);
+
+        const kubectl = new Kubectl({ ...dependencies, bundledKubectlVersion: "9.9.8" }, pinnedVersion);
+
+        expect(await kubectl.ensureKubectl({ onPhase })).toBe(true);
+
+        expect(events).toEqual(["execFile"]);
+      });
     });
   });
 });

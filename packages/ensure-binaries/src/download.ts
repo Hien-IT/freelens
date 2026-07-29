@@ -1,14 +1,13 @@
 /**
  * Copyright (c) Freelens Authors. All rights reserved.
- * Copyright (c) OpenLens Authors. All rights reserved.
  * Licensed under MIT License. See LICENSE in root directory for more information.
  */
 
 import { createHash } from "node:crypto";
 import { createWriteStream } from "node:fs";
-import { pipeline as _pipeline, Transform } from "node:stream";
+import { pipeline as _pipeline, Readable, Transform } from "node:stream";
 import { promisify } from "node:util";
-import fetch from "node-fetch";
+import { fetch } from "undici";
 
 const pipeline = promisify(_pipeline);
 
@@ -156,7 +155,7 @@ export async function downloadToFile(url: string, destination: string): Promise<
   const file = createWriteStream(destination);
 
   await pipeline(
-    response.body,
+    Readable.fromWeb(response.body),
     new Transform({
       transform(chunk, _encoding, callback) {
         hash.update(chunk);
