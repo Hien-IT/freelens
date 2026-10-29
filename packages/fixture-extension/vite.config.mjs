@@ -28,6 +28,8 @@ const HOST_GLOBAL = "globalThis.FreelensExtensionApi";
  * `@freelensapp/extensions` reproduces what the published runtime shim
  * (`packages/extensions/src/runtime-shim.ts`) does; the rest are the singletons
  * the host re-exports alongside it.
+ *
+ * @type {Record<string, string>}
  */
 const hostProvidedModules = {
   "@freelensapp/extensions": `const api = ${HOST_GLOBAL};
@@ -38,7 +40,7 @@ export const Renderer = api.Renderer;
 
   react: `const React = ${HOST_GLOBAL}.React;
 export default React;
-export const { useCallback, useMemo, useState } = React;
+export const { Component, useCallback, useMemo, useState } = React;
 `,
 
   "react/jsx-runtime": `const jsxRuntime = ${HOST_GLOBAL}.ReactJsxRuntime;
@@ -69,19 +71,59 @@ const hostProvidedModulesPlugin = {
   },
 };
 
-export default defineConfig({
-  plugins: [hostProvidedModulesPlugin],
-  build: {
-    target: "esnext",
-    // Readable output: this bundle is read by humans reviewing what the
-    // contract compiled down to, and loaded by the unit tests as-is.
-    minify: false,
-    sourcemap: false,
+/**
+ * One entry point per run: the renderer by default, the main entry with
+ * `--mode main`. The renderer is built for a browser page and the main entry
+ * for Node, so they cannot share settings, and each bundle carries its own
+ * copy of `src/common/` rather than a shared chunk the other process would
+ * have to load.
+ */
+const entryPoints = {
+  renderer: {
+    entry: "src/renderer/index.tsx",
+    // First of the two runs in `build`, so it clears the output directory.
     emptyOutDir: true,
-    lib: {
-      entry: "src/renderer.tsx",
-      formats: ["es"],
-      fileName: () => "renderer.js",
-    },
+    external: [],
+    platform: /** @type {const} */ ("browser"),
   },
+  main: {
+    entry: "src/main/index.ts",
+    emptyOutDir: false,
+    // Node resolves its own builtins at runtime. Only main may import them:
+    // `src/renderer/tsconfig.json` has no Node types, so an import of one
+    // there fails the type check before it could reach a bundle.
+    external: [/^node:/],
+    // Bundled CommonJS packages `require()` the builtins. For the browser
+    // platform Rolldown turns such a call into a shim that throws in an ES
+    // module, where there is no `require`, as soon as Freelens evaluates
+    // `dist/main.js`, while the build and the type check pass; for Node it
+    // creates one with `createRequire(import.meta.url)`.
+    platform: /** @type {const} */ ("node"),
+  },
+};
+
+export default defineConfig(({ mode }) => {
+  const name = mode === "main" ? "main" : "renderer";
+  const entryPoint = entryPoints[name];
+
+  return {
+    plugins: [hostProvidedModulesPlugin],
+    build: {
+      target: "esnext",
+      // Readable output: this bundle is read by humans reviewing what the
+      // contract compiled down to, and loaded by the unit tests as-is.
+      minify: false,
+      sourcemap: false,
+      emptyOutDir: entryPoint.emptyOutDir,
+      lib: {
+        entry: entryPoint.entry,
+        formats: ["es"],
+        fileName: () => `${name}.js`,
+      },
+      rolldownOptions: {
+        external: entryPoint.external,
+        platform: entryPoint.platform,
+      },
+    },
+  };
 });

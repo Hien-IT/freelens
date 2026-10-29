@@ -3,11 +3,13 @@
  * Licensed under MIT License. See LICENSE in root directory for more information.
  */
 
-// The unit level of the extension contract (#2451). It loads the built bundle
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
+
+// The unit level of the extension contract. It loads the built bundle
 // of `@freelensapp/fixture-extension` — an extension written the way a
 // third-party extension is written, against the published
 // `dist/extension-api.d.ts` and with its externals mapped onto
-// `globalThis.FreelensExtensionApi` — and asserts the four things that break
+// `globalThis.FreelensExtensionApi` — and asserts the six things that break
 // silently and that a hand-written list of `toHaveProperty` calls cannot see:
 //
 //  1. instance identity of React: a hook in the extension's component only
@@ -22,7 +24,14 @@
 //     and would pass without tracking anything at all
 //  3. the lifecycle: the declarative registration reaches the host only through
 //     the registrators and `extension.register()`
-//  4. `Renderer.Util.fetch`: the API namespace reaches the host's DI container
+//  4. `Common.Util.getAppVersion()`: the API namespace reaches the host's DI
+//     container
+//  5. `Renderer.K8sApi.detailsFor` and `menuItemFor`: the helpers the
+//     declaration promises exist on the runtime namespace, and the model they
+//     take, which narrows its `kind` and `apiVersion` with `declare`, keeps the
+//     values its base class assigns
+//  6. `customResources`: the host reads the group and plural of the model
+//     class the bundle registers
 //
 // The bundle is loaded through a file URL rather than a static import for two
 // reasons: it throws while evaluating if the globals are not installed first
@@ -34,13 +43,18 @@ import { existsSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { fireEvent, render } from "@testing-library/react";
+import * as Mobx from "mobx";
 import { autorun, observable, runInAction } from "mobx";
+import * as MobxReact from "mobx-react";
+import * as MonacoEditor from "monaco-editor";
 import React from "react";
+import * as ReactJsxRuntime from "react/jsx-runtime";
+import ReactDom from "react-dom";
 import directoryForUserDataInjectable from "../../common/app-paths/directory-for-user-data/directory-for-user-data.injectable";
 import isFlatpakPackageInjectable from "../../common/vars/is-flatpak-package.injectable";
 import { buildVersionInitializable } from "../../features/vars/build-version/common/token";
+import { extensionCustomResourceInjectionToken } from "../../renderer/components/custom-resource-definitions/extension-custom-resource-injection-token";
 import statusBarItemsInjectable from "../../renderer/components/status-bar/status-bar-items.injectable";
-import browserFetchInjectable from "../../renderer/fetch/browser-fetch.injectable";
 import { getDiForUnitTesting } from "../../renderer/getDiForUnitTesting";
 import currentlyInClusterFrameInjectable from "../../renderer/routes/currently-in-cluster-frame.injectable";
 import { installExtensionApiGlobals } from "../../test-utils/install-extension-api-globals";
@@ -55,9 +69,11 @@ import type { LensRendererExtension } from "../lens-renderer-extension";
 
 interface FixtureBundle {
   default: new (extension: InstalledExtension) => LensRendererExtension;
-  FIXTURE_PROBE_URL: string;
   FixtureStatusBarItem: React.ComponentType;
-  activationRecord: IObservableValue<{ appVersion: string; probeStatus: number } | undefined>;
+  FixtureExampleDetails: React.ComponentType;
+  FixtureExampleMenuItem: React.ComponentType;
+  FixtureExample: new (data: object) => { kind: string; apiVersion: string };
+  activationRecord: IObservableValue<{ appVersion: string; probeHost: string } | undefined>;
   setStatusBarItemVisible: (value: boolean) => void;
   resolvedMobxObservable: typeof observable;
   resolvedReactUseState: typeof React.useState;
@@ -74,6 +90,8 @@ const installedFixture: InstalledExtension = {
   id: EXTENSION_NAME,
   absolutePath: "/irrelevant",
   manifestPath: "/irrelevant/package.json",
+  isManaged: true,
+  isVerified: true,
   manifest: {
     name: EXTENSION_NAME,
     version: "2.0.0-0",
@@ -97,7 +115,6 @@ const importFixtureBundle = async (): Promise<FixtureBundle> => {
 describe("extension contract, against the built fixture extension", () => {
   let di: DiContainer;
   let fixture: FixtureBundle;
-  let fetchMock: ReturnType<typeof vi.fn>;
 
   beforeEach(async () => {
     di = getDiForUnitTesting();
@@ -107,9 +124,6 @@ describe("extension contract, against the built fixture extension", () => {
     // extension instance injects it through `navigate-to-route`.
     di.override(currentlyInClusterFrameInjectable, () => false);
     di.override(directoryForUserDataInjectable, () => "/some-directory-for-user-data");
-
-    fetchMock = vi.fn(async () => ({ ok: true, status: 204 }));
-    di.override(browserFetchInjectable, () => fetchMock as never);
 
     installExtensionApiGlobals();
 
@@ -131,11 +145,51 @@ describe("extension contract, against the built fixture extension", () => {
     });
   });
 
+  // The renderer half of the singleton contract: every module an
+  // extension must share rather than bundle, published under the name the rule
+  // derives from its module id, and being the host's *own* instance of it. The
+  // last part is why these are `toBe` against this file's own imports rather
+  // than a property list: a second resolution of the same specifier — a
+  // `monaco-editor/esm/...` next to a `monaco-editor`, say — has every property
+  // and none of the identity.
+  it.each([
+    ["React", React],
+    ["ReactDom", ReactDom],
+    ["ReactJsxRuntime", ReactJsxRuntime],
+    ["Mobx", Mobx],
+    ["MobxReact", MobxReact],
+    ["MonacoEditor", MonacoEditor],
+  ])("publishes the host's own instance of %s", (name, hostInstance) => {
+    const published = Reflect.get(globalThis, "FreelensExtensionApi") as Record<string, unknown>;
+
+    expect(published[name]).toBe(hostInstance);
+  });
+
+  it("publishes no singleton besides those", () => {
+    // The host's DI library stays internal: the container is not shared with
+    // extensions, so an extension that wants injection bundles its own copy.
+    const published = Reflect.get(globalThis, "FreelensExtensionApi") as Record<string, unknown>;
+
+    expect(Object.keys(published).sort()).toEqual([
+      "Common",
+      "Mobx",
+      "MobxReact",
+      "MonacoEditor",
+      "React",
+      "ReactDom",
+      "ReactJsxRuntime",
+      "Renderer",
+    ]);
+    expect(published).not.toHaveProperty("OgreToolsInjectable");
+    expect(published).not.toHaveProperty("OgreToolsInjectableReact");
+  });
+
   it("shares the host's singletons by identity, not by shape", () => {
-    // For mobx this is the assertion that matters. Two copies of mobx 6 keep
-    // interoperating through the shared global state they both write to
-    // `globalThis`, so a reaction fires either way and the behavioural checks
-    // below stay green while the extension carries a duplicate.
+    // What the *bundle* resolved, which is the end of the chain the assertions
+    // above only start. For mobx this is the assertion that matters: two copies
+    // of mobx 6 keep interoperating through the shared global state they both
+    // write to `globalThis`, so a reaction fires either way and the behavioural
+    // checks below stay green while the extension carries a duplicate.
     expect(fixture.resolvedMobxObservable).toBe(observable);
     expect(fixture.resolvedReactUseState).toBe(React.useState);
   });
@@ -166,8 +220,55 @@ describe("extension contract, against the built fixture extension", () => {
       disposeObserver?.();
     });
 
+    it("builds its detail and menu registrations with the helpers of Renderer.K8sApi", () => {
+      // The helpers run in the extension's field initializers, through the
+      // namespace the bundle read off the global, so a helper the declaration
+      // promises and the runtime lacks fails the construction above.
+      expect(extension.kubeObjectDetailItems).toEqual([
+        {
+          kind: "FixtureExample",
+          apiVersions: ["fixture.freelens.app/v1alpha1"],
+          components: { Details: fixture.FixtureExampleDetails },
+        },
+      ]);
+      expect(extension.kubeObjectMenuItems).toEqual([
+        {
+          kind: "FixtureExample",
+          apiVersions: ["fixture.freelens.app/v1alpha1"],
+          components: { MenuItem: fixture.FixtureExampleMenuItem },
+        },
+      ]);
+    });
+
+    it("keeps the kind and apiVersion of a model that narrows them with declare", () => {
+      // `declare` emits nothing. A plain field in its place would be defined
+      // after the base constructor assigned the object's data, and reset both.
+      const object = new fixture.FixtureExample({
+        apiVersion: "fixture.freelens.app/v1alpha1",
+        kind: "FixtureExample",
+        metadata: {
+          name: "fixture",
+          namespace: "default",
+          selfLink: "/apis/fixture.freelens.app/v1alpha1/namespaces/default/fixtureexamples/fixture",
+        },
+      });
+
+      expect(object.kind).toBe("FixtureExample");
+      expect(object.apiVersion).toBe("fixture.freelens.app/v1alpha1");
+    });
+
     it("shows the extension's declarative registration in the host", () => {
       expect(statusBarItems.right.map((item) => item.origin)).toContain(EXTENSION_NAME);
+    });
+
+    it("registers its custom resources with the host, read from the model class", () => {
+      const registered = di
+        .injectMany(extensionCustomResourceInjectionToken)
+        .map(({ group, plural, extensionName }) => ({ group, plural, extensionName }));
+
+      expect(registered).toEqual([
+        { group: "fixture.freelens.app", plural: "fixtureexamples", extensionName: EXTENSION_NAME },
+      ]);
     });
 
     it("reacts to an observable the extension created, through the host's own mobx", () => {
@@ -213,16 +314,12 @@ describe("extension contract, against the built fixture extension", () => {
         dispose();
       });
 
-      it("reaches the host's HTTP client through Renderer.Util.fetch", () => {
-        expect(fetchMock).toHaveBeenCalledWith(fixture.FIXTURE_PROBE_URL);
-      });
-
       it("reaches the host's DI container through Common.Util", () => {
-        expect(fixture.activationRecord.get()).toEqual({ appVersion: "1.2.3", probeStatus: 204 });
+        expect(fixture.activationRecord.get()).toEqual({ appVersion: "1.2.3", probeHost: "fixture.invalid" });
       });
 
       it("notifies the host of the change it made to its own observable", () => {
-        expect(recorded).toEqual([undefined, { appVersion: "1.2.3", probeStatus: 204 }]);
+        expect(recorded).toEqual([undefined, { appVersion: "1.2.3", probeHost: "fixture.invalid" }]);
       });
     });
   });
