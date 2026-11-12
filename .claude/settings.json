@@ -22,5 +22,8 @@
       "Edit(**/*.pem)",
       "Edit(**/*.key)"
     ]
+  },
+  "enabledPlugins": {
+    "ponytail@ponytail": true
   }
 }
