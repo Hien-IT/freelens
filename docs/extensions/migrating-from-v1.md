@@ -21,20 +21,21 @@ workflows — is
 [freelens-example-extension](https://github.com/freelensapp/freelens-example-extension).
 Start from it rather than rediscovering them.
 
-To port with a coding agent, the template ships the
-[`port-freelens-extension-to-v2`](https://github.com/freelensapp/freelens-example-extension/blob/main/skills/port-freelens-extension-to-v2/SKILL.md)
-skill, in the [Agent Skills](https://agentskills.io/specification) format.
-Install it into the extension's repository:
+To port with a coding agent, the `freelens` plugin of Claude Code in this
+repository has the
+[`port-extension-to-v2`](../../plugins/freelens/skills/port-extension-to-v2/SKILL.md)
+skill, in the [Agent Skills](https://agentskills.io/specification) format,
+which other agents read too:
 
 ```sh
-npx skills add freelensapp/freelens-example-extension --skill port-freelens-extension-to-v2
+claude plugin marketplace add freelensapp/freelens --sparse .claude-plugin plugins
+claude plugin install freelens@freelens
 ```
 
 The skill holds the workflow of the port and follows this guide, which it links
 to for every API change; it does not replace it. For a new extension, the
-template's
-[`create-freelens-extension`](https://github.com/freelensapp/freelens-example-extension/blob/main/skills/create-freelens-extension/SKILL.md)
-skill starts one from a copy of the template.
+[`create-extension`](../../plugins/freelens/skills/create-extension/SKILL.md)
+skill of the same plugin starts one from a copy of the template.
 
 ## Step one: bump `engines.freelens`
 
@@ -1810,6 +1811,24 @@ unaffected and stays. It is the virtualized table the resource views use, it
 persists its sort order in the URL, and it expects items with a `getId()` /
 `getName()` shape — a different tool than `List` was, but the right one if your
 rows are Kubernetes objects.
+
+## `logTabStore.createWorkloadTab` opens a combined logs tab
+
+`Renderer.Component.logTabStore.createWorkloadTab({ workload })` keeps its
+signature and changes what it opens. In v1 the tab showed the logs of
+the first pod of the workload, with the other pods in a dropdown. In v2 it
+shows the logs of all the pods of the workload, merged in chronological order
+and tagged with the name of their pod, and it follows the workload: the pods
+are read again at every refresh, so a rollout or a scale does not leave the
+tab on pods that are gone.
+
+What to check in an extension that calls it:
+
+- The title of the tab is the workload (`Deployment my-app`), no longer its
+  first pod.
+- The tab reads at most 20 pods of the workload, the first ones by name.
+- `logTabStore.createPodTab` is unchanged, and is the one to call for the logs
+  of a single pod.
 
 ## Chart.js v4 (`Renderer.Component.BarChart` / `PieChart`)
 

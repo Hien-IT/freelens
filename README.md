@@ -20,7 +20,6 @@
 [![Integration tests](https://github.com/freelensapp/freelens/actions/workflows/integration-tests.yaml/badge.svg?branch=main)](https://github.com/freelensapp/freelens/actions/workflows/integration-tests.yaml)
 [![Trunk Check](https://github.com/freelensapp/freelens/actions/workflows/trunk-check.yaml/badge.svg?branch=main)](https://github.com/freelensapp/freelens/actions/workflows/trunk-check.yaml)
 
-
 <picture>
   <img alt="Freelens logo" src="docs/images/logo.svg" width="110" align="left">
 </picture>
@@ -135,7 +134,6 @@ snap install freelens --classic
 
 Run the following commands:
 
-
 ```sh
 curl -L https://raw.githubusercontent.com/freelensapp/freelens/refs/heads/main/freelens/build/apt/freelens.asc | sudo tee /etc/apt/keyrings/freelens.asc
 curl -L https://raw.githubusercontent.com/freelensapp/freelens/refs/heads/main/freelens/build/apt/freelens.sources | sudo tee /etc/apt/sources.list.d/freelens.sources
@@ -236,6 +234,23 @@ Visit the [Extensions](https://github.com/freelensapp/freelens/discussions/2291)
 discussion to see them and write in the [appropriate
 discussion](https://github.com/freelensapp/freelens/discussions/117) if you
 also want to propose yours.
+
+The skills for coding agents that create Freelens extensions and port v1
+extensions to the v2 extension API are the `freelens` plugin of
+[Claude Code](https://code.claude.com/docs/en/plugins), whose `SKILL.md` files
+in [`plugins/freelens/skills`](plugins/freelens/skills) other agents read too.
+Add the marketplace with `--sparse`, which checks out only the plugin instead
+of the whole Freelens repository, then install the plugin from it:
+
+```sh
+claude plugin marketplace add freelensapp/freelens --sparse .claude-plugin plugins
+claude plugin install freelens@freelens
+```
+
+`/freelens:create-extension` starts a new extension from a copy of
+[freelens-example-extension](https://github.com/freelensapp/freelens-example-extension),
+and `/freelens:port-extension-to-v2` ports an extension written for the v1
+extension API.
 
 ## Community
 
