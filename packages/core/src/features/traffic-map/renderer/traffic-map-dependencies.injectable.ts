@@ -67,7 +67,17 @@ const trafficMapDependenciesInjectable = getInjectable({
     return {
       requestTraffic,
       getNamespaces: () => (namespaceStore.areAllSelectedImplicitly ? [] : [...namespaceStore.contextNamespaces]),
-      getTextColor: () => activeTheme.get().colors.textColorPrimary,
+      getCanvasColors: () => {
+        const { colors } = activeTheme.get();
+
+        return {
+          text: colors.textColorPrimary,
+          secondaryText: colors.textColorSecondary,
+          card: colors.contentColor,
+          border: colors.borderColor,
+          selected: colors.primary,
+        };
+      },
       openLink: (url) => {
         openLinkInBrowser(url).catch((error) => logger.warn("[TRAFFIC-MAP]: cannot open a link", error));
       },

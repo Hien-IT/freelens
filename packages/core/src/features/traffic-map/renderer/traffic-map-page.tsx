@@ -22,11 +22,12 @@ import { TrafficSetup } from "./traffic-setup";
 import { ConnectionsTable, FlowRecordsTable } from "./traffic-tables";
 
 import type { TrafficEndpoint, TrafficSourceName } from "../common/types";
+import type { TrafficCanvasColors } from "./traffic-graph";
 import type { TrafficMapModelDependencies } from "./traffic-map-model";
 
 export interface TrafficMapPageDependencies extends TrafficMapModelDependencies {
-  /** The colour of text on the canvas, in the active theme. */
-  getTextColor(): string;
+  /** The colours of the active theme for the canvas; read while rendering, a theme change paints it again. */
+  getCanvasColors(): TrafficCanvasColors;
   openLink(url: string): void;
   copyText(text: string): void;
   openObject(endpoint: TrafficEndpoint): void;
@@ -179,7 +180,7 @@ const Content = observer(
                 {total > 0 && <a onClick={() => model.resetFilters()}>Show all traffic</a>}
               </div>
             ) : (
-              <TrafficGraphView model={model} textColor={dependencies.getTextColor()} />
+              <TrafficGraphView model={model} colors={dependencies.getCanvasColors()} />
             )}
             <TrafficDetails model={model} openObject={dependencies.openObject} />
             <div className={styles.stats}>

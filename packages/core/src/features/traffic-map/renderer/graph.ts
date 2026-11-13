@@ -15,7 +15,9 @@ export interface TrafficNode {
   /** The node has an edge with 5xx errors or dropped flows. */
   hasProblems: boolean;
   hot: boolean;
-  // Set by the force simulation.
+  /** The ports that the node is called on, busiest first. */
+  ports: number[];
+  // Set by the layout.
   x?: number;
   y?: number;
 }
@@ -123,6 +125,7 @@ export function buildTrafficGraph(flows: readonly AggregatedFlow[], rateBased: b
   const hotIndex = Math.floor(volumes.length * 0.1) - 1;
   const hotThreshold = hotIndex >= 0 ? volumes[hotIndex] : Number.POSITIVE_INFINITY;
   const nodes = new Map<string, TrafficNode>();
+  const portVolumes = new Map<string, Map<number, number>>();
   const links: TrafficLink[] = [];
 
   const nodeOf = (endpoint: TrafficEndpoint) => {
@@ -130,7 +133,7 @@ export function buildTrafficGraph(flows: readonly AggregatedFlow[], rateBased: b
     let node = nodes.get(id);
 
     if (!node) {
-      node = { id, endpoint, volume: 0, hasProblems: false, hot: false };
+      node = { id, endpoint, volume: 0, hasProblems: false, hot: false, ports: [] };
       nodes.set(id, node);
     }
 
@@ -143,6 +146,13 @@ export function buildTrafficGraph(flows: readonly AggregatedFlow[], rateBased: b
     const dropped = isDropped(flow);
     const source = nodeOf(flow.source);
     const target = nodeOf(flow.destination);
+
+    if (flow.port > 0 && !flow.directionUnknown) {
+      const ports = portVolumes.get(target.id) ?? new Map<number, number>();
+
+      ports.set(flow.port, (ports.get(flow.port) ?? 0) + volume);
+      portVolumes.set(target.id, ports);
+    }
 
     for (const node of [source, target]) {
       node.volume += volume;
@@ -161,6 +171,10 @@ export function buildTrafficGraph(flows: readonly AggregatedFlow[], rateBased: b
       hot,
       dropped,
     });
+  }
+
+  for (const [id, ports] of portVolumes) {
+    nodes.get(id)!.ports = [...ports].sort((a, b) => b[1] - a[1] || a[0] - b[0]).map(([port]) => port);
   }
 
   return { nodes: [...nodes.values()], links };
