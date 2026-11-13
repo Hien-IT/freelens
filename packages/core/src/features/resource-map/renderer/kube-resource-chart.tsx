@@ -1,0 +1,609 @@
+/**
+ * Copyright (c) Freelens Authors. All rights reserved.
+ * Licensed under MIT License. See LICENSE in root directory for more information.
+ */
+
+import { Deployment, StatefulSet } from "@freelensapp/kube-object";
+import { Spinner } from "@freelensapp/spinner";
+import { compareStructural, observable, reaction, runInAction } from "mobx";
+import { observer } from "mobx-react";
+import React from "react";
+import ForceGraph2D from "react-force-graph-2d";
+import { DrawerTitle } from "../../../renderer/components/drawer";
+import { logPrefix } from "./dependencies";
+import { loadConfigImages } from "./helpers/config";
+import { childPodsOf, type DetailsGraph, type DetailsGraphObjects } from "./helpers/details-graph";
+import { ElementSize } from "./helpers/element-size";
+import {
+  applyMapForces,
+  fitGraph,
+  type GraphMethods,
+  type NodePoint,
+  nodePointsOf,
+  refWithSetter,
+  smallGraphZoom,
+} from "./helpers/graph-methods";
+import { helmReleaseKind } from "./helpers/helm";
+import { sameGraph } from "./helpers/namespace-graph";
+import styles from "./kube-force-chart.module.scss";
+import { MapNodeList } from "./map-node-list";
+import { MapTooltip } from "./tooltips/map-tooltip";
+
+import type { KubeApiListOptions } from "@freelensapp/kube-api";
+import type { DaemonSet, KubeObject } from "@freelensapp/kube-object";
+
+import type {
+  KubeObjectStoreLoadAllParams,
+  KubeObjectStoreSubscribeParams,
+} from "../../../common/k8s-api/kube-object.store";
+import type { MapStores, ResourceMapDependencies } from "./dependencies";
+import type { ChartDataSeries, LinkObject } from "./helpers/types";
+
+type Controller = Deployment | StatefulSet | DaemonSet;
+
+export interface KubeResourceChartProps<K extends KubeObject = KubeObject> {
+  /** The object of the details panel, of the class that the map draws. */
+  object: K;
+  dependencies: ResourceMapDependencies;
+}
+
+interface State {
+  data: {
+    nodes: ChartDataSeries[];
+    links: LinkObject[];
+  };
+  highlightLinks: Set<LinkObject>;
+  hoverNode?: ChartDataSeries;
+}
+
+/** What the map needs of a store. */
+interface MapStore {
+  readonly api: { readonly kind: string };
+  loadAll(params?: KubeObjectStoreLoadAllParams): Promise<unknown>;
+  subscribe(params?: KubeObjectStoreSubscribeParams): () => void;
+}
+
+/** What the map needs of an API: its kind, and the list of the objects of one namespace. */
+interface MapApi<T extends KubeObject> {
+  readonly kind: string;
+  list(options?: KubeApiListOptions): Promise<T[] | null>;
+}
+
+/** The objects of the kinds of the stores, as a details map lists them for a namespace; a kind whose list failed has none. */
+type MapObjects = Partial<Omit<DetailsGraphObjects, "childPods">>;
+
+// Whether the stores hold the objects of a namespace: a map loads them for the
+// namespaces that the filter selects, and for all of them when it selects none.
+function storesLoad(dependencies: ResourceMapDependencies, namespace: string) {
+  const { namespaceStore } = dependencies;
+  return namespaceStore.areAllSelectedImplicitly || namespaceStore.hasContext(namespace);
+}
+
+// The items of a store, where the listed objects of its kind, when its list
+// came back, take the place of those the store holds in the listed namespace.
+// What it holds there can be what a view loaded once, such as the object of a
+// panel, or what the stores loaded for an earlier selection of the filter,
+// which they keep when it changes. A store that does watch the namespace shows
+// its changes there, and the map lists the namespace again (relistOnChange).
+function withListed<T extends KubeObject>(
+  held: readonly T[],
+  namespace: string,
+  listed: readonly T[] | undefined,
+): readonly T[] {
+  if (!listed) return held;
+  return [...held.filter((object) => object.getNs() !== namespace), ...listed];
+}
+
+// How long a map waits before it lists its namespace again after a change of
+// a followed store there, and so how often it lists it at most.
+const relistInterval = 1000;
+
+// The store of the kind of the object of a panel: its changes, with those of
+// the pods, build the map again.
+const storeOfKind: Partial<Record<string, keyof MapStores>> = {
+  Pod: "pods",
+  Service: "services",
+  Ingress: "ingresses",
+  Deployment: "deployments",
+  DaemonSet: "daemonSets",
+  StatefulSet: "statefulSets",
+};
+
+// The largest zoom of a details map, whose canvas is 400 px high.
+const maxZoom = 1.2;
+
+/**
+ * The map in the details panel of an object: the objects around it in its
+ * namespace, from the stores, or listed by the map when the stores do
+ * not load that namespace. Each subclass names the class of the object that
+ * its registration draws, and builds its map with the builder of
+ * `helpers/details-graph.ts` for that kind.
+ */
+@observer
+export class KubeResourceChart<K extends KubeObject = KubeObject> extends React.Component<
+  KubeResourceChartProps<K>,
+  State
+> {
+  @observable accessor isReady = false;
+  /** The graph has stopped moving and has its first zoom: its nodes stay where they are. */
+  @observable accessor settled = false;
+  @observable accessor nodePoints: readonly NodePoint[] = [];
+
+  protected links: LinkObject[] = [];
+  protected nodes: ChartDataSeries[] = [];
+  protected initZoomDone = false;
+
+  private chart?: GraphMethods;
+  // The graph sets its methods in this ref when it mounts, so the forces go on
+  // a simulation that exists.
+  private readonly chartRef = refWithSetter<GraphMethods>((chart) => {
+    this.chart = chart ?? undefined;
+    if (chart) {
+      applyMapForces(chart);
+    }
+  });
+  private readonly tooltip = React.createRef<MapTooltip>();
+  // The size of the container, which the graph takes.
+  private readonly size = new ElementSize();
+  private readonly followContainer = (element: HTMLDivElement | null) => this.size.follow(element);
+
+  // What the map takes from the application, which does not change; a field,
+  // as mobx-react lets no reaction read this.props.
+  private readonly dependencies: ResourceMapDependencies;
+  private readonly stores: ResourceMapDependencies["stores"];
+
+  private listable = new Set<keyof MapStores>();
+  private loading?: AbortController;
+  private listing?: AbortController;
+  // The objects of the namespace of the object, listed when the stores do not load it.
+  private listed?: { namespace: string; objects: MapObjects };
+  // Whether the map lists the namespace of its object, decided the first time
+  // it looks at it: it loads its stores for the selection of that moment, and
+  // does not follow the selection.
+  private listsNamespace?: { namespace: string; lists: boolean };
+  // The stores whose changes build the map again: the pods and the store of
+  // the kind of its object.
+  private followed: (keyof MapStores)[] = [];
+  // The items of each followed store in the listed namespace when the last
+  // list of it started, which tell a change of the store there.
+  private readonly listedItems = new Map<keyof MapStores, string>();
+  private relistTimer?: ReturnType<typeof setTimeout>;
+  private watchDisposers: (() => void)[] = [];
+  private disposers: (() => void)[] = [];
+  private settleTimer?: ReturnType<typeof setTimeout>;
+  // The size of the canvas when the points of the hidden list were taken.
+  private pointsSize = { width: 0, height: 0 };
+
+  state: Readonly<State> = {
+    data: {
+      nodes: [],
+      links: [],
+    },
+    highlightLinks: new Set<LinkObject>(),
+  };
+
+  constructor(props: KubeResourceChartProps<K>) {
+    super(props);
+    this.dependencies = props.dependencies;
+    this.stores = props.dependencies.stores;
+    loadConfigImages();
+  }
+
+  // Everything a mount starts, its next unmount stops: React.StrictMode, in
+  // Freelens dev, mounts, unmounts and mounts again the same instance.
+  componentDidMount() {
+    const keys = Object.keys(this.stores) as (keyof MapStores)[];
+    this.listable = new Set(keys.filter((key) => this.dependencies.canListMapStore(key)));
+    const followed = new Set<keyof MapStores>(["pods"]);
+    const own = storeOfKind[this.props.object.kind];
+    if (own) followed.add(own);
+    this.followed = [...followed].filter((key) => this.listable.has(key));
+
+    this.disposers.push(
+      ...this.followed.map((key) =>
+        reaction(
+          () => this.stores[key].items.toJSON(),
+          () => {
+            this.relistOnChange(key);
+            this.refreshChart();
+          },
+          { equals: compareStructural },
+        ),
+      ),
+    );
+    void this.load();
+  }
+
+  // mobx-react 10 does not let a reaction read this.props, so a new object of the details drawer is handled here
+  componentDidUpdate(prevProps: KubeResourceChartProps<K>) {
+    // force-graph keeps the center of its view when its canvas changes size,
+    // so every node moves on the screen: a settled map takes their points again.
+    this.followResize();
+    if (prevProps.object === this.props.object) return;
+    // A new object lists its namespace again, when the stores do not load it,
+    // and the map is built again once the list is back.
+    const listing = this.listNamespace();
+    if (prevProps.object.getId() !== this.props.object.getId()) {
+      this.displayChart();
+    } else {
+      this.refreshChart();
+    }
+    void listing.then((listed) => {
+      if (listed && this.isReady) this.refreshChart();
+    });
+  }
+
+  componentWillUnmount() {
+    this.stopLoading();
+    clearTimeout(this.relistTimer);
+    this.relistTimer = undefined;
+    this.listed = undefined;
+    this.listsNamespace = undefined;
+    this.disposers.forEach((disposer) => disposer());
+    this.disposers.length = 0;
+    clearTimeout(this.settleTimer);
+    this.nodes = [];
+    this.links = [];
+  }
+
+  /**
+   * Loads the stores one after the other, for the namespaces of the filter,
+   * as the page does, and watches each one, with one abort controller for the
+   * loads and the watches: the unmount aborts it, and a load that comes back
+   * aborted writes nothing. It loads a store that has loaded already too: a
+   * store holds and watches the namespaces of its last load, and the application
+   * loads it again for a new selection only while one of its own views
+   * follows it, so a store loaded for an earlier selection would hold none of
+   * the objects of a namespace selected since. A list that fails reaches
+   * `onLoadFailure` and is logged as a warning, and the map draws the rest;
+   * the watches get the same handler, for the list that a watch sends again
+   * after a 410 Gone, which empties the shared store when it fails without one.
+   * Meanwhile it lists the namespace of the object, when the filter does not
+   * select it, and draws the map once both are done.
+   */
+  private async load() {
+    this.stopLoading();
+    const controller = new AbortController();
+    this.loading = controller;
+    // React.StrictMode unmounts the first mount at once: one turn first lets
+    // that mount stop before it sends a request.
+    await Promise.resolve();
+    if (controller.signal.aborted) return;
+    const listing = this.listNamespace();
+    for (const key of this.listable) {
+      const store: MapStore = this.stores[key];
+      // A list that fails, the load's own or one that the watch sends again
+      // after the API server answered 410 Gone, is logged as a warning.
+      const onLoadFailure = (error: unknown) => {
+        this.dependencies.logger.warn(`${logPrefix}: cannot list the ${store.api.kind} objects`, error);
+      };
+      await store.loadAll({ reqInit: { signal: controller.signal }, onLoadFailure });
+      if (controller.signal.aborted) return;
+      this.watchDisposers.push(store.subscribe({ abortController: controller, onLoadFailure }));
+    }
+    await listing;
+    if (controller.signal.aborted) return;
+    runInAction(() => {
+      this.isReady = true;
+    });
+    this.displayChart();
+  }
+
+  /**
+   * Lists the objects of the namespace of the object when the stores do not
+   * load it: the filter selects other namespaces, and the panel shows an
+   * object opened from elsewhere, such as a pod from the details of its node.
+   * The objects are the map's own: the stores keep the namespaces of the
+   * filter, as the other views expect them, and no watch of the map's own
+   * follows the listed objects. The choice is made the first time, and kept:
+   * the map loaded its stores for the selection of then. Resolves to whether
+   * it listed them, and no newer listing, nor the unmount, aborted it.
+   */
+  private async listNamespace(): Promise<boolean> {
+    this.listing?.abort();
+    this.listing = undefined;
+    const namespace = this.props.object.getNs();
+    if (namespace && this.listsNamespace?.namespace !== namespace) {
+      this.listsNamespace = { namespace, lists: !storesLoad(this.dependencies, namespace) };
+    }
+    if (!namespace || !this.listsNamespace?.lists) {
+      this.listed = undefined;
+      return false;
+    }
+    const controller = new AbortController();
+    this.listing = controller;
+    for (const key of this.followed) this.listedItems.set(key, this.itemsKey(key, namespace));
+    const objects = await this.listObjects(namespace, controller.signal);
+    if (controller.signal.aborted) return false;
+    this.listing = undefined;
+    this.listed = { namespace, objects };
+    for (const key of this.followed) this.relistOnChange(key);
+    return true;
+  }
+
+  /**
+   * Lists the namespace again, at most once a second, when a followed store
+   * has changed there since the last list of it started. The store is then
+   * watched there, by another view or by the map's own subscription:
+   * after the Nodes page, or the details of a node, the pods store loads and
+   * watches every namespace. The listed objects would otherwise hide its
+   * changes, such as a pod that a rollout replaces.
+   */
+  private relistOnChange(key: keyof MapStores) {
+    const { listed } = this;
+    if (!listed || this.relistTimer || this.itemsKey(key, listed.namespace) === this.listedItems.get(key)) return;
+    this.relistTimer = setTimeout(() => {
+      this.relistTimer = undefined;
+      void this.listNamespace().then((done) => {
+        if (done && this.isReady) this.refreshChart();
+      });
+    }, relistInterval);
+  }
+
+  // The uid and resourceVersion of every item of a store in a namespace.
+  private itemsKey(key: keyof MapStores, namespace: string) {
+    return (this.itemsOf(key) as readonly KubeObject[])
+      .filter((object) => object.getNs() === namespace)
+      .map((object) => `${object.getId()}@${object.metadata.resourceVersion ?? ""}`)
+      .sort()
+      .join(",");
+  }
+
+  // The objects of every kind that the user may list, in one namespace, with
+  // the APIs. A list that fails is logged as a warning, and the map
+  // keeps what the store of its kind holds there.
+  private async listObjects(namespace: string, signal: AbortSignal): Promise<MapObjects> {
+    const { apis } = this.dependencies;
+    const list = async <T extends KubeObject>(key: keyof MapStores, api: MapApi<T>): Promise<T[] | undefined> => {
+      if (!this.listable.has(key)) return undefined;
+      try {
+        return (await api.list({ namespace, reqInit: { signal } })) ?? [];
+      } catch (error) {
+        if (!signal.aborted) {
+          this.dependencies.logger.warn(
+            `${logPrefix}: cannot list the ${api.kind} objects of the namespace ${namespace}`,
+            error,
+          );
+        }
+        return undefined;
+      }
+    };
+    const [pods, deployments, statefulSets, daemonSets, services, ingresses, pvcs, configMaps, secrets] =
+      await Promise.all([
+        list("pods", apis.pods),
+        list("deployments", apis.deployments),
+        list("statefulSets", apis.statefulSets),
+        list("daemonSets", apis.daemonSets),
+        list("services", apis.services),
+        list("ingresses", apis.ingresses),
+        list("pvcs", apis.pvcs),
+        list("configMaps", apis.configMaps),
+        list("secrets", apis.secrets),
+      ]);
+    return { pods, deployments, statefulSets, daemonSets, services, ingresses, pvcs, configMaps, secrets };
+  }
+
+  private stopLoading() {
+    this.loading?.abort();
+    this.loading = undefined;
+    this.listing?.abort();
+    this.listing = undefined;
+    this.watchDisposers.forEach((dispose) => dispose());
+    this.watchDisposers.length = 0;
+  }
+
+  displayChart = () => {
+    this.initZoomDone = false;
+    this.nodes = [];
+    this.links = [];
+    this.generateChartDataSeries();
+  };
+
+  refreshChart = () => {
+    this.generateChartDataSeries();
+  };
+
+  generateChartDataSeries = () => {
+    const previous = { nodes: this.nodes, links: this.links };
+    const graph = this.buildGraph(this.mapObjects(), previous);
+    if (!previous.nodes.length || !sameGraph(graph, previous)) {
+      this.nodes = graph.nodes;
+      this.links = graph.links;
+      this.unsettle();
+      this.setState({
+        data: graph,
+        highlightLinks: new Set<LinkObject>(),
+      });
+    }
+  };
+
+  // The graph reached its first zoom and stopped: the points of its nodes, for
+  // the hidden list, and the data-settled mark.
+  private settle() {
+    this.pointsSize = { width: this.size.width, height: this.size.height };
+    runInAction(() => {
+      this.nodePoints = nodePointsOf(this.chart, this.nodes);
+      this.settled = true;
+    });
+  }
+
+  private followResize() {
+    const { width, height } = this.size;
+    if (this.settled && (width !== this.pointsSize.width || height !== this.pointsSize.height)) {
+      this.settle();
+    }
+  }
+
+  private unsettle() {
+    clearTimeout(this.settleTimer);
+    runInAction(() => {
+      this.settled = false;
+      this.nodePoints = [];
+    });
+  }
+
+  /** The nodes and the links of the map; a subclass builds them for its kind, and this class draws none. */
+  protected buildGraph(_objects: DetailsGraphObjects, _previous: DetailsGraph): DetailsGraph {
+    return { nodes: [], links: [] };
+  }
+
+  // The items of a store, or none for a kind that the user cannot list.
+  private itemsOf<S extends keyof MapStores>(key: S): MapStores[S]["items"] | [] {
+    return this.listable.has(key) ? this.stores[key].items : [];
+  }
+
+  // The items of the stores, with the objects listed for the namespace of the
+  // object. The builders look in that namespace only, so the objects of the
+  // namespace of a previous object, until the list of the new one is back,
+  // add nothing.
+  private mapObjects(): DetailsGraphObjects {
+    const { namespace = "", objects: listed = {} } = this.listed ?? {};
+    const pods = withListed(this.itemsOf("pods"), namespace, listed.pods);
+    return {
+      pods,
+      deployments: withListed(this.itemsOf("deployments"), namespace, listed.deployments),
+      statefulSets: withListed(this.itemsOf("statefulSets"), namespace, listed.statefulSets),
+      daemonSets: withListed(this.itemsOf("daemonSets"), namespace, listed.daemonSets),
+      services: withListed(this.itemsOf("services"), namespace, listed.services),
+      ingresses: withListed(this.itemsOf("ingresses"), namespace, listed.ingresses),
+      pvcs: withListed(this.itemsOf("pvcs"), namespace, listed.pvcs),
+      configMaps: withListed(this.itemsOf("configMaps"), namespace, listed.configMaps),
+      secrets: withListed(this.itemsOf("secrets"), namespace, listed.secrets),
+      // The stores' methods see the pods of the store alone: with listed pods,
+      // those of a workload are found among the pods of the map in their way.
+      childPods: (controller) => (listed.pods ? childPodsOf(controller, pods) : this.heldChildPods(controller)),
+    };
+  }
+
+  // The pods of a workload among the items of the store of the pods, as the store of its kind finds them.
+  private heldChildPods(controller: Controller) {
+    const { stores } = this;
+    if (controller instanceof Deployment) return stores.deployments.getChildPods(controller);
+    if (controller instanceof StatefulSet) return stores.statefulSets.getChildPods(controller);
+    return stores.daemonSets.getChildPods(controller);
+  }
+
+  getLinksForNode(node: ChartDataSeries): LinkObject[] {
+    return this.links.filter(
+      (link) => (link.source as ChartDataSeries).id == node.id || (link.target as ChartDataSeries).id == node.id,
+    );
+  }
+
+  handleNodeHover(node: ChartDataSeries | null) {
+    const highlightLinks = new Set<LinkObject>();
+    if (node) {
+      this.getLinksForNode(node).forEach((link) => highlightLinks.add(link));
+    }
+    this.setState({ highlightLinks, hoverNode: node ?? undefined });
+  }
+
+  render() {
+    if (!this.isReady) {
+      return <Spinner />;
+    }
+
+    const colors = this.dependencies.getCanvasColors();
+    const { hoverNode } = this.state;
+    return (
+      <>
+        <DrawerTitle>Resources</DrawerTitle>
+        <div
+          ref={this.followContainer}
+          className={`${styles.kubeForceChart} ${styles.details}`}
+          data-settled={this.settled || undefined}
+          onMouseMove={(event) => this.tooltip.current?.follow(event)}
+        >
+          <MapTooltip ref={this.tooltip} object={hoverNode?.object} />
+          <MapNodeList points={this.nodePoints} />
+          <ForceGraph2D
+            graphData={this.state.data}
+            ref={this.chartRef}
+            width={this.size.width}
+            height={this.size.height}
+            autoPauseRedraw={false}
+            maxZoom={maxZoom}
+            cooldownTicks={200}
+            onEngineStop={() => {
+              if (this.initZoomDone) {
+                this.settle();
+              } else if (this.nodes.length > 10) {
+                this.initZoomDone = true;
+                fitGraph(this.chart, this.size, maxZoom, 400);
+                this.settleTimer = setTimeout(() => this.settle(), 400);
+              } else {
+                this.initZoomDone = true;
+                fitGraph(this.chart, this.size, smallGraphZoom, 0);
+                this.settle();
+              }
+            }}
+            linkWidth={(link) => (this.state.highlightLinks.has(link) ? 2 : 1)}
+            onNodeHover={(node) => this.handleNodeHover(node)}
+            onNodeDrag={(node) => this.handleNodeHover(node)}
+            nodeVal="value"
+            nodeLabel={() => ""}
+            nodeVisibility={"visible"}
+            linkColor={(link) => {
+              return (link.source as ChartDataSeries).color ?? "";
+            }}
+            onNodeClick={(node) => {
+              const { object } = node;
+              if (object) {
+                if (object.kind === helmReleaseKind) {
+                  this.dependencies.showHelmRelease({ namespace: object.getNs(), name: object.getName() });
+                } else {
+                  this.dependencies.showDetails(object.selfLink);
+                }
+              }
+            }}
+            nodeCanvasObject={(node, ctx, globalScale) => {
+              const padAmount = 0;
+              const { name, value, color, image, object } = node;
+              const label = name;
+              const fontSize = 9;
+              const x = node.x ?? 0;
+              const y = node.y ?? 0;
+
+              const r = Math.sqrt(Math.max(0, value || 10)) * 4 + padAmount;
+
+              // draw outer circle
+              if (object.getId() === this.props.object.getId()) {
+                ctx.beginPath();
+                ctx.lineWidth = 2;
+                ctx.arc(x, y, r + 3, 0, 2 * Math.PI, false);
+                ctx.strokeStyle = color ?? "";
+                ctx.stroke();
+                ctx.fillStyle = colors.background;
+                ctx.fill();
+                ctx.closePath();
+              }
+
+              // draw circle
+              const size = hoverNode == node ? r + 1 : r;
+
+              ctx.beginPath();
+              ctx.arc(x, y, size, 0, 2 * Math.PI, false);
+              ctx.fillStyle = color || "rgba(31, 120, 180, 0.92)";
+              ctx.fill();
+
+              // draw icon
+              if (image) {
+                try {
+                  ctx.drawImage(image, x - 15, y - 15, 30, 30);
+                } catch (error) {
+                  this.dependencies.logger.error(`${logPrefix}: cannot draw the icon of ${node.kind}`, error);
+                }
+              }
+
+              // draw label
+              ctx.textAlign = "center";
+              ctx.font = `${fontSize}px Arial`;
+              ctx.textBaseline = "middle";
+              ctx.fillStyle = colors.text;
+              ctx.fillText(label, x, y + r + 10 / globalScale);
+            }}
+          />
+        </div>
+      </>
+    );
+  }
+}

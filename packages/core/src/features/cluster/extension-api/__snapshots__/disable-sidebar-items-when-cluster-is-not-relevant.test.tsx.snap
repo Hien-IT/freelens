@@ -201,6 +201,40 @@ exports[`disable sidebar items when cluster is not relevant > given extension sh
               role="button"
               style="pointer-events: auto; opacity: 1;"
               tabindex="0"
+            >
+              <div
+                class="SidebarItem"
+                data-is-active-test="false"
+                data-testid="sidebar-item-resource-map"
+              >
+                <a
+                  class="navItem"
+                  data-testid="link-for-sidebar-item-resource-map"
+                  href="/workloads"
+                >
+                  <i
+                    class="Icon material focusable"
+                  >
+                    <span
+                      class="icon"
+                      data-icon-name="bubble_chart"
+                    >
+                      bubble_chart
+                    </span>
+                  </i>
+                  <span>
+                    Resource Map
+                  </span>
+                </a>
+              </div>
+            </div>
+            <div
+              aria-describedby="DndDescribedBy-4"
+              aria-disabled="false"
+              aria-roledescription="sortable"
+              role="button"
+              style="pointer-events: auto; opacity: 1;"
+              tabindex="0"
             />
             <div
               aria-describedby="DndDescribedBy-4"
@@ -247,6 +281,14 @@ exports[`disable sidebar items when cluster is not relevant > given extension sh
                 </a>
               </div>
             </div>
+            <div
+              aria-describedby="DndDescribedBy-4"
+              aria-disabled="false"
+              aria-roledescription="sortable"
+              role="button"
+              style="pointer-events: auto; opacity: 1;"
+              tabindex="0"
+            />
             <div
               aria-describedby="DndDescribedBy-4"
               aria-disabled="false"
@@ -569,6 +611,30 @@ exports[`disable sidebar items when cluster is not relevant > given extension sh
                 <div
                   class="workloads"
                 />
+              </div>
+              <div
+                class="overviewDetail"
+              >
+                <div
+                  class="overviewHeader"
+                >
+                  <h5>
+                    Resources
+                  </h5>
+                </div>
+                <div
+                  class="overviewContent"
+                >
+                  <div
+                    class="status"
+                  >
+                    <h3
+                      class="noResources"
+                    >
+                      No visualizable resources found in this namespace.
+                    </h3>
+                  </div>
+                </div>
               </div>
             </div>
           </main>
@@ -908,6 +974,40 @@ exports[`disable sidebar items when cluster is not relevant > given extension sh
               role="button"
               style="pointer-events: auto; opacity: 1;"
               tabindex="0"
+            >
+              <div
+                class="SidebarItem"
+                data-is-active-test="false"
+                data-testid="sidebar-item-resource-map"
+              >
+                <a
+                  class="navItem"
+                  data-testid="link-for-sidebar-item-resource-map"
+                  href="/workloads"
+                >
+                  <i
+                    class="Icon material focusable"
+                  >
+                    <span
+                      class="icon"
+                      data-icon-name="bubble_chart"
+                    >
+                      bubble_chart
+                    </span>
+                  </i>
+                  <span>
+                    Resource Map
+                  </span>
+                </a>
+              </div>
+            </div>
+            <div
+              aria-describedby="DndDescribedBy-2"
+              aria-disabled="false"
+              aria-roledescription="sortable"
+              role="button"
+              style="pointer-events: auto; opacity: 1;"
+              tabindex="0"
             />
             <div
               aria-describedby="DndDescribedBy-2"
@@ -954,6 +1054,14 @@ exports[`disable sidebar items when cluster is not relevant > given extension sh
                 </a>
               </div>
             </div>
+            <div
+              aria-describedby="DndDescribedBy-2"
+              aria-disabled="false"
+              aria-roledescription="sortable"
+              role="button"
+              style="pointer-events: auto; opacity: 1;"
+              tabindex="0"
+            />
             <div
               aria-describedby="DndDescribedBy-2"
               aria-disabled="false"
@@ -1257,6 +1365,30 @@ exports[`disable sidebar items when cluster is not relevant > given extension sh
                 <div
                   class="workloads"
                 />
+              </div>
+              <div
+                class="overviewDetail"
+              >
+                <div
+                  class="overviewHeader"
+                >
+                  <h5>
+                    Resources
+                  </h5>
+                </div>
+                <div
+                  class="overviewContent"
+                >
+                  <div
+                    class="status"
+                  >
+                    <h3
+                      class="noResources"
+                    >
+                      No visualizable resources found in this namespace.
+                    </h3>
+                  </div>
+                </div>
               </div>
             </div>
           </main>
@@ -1596,6 +1728,40 @@ exports[`disable sidebar items when cluster is not relevant > given not yet know
               role="button"
               style="pointer-events: auto; opacity: 1;"
               tabindex="0"
+            >
+              <div
+                class="SidebarItem"
+                data-is-active-test="false"
+                data-testid="sidebar-item-resource-map"
+              >
+                <a
+                  class="navItem"
+                  data-testid="link-for-sidebar-item-resource-map"
+                  href="/workloads"
+                >
+                  <i
+                    class="Icon material focusable"
+                  >
+                    <span
+                      class="icon"
+                      data-icon-name="bubble_chart"
+                    >
+                      bubble_chart
+                    </span>
+                  </i>
+                  <span>
+                    Resource Map
+                  </span>
+                </a>
+              </div>
+            </div>
+            <div
+              aria-describedby="DndDescribedBy-0"
+              aria-disabled="false"
+              aria-roledescription="sortable"
+              role="button"
+              style="pointer-events: auto; opacity: 1;"
+              tabindex="0"
             />
             <div
               aria-describedby="DndDescribedBy-0"
@@ -1642,6 +1808,14 @@ exports[`disable sidebar items when cluster is not relevant > given not yet know
                 </a>
               </div>
             </div>
+            <div
+              aria-describedby="DndDescribedBy-0"
+              aria-disabled="false"
+              aria-roledescription="sortable"
+              role="button"
+              style="pointer-events: auto; opacity: 1;"
+              tabindex="0"
+            />
             <div
               aria-describedby="DndDescribedBy-0"
               aria-disabled="false"
@@ -1945,6 +2119,30 @@ exports[`disable sidebar items when cluster is not relevant > given not yet know
                 <div
                   class="workloads"
                 />
+              </div>
+              <div
+                class="overviewDetail"
+              >
+                <div
+                  class="overviewHeader"
+                >
+                  <h5>
+                    Resources
+                  </h5>
+                </div>
+                <div
+                  class="overviewContent"
+                >
+                  <div
+                    class="status"
+                  >
+                    <h3
+                      class="noResources"
+                    >
+                      No visualizable resources found in this namespace.
+                    </h3>
+                  </div>
+                </div>
               </div>
             </div>
           </main>

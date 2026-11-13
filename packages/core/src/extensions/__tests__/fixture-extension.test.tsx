@@ -264,6 +264,7 @@ describe("extension contract, against the built fixture extension", () => {
     it("registers its custom resources with the host, read from the model class", () => {
       const registered = di
         .injectMany(extensionCustomResourceInjectionToken)
+        .filter(({ extensionName }) => extensionName === EXTENSION_NAME)
         .map(({ group, plural, extensionName }) => ({ group, plural, extensionName }));
 
       expect(registered).toEqual([

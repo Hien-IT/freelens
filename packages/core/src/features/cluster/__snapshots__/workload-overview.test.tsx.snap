@@ -201,6 +201,40 @@ exports[`workload overview > when navigating to workload overview > renders 1`] 
               role="button"
               style="pointer-events: auto; opacity: 1; transition: transform 0ms linear;"
               tabindex="0"
+            >
+              <div
+                class="SidebarItem"
+                data-is-active-test="false"
+                data-testid="sidebar-item-resource-map"
+              >
+                <a
+                  class="navItem"
+                  data-testid="link-for-sidebar-item-resource-map"
+                  href="/workloads"
+                >
+                  <i
+                    class="Icon material focusable"
+                  >
+                    <span
+                      class="icon"
+                      data-icon-name="bubble_chart"
+                    >
+                      bubble_chart
+                    </span>
+                  </i>
+                  <span>
+                    Resource Map
+                  </span>
+                </a>
+              </div>
+            </div>
+            <div
+              aria-describedby="DndDescribedBy-0"
+              aria-disabled="false"
+              aria-roledescription="sortable"
+              role="button"
+              style="pointer-events: auto; opacity: 1; transition: transform 0ms linear;"
+              tabindex="0"
             />
             <div
               aria-describedby="DndDescribedBy-0"
@@ -247,6 +281,14 @@ exports[`workload overview > when navigating to workload overview > renders 1`] 
                 </a>
               </div>
             </div>
+            <div
+              aria-describedby="DndDescribedBy-0"
+              aria-disabled="false"
+              aria-roledescription="sortable"
+              role="button"
+              style="pointer-events: auto; opacity: 1; transition: transform 0ms linear;"
+              tabindex="0"
+            />
             <div
               aria-describedby="DndDescribedBy-0"
               aria-disabled="false"
@@ -593,6 +635,28 @@ exports[`workload overview > when navigating to workload overview > renders 1`] 
                         </div>
                       </div>
                     </div>
+                  </div>
+                </div>
+              </div>
+              <div
+                class="overviewDetail"
+              >
+                <div
+                  class="overviewHeader"
+                >
+                  <h5>
+                    Resources
+                  </h5>
+                </div>
+                <div
+                  class="overviewContent"
+                >
+                  <div
+                    class="status"
+                  >
+                    <div
+                      class="Spinner singleColor"
+                    />
                   </div>
                 </div>
               </div>

@@ -1,0 +1,49 @@
+/**
+ * Copyright (c) Freelens Authors. All rights reserved.
+ * Licensed under MIT License. See LICENSE in root directory for more information.
+ */
+
+import { observer } from "mobx-react";
+import { BadgeBoolean } from "../../../../../renderer/components/badge";
+import { KubeObjectAge } from "../../../../../renderer/components/kube-object/age";
+import { KubeObjectListLayout } from "../../../../../renderer/components/kube-object-list-layout";
+import { WithTooltip } from "../../../../../renderer/components/with-tooltip";
+import { BackendTLSPolicy } from "../../api/k8s";
+import { isPolicyAccepted } from "../../api/k8s/types";
+import { withErrorPage } from "../../components/error-page";
+import styles from "./backend-tls-policies-page-v1.module.scss";
+import { type GatewayPageProps, namespaceCell } from "./shared";
+
+export const BackendTLSPoliciesPage = observer((props: GatewayPageProps<BackendTLSPolicy>) =>
+  withErrorPage(props, () => {
+    const { store } = props;
+
+    return (
+      <KubeObjectListLayout<BackendTLSPolicy, any>
+        tableId={`${BackendTLSPolicy.crd.plural}Table`}
+        className={styles.page}
+        store={store}
+        sortingCallbacks={{
+          name: (item: BackendTLSPolicy) => item.getName(),
+          namespace: (item: BackendTLSPolicy) => item.getNs() ?? "",
+          accepted: (item: BackendTLSPolicy) => String(isPolicyAccepted(item.status)),
+          age: (item: BackendTLSPolicy) => item.getCreationTimestamp(),
+        }}
+        searchFilters={[(item: BackendTLSPolicy) => item.getSearchFields()]}
+        renderHeaderTitle={BackendTLSPolicy.crd.title}
+        renderTableHeader={[
+          { title: "Name", sortBy: "name", className: styles.name },
+          { title: "Namespace", sortBy: "namespace", className: styles.namespace },
+          { title: "Accepted", sortBy: "accepted", className: styles.accepted },
+          { title: "Age", sortBy: "age", className: styles.age },
+        ]}
+        renderTableContents={(item: BackendTLSPolicy) => [
+          <WithTooltip>{item.getName()}</WithTooltip>,
+          namespaceCell(item.getNs()),
+          <BadgeBoolean value={isPolicyAccepted(item.status)} />,
+          <KubeObjectAge object={item} key="age" />,
+        ]}
+      />
+    );
+  }),
+);

@@ -288,6 +288,40 @@ exports[`<ClusterFrame /> > given cluster with list nodes and namespaces permiss
             role="button"
             style="pointer-events: auto; opacity: 1; transition: transform 0ms linear;"
             tabindex="0"
+          >
+            <div
+              class="SidebarItem"
+              data-is-active-test="false"
+              data-testid="sidebar-item-resource-map"
+            >
+              <a
+                class="navItem"
+                data-testid="link-for-sidebar-item-resource-map"
+                href="/overview"
+              >
+                <i
+                  class="Icon material focusable"
+                >
+                  <span
+                    class="icon"
+                    data-icon-name="bubble_chart"
+                  >
+                    bubble_chart
+                  </span>
+                </i>
+                <span>
+                  Resource Map
+                </span>
+              </a>
+            </div>
+          </div>
+          <div
+            aria-describedby="DndDescribedBy-2"
+            aria-disabled="false"
+            aria-roledescription="sortable"
+            role="button"
+            style="pointer-events: auto; opacity: 1; transition: transform 0ms linear;"
+            tabindex="0"
           />
           <div
             aria-describedby="DndDescribedBy-2"
@@ -334,6 +368,14 @@ exports[`<ClusterFrame /> > given cluster with list nodes and namespaces permiss
               </a>
             </div>
           </div>
+          <div
+            aria-describedby="DndDescribedBy-2"
+            aria-disabled="false"
+            aria-roledescription="sortable"
+            role="button"
+            style="pointer-events: auto; opacity: 1; transition: transform 0ms linear;"
+            tabindex="0"
+          />
           <div
             aria-describedby="DndDescribedBy-2"
             aria-disabled="false"
@@ -961,6 +1003,40 @@ exports[`<ClusterFrame /> > given cluster with list nodes and namespaces permiss
             role="button"
             style="pointer-events: auto; opacity: 1; transition: transform 0ms linear;"
             tabindex="0"
+          >
+            <div
+              class="SidebarItem"
+              data-is-active-test="false"
+              data-testid="sidebar-item-resource-map"
+            >
+              <a
+                class="navItem"
+                data-testid="link-for-sidebar-item-resource-map"
+                href="/overview"
+              >
+                <i
+                  class="Icon material focusable"
+                >
+                  <span
+                    class="icon"
+                    data-icon-name="bubble_chart"
+                  >
+                    bubble_chart
+                  </span>
+                </i>
+                <span>
+                  Resource Map
+                </span>
+              </a>
+            </div>
+          </div>
+          <div
+            aria-describedby="DndDescribedBy-0"
+            aria-disabled="false"
+            aria-roledescription="sortable"
+            role="button"
+            style="pointer-events: auto; opacity: 1; transition: transform 0ms linear;"
+            tabindex="0"
           />
           <div
             aria-describedby="DndDescribedBy-0"
@@ -1007,6 +1083,14 @@ exports[`<ClusterFrame /> > given cluster with list nodes and namespaces permiss
               </a>
             </div>
           </div>
+          <div
+            aria-describedby="DndDescribedBy-0"
+            aria-disabled="false"
+            aria-roledescription="sortable"
+            role="button"
+            style="pointer-events: auto; opacity: 1; transition: transform 0ms linear;"
+            tabindex="0"
+          />
           <div
             aria-describedby="DndDescribedBy-0"
             aria-disabled="false"
@@ -1553,6 +1637,40 @@ exports[`<ClusterFrame /> > given cluster without list nodes, but with namespace
             role="button"
             style="pointer-events: auto; opacity: 1; transition: transform 0ms linear;"
             tabindex="0"
+          >
+            <div
+              class="SidebarItem"
+              data-is-active-test="false"
+              data-testid="sidebar-item-resource-map"
+            >
+              <a
+                class="navItem"
+                data-testid="link-for-sidebar-item-resource-map"
+                href="/workloads"
+              >
+                <i
+                  class="Icon material focusable"
+                >
+                  <span
+                    class="icon"
+                    data-icon-name="bubble_chart"
+                  >
+                    bubble_chart
+                  </span>
+                </i>
+                <span>
+                  Resource Map
+                </span>
+              </a>
+            </div>
+          </div>
+          <div
+            aria-describedby="DndDescribedBy-4"
+            aria-disabled="false"
+            aria-roledescription="sortable"
+            role="button"
+            style="pointer-events: auto; opacity: 1; transition: transform 0ms linear;"
+            tabindex="0"
           />
           <div
             aria-describedby="DndDescribedBy-4"
@@ -1599,6 +1717,14 @@ exports[`<ClusterFrame /> > given cluster without list nodes, but with namespace
               </a>
             </div>
           </div>
+          <div
+            aria-describedby="DndDescribedBy-4"
+            aria-disabled="false"
+            aria-roledescription="sortable"
+            role="button"
+            style="pointer-events: auto; opacity: 1; transition: transform 0ms linear;"
+            tabindex="0"
+          />
           <div
             aria-describedby="DndDescribedBy-4"
             aria-disabled="false"
@@ -1920,6 +2046,30 @@ exports[`<ClusterFrame /> > given cluster without list nodes, but with namespace
               <div
                 class="workloads"
               />
+            </div>
+            <div
+              class="overviewDetail"
+            >
+              <div
+                class="overviewHeader"
+              >
+                <h5>
+                  Resources
+                </h5>
+              </div>
+              <div
+                class="overviewContent"
+              >
+                <div
+                  class="status"
+                >
+                  <h3
+                    class="noResources"
+                  >
+                    No visualizable resources found in this namespace.
+                  </h3>
+                </div>
+              </div>
             </div>
           </div>
         </main>

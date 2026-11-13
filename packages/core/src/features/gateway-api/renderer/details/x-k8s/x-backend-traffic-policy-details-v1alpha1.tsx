@@ -1,0 +1,102 @@
+/**
+ * Copyright (c) Freelens Authors. All rights reserved.
+ * Licensed under MIT License. See LICENSE in root directory for more information.
+ */
+
+import { createReactKey } from "@freelensapp/utilities";
+import { observer } from "mobx-react";
+import { BadgeBoolean } from "../../../../../renderer/components/badge";
+import { DrawerItem, DrawerTitle } from "../../../../../renderer/components/drawer";
+import { Table, TableCell, TableHead, TableRow } from "../../../../../renderer/components/table";
+import { isPolicyAccepted } from "../../api/k8s/types";
+import { XBackendTrafficPolicy } from "../../api/x-k8s";
+import { PolicyAncestors } from "../k8s/policy-ancestors";
+import { ReferenceLink } from "../k8s/reference-link";
+import styles from "./common.module.scss";
+
+import type { KubeObjectDetailsProps } from "../../../../../renderer/components/kube-object-details";
+
+export const XBackendTrafficPolicyDetails = observer((props: KubeObjectDetailsProps<XBackendTrafficPolicy>) => {
+  const { object } = props;
+  const targetRefs = object.spec?.targetRefs ?? [];
+  const retryConstraint = object.spec?.retryConstraint;
+  const sessionPersistence = object.spec?.sessionPersistence;
+
+  return (
+    <div className={styles.details}>
+      <DrawerItem name="Accepted">
+        <BadgeBoolean value={isPolicyAccepted(object.status)} />
+      </DrawerItem>
+
+      <DrawerTitle>Target Refs</DrawerTitle>
+      {targetRefs.length > 0 ? (
+        <Table selectable tableId="xBackendTrafficPolicyTargetRefs" scrollable={false} sortSyncWithUrl={false}>
+          <TableHead flat sticky={false}>
+            <TableCell>Group</TableCell>
+            <TableCell>Kind</TableCell>
+            <TableCell>Name</TableCell>
+          </TableHead>
+          {targetRefs.map((targetRef) => {
+            const key = createReactKey(targetRef);
+
+            return (
+              <TableRow key={key} nowrap>
+                <TableCell>{targetRef.group || "-"}</TableCell>
+                <TableCell>{targetRef.kind}</TableCell>
+                <TableCell>
+                  <ReferenceLink
+                    object={object}
+                    group={targetRef.group}
+                    kind={targetRef.kind}
+                    name={targetRef.name}
+                    namespace={object.getNs()}
+                  />
+                </TableCell>
+              </TableRow>
+            );
+          })}
+        </Table>
+      ) : (
+        <DrawerItem name="Target Refs">-</DrawerItem>
+      )}
+
+      {retryConstraint && (
+        <>
+          <DrawerTitle>Retry Constraint</DrawerTitle>
+          {retryConstraint.budget && (
+            <>
+              <DrawerItem name="Budget Percent">{retryConstraint.budget.percent ?? 20}</DrawerItem>
+              <DrawerItem name="Budget Interval">{retryConstraint.budget.interval ?? "10s"}</DrawerItem>
+            </>
+          )}
+          {retryConstraint.minRetryRate && (
+            <>
+              <DrawerItem name="Min Retry Rate Count">{retryConstraint.minRetryRate.count ?? 10}</DrawerItem>
+              <DrawerItem name="Min Retry Rate Interval">{retryConstraint.minRetryRate.interval ?? "1s"}</DrawerItem>
+            </>
+          )}
+        </>
+      )}
+
+      {sessionPersistence && (
+        <>
+          <DrawerTitle>Session Persistence</DrawerTitle>
+          <DrawerItem name="Session Name" hidden={!sessionPersistence.sessionName}>
+            {sessionPersistence.sessionName ?? "-"}
+          </DrawerItem>
+          <DrawerItem name="Type">{sessionPersistence.type ?? "Cookie"}</DrawerItem>
+          <DrawerItem name="Absolute Timeout" hidden={!sessionPersistence.absoluteTimeout}>
+            {sessionPersistence.absoluteTimeout ?? "-"}
+          </DrawerItem>
+          {sessionPersistence.cookieConfig && (
+            <DrawerItem name="Cookie Lifetime Type">
+              {sessionPersistence.cookieConfig.lifetimeType ?? "Session"}
+            </DrawerItem>
+          )}
+        </>
+      )}
+
+      <PolicyAncestors object={object} ancestors={object.status?.ancestors ?? []} />
+    </div>
+  );
+});

@@ -1,0 +1,154 @@
+/**
+ * Copyright (c) Freelens Authors. All rights reserved.
+ * Licensed under MIT License. See LICENSE in root directory for more information.
+ */
+
+import { Icon } from "@freelensapp/icon";
+import { createReactKey } from "@freelensapp/utilities";
+import { observer } from "mobx-react";
+import { BadgeBoolean } from "../../../../../renderer/components/badge";
+import { DrawerItem, DrawerItemLabels, DrawerTitle } from "../../../../../renderer/components/drawer";
+import { Table, TableCell, TableHead, TableRow } from "../../../../../renderer/components/table";
+import { ListenerSet } from "../../api/k8s";
+import styles from "./common.module.scss";
+import { ReferenceLink } from "./reference-link";
+import { gatewayApiGroup } from "./references";
+
+import type { KubeObjectDetailsProps } from "../../../../../renderer/components/kube-object-details";
+import type { ListenerEntryStatus } from "../../api/k8s/listenerset-v1";
+
+function isAccepted(object: ListenerSet): boolean {
+  return (object.status?.conditions ?? []).some(
+    (condition) => condition.type === "Accepted" && condition.status === "True",
+  );
+}
+
+function isProgrammed(object: ListenerSet): boolean {
+  return (object.status?.conditions ?? []).some(
+    (condition) => condition.type === "Programmed" && condition.status === "True",
+  );
+}
+
+function formatCondition(condition: { type?: string; status?: string }): string {
+  return `${condition.type ?? "Unknown"}: ${condition.status ?? "Unknown"}`;
+}
+
+function formatGroupKinds(kinds: Array<{ group?: string; kind: string }> | undefined): string {
+  if (!kinds || kinds.length === 0) {
+    return "-";
+  }
+
+  return kinds
+    .map((entry) => {
+      const group = entry.group ?? "gateway.networking.k8s.io";
+      return group ? `${group}/${entry.kind}` : entry.kind;
+    })
+    .join(", ");
+}
+
+export const ListenerSetDetails = observer((props: KubeObjectDetailsProps<ListenerSet>) => {
+  const { object } = props;
+  const objectNs = object.getNs();
+  const parentRef = object.spec?.parentRef ?? { name: "" };
+  const listeners = object.spec?.listeners ?? [];
+  const statusListeners = (object.status?.listeners ?? []) as ListenerEntryStatus[];
+
+  const parentGroup = parentRef.group ?? gatewayApiGroup;
+  const parentKind = parentRef.kind ?? "Gateway";
+
+  return (
+    <div className={styles.details}>
+      <DrawerItem name="Accepted">
+        <BadgeBoolean value={isAccepted(object)} />
+      </DrawerItem>
+      <DrawerItem name="Programmed">
+        <BadgeBoolean value={isProgrammed(object)} />
+      </DrawerItem>
+
+      <DrawerTitle>Parent Reference</DrawerTitle>
+      <Table selectable tableId="listenerSetParentRef" scrollable={false} sortSyncWithUrl={false}>
+        <TableHead flat sticky={false}>
+          <TableCell>Group</TableCell>
+          <TableCell>Kind</TableCell>
+          <TableCell>Name</TableCell>
+        </TableHead>
+        <TableRow nowrap>
+          <TableCell>{parentGroup || "-"}</TableCell>
+          <TableCell>{parentKind}</TableCell>
+          <TableCell>
+            <ReferenceLink
+              object={object}
+              group={parentGroup}
+              kind={parentKind}
+              name={parentRef.name}
+              namespace={parentRef.namespace ?? objectNs}
+            />
+          </TableCell>
+        </TableRow>
+      </Table>
+
+      {listeners.length > 0 && (
+        <>
+          <DrawerTitle>Listeners</DrawerTitle>
+          {listeners.map((listener) => (
+            <div key={listener.name}>
+              <div className={styles.title}>
+                <Icon small material="list" />
+                <span>{listener.name}</span>
+              </div>
+              <DrawerItem name="Listener">{`${listener.protocol}:${listener.port} ${listener.hostname ?? "*"}`}</DrawerItem>
+              <DrawerItem name="TLS Mode" hidden={!listener.tls}>
+                {listener.tls?.mode ?? "Terminate"}
+              </DrawerItem>
+              <DrawerItem name="TLS Certs" hidden={!listener.tls?.certificateRefs?.length} labelsOnly>
+                {listener.tls?.certificateRefs?.map((certificateRef) => (
+                  <div key={createReactKey(certificateRef)}>
+                    <ReferenceLink
+                      object={object}
+                      group={certificateRef.group ?? ""}
+                      kind={certificateRef.kind ?? "Secret"}
+                      name={certificateRef.name}
+                      namespace={certificateRef.namespace ?? objectNs}
+                    />
+                  </div>
+                ))}
+              </DrawerItem>
+              <DrawerItemLabels
+                name="TLS Options"
+                labels={listener.tls?.options ?? {}}
+                hidden={!listener.tls?.options}
+              />
+              <DrawerItem name="Allowed Routes Namespaces From">
+                {listener.allowedRoutes?.namespaces?.from ?? "-"}
+              </DrawerItem>
+              <DrawerItem name="Allowed Route Kinds" hidden={!listener.allowedRoutes?.kinds}>
+                {formatGroupKinds(listener.allowedRoutes?.kinds)}
+              </DrawerItem>
+            </div>
+          ))}
+        </>
+      )}
+
+      {statusListeners.length > 0 && (
+        <>
+          <DrawerTitle>Status Listeners</DrawerTitle>
+          {statusListeners.map((listenerStatus) => (
+            <div key={`listener-status-${listenerStatus.name}`}>
+              <div className={styles.title}>
+                <Icon small material="list" />
+                <span>{listenerStatus.name}</span>
+              </div>
+              <DrawerItem name="Attached Routes">{listenerStatus.attachedRoutes}</DrawerItem>
+              <DrawerItem name="Supported Kinds">{formatGroupKinds(listenerStatus.supportedKinds)}</DrawerItem>
+              <DrawerItem name="Conditions">
+                {listenerStatus.conditions.length
+                  ? listenerStatus.conditions.map((condition) => formatCondition(condition)).join(", ")
+                  : "-"}
+              </DrawerItem>
+            </div>
+          ))}
+        </>
+      )}
+    </div>
+  );
+});

@@ -1,0 +1,57 @@
+/**
+ * Copyright (c) Freelens Authors. All rights reserved.
+ * Licensed under MIT License. See LICENSE in root directory for more information.
+ */
+
+import { observer } from "mobx-react";
+import { BadgeBoolean } from "../../../../../renderer/components/badge";
+import { KubeObjectAge } from "../../../../../renderer/components/kube-object/age";
+import { KubeObjectListLayout } from "../../../../../renderer/components/kube-object-list-layout";
+import { WithTooltip } from "../../../../../renderer/components/with-tooltip";
+import { GatewayClass } from "../../api/k8s";
+import { hasTrueCondition } from "../../api/k8s/types";
+import { withErrorPage } from "../../components/error-page";
+import styles from "./gateway-classes-page-v1.module.scss";
+import { type GatewayPageProps } from "./shared";
+
+function getControllerName(item: GatewayClass): string {
+  return item.spec?.controllerName ?? "";
+}
+
+function isAccepted(item: GatewayClass): boolean {
+  return hasTrueCondition(item.status?.conditions, "Accepted");
+}
+
+export const GatewayClassesPage = observer((props: GatewayPageProps<GatewayClass>) =>
+  withErrorPage(props, () => {
+    const { store } = props;
+
+    return (
+      <KubeObjectListLayout<GatewayClass, any>
+        tableId={`${GatewayClass.crd.plural}Table`}
+        className={styles.page}
+        store={store}
+        sortingCallbacks={{
+          name: (item: GatewayClass) => item.getName(),
+          controller: (item: GatewayClass) => getControllerName(item),
+          accepted: (item: GatewayClass) => String(isAccepted(item)),
+          age: (item: GatewayClass) => item.getCreationTimestamp(),
+        }}
+        searchFilters={[(item: GatewayClass) => item.getSearchFields()]}
+        renderHeaderTitle={GatewayClass.crd.title}
+        renderTableHeader={[
+          { title: "Name", sortBy: "name", className: styles.name },
+          { title: "Controller", sortBy: "controller", className: styles.controller },
+          { title: "Accepted", sortBy: "accepted", className: styles.accepted },
+          { title: "Age", sortBy: "age", className: styles.age },
+        ]}
+        renderTableContents={(item: GatewayClass) => [
+          <WithTooltip>{item.getName()}</WithTooltip>,
+          <WithTooltip>{getControllerName(item)}</WithTooltip>,
+          <BadgeBoolean value={isAccepted(item)} />,
+          <KubeObjectAge object={item} key="age" />,
+        ]}
+      />
+    );
+  }),
+);

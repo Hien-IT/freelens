@@ -200,6 +200,40 @@ exports[`cluster/namespaces - edit namespace from new tab > when navigating to n
               role="button"
               style="pointer-events: auto; opacity: 1; transition: transform 0ms linear;"
               tabindex="0"
+            >
+              <div
+                class="SidebarItem"
+                data-is-active-test="false"
+                data-testid="sidebar-item-resource-map"
+              >
+                <a
+                  class="navItem"
+                  data-testid="link-for-sidebar-item-resource-map"
+                  href="/namespaces"
+                >
+                  <i
+                    class="Icon material focusable"
+                  >
+                    <span
+                      class="icon"
+                      data-icon-name="bubble_chart"
+                    >
+                      bubble_chart
+                    </span>
+                  </i>
+                  <span>
+                    Resource Map
+                  </span>
+                </a>
+              </div>
+            </div>
+            <div
+              aria-describedby="DndDescribedBy-0"
+              aria-disabled="false"
+              aria-roledescription="sortable"
+              role="button"
+              style="pointer-events: auto; opacity: 1; transition: transform 0ms linear;"
+              tabindex="0"
             />
             <div
               aria-describedby="DndDescribedBy-0"
@@ -246,6 +280,14 @@ exports[`cluster/namespaces - edit namespace from new tab > when navigating to n
                 </a>
               </div>
             </div>
+            <div
+              aria-describedby="DndDescribedBy-0"
+              aria-disabled="false"
+              aria-roledescription="sortable"
+              role="button"
+              style="pointer-events: auto; opacity: 1; transition: transform 0ms linear;"
+              tabindex="0"
+            />
             <div
               aria-describedby="DndDescribedBy-0"
               aria-disabled="false"
@@ -1030,6 +1072,40 @@ exports[`cluster/namespaces - edit namespace from new tab > when navigating to n
               role="button"
               style="pointer-events: auto; opacity: 1; transition: transform 0ms linear;"
               tabindex="0"
+            >
+              <div
+                class="SidebarItem"
+                data-is-active-test="false"
+                data-testid="sidebar-item-resource-map"
+              >
+                <a
+                  class="navItem"
+                  data-testid="link-for-sidebar-item-resource-map"
+                  href="/namespaces"
+                >
+                  <i
+                    class="Icon material focusable"
+                  >
+                    <span
+                      class="icon"
+                      data-icon-name="bubble_chart"
+                    >
+                      bubble_chart
+                    </span>
+                  </i>
+                  <span>
+                    Resource Map
+                  </span>
+                </a>
+              </div>
+            </div>
+            <div
+              aria-describedby="DndDescribedBy-63"
+              aria-disabled="false"
+              aria-roledescription="sortable"
+              role="button"
+              style="pointer-events: auto; opacity: 1; transition: transform 0ms linear;"
+              tabindex="0"
             />
             <div
               aria-describedby="DndDescribedBy-63"
@@ -1076,6 +1152,14 @@ exports[`cluster/namespaces - edit namespace from new tab > when navigating to n
                 </a>
               </div>
             </div>
+            <div
+              aria-describedby="DndDescribedBy-63"
+              aria-disabled="false"
+              aria-roledescription="sortable"
+              role="button"
+              style="pointer-events: auto; opacity: 1; transition: transform 0ms linear;"
+              tabindex="0"
+            />
             <div
               aria-describedby="DndDescribedBy-63"
               aria-disabled="false"
@@ -1865,6 +1949,40 @@ exports[`cluster/namespaces - edit namespace from new tab > when navigating to n
               role="button"
               style="pointer-events: auto; opacity: 1; transition: transform 0ms linear;"
               tabindex="0"
+            >
+              <div
+                class="SidebarItem"
+                data-is-active-test="false"
+                data-testid="sidebar-item-resource-map"
+              >
+                <a
+                  class="navItem"
+                  data-testid="link-for-sidebar-item-resource-map"
+                  href="/namespaces"
+                >
+                  <i
+                    class="Icon material focusable"
+                  >
+                    <span
+                      class="icon"
+                      data-icon-name="bubble_chart"
+                    >
+                      bubble_chart
+                    </span>
+                  </i>
+                  <span>
+                    Resource Map
+                  </span>
+                </a>
+              </div>
+            </div>
+            <div
+              aria-describedby="DndDescribedBy-37"
+              aria-disabled="false"
+              aria-roledescription="sortable"
+              role="button"
+              style="pointer-events: auto; opacity: 1; transition: transform 0ms linear;"
+              tabindex="0"
             />
             <div
               aria-describedby="DndDescribedBy-37"
@@ -1911,6 +2029,14 @@ exports[`cluster/namespaces - edit namespace from new tab > when navigating to n
                 </a>
               </div>
             </div>
+            <div
+              aria-describedby="DndDescribedBy-37"
+              aria-disabled="false"
+              aria-roledescription="sortable"
+              role="button"
+              style="pointer-events: auto; opacity: 1; transition: transform 0ms linear;"
+              tabindex="0"
+            />
             <div
               aria-describedby="DndDescribedBy-37"
               aria-disabled="false"
@@ -2799,6 +2925,40 @@ exports[`cluster/namespaces - edit namespace from new tab > when navigating to n
               role="button"
               style="pointer-events: auto; opacity: 1; transition: transform 0ms linear;"
               tabindex="0"
+            >
+              <div
+                class="SidebarItem"
+                data-is-active-test="false"
+                data-testid="sidebar-item-resource-map"
+              >
+                <a
+                  class="navItem"
+                  data-testid="link-for-sidebar-item-resource-map"
+                  href="/namespaces"
+                >
+                  <i
+                    class="Icon material focusable"
+                  >
+                    <span
+                      class="icon"
+                      data-icon-name="bubble_chart"
+                    >
+                      bubble_chart
+                    </span>
+                  </i>
+                  <span>
+                    Resource Map
+                  </span>
+                </a>
+              </div>
+            </div>
+            <div
+              aria-describedby="DndDescribedBy-48"
+              aria-disabled="false"
+              aria-roledescription="sortable"
+              role="button"
+              style="pointer-events: auto; opacity: 1; transition: transform 0ms linear;"
+              tabindex="0"
             />
             <div
               aria-describedby="DndDescribedBy-48"
@@ -2845,6 +3005,14 @@ exports[`cluster/namespaces - edit namespace from new tab > when navigating to n
                 </a>
               </div>
             </div>
+            <div
+              aria-describedby="DndDescribedBy-48"
+              aria-disabled="false"
+              aria-roledescription="sortable"
+              role="button"
+              style="pointer-events: auto; opacity: 1; transition: transform 0ms linear;"
+              tabindex="0"
+            />
             <div
               aria-describedby="DndDescribedBy-48"
               aria-disabled="false"
@@ -3681,6 +3849,40 @@ exports[`cluster/namespaces - edit namespace from new tab > when navigating to n
               role="button"
               style="pointer-events: auto; opacity: 1; transition: transform 0ms linear;"
               tabindex="0"
+            >
+              <div
+                class="SidebarItem"
+                data-is-active-test="false"
+                data-testid="sidebar-item-resource-map"
+              >
+                <a
+                  class="navItem"
+                  data-testid="link-for-sidebar-item-resource-map"
+                  href="/namespaces"
+                >
+                  <i
+                    class="Icon material focusable"
+                  >
+                    <span
+                      class="icon"
+                      data-icon-name="bubble_chart"
+                    >
+                      bubble_chart
+                    </span>
+                  </i>
+                  <span>
+                    Resource Map
+                  </span>
+                </a>
+              </div>
+            </div>
+            <div
+              aria-describedby="DndDescribedBy-53"
+              aria-disabled="false"
+              aria-roledescription="sortable"
+              role="button"
+              style="pointer-events: auto; opacity: 1; transition: transform 0ms linear;"
+              tabindex="0"
             />
             <div
               aria-describedby="DndDescribedBy-53"
@@ -3727,6 +3929,14 @@ exports[`cluster/namespaces - edit namespace from new tab > when navigating to n
                 </a>
               </div>
             </div>
+            <div
+              aria-describedby="DndDescribedBy-53"
+              aria-disabled="false"
+              aria-roledescription="sortable"
+              role="button"
+              style="pointer-events: auto; opacity: 1; transition: transform 0ms linear;"
+              tabindex="0"
+            />
             <div
               aria-describedby="DndDescribedBy-53"
               aria-disabled="false"
@@ -4665,6 +4875,40 @@ exports[`cluster/namespaces - edit namespace from new tab > when navigating to n
               role="button"
               style="pointer-events: auto; opacity: 1; transition: transform 0ms linear;"
               tabindex="0"
+            >
+              <div
+                class="SidebarItem"
+                data-is-active-test="false"
+                data-testid="sidebar-item-resource-map"
+              >
+                <a
+                  class="navItem"
+                  data-testid="link-for-sidebar-item-resource-map"
+                  href="/namespaces"
+                >
+                  <i
+                    class="Icon material focusable"
+                  >
+                    <span
+                      class="icon"
+                      data-icon-name="bubble_chart"
+                    >
+                      bubble_chart
+                    </span>
+                  </i>
+                  <span>
+                    Resource Map
+                  </span>
+                </a>
+              </div>
+            </div>
+            <div
+              aria-describedby="DndDescribedBy-56"
+              aria-disabled="false"
+              aria-roledescription="sortable"
+              role="button"
+              style="pointer-events: auto; opacity: 1; transition: transform 0ms linear;"
+              tabindex="0"
             />
             <div
               aria-describedby="DndDescribedBy-56"
@@ -4711,6 +4955,14 @@ exports[`cluster/namespaces - edit namespace from new tab > when navigating to n
                 </a>
               </div>
             </div>
+            <div
+              aria-describedby="DndDescribedBy-56"
+              aria-disabled="false"
+              aria-roledescription="sortable"
+              role="button"
+              style="pointer-events: auto; opacity: 1; transition: transform 0ms linear;"
+              tabindex="0"
+            />
             <div
               aria-describedby="DndDescribedBy-56"
               aria-disabled="false"
@@ -5651,6 +5903,40 @@ exports[`cluster/namespaces - edit namespace from new tab > when navigating to n
               role="button"
               style="pointer-events: auto; opacity: 1; transition: transform 0ms linear;"
               tabindex="0"
+            >
+              <div
+                class="SidebarItem"
+                data-is-active-test="false"
+                data-testid="sidebar-item-resource-map"
+              >
+                <a
+                  class="navItem"
+                  data-testid="link-for-sidebar-item-resource-map"
+                  href="/namespaces"
+                >
+                  <i
+                    class="Icon material focusable"
+                  >
+                    <span
+                      class="icon"
+                      data-icon-name="bubble_chart"
+                    >
+                      bubble_chart
+                    </span>
+                  </i>
+                  <span>
+                    Resource Map
+                  </span>
+                </a>
+              </div>
+            </div>
+            <div
+              aria-describedby="DndDescribedBy-42"
+              aria-disabled="false"
+              aria-roledescription="sortable"
+              role="button"
+              style="pointer-events: auto; opacity: 1; transition: transform 0ms linear;"
+              tabindex="0"
             />
             <div
               aria-describedby="DndDescribedBy-42"
@@ -5697,6 +5983,14 @@ exports[`cluster/namespaces - edit namespace from new tab > when navigating to n
                 </a>
               </div>
             </div>
+            <div
+              aria-describedby="DndDescribedBy-42"
+              aria-disabled="false"
+              aria-roledescription="sortable"
+              role="button"
+              style="pointer-events: auto; opacity: 1; transition: transform 0ms linear;"
+              tabindex="0"
+            />
             <div
               aria-describedby="DndDescribedBy-42"
               aria-disabled="false"
@@ -6599,6 +6893,40 @@ exports[`cluster/namespaces - edit namespace from new tab > when navigating to n
               role="button"
               style="pointer-events: auto; opacity: 1; transition: transform 0ms linear;"
               tabindex="0"
+            >
+              <div
+                class="SidebarItem"
+                data-is-active-test="false"
+                data-testid="sidebar-item-resource-map"
+              >
+                <a
+                  class="navItem"
+                  data-testid="link-for-sidebar-item-resource-map"
+                  href="/namespaces"
+                >
+                  <i
+                    class="Icon material focusable"
+                  >
+                    <span
+                      class="icon"
+                      data-icon-name="bubble_chart"
+                    >
+                      bubble_chart
+                    </span>
+                  </i>
+                  <span>
+                    Resource Map
+                  </span>
+                </a>
+              </div>
+            </div>
+            <div
+              aria-describedby="DndDescribedBy-7"
+              aria-disabled="false"
+              aria-roledescription="sortable"
+              role="button"
+              style="pointer-events: auto; opacity: 1; transition: transform 0ms linear;"
+              tabindex="0"
             />
             <div
               aria-describedby="DndDescribedBy-7"
@@ -6645,6 +6973,14 @@ exports[`cluster/namespaces - edit namespace from new tab > when navigating to n
                 </a>
               </div>
             </div>
+            <div
+              aria-describedby="DndDescribedBy-7"
+              aria-disabled="false"
+              aria-roledescription="sortable"
+              role="button"
+              style="pointer-events: auto; opacity: 1; transition: transform 0ms linear;"
+              tabindex="0"
+            />
             <div
               aria-describedby="DndDescribedBy-7"
               aria-disabled="false"
@@ -7542,6 +7878,40 @@ exports[`cluster/namespaces - edit namespace from new tab > when navigating to n
               role="button"
               style="pointer-events: auto; opacity: 1; transition: transform 0ms linear;"
               tabindex="0"
+            >
+              <div
+                class="SidebarItem"
+                data-is-active-test="false"
+                data-testid="sidebar-item-resource-map"
+              >
+                <a
+                  class="navItem"
+                  data-testid="link-for-sidebar-item-resource-map"
+                  href="/namespaces"
+                >
+                  <i
+                    class="Icon material focusable"
+                  >
+                    <span
+                      class="icon"
+                      data-icon-name="bubble_chart"
+                    >
+                      bubble_chart
+                    </span>
+                  </i>
+                  <span>
+                    Resource Map
+                  </span>
+                </a>
+              </div>
+            </div>
+            <div
+              aria-describedby="DndDescribedBy-19"
+              aria-disabled="false"
+              aria-roledescription="sortable"
+              role="button"
+              style="pointer-events: auto; opacity: 1; transition: transform 0ms linear;"
+              tabindex="0"
             />
             <div
               aria-describedby="DndDescribedBy-19"
@@ -7588,6 +7958,14 @@ exports[`cluster/namespaces - edit namespace from new tab > when navigating to n
                 </a>
               </div>
             </div>
+            <div
+              aria-describedby="DndDescribedBy-19"
+              aria-disabled="false"
+              aria-roledescription="sortable"
+              role="button"
+              style="pointer-events: auto; opacity: 1; transition: transform 0ms linear;"
+              tabindex="0"
+            />
             <div
               aria-describedby="DndDescribedBy-19"
               aria-disabled="false"
@@ -8476,6 +8854,40 @@ exports[`cluster/namespaces - edit namespace from new tab > when navigating to n
               role="button"
               style="pointer-events: auto; opacity: 1; transition: transform 0ms linear;"
               tabindex="0"
+            >
+              <div
+                class="SidebarItem"
+                data-is-active-test="false"
+                data-testid="sidebar-item-resource-map"
+              >
+                <a
+                  class="navItem"
+                  data-testid="link-for-sidebar-item-resource-map"
+                  href="/namespaces"
+                >
+                  <i
+                    class="Icon material focusable"
+                  >
+                    <span
+                      class="icon"
+                      data-icon-name="bubble_chart"
+                    >
+                      bubble_chart
+                    </span>
+                  </i>
+                  <span>
+                    Resource Map
+                  </span>
+                </a>
+              </div>
+            </div>
+            <div
+              aria-describedby="DndDescribedBy-12"
+              aria-disabled="false"
+              aria-roledescription="sortable"
+              role="button"
+              style="pointer-events: auto; opacity: 1; transition: transform 0ms linear;"
+              tabindex="0"
             />
             <div
               aria-describedby="DndDescribedBy-12"
@@ -8522,6 +8934,14 @@ exports[`cluster/namespaces - edit namespace from new tab > when navigating to n
                 </a>
               </div>
             </div>
+            <div
+              aria-describedby="DndDescribedBy-12"
+              aria-disabled="false"
+              aria-roledescription="sortable"
+              role="button"
+              style="pointer-events: auto; opacity: 1; transition: transform 0ms linear;"
+              tabindex="0"
+            />
             <div
               aria-describedby="DndDescribedBy-12"
               aria-disabled="false"
@@ -9410,6 +9830,40 @@ exports[`cluster/namespaces - edit namespace from new tab > when navigating to n
               role="button"
               style="pointer-events: auto; opacity: 1; transition: transform 0ms linear;"
               tabindex="0"
+            >
+              <div
+                class="SidebarItem"
+                data-is-active-test="false"
+                data-testid="sidebar-item-resource-map"
+              >
+                <a
+                  class="navItem"
+                  data-testid="link-for-sidebar-item-resource-map"
+                  href="/namespaces"
+                >
+                  <i
+                    class="Icon material focusable"
+                  >
+                    <span
+                      class="icon"
+                      data-icon-name="bubble_chart"
+                    >
+                      bubble_chart
+                    </span>
+                  </i>
+                  <span>
+                    Resource Map
+                  </span>
+                </a>
+              </div>
+            </div>
+            <div
+              aria-describedby="DndDescribedBy-4"
+              aria-disabled="false"
+              aria-roledescription="sortable"
+              role="button"
+              style="pointer-events: auto; opacity: 1; transition: transform 0ms linear;"
+              tabindex="0"
             />
             <div
               aria-describedby="DndDescribedBy-4"
@@ -9456,6 +9910,14 @@ exports[`cluster/namespaces - edit namespace from new tab > when navigating to n
                 </a>
               </div>
             </div>
+            <div
+              aria-describedby="DndDescribedBy-4"
+              aria-disabled="false"
+              aria-roledescription="sortable"
+              role="button"
+              style="pointer-events: auto; opacity: 1; transition: transform 0ms linear;"
+              tabindex="0"
+            />
             <div
               aria-describedby="DndDescribedBy-4"
               aria-disabled="false"
@@ -10344,6 +10806,40 @@ exports[`cluster/namespaces - edit namespace from new tab > when navigating to n
               role="button"
               style="pointer-events: auto; opacity: 1; transition: transform 0ms linear;"
               tabindex="0"
+            >
+              <div
+                class="SidebarItem"
+                data-is-active-test="false"
+                data-testid="sidebar-item-resource-map"
+              >
+                <a
+                  class="navItem"
+                  data-testid="link-for-sidebar-item-resource-map"
+                  href="/namespaces"
+                >
+                  <i
+                    class="Icon material focusable"
+                  >
+                    <span
+                      class="icon"
+                      data-icon-name="bubble_chart"
+                    >
+                      bubble_chart
+                    </span>
+                  </i>
+                  <span>
+                    Resource Map
+                  </span>
+                </a>
+              </div>
+            </div>
+            <div
+              aria-describedby="DndDescribedBy-35"
+              aria-disabled="false"
+              aria-roledescription="sortable"
+              role="button"
+              style="pointer-events: auto; opacity: 1; transition: transform 0ms linear;"
+              tabindex="0"
             />
             <div
               aria-describedby="DndDescribedBy-35"
@@ -10390,6 +10886,14 @@ exports[`cluster/namespaces - edit namespace from new tab > when navigating to n
                 </a>
               </div>
             </div>
+            <div
+              aria-describedby="DndDescribedBy-35"
+              aria-disabled="false"
+              aria-roledescription="sortable"
+              role="button"
+              style="pointer-events: auto; opacity: 1; transition: transform 0ms linear;"
+              tabindex="0"
+            />
             <div
               aria-describedby="DndDescribedBy-35"
               aria-disabled="false"
@@ -11083,6 +11587,40 @@ exports[`cluster/namespaces - edit namespace from new tab > when navigating to n
               role="button"
               style="pointer-events: auto; opacity: 1; transition: transform 0ms linear;"
               tabindex="0"
+            >
+              <div
+                class="SidebarItem"
+                data-is-active-test="false"
+                data-testid="sidebar-item-resource-map"
+              >
+                <a
+                  class="navItem"
+                  data-testid="link-for-sidebar-item-resource-map"
+                  href="/namespaces"
+                >
+                  <i
+                    class="Icon material focusable"
+                  >
+                    <span
+                      class="icon"
+                      data-icon-name="bubble_chart"
+                    >
+                      bubble_chart
+                    </span>
+                  </i>
+                  <span>
+                    Resource Map
+                  </span>
+                </a>
+              </div>
+            </div>
+            <div
+              aria-describedby="DndDescribedBy-26"
+              aria-disabled="false"
+              aria-roledescription="sortable"
+              role="button"
+              style="pointer-events: auto; opacity: 1; transition: transform 0ms linear;"
+              tabindex="0"
             />
             <div
               aria-describedby="DndDescribedBy-26"
@@ -11129,6 +11667,14 @@ exports[`cluster/namespaces - edit namespace from new tab > when navigating to n
                 </a>
               </div>
             </div>
+            <div
+              aria-describedby="DndDescribedBy-26"
+              aria-disabled="false"
+              aria-roledescription="sortable"
+              role="button"
+              style="pointer-events: auto; opacity: 1; transition: transform 0ms linear;"
+              tabindex="0"
+            />
             <div
               aria-describedby="DndDescribedBy-26"
               aria-disabled="false"
@@ -12026,6 +12572,40 @@ exports[`cluster/namespaces - edit namespace from new tab > when navigating to n
               role="button"
               style="pointer-events: auto; opacity: 1; transition: transform 0ms linear;"
               tabindex="0"
+            >
+              <div
+                class="SidebarItem"
+                data-is-active-test="false"
+                data-testid="sidebar-item-resource-map"
+              >
+                <a
+                  class="navItem"
+                  data-testid="link-for-sidebar-item-resource-map"
+                  href="/namespaces"
+                >
+                  <i
+                    class="Icon material focusable"
+                  >
+                    <span
+                      class="icon"
+                      data-icon-name="bubble_chart"
+                    >
+                      bubble_chart
+                    </span>
+                  </i>
+                  <span>
+                    Resource Map
+                  </span>
+                </a>
+              </div>
+            </div>
+            <div
+              aria-describedby="DndDescribedBy-30"
+              aria-disabled="false"
+              aria-roledescription="sortable"
+              role="button"
+              style="pointer-events: auto; opacity: 1; transition: transform 0ms linear;"
+              tabindex="0"
             />
             <div
               aria-describedby="DndDescribedBy-30"
@@ -12072,6 +12652,14 @@ exports[`cluster/namespaces - edit namespace from new tab > when navigating to n
                 </a>
               </div>
             </div>
+            <div
+              aria-describedby="DndDescribedBy-30"
+              aria-disabled="false"
+              aria-roledescription="sortable"
+              role="button"
+              style="pointer-events: auto; opacity: 1; transition: transform 0ms linear;"
+              tabindex="0"
+            />
             <div
               aria-describedby="DndDescribedBy-30"
               aria-disabled="false"
@@ -12960,6 +13548,40 @@ exports[`cluster/namespaces - edit namespace from new tab > when navigating to n
               role="button"
               style="pointer-events: auto; opacity: 1; transition: transform 0ms linear;"
               tabindex="0"
+            >
+              <div
+                class="SidebarItem"
+                data-is-active-test="false"
+                data-testid="sidebar-item-resource-map"
+              >
+                <a
+                  class="navItem"
+                  data-testid="link-for-sidebar-item-resource-map"
+                  href="/namespaces"
+                >
+                  <i
+                    class="Icon material focusable"
+                  >
+                    <span
+                      class="icon"
+                      data-icon-name="bubble_chart"
+                    >
+                      bubble_chart
+                    </span>
+                  </i>
+                  <span>
+                    Resource Map
+                  </span>
+                </a>
+              </div>
+            </div>
+            <div
+              aria-describedby="DndDescribedBy-32"
+              aria-disabled="false"
+              aria-roledescription="sortable"
+              role="button"
+              style="pointer-events: auto; opacity: 1; transition: transform 0ms linear;"
+              tabindex="0"
             />
             <div
               aria-describedby="DndDescribedBy-32"
@@ -13006,6 +13628,14 @@ exports[`cluster/namespaces - edit namespace from new tab > when navigating to n
                 </a>
               </div>
             </div>
+            <div
+              aria-describedby="DndDescribedBy-32"
+              aria-disabled="false"
+              aria-roledescription="sortable"
+              role="button"
+              style="pointer-events: auto; opacity: 1; transition: transform 0ms linear;"
+              tabindex="0"
+            />
             <div
               aria-describedby="DndDescribedBy-32"
               aria-disabled="false"
@@ -13894,6 +14524,40 @@ exports[`cluster/namespaces - edit namespace from new tab > when navigating to n
               role="button"
               style="pointer-events: auto; opacity: 1; transition: transform 0ms linear;"
               tabindex="0"
+            >
+              <div
+                class="SidebarItem"
+                data-is-active-test="false"
+                data-testid="sidebar-item-resource-map"
+              >
+                <a
+                  class="navItem"
+                  data-testid="link-for-sidebar-item-resource-map"
+                  href="/namespaces"
+                >
+                  <i
+                    class="Icon material focusable"
+                  >
+                    <span
+                      class="icon"
+                      data-icon-name="bubble_chart"
+                    >
+                      bubble_chart
+                    </span>
+                  </i>
+                  <span>
+                    Resource Map
+                  </span>
+                </a>
+              </div>
+            </div>
+            <div
+              aria-describedby="DndDescribedBy-28"
+              aria-disabled="false"
+              aria-roledescription="sortable"
+              role="button"
+              style="pointer-events: auto; opacity: 1; transition: transform 0ms linear;"
+              tabindex="0"
             />
             <div
               aria-describedby="DndDescribedBy-28"
@@ -13940,6 +14604,14 @@ exports[`cluster/namespaces - edit namespace from new tab > when navigating to n
                 </a>
               </div>
             </div>
+            <div
+              aria-describedby="DndDescribedBy-28"
+              aria-disabled="false"
+              aria-roledescription="sortable"
+              role="button"
+              style="pointer-events: auto; opacity: 1; transition: transform 0ms linear;"
+              tabindex="0"
+            />
             <div
               aria-describedby="DndDescribedBy-28"
               aria-disabled="false"

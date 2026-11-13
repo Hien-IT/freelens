@@ -1,0 +1,21 @@
+/**
+ * Copyright (c) Freelens Authors. All rights reserved.
+ * Licensed under MIT License. See LICENSE in root directory for more information.
+ */
+
+import { buildServiceMap } from "./helpers/details-graph";
+import { KubeResourceChart } from "./kube-resource-chart";
+
+import type { Service } from "@freelensapp/kube-object";
+
+import type { DetailsGraph, DetailsGraphObjects } from "./helpers/details-graph";
+
+/**
+ * The map of a Service: the pods it selects, with the other Services that
+ * select them and their controllers, and the Ingresses whose backends name it.
+ */
+export class KubeServiceChart extends KubeResourceChart<Service> {
+  protected buildGraph(objects: DetailsGraphObjects, previous: DetailsGraph) {
+    return buildServiceMap(this.props.object, objects, previous);
+  }
+}

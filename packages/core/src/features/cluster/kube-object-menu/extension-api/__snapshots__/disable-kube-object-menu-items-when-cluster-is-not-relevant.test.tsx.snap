@@ -200,6 +200,40 @@ exports[`disable kube object menu items when cluster is not relevant > given ext
               role="button"
               style="pointer-events: auto; opacity: 1; transition: transform 0ms linear;"
               tabindex="0"
+            >
+              <div
+                class="SidebarItem"
+                data-is-active-test="false"
+                data-testid="sidebar-item-resource-map"
+              >
+                <a
+                  class="navItem"
+                  data-testid="link-for-sidebar-item-resource-map"
+                  href="/test-route"
+                >
+                  <i
+                    class="Icon material focusable"
+                  >
+                    <span
+                      class="icon"
+                      data-icon-name="bubble_chart"
+                    >
+                      bubble_chart
+                    </span>
+                  </i>
+                  <span>
+                    Resource Map
+                  </span>
+                </a>
+              </div>
+            </div>
+            <div
+              aria-describedby="DndDescribedBy-4"
+              aria-disabled="false"
+              aria-roledescription="sortable"
+              role="button"
+              style="pointer-events: auto; opacity: 1; transition: transform 0ms linear;"
+              tabindex="0"
             />
             <div
               aria-describedby="DndDescribedBy-4"
@@ -246,6 +280,14 @@ exports[`disable kube object menu items when cluster is not relevant > given ext
                 </a>
               </div>
             </div>
+            <div
+              aria-describedby="DndDescribedBy-4"
+              aria-disabled="false"
+              aria-roledescription="sortable"
+              role="button"
+              style="pointer-events: auto; opacity: 1; transition: transform 0ms linear;"
+              tabindex="0"
+            />
             <div
               aria-describedby="DndDescribedBy-4"
               aria-disabled="false"
@@ -763,6 +805,40 @@ exports[`disable kube object menu items when cluster is not relevant > given ext
               role="button"
               style="pointer-events: auto; opacity: 1; transition: transform 0ms linear;"
               tabindex="0"
+            >
+              <div
+                class="SidebarItem"
+                data-is-active-test="false"
+                data-testid="sidebar-item-resource-map"
+              >
+                <a
+                  class="navItem"
+                  data-testid="link-for-sidebar-item-resource-map"
+                  href="/test-route"
+                >
+                  <i
+                    class="Icon material focusable"
+                  >
+                    <span
+                      class="icon"
+                      data-icon-name="bubble_chart"
+                    >
+                      bubble_chart
+                    </span>
+                  </i>
+                  <span>
+                    Resource Map
+                  </span>
+                </a>
+              </div>
+            </div>
+            <div
+              aria-describedby="DndDescribedBy-2"
+              aria-disabled="false"
+              aria-roledescription="sortable"
+              role="button"
+              style="pointer-events: auto; opacity: 1; transition: transform 0ms linear;"
+              tabindex="0"
             />
             <div
               aria-describedby="DndDescribedBy-2"
@@ -809,6 +885,14 @@ exports[`disable kube object menu items when cluster is not relevant > given ext
                 </a>
               </div>
             </div>
+            <div
+              aria-describedby="DndDescribedBy-2"
+              aria-disabled="false"
+              aria-roledescription="sortable"
+              role="button"
+              style="pointer-events: auto; opacity: 1; transition: transform 0ms linear;"
+              tabindex="0"
+            />
             <div
               aria-describedby="DndDescribedBy-2"
               aria-disabled="false"
@@ -1320,6 +1404,40 @@ exports[`disable kube object menu items when cluster is not relevant > given not
               role="button"
               style="pointer-events: auto; opacity: 1; transition: transform 0ms linear;"
               tabindex="0"
+            >
+              <div
+                class="SidebarItem"
+                data-is-active-test="false"
+                data-testid="sidebar-item-resource-map"
+              >
+                <a
+                  class="navItem"
+                  data-testid="link-for-sidebar-item-resource-map"
+                  href="/test-route"
+                >
+                  <i
+                    class="Icon material focusable"
+                  >
+                    <span
+                      class="icon"
+                      data-icon-name="bubble_chart"
+                    >
+                      bubble_chart
+                    </span>
+                  </i>
+                  <span>
+                    Resource Map
+                  </span>
+                </a>
+              </div>
+            </div>
+            <div
+              aria-describedby="DndDescribedBy-0"
+              aria-disabled="false"
+              aria-roledescription="sortable"
+              role="button"
+              style="pointer-events: auto; opacity: 1; transition: transform 0ms linear;"
+              tabindex="0"
             />
             <div
               aria-describedby="DndDescribedBy-0"
@@ -1366,6 +1484,14 @@ exports[`disable kube object menu items when cluster is not relevant > given not
                 </a>
               </div>
             </div>
+            <div
+              aria-describedby="DndDescribedBy-0"
+              aria-disabled="false"
+              aria-roledescription="sortable"
+              role="button"
+              style="pointer-events: auto; opacity: 1; transition: transform 0ms linear;"
+              tabindex="0"
+            />
             <div
               aria-describedby="DndDescribedBy-0"
               aria-disabled="false"

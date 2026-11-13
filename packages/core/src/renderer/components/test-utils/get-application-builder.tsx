@@ -19,7 +19,7 @@ import { discoverFor } from "@freelensapp/react-testing-library-discovery";
 import { renderFor } from "@freelensapp/test-utils";
 import { getInjectable } from "@ogre-tools/injectable";
 import { act, fireEvent, queryByText } from "@testing-library/react";
-import { action, computed, observable, runInAction } from "mobx";
+import { action, compareShallow, computed, observable, reaction, runInAction } from "mobx";
 import React from "react";
 import { openMenu } from "react-select-event";
 import { vi } from "vitest";
@@ -584,6 +584,11 @@ export const getApplicationBuilder = () => {
               isSelectedAll: () => false,
               getTotalCount: () => namespaceItems.length,
               isSelected: () => false,
+              onContextChange: (callback, opts = {}) =>
+                reaction(() => Array.from(selectedNamespaces), callback, {
+                  fireImmediately: opts.fireImmediately,
+                  equals: compareShallow,
+                }),
             }) as Partial<NamespaceStore> as NamespaceStore,
         );
       });

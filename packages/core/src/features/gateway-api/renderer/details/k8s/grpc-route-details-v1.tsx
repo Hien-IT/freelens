@@ -1,0 +1,175 @@
+/**
+ * Copyright (c) Freelens Authors. All rights reserved.
+ * Licensed under MIT License. See LICENSE in root directory for more information.
+ */
+
+import { Icon } from "@freelensapp/icon";
+import { createReactKey } from "@freelensapp/utilities";
+import { observer } from "mobx-react";
+import { BadgeBoolean } from "../../../../../renderer/components/badge";
+import { DrawerItem, DrawerTitle } from "../../../../../renderer/components/drawer";
+import { Table, TableCell, TableHead, TableRow } from "../../../../../renderer/components/table";
+import { GRPCRoute } from "../../api/k8s";
+import { formatValueMatch } from "../../api/k8s/types";
+import styles from "./common.module.scss";
+import { ReferenceLink } from "./reference-link";
+import { gatewayApiGroup } from "./references";
+
+import type { KubeObjectDetailsProps } from "../../../../../renderer/components/kube-object-details";
+
+function isAccepted(object: GRPCRoute): boolean {
+  return (object.status?.parents ?? []).some((parent) =>
+    parent.conditions.some((condition) => condition?.type === "Accepted" && condition?.status === "True"),
+  );
+}
+
+export const GRPCRouteDetails = observer((props: KubeObjectDetailsProps<GRPCRoute>) => {
+  const { object } = props;
+  const objectNs = object.getNs();
+
+  const parentRefs = object.spec?.parentRefs ?? [];
+  const rules = object.spec?.rules ?? [];
+  const accepted = isAccepted(object);
+
+  return (
+    <div className={styles.details}>
+      <DrawerItem name="Accepted">
+        <BadgeBoolean value={accepted} />
+      </DrawerItem>
+
+      <DrawerTitle>Parent References</DrawerTitle>
+      {parentRefs.length > 0 ? (
+        <Table selectable tableId="parentRefs" scrollable={false} sortSyncWithUrl={false}>
+          <TableHead flat sticky={false}>
+            <TableCell>Group</TableCell>
+            <TableCell>Kind</TableCell>
+            <TableCell>Namespace</TableCell>
+            <TableCell>Section Name</TableCell>
+            <TableCell>Name</TableCell>
+          </TableHead>
+          {parentRefs.map((parentRef) => {
+            const namespace = parentRef.namespace || objectNs;
+            const group = parentRef.group ?? gatewayApiGroup;
+            const kind = parentRef.kind ?? "Gateway";
+            const key = createReactKey(parentRef);
+
+            return (
+              <TableRow key={key} nowrap>
+                <TableCell>{group || "-"}</TableCell>
+                <TableCell>{kind}</TableCell>
+                <TableCell>{namespace ?? "-"}</TableCell>
+                <TableCell>{parentRef.sectionName ?? "-"}</TableCell>
+                <TableCell>
+                  <ReferenceLink
+                    object={object}
+                    group={group}
+                    kind={kind}
+                    name={parentRef.name}
+                    namespace={namespace}
+                  />
+                </TableCell>
+              </TableRow>
+            );
+          })}
+        </Table>
+      ) : (
+        <DrawerItem name="Parent References">-</DrawerItem>
+      )}
+
+      {rules.length > 0 && (
+        <>
+          <DrawerTitle>Rules</DrawerTitle>
+          {rules.map((rule, index) => {
+            const key = createReactKey(rule);
+            return (
+              <div key={key}>
+                <div className={styles.title}>
+                  <Icon small material="list" />
+                  <span>Rule {index + 1}</span>
+                  {rule.name && <span style={{ color: "var(--textColorSecondary)" }}>({rule.name})</span>}
+                </div>
+
+                {rule.matches && rule.matches.length > 0 && (
+                  <DrawerItem name="Matches">
+                    {rule.matches.map((match) => {
+                      const key = createReactKey(match);
+
+                      return (
+                        <div key={key} style={{ marginBottom: "10px" }}>
+                          {match.method && (
+                            <>
+                              <DrawerItem name="Method Type" key={`${key}-type`}>
+                                {match.method.type ?? "Exact"}
+                              </DrawerItem>
+                              {match.method.service && (
+                                <DrawerItem name="Service" key={`${key}-service`}>
+                                  {match.method.service}
+                                </DrawerItem>
+                              )}
+                              {match.method.method && (
+                                <DrawerItem name="Method" key={`${key}-method`}>
+                                  {match.method.method}
+                                </DrawerItem>
+                              )}
+                            </>
+                          )}
+                          {match.headers && match.headers.length > 0 && (
+                            <DrawerItem name="Headers" key={`${key}-headers`}>
+                              {match.headers.map(formatValueMatch).join(", ")}
+                            </DrawerItem>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </DrawerItem>
+                )}
+
+                {rule.filters && rule.filters.length > 0 && (
+                  <DrawerItem name="Filters">
+                    {rule.filters.map((filter) => {
+                      const key = createReactKey(filter);
+                      return <div key={key}>{filter.type}</div>;
+                    })}
+                  </DrawerItem>
+                )}
+
+                {rule.backendRefs && rule.backendRefs.length > 0 && (
+                  <DrawerItem name="Backend References">
+                    <Table selectable tableId="backendRefs" scrollable={false} sortSyncWithUrl={false}>
+                      <TableHead flat sticky={false}>
+                        <TableCell>Reference</TableCell>
+                        <TableCell>Port</TableCell>
+                        <TableCell>Weight</TableCell>
+                      </TableHead>
+                      {rule.backendRefs.map((backend) => {
+                        const kind = backend.kind ?? "Service";
+                        const namespace = backend.namespace || objectNs;
+                        const key = createReactKey(backend);
+
+                        return (
+                          <TableRow key={key} nowrap>
+                            <TableCell>
+                              <ReferenceLink
+                                object={object}
+                                group={backend.group ?? ""}
+                                kind={kind}
+                                name={backend.name}
+                                namespace={namespace}
+                              />
+                            </TableCell>
+                            <TableCell>{backend.port ?? "-"}</TableCell>
+                            <TableCell>{backend.weight ?? "-"}</TableCell>
+                          </TableRow>
+                        );
+                      })}
+                    </Table>
+                  </DrawerItem>
+                )}
+              </div>
+            );
+          })}
+        </>
+      )}
+    </div>
+  );
+});

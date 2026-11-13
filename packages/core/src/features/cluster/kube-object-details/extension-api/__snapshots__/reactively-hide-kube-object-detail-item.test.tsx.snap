@@ -313,6 +313,40 @@ exports[`reactively hide kube object detail item > renders 1`] = `
               role="button"
               style="pointer-events: auto; opacity: 1; transition: transform 0ms linear;"
               tabindex="0"
+            >
+              <div
+                class="SidebarItem"
+                data-is-active-test="false"
+                data-testid="sidebar-item-resource-map"
+              >
+                <a
+                  class="navItem"
+                  data-testid="link-for-sidebar-item-resource-map"
+                  href="/workloads"
+                >
+                  <i
+                    class="Icon material focusable"
+                  >
+                    <span
+                      class="icon"
+                      data-icon-name="bubble_chart"
+                    >
+                      bubble_chart
+                    </span>
+                  </i>
+                  <span>
+                    Resource Map
+                  </span>
+                </a>
+              </div>
+            </div>
+            <div
+              aria-describedby="DndDescribedBy-0"
+              aria-disabled="false"
+              aria-roledescription="sortable"
+              role="button"
+              style="pointer-events: auto; opacity: 1; transition: transform 0ms linear;"
+              tabindex="0"
             />
             <div
               aria-describedby="DndDescribedBy-0"
@@ -359,6 +393,14 @@ exports[`reactively hide kube object detail item > renders 1`] = `
                 </a>
               </div>
             </div>
+            <div
+              aria-describedby="DndDescribedBy-0"
+              aria-disabled="false"
+              aria-roledescription="sortable"
+              role="button"
+              style="pointer-events: auto; opacity: 1; transition: transform 0ms linear;"
+              tabindex="0"
+            />
             <div
               aria-describedby="DndDescribedBy-0"
               aria-disabled="false"
@@ -654,6 +696,30 @@ exports[`reactively hide kube object detail item > renders 1`] = `
                 <div
                   class="workloads"
                 />
+              </div>
+              <div
+                class="overviewDetail"
+              >
+                <div
+                  class="overviewHeader"
+                >
+                  <h5>
+                    Resources
+                  </h5>
+                </div>
+                <div
+                  class="overviewContent"
+                >
+                  <div
+                    class="status"
+                  >
+                    <h3
+                      class="noResources"
+                    >
+                      No visualizable resources found in this namespace.
+                    </h3>
+                  </div>
+                </div>
               </div>
             </div>
           </main>
@@ -1110,6 +1176,40 @@ exports[`reactively hide kube object detail item > when the item is shown > rend
               role="button"
               style="pointer-events: auto; opacity: 1; transition: transform 0ms linear;"
               tabindex="0"
+            >
+              <div
+                class="SidebarItem"
+                data-is-active-test="false"
+                data-testid="sidebar-item-resource-map"
+              >
+                <a
+                  class="navItem"
+                  data-testid="link-for-sidebar-item-resource-map"
+                  href="/workloads"
+                >
+                  <i
+                    class="Icon material focusable"
+                  >
+                    <span
+                      class="icon"
+                      data-icon-name="bubble_chart"
+                    >
+                      bubble_chart
+                    </span>
+                  </i>
+                  <span>
+                    Resource Map
+                  </span>
+                </a>
+              </div>
+            </div>
+            <div
+              aria-describedby="DndDescribedBy-2"
+              aria-disabled="false"
+              aria-roledescription="sortable"
+              role="button"
+              style="pointer-events: auto; opacity: 1; transition: transform 0ms linear;"
+              tabindex="0"
             />
             <div
               aria-describedby="DndDescribedBy-2"
@@ -1156,6 +1256,14 @@ exports[`reactively hide kube object detail item > when the item is shown > rend
                 </a>
               </div>
             </div>
+            <div
+              aria-describedby="DndDescribedBy-2"
+              aria-disabled="false"
+              aria-roledescription="sortable"
+              role="button"
+              style="pointer-events: auto; opacity: 1; transition: transform 0ms linear;"
+              tabindex="0"
+            />
             <div
               aria-describedby="DndDescribedBy-2"
               aria-disabled="false"
@@ -1451,6 +1559,30 @@ exports[`reactively hide kube object detail item > when the item is shown > rend
                 <div
                   class="workloads"
                 />
+              </div>
+              <div
+                class="overviewDetail"
+              >
+                <div
+                  class="overviewHeader"
+                >
+                  <h5>
+                    Resources
+                  </h5>
+                </div>
+                <div
+                  class="overviewContent"
+                >
+                  <div
+                    class="status"
+                  >
+                    <h3
+                      class="noResources"
+                    >
+                      No visualizable resources found in this namespace.
+                    </h3>
+                  </div>
+                </div>
               </div>
             </div>
           </main>

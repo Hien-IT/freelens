@@ -23,6 +23,7 @@ import { registerInjectables as registerFeaturesFeaturesExtensionsInjectables } 
 import { registerInjectables as registerFeaturesFeaturesFavoritesInjectables } from "./features/favorites/register-injectables";
 import { registerInjectables as registerFeaturesFeaturesFavoritesRendererInjectables } from "./features/favorites/renderer/register-injectables";
 import { registerInjectables as registerFeaturesFeaturesFileSystemProvisionerRendererInjectables } from "./features/file-system-provisioner/renderer/register-injectables";
+import { registerInjectables as registerFeaturesFeaturesGatewayApiRendererInjectables } from "./features/gateway-api/renderer/register-injectables";
 import { registerInjectables as registerFeaturesFeaturesHelmChartsChildFeaturesPreferencesRendererInjectables } from "./features/helm-charts/child-features/preferences/renderer/register-injectables";
 import { registerInjectables as registerFeaturesFeaturesHelmReleasesRendererInjectables } from "./features/helm-releases/renderer/register-injectables";
 import { registerInjectables as registerFeaturesFeaturesHotbarInjectables } from "./features/hotbar/register-injectables";
@@ -38,6 +39,7 @@ import { registerInjectables as registerFeaturesFeaturesPodFilesRendererInjectab
 import { registerInjectables as registerFeaturesFeaturesPopulationOfLogsToAFileRendererInjectables } from "./features/population-of-logs-to-a-file/renderer/register-injectables";
 import { registerInjectables as registerFeaturesFeaturesPreferencesInjectables } from "./features/preferences/register-injectables";
 import { registerInjectables as registerFeaturesFeaturesPreferencesRendererInjectables } from "./features/preferences/renderer/register-injectables";
+import { registerInjectables as registerFeaturesFeaturesResourceMapRendererInjectables } from "./features/resource-map/renderer/register-injectables";
 import { registerInjectables as registerFeaturesFeaturesSecretCertificatesRendererInjectables } from "./features/secret-certificates/renderer/register-injectables";
 import { registerInjectables as registerFeaturesFeaturesShellSyncRendererInjectables } from "./features/shell-sync/renderer/register-injectables";
 import { registerInjectables as registerFeaturesFeaturesStandaloneTerminalRendererInjectables } from "./features/standalone-terminal/renderer/register-injectables";
@@ -73,6 +75,7 @@ export function registerInjectables(di: DiContainerForInjection): void {
   registerFeaturesFeaturesFavoritesRendererInjectables(di);
   registerFeaturesFeaturesFavoritesInjectables(di);
   registerFeaturesFeaturesFileSystemProvisionerRendererInjectables(di);
+  registerFeaturesFeaturesGatewayApiRendererInjectables(di);
   registerFeaturesFeaturesHelmChartsChildFeaturesPreferencesRendererInjectables(di);
   registerFeaturesFeaturesHelmReleasesRendererInjectables(di);
   registerFeaturesFeaturesHotbarInjectables(di);
@@ -88,6 +91,7 @@ export function registerInjectables(di: DiContainerForInjection): void {
   registerFeaturesFeaturesPopulationOfLogsToAFileRendererInjectables(di);
   registerFeaturesFeaturesPreferencesRendererInjectables(di);
   registerFeaturesFeaturesPreferencesInjectables(di);
+  registerFeaturesFeaturesResourceMapRendererInjectables(di);
   registerFeaturesFeaturesSecretCertificatesRendererInjectables(di);
   registerFeaturesFeaturesShellSyncRendererInjectables(di);
   registerFeaturesFeaturesStandaloneTerminalRendererInjectables(di);

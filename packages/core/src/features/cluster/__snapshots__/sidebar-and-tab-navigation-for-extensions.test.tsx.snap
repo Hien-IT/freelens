@@ -200,6 +200,40 @@ exports[`cluster - sidebar and tab navigation for extensions > given extension w
             role="button"
             style="pointer-events: auto; opacity: 1; transition: transform 0ms linear;"
             tabindex="0"
+          >
+            <div
+              class="SidebarItem"
+              data-is-active-test="false"
+              data-testid="sidebar-item-resource-map"
+            >
+              <a
+                class="navItem"
+                data-testid="link-for-sidebar-item-resource-map"
+                href="/workloads"
+              >
+                <i
+                  class="Icon material focusable"
+                >
+                  <span
+                    class="icon"
+                    data-icon-name="bubble_chart"
+                  >
+                    bubble_chart
+                  </span>
+                </i>
+                <span>
+                  Resource Map
+                </span>
+              </a>
+            </div>
+          </div>
+          <div
+            aria-describedby="DndDescribedBy-9"
+            aria-disabled="false"
+            aria-roledescription="sortable"
+            role="button"
+            style="pointer-events: auto; opacity: 1; transition: transform 0ms linear;"
+            tabindex="0"
           />
           <div
             aria-describedby="DndDescribedBy-9"
@@ -246,6 +280,14 @@ exports[`cluster - sidebar and tab navigation for extensions > given extension w
               </a>
             </div>
           </div>
+          <div
+            aria-describedby="DndDescribedBy-9"
+            aria-disabled="false"
+            aria-roledescription="sortable"
+            role="button"
+            style="pointer-events: auto; opacity: 1; transition: transform 0ms linear;"
+            tabindex="0"
+          />
           <div
             aria-describedby="DndDescribedBy-9"
             aria-disabled="false"
@@ -588,6 +630,30 @@ exports[`cluster - sidebar and tab navigation for extensions > given extension w
                 class="workloads"
               />
             </div>
+            <div
+              class="overviewDetail"
+            >
+              <div
+                class="overviewHeader"
+              >
+                <h5>
+                  Resources
+                </h5>
+              </div>
+              <div
+                class="overviewContent"
+              >
+                <div
+                  class="status"
+                >
+                  <h3
+                    class="noResources"
+                  >
+                    No visualizable resources found in this namespace.
+                  </h3>
+                </div>
+              </div>
+            </div>
           </div>
         </main>
       </div>
@@ -924,6 +990,40 @@ exports[`cluster - sidebar and tab navigation for extensions > given extension w
             role="button"
             style="pointer-events: auto; opacity: 1; transition: transform 0ms linear;"
             tabindex="0"
+          >
+            <div
+              class="SidebarItem"
+              data-is-active-test="false"
+              data-testid="sidebar-item-resource-map"
+            >
+              <a
+                class="navItem"
+                data-testid="link-for-sidebar-item-resource-map"
+                href="/workloads"
+              >
+                <i
+                  class="Icon material focusable"
+                >
+                  <span
+                    class="icon"
+                    data-icon-name="bubble_chart"
+                  >
+                    bubble_chart
+                  </span>
+                </i>
+                <span>
+                  Resource Map
+                </span>
+              </a>
+            </div>
+          </div>
+          <div
+            aria-describedby="DndDescribedBy-11"
+            aria-disabled="false"
+            aria-roledescription="sortable"
+            role="button"
+            style="pointer-events: auto; opacity: 1; transition: transform 0ms linear;"
+            tabindex="0"
           />
           <div
             aria-describedby="DndDescribedBy-11"
@@ -970,6 +1070,14 @@ exports[`cluster - sidebar and tab navigation for extensions > given extension w
               </a>
             </div>
           </div>
+          <div
+            aria-describedby="DndDescribedBy-11"
+            aria-disabled="false"
+            aria-roledescription="sortable"
+            role="button"
+            style="pointer-events: auto; opacity: 1; transition: transform 0ms linear;"
+            tabindex="0"
+          />
           <div
             aria-describedby="DndDescribedBy-11"
             aria-disabled="false"
@@ -1312,6 +1420,30 @@ exports[`cluster - sidebar and tab navigation for extensions > given extension w
                 class="workloads"
               />
             </div>
+            <div
+              class="overviewDetail"
+            >
+              <div
+                class="overviewHeader"
+              >
+                <h5>
+                  Resources
+                </h5>
+              </div>
+              <div
+                class="overviewContent"
+              >
+                <div
+                  class="status"
+                >
+                  <h3
+                    class="noResources"
+                  >
+                    No visualizable resources found in this namespace.
+                  </h3>
+                </div>
+              </div>
+            </div>
           </div>
         </main>
       </div>
@@ -1648,6 +1780,40 @@ exports[`cluster - sidebar and tab navigation for extensions > given extension w
             role="button"
             style="pointer-events: auto; opacity: 1; transition: transform 0ms linear;"
             tabindex="0"
+          >
+            <div
+              class="SidebarItem"
+              data-is-active-test="false"
+              data-testid="sidebar-item-resource-map"
+            >
+              <a
+                class="navItem"
+                data-testid="link-for-sidebar-item-resource-map"
+                href="/workloads"
+              >
+                <i
+                  class="Icon material focusable"
+                >
+                  <span
+                    class="icon"
+                    data-icon-name="bubble_chart"
+                  >
+                    bubble_chart
+                  </span>
+                </i>
+                <span>
+                  Resource Map
+                </span>
+              </a>
+            </div>
+          </div>
+          <div
+            aria-describedby="DndDescribedBy-16"
+            aria-disabled="false"
+            aria-roledescription="sortable"
+            role="button"
+            style="pointer-events: auto; opacity: 1; transition: transform 0ms linear;"
+            tabindex="0"
           />
           <div
             aria-describedby="DndDescribedBy-16"
@@ -1694,6 +1860,14 @@ exports[`cluster - sidebar and tab navigation for extensions > given extension w
               </a>
             </div>
           </div>
+          <div
+            aria-describedby="DndDescribedBy-16"
+            aria-disabled="false"
+            aria-roledescription="sortable"
+            role="button"
+            style="pointer-events: auto; opacity: 1; transition: transform 0ms linear;"
+            tabindex="0"
+          />
           <div
             aria-describedby="DndDescribedBy-16"
             aria-disabled="false"
@@ -2124,6 +2298,30 @@ exports[`cluster - sidebar and tab navigation for extensions > given extension w
                 class="workloads"
               />
             </div>
+            <div
+              class="overviewDetail"
+            >
+              <div
+                class="overviewHeader"
+              >
+                <h5>
+                  Resources
+                </h5>
+              </div>
+              <div
+                class="overviewContent"
+              >
+                <div
+                  class="status"
+                >
+                  <h3
+                    class="noResources"
+                  >
+                    No visualizable resources found in this namespace.
+                  </h3>
+                </div>
+              </div>
+            </div>
           </div>
         </main>
       </div>
@@ -2459,6 +2657,40 @@ exports[`cluster - sidebar and tab navigation for extensions > given extension w
             role="button"
             style="pointer-events: auto; opacity: 1; transition: transform 0ms linear;"
             tabindex="0"
+          >
+            <div
+              class="SidebarItem"
+              data-is-active-test="false"
+              data-testid="sidebar-item-resource-map"
+            >
+              <a
+                class="navItem"
+                data-testid="link-for-sidebar-item-resource-map"
+                href="/extension/some-extension-name/some-child-page-id"
+              >
+                <i
+                  class="Icon material focusable"
+                >
+                  <span
+                    class="icon"
+                    data-icon-name="bubble_chart"
+                  >
+                    bubble_chart
+                  </span>
+                </i>
+                <span>
+                  Resource Map
+                </span>
+              </a>
+            </div>
+          </div>
+          <div
+            aria-describedby="DndDescribedBy-19"
+            aria-disabled="false"
+            aria-roledescription="sortable"
+            role="button"
+            style="pointer-events: auto; opacity: 1; transition: transform 0ms linear;"
+            tabindex="0"
           />
           <div
             aria-describedby="DndDescribedBy-19"
@@ -2505,6 +2737,14 @@ exports[`cluster - sidebar and tab navigation for extensions > given extension w
               </a>
             </div>
           </div>
+          <div
+            aria-describedby="DndDescribedBy-19"
+            aria-disabled="false"
+            aria-roledescription="sortable"
+            role="button"
+            style="pointer-events: auto; opacity: 1; transition: transform 0ms linear;"
+            tabindex="0"
+          />
           <div
             aria-describedby="DndDescribedBy-19"
             aria-disabled="false"
@@ -3188,6 +3428,40 @@ exports[`cluster - sidebar and tab navigation for extensions > given extension w
             role="button"
             style="pointer-events: auto; opacity: 1; transition: transform 0ms linear;"
             tabindex="0"
+          >
+            <div
+              class="SidebarItem"
+              data-is-active-test="false"
+              data-testid="sidebar-item-resource-map"
+            >
+              <a
+                class="navItem"
+                data-testid="link-for-sidebar-item-resource-map"
+                href="/extension/some-extension-name/some-other-child-page-id"
+              >
+                <i
+                  class="Icon material focusable"
+                >
+                  <span
+                    class="icon"
+                    data-icon-name="bubble_chart"
+                  >
+                    bubble_chart
+                  </span>
+                </i>
+                <span>
+                  Resource Map
+                </span>
+              </a>
+            </div>
+          </div>
+          <div
+            aria-describedby="DndDescribedBy-28"
+            aria-disabled="false"
+            aria-roledescription="sortable"
+            role="button"
+            style="pointer-events: auto; opacity: 1; transition: transform 0ms linear;"
+            tabindex="0"
           />
           <div
             aria-describedby="DndDescribedBy-28"
@@ -3234,6 +3508,14 @@ exports[`cluster - sidebar and tab navigation for extensions > given extension w
               </a>
             </div>
           </div>
+          <div
+            aria-describedby="DndDescribedBy-28"
+            aria-disabled="false"
+            aria-roledescription="sortable"
+            role="button"
+            style="pointer-events: auto; opacity: 1; transition: transform 0ms linear;"
+            tabindex="0"
+          />
           <div
             aria-describedby="DndDescribedBy-28"
             aria-disabled="false"
@@ -3917,6 +4199,40 @@ exports[`cluster - sidebar and tab navigation for extensions > given extension w
             role="button"
             style="pointer-events: auto; opacity: 1; transition: transform 0ms linear;"
             tabindex="0"
+          >
+            <div
+              class="SidebarItem"
+              data-is-active-test="false"
+              data-testid="sidebar-item-resource-map"
+            >
+              <a
+                class="navItem"
+                data-testid="link-for-sidebar-item-resource-map"
+                href="/extension/some-extension-name/some-child-page-id"
+              >
+                <i
+                  class="Icon material focusable"
+                >
+                  <span
+                    class="icon"
+                    data-icon-name="bubble_chart"
+                  >
+                    bubble_chart
+                  </span>
+                </i>
+                <span>
+                  Resource Map
+                </span>
+              </a>
+            </div>
+          </div>
+          <div
+            aria-describedby="DndDescribedBy-0"
+            aria-disabled="false"
+            aria-roledescription="sortable"
+            role="button"
+            style="pointer-events: auto; opacity: 1; transition: transform 0ms linear;"
+            tabindex="0"
           />
           <div
             aria-describedby="DndDescribedBy-0"
@@ -3963,6 +4279,14 @@ exports[`cluster - sidebar and tab navigation for extensions > given extension w
               </a>
             </div>
           </div>
+          <div
+            aria-describedby="DndDescribedBy-0"
+            aria-disabled="false"
+            aria-roledescription="sortable"
+            role="button"
+            style="pointer-events: auto; opacity: 1; transition: transform 0ms linear;"
+            tabindex="0"
+          />
           <div
             aria-describedby="DndDescribedBy-0"
             aria-disabled="false"
@@ -4558,6 +4882,40 @@ exports[`cluster - sidebar and tab navigation for extensions > given extension w
             role="button"
             style="pointer-events: auto; opacity: 1; transition: transform 0ms linear;"
             tabindex="0"
+          >
+            <div
+              class="SidebarItem"
+              data-is-active-test="false"
+              data-testid="sidebar-item-resource-map"
+            >
+              <a
+                class="navItem"
+                data-testid="link-for-sidebar-item-resource-map"
+                href="/workloads"
+              >
+                <i
+                  class="Icon material focusable"
+                >
+                  <span
+                    class="icon"
+                    data-icon-name="bubble_chart"
+                  >
+                    bubble_chart
+                  </span>
+                </i>
+                <span>
+                  Resource Map
+                </span>
+              </a>
+            </div>
+          </div>
+          <div
+            aria-describedby="DndDescribedBy-4"
+            aria-disabled="false"
+            aria-roledescription="sortable"
+            role="button"
+            style="pointer-events: auto; opacity: 1; transition: transform 0ms linear;"
+            tabindex="0"
           />
           <div
             aria-describedby="DndDescribedBy-4"
@@ -4604,6 +4962,14 @@ exports[`cluster - sidebar and tab navigation for extensions > given extension w
               </a>
             </div>
           </div>
+          <div
+            aria-describedby="DndDescribedBy-4"
+            aria-disabled="false"
+            aria-roledescription="sortable"
+            role="button"
+            style="pointer-events: auto; opacity: 1; transition: transform 0ms linear;"
+            tabindex="0"
+          />
           <div
             aria-describedby="DndDescribedBy-4"
             aria-disabled="false"
@@ -5034,6 +5400,30 @@ exports[`cluster - sidebar and tab navigation for extensions > given extension w
                 class="workloads"
               />
             </div>
+            <div
+              class="overviewDetail"
+            >
+              <div
+                class="overviewHeader"
+              >
+                <h5>
+                  Resources
+                </h5>
+              </div>
+              <div
+                class="overviewContent"
+              >
+                <div
+                  class="status"
+                >
+                  <h3
+                    class="noResources"
+                  >
+                    No visualizable resources found in this namespace.
+                  </h3>
+                </div>
+              </div>
+            </div>
           </div>
         </main>
       </div>
@@ -5370,6 +5760,40 @@ exports[`cluster - sidebar and tab navigation for extensions > given extension w
             role="button"
             style="pointer-events: auto; opacity: 1; transition: transform 0ms linear;"
             tabindex="0"
+          >
+            <div
+              class="SidebarItem"
+              data-is-active-test="false"
+              data-testid="sidebar-item-resource-map"
+            >
+              <a
+                class="navItem"
+                data-testid="link-for-sidebar-item-resource-map"
+                href="/workloads"
+              >
+                <i
+                  class="Icon material focusable"
+                >
+                  <span
+                    class="icon"
+                    data-icon-name="bubble_chart"
+                  >
+                    bubble_chart
+                  </span>
+                </i>
+                <span>
+                  Resource Map
+                </span>
+              </a>
+            </div>
+          </div>
+          <div
+            aria-describedby="DndDescribedBy-7"
+            aria-disabled="false"
+            aria-roledescription="sortable"
+            role="button"
+            style="pointer-events: auto; opacity: 1; transition: transform 0ms linear;"
+            tabindex="0"
           />
           <div
             aria-describedby="DndDescribedBy-7"
@@ -5416,6 +5840,14 @@ exports[`cluster - sidebar and tab navigation for extensions > given extension w
               </a>
             </div>
           </div>
+          <div
+            aria-describedby="DndDescribedBy-7"
+            aria-disabled="false"
+            aria-roledescription="sortable"
+            role="button"
+            style="pointer-events: auto; opacity: 1; transition: transform 0ms linear;"
+            tabindex="0"
+          />
           <div
             aria-describedby="DndDescribedBy-7"
             aria-disabled="false"
@@ -5758,6 +6190,30 @@ exports[`cluster - sidebar and tab navigation for extensions > given extension w
                 class="workloads"
               />
             </div>
+            <div
+              class="overviewDetail"
+            >
+              <div
+                class="overviewHeader"
+              >
+                <h5>
+                  Resources
+                </h5>
+              </div>
+              <div
+                class="overviewContent"
+              >
+                <div
+                  class="status"
+                >
+                  <h3
+                    class="noResources"
+                  >
+                    No visualizable resources found in this namespace.
+                  </h3>
+                </div>
+              </div>
+            </div>
           </div>
         </main>
       </div>
@@ -6093,6 +6549,40 @@ exports[`cluster - sidebar and tab navigation for extensions > given extension w
             role="button"
             style="pointer-events: auto; opacity: 1; transition: transform 0ms linear;"
             tabindex="0"
+          >
+            <div
+              class="SidebarItem"
+              data-is-active-test="false"
+              data-testid="sidebar-item-resource-map"
+            >
+              <a
+                class="navItem"
+                data-testid="link-for-sidebar-item-resource-map"
+                href="/extension/some-extension-name/some-child-page-id"
+              >
+                <i
+                  class="Icon material focusable"
+                >
+                  <span
+                    class="icon"
+                    data-icon-name="bubble_chart"
+                  >
+                    bubble_chart
+                  </span>
+                </i>
+                <span>
+                  Resource Map
+                </span>
+              </a>
+            </div>
+          </div>
+          <div
+            aria-describedby="DndDescribedBy-32"
+            aria-disabled="false"
+            aria-roledescription="sortable"
+            role="button"
+            style="pointer-events: auto; opacity: 1; transition: transform 0ms linear;"
+            tabindex="0"
           />
           <div
             aria-describedby="DndDescribedBy-32"
@@ -6139,6 +6629,14 @@ exports[`cluster - sidebar and tab navigation for extensions > given extension w
               </a>
             </div>
           </div>
+          <div
+            aria-describedby="DndDescribedBy-32"
+            aria-disabled="false"
+            aria-roledescription="sortable"
+            role="button"
+            style="pointer-events: auto; opacity: 1; transition: transform 0ms linear;"
+            tabindex="0"
+          />
           <div
             aria-describedby="DndDescribedBy-32"
             aria-disabled="false"

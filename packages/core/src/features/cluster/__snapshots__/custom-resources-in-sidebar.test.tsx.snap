@@ -200,6 +200,40 @@ exports[`cluster - custom resources in sidebar > renders 1`] = `
             role="button"
             style="pointer-events: auto; opacity: 1; transition: transform 0ms linear;"
             tabindex="0"
+          >
+            <div
+              class="SidebarItem"
+              data-is-active-test="false"
+              data-testid="sidebar-item-resource-map"
+            >
+              <a
+                class="navItem"
+                data-testid="link-for-sidebar-item-resource-map"
+                href="/workloads"
+              >
+                <i
+                  class="Icon material focusable"
+                >
+                  <span
+                    class="icon"
+                    data-icon-name="bubble_chart"
+                  >
+                    bubble_chart
+                  </span>
+                </i>
+                <span>
+                  Resource Map
+                </span>
+              </a>
+            </div>
+          </div>
+          <div
+            aria-describedby="DndDescribedBy-0"
+            aria-disabled="false"
+            aria-roledescription="sortable"
+            role="button"
+            style="pointer-events: auto; opacity: 1; transition: transform 0ms linear;"
+            tabindex="0"
           />
           <div
             aria-describedby="DndDescribedBy-0"
@@ -246,6 +280,14 @@ exports[`cluster - custom resources in sidebar > renders 1`] = `
               </a>
             </div>
           </div>
+          <div
+            aria-describedby="DndDescribedBy-0"
+            aria-disabled="false"
+            aria-roledescription="sortable"
+            role="button"
+            style="pointer-events: auto; opacity: 1; transition: transform 0ms linear;"
+            tabindex="0"
+          />
           <div
             aria-describedby="DndDescribedBy-0"
             aria-disabled="false"
@@ -541,6 +583,30 @@ exports[`cluster - custom resources in sidebar > renders 1`] = `
               <div
                 class="workloads"
               />
+            </div>
+            <div
+              class="overviewDetail"
+            >
+              <div
+                class="overviewHeader"
+              >
+                <h5>
+                  Resources
+                </h5>
+              </div>
+              <div
+                class="overviewContent"
+              >
+                <div
+                  class="status"
+                >
+                  <h3
+                    class="noResources"
+                  >
+                    No visualizable resources found in this namespace.
+                  </h3>
+                </div>
+              </div>
             </div>
           </div>
         </main>
@@ -878,6 +944,40 @@ exports[`cluster - custom resources in sidebar > when custom resource definition
             role="button"
             style="pointer-events: auto; opacity: 1; transition: transform 0ms linear;"
             tabindex="0"
+          >
+            <div
+              class="SidebarItem"
+              data-is-active-test="false"
+              data-testid="sidebar-item-resource-map"
+            >
+              <a
+                class="navItem"
+                data-testid="link-for-sidebar-item-resource-map"
+                href="/workloads"
+              >
+                <i
+                  class="Icon material focusable"
+                >
+                  <span
+                    class="icon"
+                    data-icon-name="bubble_chart"
+                  >
+                    bubble_chart
+                  </span>
+                </i>
+                <span>
+                  Resource Map
+                </span>
+              </a>
+            </div>
+          </div>
+          <div
+            aria-describedby="DndDescribedBy-30"
+            aria-disabled="false"
+            aria-roledescription="sortable"
+            role="button"
+            style="pointer-events: auto; opacity: 1; transition: transform 0ms linear;"
+            tabindex="0"
           />
           <div
             aria-describedby="DndDescribedBy-30"
@@ -924,6 +1024,14 @@ exports[`cluster - custom resources in sidebar > when custom resource definition
               </a>
             </div>
           </div>
+          <div
+            aria-describedby="DndDescribedBy-30"
+            aria-disabled="false"
+            aria-roledescription="sortable"
+            role="button"
+            style="pointer-events: auto; opacity: 1; transition: transform 0ms linear;"
+            tabindex="0"
+          />
           <div
             aria-describedby="DndDescribedBy-30"
             aria-disabled="false"
@@ -1256,6 +1364,30 @@ exports[`cluster - custom resources in sidebar > when custom resource definition
               <div
                 class="workloads"
               />
+            </div>
+            <div
+              class="overviewDetail"
+            >
+              <div
+                class="overviewHeader"
+              >
+                <h5>
+                  Resources
+                </h5>
+              </div>
+              <div
+                class="overviewContent"
+              >
+                <div
+                  class="status"
+                >
+                  <h3
+                    class="noResources"
+                  >
+                    No visualizable resources found in this namespace.
+                  </h3>
+                </div>
+              </div>
             </div>
           </div>
         </main>
@@ -1593,6 +1725,40 @@ exports[`cluster - custom resources in sidebar > when custom resource exists > r
             role="button"
             style="pointer-events: auto; opacity: 1; transition: transform 0ms linear;"
             tabindex="0"
+          >
+            <div
+              class="SidebarItem"
+              data-is-active-test="false"
+              data-testid="sidebar-item-resource-map"
+            >
+              <a
+                class="navItem"
+                data-testid="link-for-sidebar-item-resource-map"
+                href="/workloads"
+              >
+                <i
+                  class="Icon material focusable"
+                >
+                  <span
+                    class="icon"
+                    data-icon-name="bubble_chart"
+                  >
+                    bubble_chart
+                  </span>
+                </i>
+                <span>
+                  Resource Map
+                </span>
+              </a>
+            </div>
+          </div>
+          <div
+            aria-describedby="DndDescribedBy-3"
+            aria-disabled="false"
+            aria-roledescription="sortable"
+            role="button"
+            style="pointer-events: auto; opacity: 1; transition: transform 0ms linear;"
+            tabindex="0"
           />
           <div
             aria-describedby="DndDescribedBy-3"
@@ -1639,6 +1805,14 @@ exports[`cluster - custom resources in sidebar > when custom resource exists > r
               </a>
             </div>
           </div>
+          <div
+            aria-describedby="DndDescribedBy-3"
+            aria-disabled="false"
+            aria-roledescription="sortable"
+            role="button"
+            style="pointer-events: auto; opacity: 1; transition: transform 0ms linear;"
+            tabindex="0"
+          />
           <div
             aria-describedby="DndDescribedBy-3"
             aria-disabled="false"
@@ -1934,6 +2108,30 @@ exports[`cluster - custom resources in sidebar > when custom resource exists > r
               <div
                 class="workloads"
               />
+            </div>
+            <div
+              class="overviewDetail"
+            >
+              <div
+                class="overviewHeader"
+              >
+                <h5>
+                  Resources
+                </h5>
+              </div>
+              <div
+                class="overviewContent"
+              >
+                <div
+                  class="status"
+                >
+                  <h3
+                    class="noResources"
+                  >
+                    No visualizable resources found in this namespace.
+                  </h3>
+                </div>
+              </div>
             </div>
           </div>
         </main>
@@ -2271,6 +2469,40 @@ exports[`cluster - custom resources in sidebar > when custom resource exists > w
             role="button"
             style="pointer-events: auto; opacity: 1; transition: transform 0ms linear;"
             tabindex="0"
+          >
+            <div
+              class="SidebarItem"
+              data-is-active-test="false"
+              data-testid="sidebar-item-resource-map"
+            >
+              <a
+                class="navItem"
+                data-testid="link-for-sidebar-item-resource-map"
+                href="/workloads"
+              >
+                <i
+                  class="Icon material focusable"
+                >
+                  <span
+                    class="icon"
+                    data-icon-name="bubble_chart"
+                  >
+                    bubble_chart
+                  </span>
+                </i>
+                <span>
+                  Resource Map
+                </span>
+              </a>
+            </div>
+          </div>
+          <div
+            aria-describedby="DndDescribedBy-20"
+            aria-disabled="false"
+            aria-roledescription="sortable"
+            role="button"
+            style="pointer-events: auto; opacity: 1; transition: transform 0ms linear;"
+            tabindex="0"
           />
           <div
             aria-describedby="DndDescribedBy-20"
@@ -2317,6 +2549,14 @@ exports[`cluster - custom resources in sidebar > when custom resource exists > w
               </a>
             </div>
           </div>
+          <div
+            aria-describedby="DndDescribedBy-20"
+            aria-disabled="false"
+            aria-roledescription="sortable"
+            role="button"
+            style="pointer-events: auto; opacity: 1; transition: transform 0ms linear;"
+            tabindex="0"
+          />
           <div
             aria-describedby="DndDescribedBy-20"
             aria-disabled="false"
@@ -2649,6 +2889,30 @@ exports[`cluster - custom resources in sidebar > when custom resource exists > w
               <div
                 class="workloads"
               />
+            </div>
+            <div
+              class="overviewDetail"
+            >
+              <div
+                class="overviewHeader"
+              >
+                <h5>
+                  Resources
+                </h5>
+              </div>
+              <div
+                class="overviewContent"
+              >
+                <div
+                  class="status"
+                >
+                  <h3
+                    class="noResources"
+                  >
+                    No visualizable resources found in this namespace.
+                  </h3>
+                </div>
+              </div>
             </div>
           </div>
         </main>
@@ -2986,6 +3250,40 @@ exports[`cluster - custom resources in sidebar > when custom resource exists > w
             role="button"
             style="pointer-events: auto; opacity: 1; transition: transform 0ms linear;"
             tabindex="0"
+          >
+            <div
+              class="SidebarItem"
+              data-is-active-test="false"
+              data-testid="sidebar-item-resource-map"
+            >
+              <a
+                class="navItem"
+                data-testid="link-for-sidebar-item-resource-map"
+                href="/workloads"
+              >
+                <i
+                  class="Icon material focusable"
+                >
+                  <span
+                    class="icon"
+                    data-icon-name="bubble_chart"
+                  >
+                    bubble_chart
+                  </span>
+                </i>
+                <span>
+                  Resource Map
+                </span>
+              </a>
+            </div>
+          </div>
+          <div
+            aria-describedby="DndDescribedBy-25"
+            aria-disabled="false"
+            aria-roledescription="sortable"
+            role="button"
+            style="pointer-events: auto; opacity: 1; transition: transform 0ms linear;"
+            tabindex="0"
           />
           <div
             aria-describedby="DndDescribedBy-25"
@@ -3032,6 +3330,14 @@ exports[`cluster - custom resources in sidebar > when custom resource exists > w
               </a>
             </div>
           </div>
+          <div
+            aria-describedby="DndDescribedBy-25"
+            aria-disabled="false"
+            aria-roledescription="sortable"
+            role="button"
+            style="pointer-events: auto; opacity: 1; transition: transform 0ms linear;"
+            tabindex="0"
+          />
           <div
             aria-describedby="DndDescribedBy-25"
             aria-disabled="false"
@@ -3411,6 +3717,30 @@ exports[`cluster - custom resources in sidebar > when custom resource exists > w
                 class="workloads"
               />
             </div>
+            <div
+              class="overviewDetail"
+            >
+              <div
+                class="overviewHeader"
+              >
+                <h5>
+                  Resources
+                </h5>
+              </div>
+              <div
+                class="overviewContent"
+              >
+                <div
+                  class="status"
+                >
+                  <h3
+                    class="noResources"
+                  >
+                    No visualizable resources found in this namespace.
+                  </h3>
+                </div>
+              </div>
+            </div>
           </div>
         </main>
       </div>
@@ -3747,6 +4077,40 @@ exports[`cluster - custom resources in sidebar > when custom resource exists > w
             role="button"
             style="pointer-events: auto; opacity: 1; transition: transform 0ms linear;"
             tabindex="0"
+          >
+            <div
+              class="SidebarItem"
+              data-is-active-test="false"
+              data-testid="sidebar-item-resource-map"
+            >
+              <a
+                class="navItem"
+                data-testid="link-for-sidebar-item-resource-map"
+                href="/workloads"
+              >
+                <i
+                  class="Icon material focusable"
+                >
+                  <span
+                    class="icon"
+                    data-icon-name="bubble_chart"
+                  >
+                    bubble_chart
+                  </span>
+                </i>
+                <span>
+                  Resource Map
+                </span>
+              </a>
+            </div>
+          </div>
+          <div
+            aria-describedby="DndDescribedBy-5"
+            aria-disabled="false"
+            aria-roledescription="sortable"
+            role="button"
+            style="pointer-events: auto; opacity: 1; transition: transform 0ms linear;"
+            tabindex="0"
           />
           <div
             aria-describedby="DndDescribedBy-5"
@@ -3793,6 +4157,14 @@ exports[`cluster - custom resources in sidebar > when custom resource exists > w
               </a>
             </div>
           </div>
+          <div
+            aria-describedby="DndDescribedBy-5"
+            aria-disabled="false"
+            aria-roledescription="sortable"
+            role="button"
+            style="pointer-events: auto; opacity: 1; transition: transform 0ms linear;"
+            tabindex="0"
+          />
           <div
             aria-describedby="DndDescribedBy-5"
             aria-disabled="false"
@@ -4125,6 +4497,30 @@ exports[`cluster - custom resources in sidebar > when custom resource exists > w
               <div
                 class="workloads"
               />
+            </div>
+            <div
+              class="overviewDetail"
+            >
+              <div
+                class="overviewHeader"
+              >
+                <h5>
+                  Resources
+                </h5>
+              </div>
+              <div
+                class="overviewContent"
+              >
+                <div
+                  class="status"
+                >
+                  <h3
+                    class="noResources"
+                  >
+                    No visualizable resources found in this namespace.
+                  </h3>
+                </div>
+              </div>
             </div>
           </div>
         </main>
@@ -4462,6 +4858,40 @@ exports[`cluster - custom resources in sidebar > when custom resource exists > w
             role="button"
             style="pointer-events: auto; opacity: 1; transition: transform 0ms linear;"
             tabindex="0"
+          >
+            <div
+              class="SidebarItem"
+              data-is-active-test="false"
+              data-testid="sidebar-item-resource-map"
+            >
+              <a
+                class="navItem"
+                data-testid="link-for-sidebar-item-resource-map"
+                href="/workloads"
+              >
+                <i
+                  class="Icon material focusable"
+                >
+                  <span
+                    class="icon"
+                    data-icon-name="bubble_chart"
+                  >
+                    bubble_chart
+                  </span>
+                </i>
+                <span>
+                  Resource Map
+                </span>
+              </a>
+            </div>
+          </div>
+          <div
+            aria-describedby="DndDescribedBy-10"
+            aria-disabled="false"
+            aria-roledescription="sortable"
+            role="button"
+            style="pointer-events: auto; opacity: 1; transition: transform 0ms linear;"
+            tabindex="0"
           />
           <div
             aria-describedby="DndDescribedBy-10"
@@ -4508,6 +4938,14 @@ exports[`cluster - custom resources in sidebar > when custom resource exists > w
               </a>
             </div>
           </div>
+          <div
+            aria-describedby="DndDescribedBy-10"
+            aria-disabled="false"
+            aria-roledescription="sortable"
+            role="button"
+            style="pointer-events: auto; opacity: 1; transition: transform 0ms linear;"
+            tabindex="0"
+          />
           <div
             aria-describedby="DndDescribedBy-10"
             aria-disabled="false"
@@ -4872,6 +5310,30 @@ exports[`cluster - custom resources in sidebar > when custom resource exists > w
                 class="workloads"
               />
             </div>
+            <div
+              class="overviewDetail"
+            >
+              <div
+                class="overviewHeader"
+              >
+                <h5>
+                  Resources
+                </h5>
+              </div>
+              <div
+                class="overviewContent"
+              >
+                <div
+                  class="status"
+                >
+                  <h3
+                    class="noResources"
+                  >
+                    No visualizable resources found in this namespace.
+                  </h3>
+                </div>
+              </div>
+            </div>
           </div>
         </main>
       </div>
@@ -5208,6 +5670,40 @@ exports[`cluster - custom resources in sidebar > when custom resource exists > w
             role="button"
             style="pointer-events: auto; opacity: 1; transition: transform 0ms linear;"
             tabindex="0"
+          >
+            <div
+              class="SidebarItem"
+              data-is-active-test="false"
+              data-testid="sidebar-item-resource-map"
+            >
+              <a
+                class="navItem"
+                data-testid="link-for-sidebar-item-resource-map"
+                href="/workloads"
+              >
+                <i
+                  class="Icon material focusable"
+                >
+                  <span
+                    class="icon"
+                    data-icon-name="bubble_chart"
+                  >
+                    bubble_chart
+                  </span>
+                </i>
+                <span>
+                  Resource Map
+                </span>
+              </a>
+            </div>
+          </div>
+          <div
+            aria-describedby="DndDescribedBy-15"
+            aria-disabled="false"
+            aria-roledescription="sortable"
+            role="button"
+            style="pointer-events: auto; opacity: 1; transition: transform 0ms linear;"
+            tabindex="0"
           />
           <div
             aria-describedby="DndDescribedBy-15"
@@ -5254,6 +5750,14 @@ exports[`cluster - custom resources in sidebar > when custom resource exists > w
               </a>
             </div>
           </div>
+          <div
+            aria-describedby="DndDescribedBy-15"
+            aria-disabled="false"
+            aria-roledescription="sortable"
+            role="button"
+            style="pointer-events: auto; opacity: 1; transition: transform 0ms linear;"
+            tabindex="0"
+          />
           <div
             aria-describedby="DndDescribedBy-15"
             aria-disabled="false"
@@ -5663,6 +6167,30 @@ exports[`cluster - custom resources in sidebar > when custom resource exists > w
               <div
                 class="workloads"
               />
+            </div>
+            <div
+              class="overviewDetail"
+            >
+              <div
+                class="overviewHeader"
+              >
+                <h5>
+                  Resources
+                </h5>
+              </div>
+              <div
+                class="overviewContent"
+              >
+                <div
+                  class="status"
+                >
+                  <h3
+                    class="noResources"
+                  >
+                    No visualizable resources found in this namespace.
+                  </h3>
+                </div>
+              </div>
             </div>
           </div>
         </main>

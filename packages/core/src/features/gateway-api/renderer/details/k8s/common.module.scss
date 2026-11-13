@@ -1,0 +1,11 @@
+.details {
+  .title {
+    margin-top: calc(2 * var(--margin));
+    margin-bottom: var(--margin);
+
+    span {
+      margin-left: var(--padding);
+      font-weight: bold;
+    }
+  }
+}

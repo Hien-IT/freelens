@@ -20,7 +20,9 @@ import type { KubeApiResource } from "../../common/rbac";
 import type { CustomResourceDefinitionStore } from "../../renderer/components/custom-resource-definitions/store";
 import type { ApplicationBuilder } from "../../renderer/components/test-utils/get-application-builder";
 
-const group = "gateway.networking.k8s.io";
+// Not the Gateway API group: core presents that one with pages of its own and
+// leaves it out of the Custom Resources tree.
+const group = "gateway.example.com";
 const groupItemTestId = `sidebar-item-custom-resource-group-${group}`;
 const httpRoutesItemTestId = `${groupItemTestId}/httproutes`;
 const gatewaysItemTestId = `${groupItemTestId}/gateways`;
