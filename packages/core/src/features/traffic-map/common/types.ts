@@ -17,6 +17,8 @@ export interface TrafficEndpoint {
   namespace: string;
   kind: EndpointKind;
   ip?: string;
+  /** The DNS names of the address of an endpoint outside the cluster, when the source knows them. */
+  names?: string[];
   /** The workload that owns the pod, when it is known. */
   workload?: string;
   /** The kind of that workload: Deployment, StatefulSet, DaemonSet, CronJob, Job… */
@@ -61,6 +63,8 @@ export interface TrafficFlow {
   dnsQuery?: string;
   dnsRCode?: number;
   dnsTtl?: number;
+  /** The addresses of a DNS response. */
+  dnsIps?: string[];
   dropReason?: string;
   bytesSent: number;
   bytesRecv: number;
@@ -96,6 +100,17 @@ export interface DnsQueryStat {
   avgTtl?: number;
 }
 
+/** One address outside the cluster behind an edge: a DNS name with its addresses, or an address alone. */
+export interface ExternalPeerStat {
+  /** The DNS name, or the address when there is none. */
+  name: string;
+  /** Other DNS names of the same addresses. */
+  aliases?: string[];
+  ips: string[];
+  flowCount: number;
+  connections: number;
+}
+
 /** The flows between two endpoints on one port, summed. */
 export interface AggregatedFlow {
   source: TrafficEndpoint;
@@ -126,6 +141,8 @@ export interface AggregatedFlow {
   /** "forwarded" → count */
   verdictCounts?: Record<string, number>;
   dropReasons?: Record<string, number>;
+  /** The addresses outside the cluster that an edge to or from one stands for, busiest first. */
+  externalPeers?: ExternalPeerStat[];
 }
 
 /**

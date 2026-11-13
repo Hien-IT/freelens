@@ -45,7 +45,7 @@ function classifyNonPod(labels: readonly string[], ip: string): Pick<TrafficEndp
   return { kind: "Unknown", name: ip || "unknown" };
 }
 
-function convertEndpoint(endpoint: HubbleEndpoint | undefined, ip: string): TrafficEndpoint {
+function convertEndpoint(endpoint: HubbleEndpoint | undefined, ip: string, names: readonly string[]): TrafficEndpoint {
   if (!endpoint) {
     return { kind: "Unknown", name: ip || "unknown", namespace: "", ip: ip || undefined };
   }
@@ -53,6 +53,10 @@ function convertEndpoint(endpoint: HubbleEndpoint | undefined, ip: string): Traf
   const converted: TrafficEndpoint = endpoint.podName
     ? { kind: "Pod", name: endpoint.podName, namespace: endpoint.namespace }
     : { ...classifyNonPod(endpoint.labels, ip), namespace: endpoint.namespace };
+
+  if (converted.kind !== "Pod" && names.length > 0) {
+    converted.names = [...names];
+  }
 
   if (ip) {
     converted.ip = ip;
@@ -99,8 +103,8 @@ export function convertHubbleFlow(flow: HubbleFlow, nowMs: number): TrafficFlow 
 
   const verdict = (hubbleVerdicts[flow.verdict] ?? "") as FlowVerdict;
   const converted: TrafficFlow = {
-    source: convertEndpoint(flow.source, flow.sourceIp),
-    destination: convertEndpoint(flow.destination, flow.destinationIp),
+    source: convertEndpoint(flow.source, flow.sourceIp, flow.sourceNames),
+    destination: convertEndpoint(flow.destination, flow.destinationIp, flow.destinationNames),
     protocol: flow.l4?.protocol ?? "",
     port: flow.l4?.destinationPort ?? 0,
     bytesSent: 0,
@@ -129,6 +133,7 @@ export function convertHubbleFlow(flow: HubbleFlow, nowMs: number): TrafficFlow 
       converted.dnsQuery = l7.dns.query || undefined;
       converted.dnsRCode = l7.dns.rcode;
       converted.dnsTtl = l7.dns.ttl || undefined;
+      converted.dnsIps = l7.dns.ips.length ? l7.dns.ips : undefined;
     } else if (l7.kafka) {
       converted.l7Protocol = "Kafka";
     }
@@ -163,4 +168,44 @@ export function convertHubbleFlow(flow: HubbleFlow, nowMs: number): TrafficFlow 
   }
 
   return converted;
+}
+
+/**
+ * Names the outside addresses that Hubble gave no DNS name for, from the DNS
+ * answers of the same flows: a pod that resolved `api.example.com` to an
+ * address and then connected to it was talking to `api.example.com`.
+ */
+export function nameExternalAddresses(flows: TrafficFlow[]): void {
+  const names = new Map<string, Set<string>>();
+
+  for (const flow of flows) {
+    if (!flow.dnsQuery || !flow.dnsIps) continue;
+
+    const query = flow.dnsQuery.replace(/\.$/, "");
+
+    for (const ip of flow.dnsIps) {
+      let set = names.get(ip);
+
+      if (!set) {
+        set = new Set();
+        names.set(ip, set);
+      }
+
+      set.add(query);
+    }
+  }
+
+  if (names.size === 0) return;
+
+  for (const flow of flows) {
+    for (const endpoint of [flow.source, flow.destination]) {
+      if (endpoint.kind === "External" && !endpoint.names?.length && endpoint.ip) {
+        const known = names.get(endpoint.ip);
+
+        if (known) {
+          endpoint.names = [...known];
+        }
+      }
+    }
+  }
 }

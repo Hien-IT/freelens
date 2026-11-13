@@ -447,3 +447,20 @@
     white-space: nowrap;
   }
 }
+
+.peer {
+  padding: 2px 0;
+  border-bottom: 1px solid var(--borderFaintColor);
+  font-size: smaller;
+
+  .detailRow {
+    font-size: inherit;
+  }
+}
+
+.peerName {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-family: monospace;
+}

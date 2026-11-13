@@ -5,7 +5,7 @@
 
 import tls from "node:tls";
 import { inNamespaces } from "../source";
-import { convertHubbleFlow } from "./convert";
+import { convertHubbleFlow, nameExternalAddresses } from "./convert";
 import { GrpcClient, GrpcError } from "./grpc";
 import { decodeConnectedNodes, decodeGetFlowsResponse, encodeGetFlowsRequest, unavailableNodeStates } from "./messages";
 
@@ -389,6 +389,8 @@ export class HubbleSource implements TrafficSource {
         this.close();
       }
     }
+
+    nameExternalAddresses(flows);
 
     let coveredSince: number | undefined;
 

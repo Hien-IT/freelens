@@ -6,12 +6,12 @@
 import { Button } from "@freelensapp/button";
 import { Icon } from "@freelensapp/icon";
 import { observer } from "mobx-react";
-import React from "react";
-import { nodeIdOf, volumeOf } from "./filters";
+import React, { useState } from "react";
+import { mergeExternalPeers, nodeIdOf, volumeOf } from "./filters";
 import { formatBytes, formatLatency, formatVolume, hasErrors } from "./graph";
 import styles from "./traffic-map.module.scss";
 
-import type { AggregatedFlow, TrafficEndpoint } from "../common/types";
+import type { AggregatedFlow, ExternalPeerStat, TrafficEndpoint } from "../common/types";
 import type { TrafficMapModel } from "./traffic-map-model";
 
 export interface TrafficDetailsProps {
@@ -26,6 +26,69 @@ function Row({ label, children }: { label: string; children: React.ReactNode }) 
       <span className={styles.detailLabel}>{label}</span>
       <span className={styles.detailValue}>{children}</span>
     </div>
+  );
+}
+
+const shownPeers = 15;
+
+/** The domains and addresses outside the cluster that a node or an edge stands for. */
+function ExternalPeers({ peers }: { peers: readonly ExternalPeerStat[] }) {
+  const [search, setSearch] = useState("");
+  const [all, setAll] = useState(false);
+
+  if (peers.length === 0) {
+    return (
+      <section>
+        <h6>Outside addresses</h6>
+        <p className={styles.note}>The source reports no address for this traffic.</p>
+      </section>
+    );
+  }
+
+  const needle = search.trim().toLowerCase();
+  const matching = needle
+    ? peers.filter((peer) =>
+        [peer.name, ...(peer.aliases ?? []), ...peer.ips].some((value) => value.toLowerCase().includes(needle)),
+      )
+    : peers;
+  const shown = all ? matching : matching.slice(0, shownPeers);
+  const named = peers.some((peer) => peer.ips.length === 0 || peer.name !== peer.ips[0]);
+
+  return (
+    <section>
+      <h6>Outside addresses ({peers.length})</h6>
+      {peers.length > shownPeers && (
+        <input
+          className={styles.search}
+          placeholder="Domain or address…"
+          value={search}
+          onChange={(event) => setSearch(event.target.value)}
+        />
+      )}
+      {shown.map((peer) => (
+        <div key={peer.name} className={styles.peer}>
+          <div className={styles.detailRow}>
+            <span className={styles.peerName} title={peer.name}>
+              {peer.name}
+            </span>
+            <span className={styles.detailValue}>{peer.flowCount}</span>
+          </div>
+          {(peer.aliases?.length || (peer.ips.length > 0 && peer.ips[0] !== peer.name)) && (
+            <div className={styles.note}>
+              {[...(peer.aliases ?? []), ...peer.ips.filter((ip) => ip !== peer.name)].join(" · ")}
+            </div>
+          )}
+        </div>
+      ))}
+      {matching.length > shownPeers && (
+        <a onClick={() => setAll(!all)}>{all ? "Show fewer" : `Show all ${matching.length}`}</a>
+      )}
+      {!named && (
+        <p className={styles.note}>
+          Hubble names an address only when Cilium sees the DNS lookup behind it, through its DNS proxy.
+        </p>
+      )}
+    </section>
   );
 }
 
@@ -116,6 +179,9 @@ const LinkDetails = observer(({ model, flow }: { model: TrafficMapModel; flow: A
         <Counts title="Verdicts" counts={flow.verdictCounts} />
       ) : null}
       <Counts title="Drop reasons" counts={flow.dropReasons} />
+      {(flow.source.kind === "External" || flow.destination.kind === "External") && (
+        <ExternalPeers peers={flow.externalPeers ?? []} />
+      )}
     </>
   );
 });
@@ -163,6 +229,7 @@ const NodeDetails = observer(
         {endpoint.workload && endpoint.workload !== endpoint.name && <Row label="Workload">{endpoint.workload}</Row>}
         {endpoint.ip && <Row label="IP">{endpoint.ip}</Row>}
         <Row label={rateBased ? "Request rate" : "Connections"}>{formatVolume(node.volume, rateBased)}</Row>
+        {endpoint.kind === "External" && <ExternalPeers peers={mergeExternalPeers([...incoming, ...outgoing])} />}
         {incoming.length > 0 && (
           <section>
             <h6>Incoming ({incoming.length})</h6>

@@ -90,6 +90,10 @@ function statusOf(flow: TrafficFlow): string {
 function endpointLabel(flow: TrafficFlow, side: "source" | "destination"): string {
   const endpoint = flow[side];
 
+  if (endpoint.kind === "External" && (endpoint.names?.length || endpoint.ip)) {
+    return endpoint.names?.[0] ?? endpoint.ip!;
+  }
+
   return endpoint.namespace ? `${endpoint.namespace}/${endpoint.name}` : endpoint.name;
 }
 

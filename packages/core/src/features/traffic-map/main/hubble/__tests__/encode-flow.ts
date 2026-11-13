@@ -15,7 +15,8 @@ export interface FlowSpec {
   tcp?: [number, number];
   udp?: [number, number];
   http?: { code?: number; method?: string; url?: string };
-  dns?: { query: string; rcode?: number };
+  dns?: { query: string; rcode?: number; ips?: string[] };
+  destinationNames?: string[];
   l7Type?: number;
   latencyNs?: number;
   isReply?: boolean;
@@ -45,12 +46,19 @@ export function encodeFlow(spec: FlowSpec): Uint8Array {
   if (spec.source) writer.message(8, (endpoint) => writeEndpoint(endpoint, spec.source!));
   if (spec.destination) writer.message(9, (endpoint) => writeEndpoint(endpoint, spec.destination!));
   writer.string(11, "node-a");
+  spec.destinationNames?.forEach((name) => writer.string(14, name));
 
   if (spec.http || spec.dns) {
     writer.message(15, (l7) => {
       if (spec.l7Type) l7.uint(1, spec.l7Type);
       if (spec.latencyNs) l7.uint(2, spec.latencyNs);
-      if (spec.dns) l7.message(100, (dns) => dns.string(1, spec.dns!.query).uint(6, spec.dns!.rcode ?? 0));
+      if (spec.dns) {
+        l7.message(100, (dns) => {
+          dns.string(1, spec.dns!.query);
+          spec.dns!.ips?.forEach((ip) => dns.string(2, ip));
+          dns.uint(6, spec.dns!.rcode ?? 0);
+        });
+      }
       if (spec.http) {
         l7.message(101, (http) => {
           if (spec.http!.code) http.uint(1, spec.http!.code);

@@ -138,4 +138,24 @@ describe("aggregateFlows", () => {
     expect(aggregate.verdictCounts).toEqual({ forwarded: 1, dropped: 1 });
     expect(aggregate.dropReasons).toEqual({ POLICY_DENIED: 1 });
   });
+
+  it("lists the outside addresses of an edge by domain", () => {
+    const world = (ip: string, names?: string[]) => ({
+      name: "world",
+      namespace: "",
+      kind: "External" as const,
+      ip,
+      names,
+    });
+    const [aggregate] = aggregateFlows([
+      flow({ destination: world("140.82.112.3", ["github.com"]) }),
+      flow({ destination: world("140.82.112.4", ["github.com"]) }),
+      flow({ destination: world("203.0.113.9") }),
+    ]);
+
+    expect(aggregate.externalPeers).toEqual([
+      { name: "github.com", ips: ["140.82.112.3", "140.82.112.4"], flowCount: 2, connections: 2 },
+      { name: "203.0.113.9", ips: ["203.0.113.9"], flowCount: 1, connections: 1 },
+    ]);
+  });
 });

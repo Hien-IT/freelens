@@ -3,9 +3,19 @@
  * Licensed under MIT License. See LICENSE in root directory for more information.
  */
 
-import type { AggregatedFlow, DnsQueryStat, HttpPathStat, TrafficEndpoint, TrafficFlow } from "./types";
+import type {
+  AggregatedFlow,
+  DnsQueryStat,
+  ExternalPeerStat,
+  HttpPathStat,
+  TrafficEndpoint,
+  TrafficFlow,
+} from "./types";
 
 const topEntries = 10;
+/** The most outside addresses listed for an edge, and addresses for one name. */
+const topPeers = 50;
+const ipsPerPeer = 5;
 
 /**
  * The endpoint as the graph draws it: a pod with a known workload becomes that
@@ -101,6 +111,7 @@ interface Accumulator {
   verdicts: Record<string, number>;
   dropReasons: Record<string, number>;
   l7Votes: Map<string, number>;
+  externalPeers: Map<string, { names: Set<string>; ips: Set<string>; flowCount: number; connections: number }>;
 }
 
 function increment(record: Record<string, number>, key: string) {
@@ -129,6 +140,7 @@ function newAccumulator(flow: TrafficFlow): Accumulator {
     verdicts: {},
     dropReasons: {},
     l7Votes: new Map(),
+    externalPeers: new Map(),
   };
 }
 
@@ -232,6 +244,46 @@ function accumulate(accumulator: Accumulator, flow: TrafficFlow) {
   if (flow.dropReason) {
     increment(accumulator.dropReasons, flow.dropReason);
   }
+
+  const outside =
+    flow.destination.kind === "External" ? flow.destination : flow.source.kind === "External" ? flow.source : undefined;
+
+  if (outside && (outside.names?.length || outside.ip)) {
+    const key = outside.names?.[0] ?? outside.ip!;
+    let peer = accumulator.externalPeers.get(key);
+
+    if (!peer) {
+      peer = { names: new Set(), ips: new Set(), flowCount: 0, connections: 0 };
+      accumulator.externalPeers.set(key, peer);
+    }
+
+    outside.names?.forEach((name) => peer.names.add(name));
+
+    if (outside.ip && peer.ips.size < ipsPerPeer) {
+      peer.ips.add(outside.ip);
+    }
+
+    peer.flowCount++;
+    peer.connections += flow.connections;
+  }
+}
+
+/** The outside addresses of an edge, busiest first. */
+function finishPeers(peers: Accumulator["externalPeers"]): ExternalPeerStat[] {
+  return [...peers]
+    .map(([name, peer]): ExternalPeerStat => {
+      const aliases = [...peer.names].filter((alias) => alias !== name);
+
+      return {
+        name,
+        aliases: aliases.length ? aliases : undefined,
+        ips: [...peer.ips],
+        flowCount: peer.flowCount,
+        connections: peer.connections,
+      };
+    })
+    .sort((a, b) => b.flowCount - a.flowCount || a.name.localeCompare(b.name))
+    .slice(0, topPeers);
 }
 
 function finish(accumulator: Accumulator): AggregatedFlow {
@@ -300,6 +352,10 @@ function finish(accumulator: Accumulator): AggregatedFlow {
 
   if (Object.keys(accumulator.dropReasons).length > 0) {
     aggregate.dropReasons = accumulator.dropReasons;
+  }
+
+  if (accumulator.externalPeers.size > 0) {
+    aggregate.externalPeers = finishPeers(accumulator.externalPeers);
   }
 
   return aggregate;

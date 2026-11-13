@@ -3,7 +3,7 @@
  * Licensed under MIT License. See LICENSE in root directory for more information.
  */
 
-import type { AggregatedFlow, TrafficEndpoint, TrafficSourceName } from "../common/types";
+import type { AggregatedFlow, ExternalPeerStat, TrafficEndpoint, TrafficSourceName } from "../common/types";
 
 /** The namespaces of the cluster's own machinery, which "Hide system traffic" leaves out. */
 export const systemNamespaces: ReadonlySet<string> = new Set([
@@ -155,6 +155,30 @@ function matchesL7(flow: AggregatedFlow, l7: L7Filter): boolean {
   }
 }
 
+/** The outside addresses of several edges, summed per name, busiest first. */
+export function mergeExternalPeers(flows: readonly Pick<AggregatedFlow, "externalPeers">[]): ExternalPeerStat[] {
+  const merged = new Map<string, ExternalPeerStat>();
+
+  for (const peer of flows.flatMap((flow) => flow.externalPeers ?? [])) {
+    const existing = merged.get(peer.name);
+
+    if (!existing) {
+      merged.set(peer.name, { ...peer, ips: [...peer.ips], aliases: peer.aliases && [...peer.aliases] });
+      continue;
+    }
+
+    existing.flowCount += peer.flowCount;
+    existing.connections += peer.connections;
+    existing.ips = [...new Set([...existing.ips, ...peer.ips])];
+
+    if (peer.aliases) {
+      existing.aliases = [...new Set([...(existing.aliases ?? []), ...peer.aliases])];
+    }
+  }
+
+  return [...merged.values()].sort((a, b) => b.flowCount - a.flowCount || a.name.localeCompare(b.name));
+}
+
 /** Merges the edges that the Internet node now stands for, summing what they carry. */
 function collapseInternet(flows: readonly AggregatedFlow[]): AggregatedFlow[] {
   const merged = new Map<string, AggregatedFlow>();
@@ -184,6 +208,10 @@ function collapseInternet(flows: readonly AggregatedFlow[]): AggregatedFlow[] {
     existing.bytesSent += flow.bytesSent;
     existing.bytesRecv += flow.bytesRecv;
     existing.lastSeen = Math.max(existing.lastSeen, flow.lastSeen);
+
+    if (flow.externalPeers) {
+      existing.externalPeers = mergeExternalPeers([existing, flow]);
+    }
 
     if (flow.requestRate !== undefined) existing.requestRate = (existing.requestRate ?? 0) + flow.requestRate;
     if (flow.errorRate !== undefined) existing.errorRate = (existing.errorRate ?? 0) + flow.errorRate;

@@ -4,7 +4,7 @@
  */
 
 import { describe, expect, it } from "vitest";
-import { applyFilters, availableFacets, defaultFilters, isSystemEndpoint } from "../filters";
+import { applyFilters, availableFacets, defaultFilters, isSystemEndpoint, mergeExternalPeers } from "../filters";
 import { buildTrafficGraph, edgeColors, edgeWidth } from "../graph";
 import { selfLinkOf } from "../traffic-map-dependencies.injectable";
 
@@ -80,6 +80,35 @@ describe("applyFilters", () => {
   it("offers the verdicts only when something was not forwarded", () => {
     expect(availableFacets(flows).verdicts).toEqual(["dropped", "forwarded"]);
     expect(availableFacets(flows.slice(0, 1)).verdicts).toEqual([]);
+  });
+});
+
+describe("mergeExternalPeers", () => {
+  it("sums the outside addresses of the edges that the Internet node merges", () => {
+    const merged = applyFilters(
+      [
+        edge(world, workload("web"), {
+          port: 443,
+          externalPeers: [{ name: "a.example.com", ips: ["198.51.100.1"], flowCount: 2, connections: 2 }],
+        }),
+        edge(otherWorld, workload("web"), {
+          port: 443,
+          externalPeers: [
+            { name: "a.example.com", ips: ["198.51.100.2"], flowCount: 1, connections: 1 },
+            { name: "203.0.113.9", ips: ["203.0.113.9"], flowCount: 4, connections: 4 },
+          ],
+        }),
+      ],
+      defaultFilters,
+      false,
+    );
+
+    expect(merged).toHaveLength(1);
+    expect(merged[0].externalPeers).toEqual([
+      { name: "203.0.113.9", ips: ["203.0.113.9"], flowCount: 4, connections: 4 },
+      { name: "a.example.com", ips: ["198.51.100.1", "198.51.100.2"], flowCount: 3, connections: 3 },
+    ]);
+    expect(mergeExternalPeers([])).toEqual([]);
   });
 });
 

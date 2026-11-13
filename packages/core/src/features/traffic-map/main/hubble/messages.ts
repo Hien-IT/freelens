@@ -44,6 +44,8 @@ export interface HubbleHttp {
 
 export interface HubbleDns {
   query: string;
+  /** The addresses of a response. */
+  ips: string[];
   ttl: number;
   rcode: number;
 }
@@ -66,6 +68,9 @@ export interface HubbleFlow {
   dropReasonDesc: number;
   sourceIp: string;
   destinationIp: string;
+  /** The DNS names that Cilium knows for the source and destination addresses. */
+  sourceNames: string[];
+  destinationNames: string[];
   l4?: HubbleLayer4;
   source?: HubbleEndpoint;
   destination?: HubbleEndpoint;
@@ -258,12 +263,15 @@ function decodeHttp(bytes: Uint8Array): HubbleHttp {
 }
 
 function decodeDns(bytes: Uint8Array): HubbleDns {
-  const dns: HubbleDns = { query: "", ttl: 0, rcode: 0 };
+  const dns: HubbleDns = { query: "", ips: [], ttl: 0, rcode: 0 };
 
   for (const field of readFields(bytes)) {
     switch (field.number) {
       case 1:
         dns.query = decodeString(field.bytes);
+        break;
+      case 2:
+        dns.ips.push(decodeString(field.bytes));
         break;
       case 3:
         dns.ttl = field.value;
@@ -350,6 +358,8 @@ export function decodeFlow(bytes: Uint8Array): HubbleFlow {
     dropReasonDesc: 0,
     sourceIp: "",
     destinationIp: "",
+    sourceNames: [],
+    destinationNames: [],
     nodeName: "",
     sourceService: "",
     destinationService: "",
@@ -388,6 +398,12 @@ export function decodeFlow(bytes: Uint8Array): HubbleFlow {
         break;
       case 9:
         flow.destination = decodeEndpoint(field.bytes);
+        break;
+      case 13:
+        flow.sourceNames.push(decodeString(field.bytes));
+        break;
+      case 14:
+        flow.destinationNames.push(decodeString(field.bytes));
         break;
       case 11:
         flow.nodeName = decodeString(field.bytes);
@@ -504,6 +520,8 @@ const fieldMaskPaths = [
   "drop_reason",
   "drop_reason_desc",
   "IP",
+  "source_names",
+  "destination_names",
   "l4",
   "l7",
   "is_reply",

@@ -4,7 +4,7 @@
  */
 
 import { describe, expect, it } from "vitest";
-import { convertHubbleFlow } from "../convert";
+import { convertHubbleFlow, nameExternalAddresses } from "../convert";
 import { decodeGetFlowsResponse, encodeGetFlowsRequest } from "../messages";
 import { ProtobufWriter, readFields, readVarint } from "../protobuf";
 import { encodeFlow } from "./encode-flow";
@@ -188,6 +188,58 @@ describe("decoding and converting Hubble flows", () => {
     );
 
     expect(flow).toMatchObject({ l7Protocol: "DNS", dnsQuery: "db.example.com.", dnsRCode: 3 });
+  });
+});
+
+describe("domains of outside addresses", () => {
+  it("keeps the DNS names that Hubble knows for an outside address", () => {
+    const flow = convertHubbleFlow(
+      decodeFlow({
+        tcp: [40000, 443],
+        ip: ["10.0.0.1", "140.82.112.3"],
+        source: { namespace: "infra", pod: "teleport-auth-1" },
+        destination: { labels: ["reserved:world"] },
+        destinationNames: ["github.com"],
+      }),
+      0,
+    );
+
+    expect(flow?.destination).toEqual({
+      kind: "External",
+      name: "world",
+      namespace: "",
+      ip: "140.82.112.3",
+      names: ["github.com"],
+    });
+  });
+
+  it("names an outside address from a DNS answer of the same window", () => {
+    const answer = convertHubbleFlow(
+      decodeFlow({
+        udp: [53, 40000],
+        source: { namespace: "kube-system", pod: "coredns-1" },
+        destination: { namespace: "infra", pod: "teleport-auth-1" },
+        dns: { query: "api.example.com.", ips: ["203.0.113.7"] },
+        l7Type: 2,
+        isReply: true,
+      }),
+      0,
+    )!;
+    const connection = convertHubbleFlow(
+      decodeFlow({
+        tcp: [40001, 443],
+        ip: ["10.0.0.1", "203.0.113.7"],
+        source: { namespace: "infra", pod: "teleport-auth-1" },
+        destination: { labels: ["reserved:world"] },
+      }),
+      0,
+    )!;
+
+    expect(answer.dnsIps).toEqual(["203.0.113.7"]);
+
+    nameExternalAddresses([answer, connection]);
+
+    expect(connection.destination.names).toEqual(["api.example.com"]);
   });
 });
 
