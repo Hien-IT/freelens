@@ -34,6 +34,7 @@ import { registerInjectables as registerFeaturesFeaturesNavigationReloadPageRend
 import { registerInjectables as registerFeaturesFeaturesPathPickingDialogRendererInjectables } from "./features/path-picking-dialog/renderer/register-injectables";
 import { registerInjectables as registerFeaturesFeaturesPersistentStorageInjectables } from "./features/persistent-storage/register-injectables";
 import { registerInjectables as registerFeaturesFeaturesPersistentStorageRendererInjectables } from "./features/persistent-storage/renderer/register-injectables";
+import { registerInjectables as registerFeaturesFeaturesPodFilesRendererInjectables } from "./features/pod-files/renderer/register-injectables";
 import { registerInjectables as registerFeaturesFeaturesPopulationOfLogsToAFileRendererInjectables } from "./features/population-of-logs-to-a-file/renderer/register-injectables";
 import { registerInjectables as registerFeaturesFeaturesPreferencesInjectables } from "./features/preferences/register-injectables";
 import { registerInjectables as registerFeaturesFeaturesPreferencesRendererInjectables } from "./features/preferences/renderer/register-injectables";
@@ -83,6 +84,7 @@ export function registerInjectables(di: DiContainerForInjection): void {
   registerFeaturesFeaturesPathPickingDialogRendererInjectables(di);
   registerFeaturesFeaturesPersistentStorageRendererInjectables(di);
   registerFeaturesFeaturesPersistentStorageInjectables(di);
+  registerFeaturesFeaturesPodFilesRendererInjectables(di);
   registerFeaturesFeaturesPopulationOfLogsToAFileRendererInjectables(di);
   registerFeaturesFeaturesPreferencesRendererInjectables(di);
   registerFeaturesFeaturesPreferencesInjectables(di);

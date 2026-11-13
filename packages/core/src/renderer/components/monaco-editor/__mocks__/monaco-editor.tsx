@@ -23,10 +23,10 @@ class FakeMonacoEditor extends React.Component<MonacoEditorProps> {
 
           onChange?.(newValue, {} as editor.IModelContentChangedEvent);
 
-          const validator = monacoValidators[language];
+          const validator = monacoValidators[language as keyof typeof monacoValidators];
 
           try {
-            validator(newValue);
+            validator?.(newValue);
           } catch (e) {
             onError?.(e);
           }

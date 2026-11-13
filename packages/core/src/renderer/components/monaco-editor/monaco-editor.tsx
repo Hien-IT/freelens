@@ -34,6 +34,26 @@ import type { MonacoTheme } from "./monaco-themes";
 
 export type MonacoEditorId = string;
 
+/**
+ * The languages the editor highlights. Only `yaml` and `json` are validated.
+ * The others are basic languages, highlighted without a language worker, which
+ * `setup-monaco-environment.ts` provides for `json` only.
+ */
+export type MonacoLanguage =
+  | "yaml"
+  | "json"
+  | "plaintext"
+  | "dockerfile"
+  | "go"
+  | "ini"
+  | "java"
+  | "markdown"
+  | "python"
+  | "rust"
+  | "shell"
+  | "sql"
+  | "xml";
+
 export interface MonacoEditorProps {
   id?: MonacoEditorId; // associating editor's ID with created model.uri
   className?: string;
@@ -41,7 +61,7 @@ export interface MonacoEditorProps {
   autoFocus?: boolean;
   readOnly?: boolean;
   theme?: MonacoTheme;
-  language?: "yaml" | "json"; // supported list of languages, configure in `webpack.renderer.ts`
+  language?: MonacoLanguage;
   options?: Partial<editor.IStandaloneEditorConstructionOptions>; // customize editor's initialization options
   value: string;
   onChange?(value: string, evt: editor.IModelContentChangedEvent): void; // catch latest value updates
@@ -323,7 +343,7 @@ class NonInjectedMonacoEditor extends React.Component<MonacoEditorProps & Depend
   @action
   validate(value = this.getValue()) {
     const validators: MonacoValidator[] = [
-      monacoValidators[this.props.language!], // parsing syntax check
+      monacoValidators[this.props.language as keyof typeof monacoValidators], // parsing syntax check
     ].filter(Boolean);
 
     for (const validate of validators) {

@@ -34,6 +34,7 @@ import { registerInjectables as registerFeaturesFeaturesLicensesInjectables } fr
 import { registerInjectables as registerFeaturesFeaturesPathPickingDialogMainInjectables } from "./features/path-picking-dialog/main/register-injectables";
 import { registerInjectables as registerFeaturesFeaturesPersistentStorageMainInjectables } from "./features/persistent-storage/main/register-injectables";
 import { registerInjectables as registerFeaturesFeaturesPersistentStorageInjectables } from "./features/persistent-storage/register-injectables";
+import { registerInjectables as registerFeaturesFeaturesPodFilesMainInjectables } from "./features/pod-files/main/register-injectables";
 import { registerInjectables as registerFeaturesFeaturesPopulationOfLogsToAFileMainInjectables } from "./features/population-of-logs-to-a-file/main/register-injectables";
 import { registerInjectables as registerFeaturesFeaturesPreferencesChildFeaturesApplicationMenuMainInjectables } from "./features/preferences/child-features/application-menu/main/register-injectables";
 import { registerInjectables as registerFeaturesFeaturesPreferencesChildFeaturesTrayMainInjectables } from "./features/preferences/child-features/tray/main/register-injectables";
@@ -81,6 +82,7 @@ export function registerInjectables(di: DiContainerForInjection): void {
   registerFeaturesFeaturesPathPickingDialogMainInjectables(di);
   registerFeaturesFeaturesPersistentStorageMainInjectables(di);
   registerFeaturesFeaturesPersistentStorageInjectables(di);
+  registerFeaturesFeaturesPodFilesMainInjectables(di);
   registerFeaturesFeaturesPopulationOfLogsToAFileMainInjectables(di);
   registerFeaturesFeaturesPreferencesChildFeaturesApplicationMenuMainInjectables(di);
   registerFeaturesFeaturesPreferencesChildFeaturesTrayMainInjectables(di);

@@ -20,6 +20,7 @@ export enum TabKind {
   INSTALL_CHART = "install-chart",
   UPGRADE_CHART = "upgrade-chart",
   POD_LOGS = "pod-logs",
+  POD_FILES = "pod-files",
 }
 
 /**

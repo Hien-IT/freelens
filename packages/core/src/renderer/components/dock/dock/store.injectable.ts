@@ -5,6 +5,8 @@
  */
 
 import { getInjectable } from "@ogre-tools/injectable";
+import clearPodFilesTabDataInjectable from "../../../../features/pod-files/renderer/clear-pod-files-tab-data.injectable";
+import isPodFilesTabDataValidInjectable from "../../../../features/pod-files/renderer/is-pod-files-tab-data-valid.injectable";
 import clearCreateResourceTabDataInjectable from "../create-resource/clear-create-resource-tab-data.injectable";
 import clearEditResourceTabDataInjectable from "../edit-resource/clear-edit-resource-tab-data.injectable";
 import clearInstallChartTabDataInjectable from "../install-chart/clear-install-chart-tab-data.injectable";
@@ -28,9 +30,11 @@ const dockStoreInjectable = getInjectable({
         [TabKind.EDIT_RESOURCE]: di.inject(clearEditResourceTabDataInjectable),
         [TabKind.INSTALL_CHART]: di.inject(clearInstallChartTabDataInjectable),
         [TabKind.TERMINAL]: di.inject(clearTerminalTabDataInjectable),
+        [TabKind.POD_FILES]: di.inject(clearPodFilesTabDataInjectable),
       },
       tabDataValidator: {
         [TabKind.POD_LOGS]: di.inject(isLogsTabDataValidInjectable),
+        [TabKind.POD_FILES]: di.inject(isPodFilesTabDataValidInjectable),
       },
     }),
 });

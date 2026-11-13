@@ -50,6 +50,8 @@ export const DockTabs = ({ tabs, autoFocus, selectedTab, onChangeTab }: DockTabs
         return <DockTab value={tab} icon="install_desktop" />;
       case TabKind.POD_LOGS:
         return <DockTab value={tab} icon="subject" />;
+      case TabKind.POD_FILES:
+        return <DockTab value={tab} icon="folder_open" />;
       case TabKind.TERMINAL:
         return <TerminalTab value={tab} />;
     }

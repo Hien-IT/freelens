@@ -13,6 +13,7 @@ import { cssNames } from "@freelensapp/utilities";
 import { withInjectables } from "@ogre-tools/injectable-react";
 import { observer } from "mobx-react";
 import React from "react";
+import { PodFilesDockTab } from "../../../features/pod-files/renderer/view";
 import { MenuItem } from "../menu";
 import { MenuActions } from "../menu/menu-actions";
 import createResourceTabInjectable from "./create-resource/create-resource-tab.injectable";
@@ -124,6 +125,9 @@ class NonInjectedDock extends React.Component<DockProps & Dependencies> {
       // first one, and never scroll the new tab to its last lines.
       case TabKind.POD_LOGS:
         return <LogsDockTab key={tab.id} tab={tab} />;
+      // Each tab has a model of its own, which the view reads when it mounts.
+      case TabKind.POD_FILES:
+        return <PodFilesDockTab key={tab.id} tab={tab} />;
       case TabKind.TERMINAL:
         return <TerminalWindow tab={tab} />;
     }
