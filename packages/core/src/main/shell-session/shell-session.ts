@@ -378,11 +378,14 @@ export abstract class ShellSession {
     }
 
     this.running = true;
-    shellProcess.onData((data) => {
+
+    // The PTY outlives this socket when the renderer reconnects, and the next
+    // session adds listeners of its own, so these go with this socket.
+    const dataListener = shellProcess.onData((data) => {
       lastOutputs.set(shellProcess, data);
       this.send({ type: TerminalChannels.STDOUT, data });
     });
-    shellProcess.onExit(({ exitCode }) => {
+    const exitListener = shellProcess.onExit(({ exitCode }) => {
       this.dependencies.logger.info(
         `[SHELL-SESSION]: shell has exited for ${this.terminalId} closed with exitcode=${exitCode}`,
       );
@@ -441,6 +444,8 @@ export abstract class ShellSession {
         }
       })
       .once("close", (code) => {
+        dataListener.dispose();
+        exitListener.dispose();
         this.dependencies.logger.info(
           `[SHELL-SESSION]: websocket for ${this.terminalId} closed with code=${WebSocketCloseEvent[code]}(${code})`,
           { cluster: this.cluster?.getMeta() },

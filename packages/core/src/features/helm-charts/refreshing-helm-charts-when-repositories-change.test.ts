@@ -61,7 +61,7 @@ describe("refreshing helm charts when helm repositories change", () => {
 
     builder.beforeApplicationStart(({ mainDi }) => {
       mainDi.override(execFileInjectable, () => execFileMock as unknown as ExecFile);
-      mainDi.override(helmBinaryPathInjectable, () => "some-helm-binary-path");
+      mainDi.override(helmBinaryPathInjectable, () => () => "some-helm-binary-path");
     });
 
     builder.beforeWindowStart(({ windowDi }) => {

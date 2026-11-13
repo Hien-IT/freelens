@@ -9,7 +9,11 @@ import { ResourceApplier } from "./resource-applier";
 
 import type { Logger } from "@freelensapp/logger";
 
+import type { Mock } from "vitest";
+
 import type { ExecFile } from "../../common/fs/exec-file.injectable";
+import type { RemovePath } from "../../common/fs/remove.injectable";
+import type { WriteFile } from "../../common/fs/write-file.injectable";
 import type { KubeconfigManager } from "../kubeconfig-manager/kubeconfig-manager";
 import type { Kubectl } from "../kubectl/kubectl";
 
@@ -18,10 +22,15 @@ const cacheDirectoryPath = "/some-directory-for-temp/kubecache-some-cluster-id";
 
 describe("ResourceApplier", () => {
   let execFileMock: ReturnType<typeof vi.fn>;
+  let writeFileMock: Mock<WriteFile>;
+  let deleteFileMock: Mock<RemovePath>;
+  let ensureKubectlMock: Mock<Kubectl["ensureKubectl"]>;
   let resourceApplier: ResourceApplier;
 
   beforeEach(() => {
     execFileMock = vi.fn(async () => ({ callWasSuccessful: true, response: "{}" }));
+    writeFileMock = vi.fn<WriteFile>(async () => {});
+    deleteFileMock = vi.fn<RemovePath>(async () => {});
 
     const cluster = new Cluster({
       id: "some-cluster-id",
@@ -29,8 +38,10 @@ describe("ResourceApplier", () => {
       kubeConfigPath: "/some-kubeconfig",
       preferences: { httpsProxy: "http://some-https-proxy:3128" },
     });
+    ensureKubectlMock = vi.fn<Kubectl["ensureKubectl"]>(async () => true);
+
     const kubectl = {
-      ensureKubectl: async () => true,
+      ensureKubectl: ensureKubectlMock,
       getPath: async () => "/some-kubectl",
     } as Partial<Kubectl> as Kubectl;
     const proxyKubeconfigManager = {
@@ -40,8 +51,8 @@ describe("ResourceApplier", () => {
     resourceApplier = new ResourceApplier(
       {
         emitAppEvent: vi.fn(),
-        writeFile: vi.fn(async () => {}),
-        deleteFile: vi.fn(async () => {}),
+        writeFile: writeFileMock,
+        deleteFile: deleteFileMock,
         execFile: execFileMock as unknown as ExecFile,
         joinPaths: (...paths) => paths.join("/"),
         createKubectl: () => kubectl,
@@ -127,5 +138,35 @@ describe("ResourceApplier", () => {
     const [, args] = execFileMock.mock.calls[0] as [string, string[]];
 
     expect(args.slice(0, 5)).toEqual([subCommand, "--kubeconfig", kubeconfigPath, "--cache-dir", cacheDirectoryPath]);
+  });
+
+  it.each([
+    ["succeeds", async () => ({ callWasSuccessful: true, response: "{}" })],
+    ["fails", async () => ({ callWasSuccessful: false, error: Object.assign(new Error("failed"), { stderr: "" }) })],
+    [
+      "throws",
+      async () => {
+        throw new Error("spawn failed");
+      },
+    ],
+  ])("writes the manifests owner-only and removes their directory when kubectl %s", async (_, execFile) => {
+    execFileMock.mockImplementation(execFile);
+
+    await resourceApplier.kubectlApplyAll(["some-resource", "another-resource"]).catch(() => undefined);
+
+    const [, args] = execFileMock.mock.calls[0] as [string, string[]];
+    const directory = args.at(-1);
+
+    expect(writeFileMock.mock.calls).toEqual([
+      [`${directory}/0.yaml`, "some-resource", { mode: 0o600 }],
+      [`${directory}/1.yaml`, "another-resource", { mode: 0o600 }],
+    ]);
+    expect(deleteFileMock).toHaveBeenCalledWith(directory);
+  });
+
+  it("does not ensure kubectl separately from getting its path", async () => {
+    await resourceApplier.kubectlApplyAll(["some-resource"]);
+
+    expect(ensureKubectlMock).not.toHaveBeenCalled();
   });
 });

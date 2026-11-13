@@ -44,7 +44,7 @@ describe("add helm repository from list in preferences", () => {
     builder.beforeApplicationStart(({ mainDi }) => {
       mainDi.override(getActiveHelmRepositoriesInjectable, () => getActiveHelmRepositoriesMock);
       mainDi.override(execFileInjectable, () => execFileMock as unknown as ExecFile);
-      mainDi.override(helmBinaryPathInjectable, () => "some-helm-binary-path");
+      mainDi.override(helmBinaryPathInjectable, () => () => "some-helm-binary-path");
     });
 
     builder.beforeWindowStart(({ windowDi }) => {
@@ -144,7 +144,7 @@ describe("add helm repository from list in preferences", () => {
               "some-helm-binary-path",
               ["repo", "add", "Some to be added repository", "some-other-url"],
               {
-                maxBuffer: 34359738368,
+                maxBuffer: 33554432,
                 env: {},
               },
             );
@@ -262,7 +262,7 @@ describe("add helm repository from list in preferences", () => {
                       "some-helm-binary-path",
                       ["repo", "remove", "Some already active repository"],
                       {
-                        maxBuffer: 34359738368,
+                        maxBuffer: 33554432,
                         env: {},
                       },
                     );

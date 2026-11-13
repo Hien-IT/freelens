@@ -14,6 +14,7 @@ import type { FetchRequestInit as RequestInit } from "@freelensapp/json-api";
 import type { KubeApi, KubeApiWatchOptions } from "@freelensapp/kube-api";
 import type { KubeJsonApiDataFor } from "@freelensapp/kube-object";
 
+import type { ClusterContext } from "../../../renderer/cluster-frame-context/cluster-frame-context";
 import type { KubeObjectStoreLoadingParams, KubeObjectStoreOptions } from "../kube-object.store";
 
 class FakeKubeObjectStore extends KubeObjectStore<KubeObject> {
@@ -53,7 +54,11 @@ class FakeKubeObjectStore extends KubeObjectStore<KubeObject> {
 // the method that owns the `onLoadFailure` branches -- against a fake
 // `api.list()`, instead of bypassing it entirely.
 class RealLoadItemsKubeObjectStore extends KubeObjectStore<KubeObject> {
-  constructor(api: Partial<KubeApi<KubeObject>>, isLoadingAll: (namespaces: string[]) => boolean = () => true) {
+  constructor(
+    api: Partial<KubeApi<KubeObject>>,
+    isLoadingAll: (namespaces: string[]) => boolean = () => true,
+    context: Partial<ClusterContext> = {},
+  ) {
     super(
       {
         context: {
@@ -62,6 +67,7 @@ class RealLoadItemsKubeObjectStore extends KubeObjectStore<KubeObject> {
           hasSelectedAll: false,
           isGlobalWatchEnabled: () => true,
           isLoadingAll,
+          ...context,
         },
         logger: {
           debug: noop,
@@ -826,6 +832,60 @@ describe("KubeObjectStore", () => {
       unsubscribe();
 
       expect(watchSignals.every((signal) => signal.aborted)).toBe(true);
+    });
+
+    describe("of a namespaced store", () => {
+      const createNamespacedStore = (context: Partial<ClusterContext> = {}) => {
+        const resourceVersions = new Map<string, string>();
+        const watch = vi.fn((_opts: KubeApiWatchOptions<KubeObject, KubeJsonApiDataFor<KubeObject>>) => noop);
+        const store = new RealLoadItemsKubeObjectStore(
+          {
+            isNamespaced: true,
+            list: vi.fn(async ({ namespace = "" } = {}) => {
+              resourceVersions.set(namespace, "5");
+
+              return [];
+            }),
+            getResourceVersion: (namespace = "") => resourceVersions.get(namespace),
+            setResourceVersion: (namespace = "", version: string) => void resourceVersions.set(namespace, version),
+            watch,
+          },
+          (namespaces) => namespaces.length === 3,
+          context,
+        );
+        const watchedNamespaces = () => watch.mock.calls.map(([opts]) => opts.namespace);
+
+        return { store, watchedNamespaces };
+      };
+
+      it("watches the namespaces its own load listed, not those of a later load", async () => {
+        const { store, watchedNamespaces } = createNamespacedStore();
+        const allNamespaces = new AbortController();
+        const oneNamespace = new AbortController();
+
+        await store.loadAll({ namespaces: ["a", "b", "c"], reqInit: { signal: allNamespaces.signal } });
+        await store.loadAll({ namespaces: ["c"], reqInit: { signal: oneNamespace.signal } });
+
+        store.subscribe({ abortController: allNamespaces });
+        await new Promise((resolve) => setTimeout(resolve, 0));
+
+        expect(watchedNamespaces()).toEqual([""]);
+      });
+
+      it("watches every namespace when all are loaded but global watch is disabled", async () => {
+        const { store, watchedNamespaces } = createNamespacedStore({
+          allNamespaces: ["a", "b", "c"],
+          isGlobalWatchEnabled: () => false,
+        });
+        const abortController = new AbortController();
+
+        await store.loadAll({ namespaces: ["a", "b", "c"], reqInit: { signal: abortController.signal } });
+
+        store.subscribe({ abortController });
+        await new Promise((resolve) => setTimeout(resolve, 0));
+
+        expect(watchedNamespaces()).toEqual(["a", "b", "c"]);
+      });
     });
 
     it("does not restart a watch request that failed because it was aborted", async () => {

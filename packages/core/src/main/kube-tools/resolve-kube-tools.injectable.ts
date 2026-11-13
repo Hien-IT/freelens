@@ -5,9 +5,9 @@
 
 import { getInjectable } from "@ogre-tools/injectable";
 import getDirnameOfPathInjectable from "../../common/path/get-dirname.injectable";
-import bundledBinaryPathInjectable from "../../common/utils/bundled-binary-path.injectable";
 import baseBundledBinariesDirectoryInjectable from "../../common/vars/base-bundled-binaries-dir.injectable";
 import userPreferencesStateInjectable from "../../features/user-preferences/common/state.injectable";
+import helmBinaryPathInjectable from "../helm/helm-binary-path.injectable";
 import bundledKubectlBinaryPathInjectable from "../kubectl/bundled-binary-path.injectable";
 
 import type { Kubectl, KubectlProgressOptions } from "../kubectl/kubectl";
@@ -36,14 +36,9 @@ const resolveKubeToolsInjectable = getInjectable({
   instantiate: (di): ResolveKubeTools => {
     const state = di.inject(userPreferencesStateInjectable);
     const bundledKubectlBinaryPath = di.inject(bundledKubectlBinaryPathInjectable);
-    // Not `helmBinaryPathInjectable`: that resolves the preference once, when
-    // the injectable is instantiated, and a terminal opened after the user
-    // changed it would still get the previous binary.
-    const bundledHelmBinaryPath = di.inject(bundledBinaryPathInjectable, "helm");
+    const getHelmPath = di.inject(helmBinaryPathInjectable);
     const baseBundledBinariesDirectory = di.inject(baseBundledBinariesDirectoryInjectable);
     const getDirnameOfPath = di.inject(getDirnameOfPathInjectable);
-
-    const getHelmPath = () => state.helmBinariesPath || bundledHelmBinaryPath;
 
     return {
       withoutCluster: () => ({

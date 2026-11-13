@@ -731,6 +731,11 @@ describe("KubeApi", () => {
             );
           });
 
+          it("advances the resource version of the watched namespace only", () => {
+            expect(api.getResourceVersion("kube-system")).toBe("1");
+            expect(api.getResourceVersion("")).toBeUndefined();
+          });
+
           describe("when stopping the watch", () => {
             beforeEach(() => {
               stopWatch();
@@ -1384,7 +1389,7 @@ describe("KubeApi", () => {
               JSON.stringify({
                 kind: "PodList",
                 apiVersion: "v1",
-                metadata: {},
+                metadata: { resourceVersion: "7" },
                 items: [],
               }),
             ),
@@ -1393,6 +1398,13 @@ describe("KubeApi", () => {
 
         it("the call should resolve to an empty list", async () => {
           expect(await listRequest).toEqual([]);
+        });
+
+        it("records the resource version for the listed namespace only", async () => {
+          await listRequest;
+
+          expect(api.getResourceVersion("default")).toBe("7");
+          expect(api.getResourceVersion("")).toBeUndefined();
         });
       });
     });

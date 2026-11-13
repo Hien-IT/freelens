@@ -101,6 +101,7 @@ export class LogStore {
         this.getRefresher(tabId, computedPods, logTabData).start();
         this.podLogs.set(tabId, this.limitLines(this.mergeNewLines(tabId, cursors, logsOfPods, tagged), tagged));
       },
+      (error) => this.handlerError(tabId, error),
     );
   }
 
@@ -193,6 +194,9 @@ export class LogStore {
         // Add newly received logs to bottom.
         this.podLogs.set(tabId, this.limitLines(mergeIntoLogs(this.podLogs.get(tabId) ?? oldLogs, newLines), tagged));
       },
+      // A failed poll, e.g. while the network is back from a sleep, keeps
+      // the lines shown and the polling: the next one asks again.
+      (error) => console.warn(`[LOG-STORE]: failed to load more logs for tab ${tabId}`, error),
     );
   }
 
@@ -202,6 +206,7 @@ export class LogStore {
     logTabData: IComputedValue<LogTabData | undefined>,
     getParams: (pod: Pod, podCount: number) => Partial<PodLogsQuery>,
     onLoad: (logsOfPods: PodLogs[], tagged: boolean) => void,
+    onError: (error: unknown) => void,
   ): Promise<void> {
     // Include the wait for Pod data in the limit, not just the HTTP request.
     if (this.requests.has(tabId)) {
@@ -220,7 +225,7 @@ export class LogStore {
       }
     } catch (error) {
       if (!controller.signal.aborted) {
-        this.handlerError(tabId, error);
+        onError(error);
       }
     } finally {
       // A stopped request must not remove the request started by a newer load.
@@ -394,15 +399,6 @@ export class LogStore {
     return since.toISOString().replace(/\.\d+Z$/, "Z");
   }
 
-  /**
-   * @deprecated This depends on dockStore, which should be removed
-   * Converts logs into a string array
-   * @returns Length of log lines
-   */
-  get lines(): number {
-    return this.logs.length;
-  }
-
   areLogsPresent(tabId: TabId): boolean {
     return !this.podLogs.has(tabId);
   }
@@ -419,38 +415,6 @@ export class LogStore {
     return this.getLogs(tabId).map(this.splitOutTimestamp);
   }
 
-  /**
-   * @deprecated This now only returns the empty array
-   * Returns logs with timestamps for selected tab
-   */
-  get logs(): string[] {
-    return [];
-  }
-
-  /**
-   * @deprecated This now only returns the empty array
-   * Removes timestamps from each log line and returns changed logs
-   * @returns Logs without timestamps
-   */
-  get logsWithoutTimestamps(): string[] {
-    return this.logs.map((item) => this.removeTimestamps(item));
-  }
-
-  /**
-   * It gets timestamps from all logs then returns last one + 1 second
-   * (this allows to avoid getting the last stamp in the selection)
-   * @param tabId
-   */
-  getLastSinceTime(tabId: TabId): string {
-    const logs = this.podLogs.get(tabId) ?? [];
-    const [timestamp] = this.getTimestamps(logs[logs.length - 1]) ?? [];
-    const stamp = timestamp ? new Date(timestamp) : new Date();
-
-    stamp.setSeconds(stamp.getSeconds() + 1); // avoid duplicates from last second
-
-    return stamp.toISOString();
-  }
-
   splitOutTimestamp(logs: string): [string, string] {
     const extraction = /^(\d+\S+)(.*)/m.exec(logs);
 
@@ -459,10 +423,6 @@ export class LogStore {
     }
 
     return [extraction[1], extraction[2]];
-  }
-
-  getTimestamps(logs: string) {
-    return logs.match(/^\d+\S+/gm);
   }
 
   removeTimestamps(logs: string): string {

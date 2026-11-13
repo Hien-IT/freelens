@@ -26,6 +26,11 @@ export interface ExecHelmOptions {
    * the proxy token in its environment. Set by {@link proxyKubeconfigHelmOptions}.
    */
   throughProxy?: boolean;
+  /**
+   * Written to the standard input of helm, for a secret that an argument
+   * would show in the process list.
+   */
+  input?: string;
 }
 
 export type ExecHelm = (
@@ -49,15 +54,16 @@ const execHelmInjectable = getInjectable({
   instantiate: (di): ExecHelm => {
     const execFile = di.inject(execFileInjectable);
     const execHelmEnv = di.inject(execHelmEnvInjectable);
-    const helmBinaryPath = di.inject(helmBinaryPathInjectable);
+    const getHelmBinaryPath = di.inject(helmBinaryPathInjectable);
     const withFreelensProxyCredentialEnv = di.inject(withFreelensProxyCredentialEnvInjectable);
 
-    return async (args, { env, throughProxy = false } = {}) => {
+    return async (args, { env, throughProxy = false, input } = {}) => {
       const callEnv = { ...execHelmEnv.get(), ...env };
 
-      return execFile(helmBinaryPath, args, {
-        maxBuffer: 32 * 1024 * 1024 * 1024, // 32 MiB
+      return execFile(getHelmBinaryPath(), args, {
+        maxBuffer: 32 * 1024 * 1024, // 32 MiB
         env: throughProxy ? withFreelensProxyCredentialEnv(callEnv) : callEnv,
+        ...(input === undefined ? {} : { input }),
       });
     };
   },

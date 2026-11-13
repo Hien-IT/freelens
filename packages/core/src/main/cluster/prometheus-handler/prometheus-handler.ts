@@ -5,6 +5,7 @@
  */
 
 import { CoreV1Api } from "@kubernetes/client-node";
+import { isEqual } from "es-toolkit";
 
 import type { Logger } from "@freelensapp/logger";
 import type { PrometheusProvider, PrometheusService } from "@freelensapp/prometheus";
@@ -46,16 +47,27 @@ export interface ClusterPrometheusHandler {
 const ensurePrometheusPath = (service: PrometheusService, useHttps?: boolean) =>
   `${service.namespace}/services/${useHttps ? "https:" : ""}${service.service}:${service.port}`;
 
+const toAppliedPreferences = ({ prometheus, prometheusProvider }: ClusterPrometheusPreferences) => ({
+  prometheus,
+  prometheusProvider,
+});
+
 export const createClusterPrometheusHandler = (...args: [Dependencies, Cluster]): ClusterPrometheusHandler => {
   const [deps, cluster] = args;
   const { getPrometheusProviderByKind, loadProxyKubeconfig, logger, prometheusProviders } = deps;
 
   let prometheusProvider: string | undefined = undefined;
   let prometheus: PrometheusServicePreferences | undefined = undefined;
+  // The preferences the state below was set up from, and the service that was
+  // detected for them, so that a request does not list the services again
+  let appliedPreferences: ClusterPrometheusPreferences | undefined = undefined;
+  let detectedService: PrometheusService | undefined = undefined;
 
   const setupPrometheus: ClusterPrometheusHandler["setupPrometheus"] = (preferences = {}) => {
+    appliedPreferences = toAppliedPreferences(preferences);
     prometheusProvider = preferences.prometheusProvider?.type;
     prometheus = preferences.prometheus;
+    detectedService = undefined;
   };
 
   const ensurePrometheusProvider = (service: PrometheusService) => {
@@ -80,7 +92,13 @@ export const createClusterPrometheusHandler = (...args: [Dependencies, Cluster])
   };
 
   const getPrometheusService = async (): Promise<PrometheusService> => {
-    setupPrometheus(cluster.preferences);
+    const preferences = cluster.prometheusPreferences.get();
+
+    // The connection updates the preferences when they change, but not while
+    // it is disconnected
+    if (!isEqual(appliedPreferences, toAppliedPreferences(preferences))) {
+      setupPrometheus(preferences);
+    }
 
     if (prometheus && prometheusProvider) {
       return {
@@ -91,6 +109,11 @@ export const createClusterPrometheusHandler = (...args: [Dependencies, Cluster])
       };
     }
 
+    if (detectedService) {
+      return detectedService;
+    }
+
+    const detectedFor = appliedPreferences;
     const providers = listPotentialProviders();
     const proxyConfig = await loadProxyKubeconfig();
     const apiClient = proxyConfig.makeApiClient(CoreV1Api);
@@ -107,6 +130,11 @@ export const createClusterPrometheusHandler = (...args: [Dependencies, Cluster])
 
         case "fulfilled":
           if (res.value) {
+            // Preferences that changed during the detection make it stale
+            if (appliedPreferences === detectedFor) {
+              detectedService = res.value;
+            }
+
             return res.value;
           }
       }
@@ -123,7 +151,7 @@ export const createClusterPrometheusHandler = (...args: [Dependencies, Cluster])
     return { prometheusPath, provider };
   };
 
-  setupPrometheus(cluster.preferences);
+  setupPrometheus(cluster.prometheusPreferences.get());
 
   return {
     setupPrometheus,

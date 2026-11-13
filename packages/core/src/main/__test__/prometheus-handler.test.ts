@@ -7,7 +7,7 @@
 import { prometheusProviderInjectionToken } from "@freelensapp/prometheus";
 import { getInjectable } from "@ogre-tools/injectable";
 import { runInAction } from "mobx";
-import { beforeEach, describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import directoryForUserDataInjectable from "../../common/app-paths/directory-for-user-data/directory-for-user-data.injectable";
 import { Cluster } from "../../common/cluster/cluster";
 import writeJsonFileInjectable from "../../common/fs/write-json-file.injectable";
@@ -239,6 +239,35 @@ describe("PrometheusHandler", () => {
       const details = await di.inject(prometheusHandlerInjectable, cluster).getPrometheusDetails();
 
       expect(details.provider.kind === "id_success_0");
+    });
+
+    it("detects the service once until the preferences change", async () => {
+      const provider = createTestPrometheusProvider("id_success_0", ServiceResult.Success);
+      const getPrometheusService = vi.spyOn(provider, "getPrometheusService");
+
+      runInAction(() => {
+        di.register(
+          getInjectable({
+            id: "test-prometheus-provider-success-0",
+            injectionToken: prometheusProviderInjectionToken,
+            instantiate: () => provider,
+          }),
+        );
+      });
+
+      const handler = di.inject(prometheusHandlerInjectable, cluster);
+
+      await handler.getPrometheusDetails();
+      await handler.getPrometheusDetails();
+
+      expect(getPrometheusService).toHaveBeenCalledTimes(1);
+
+      runInAction(() => {
+        cluster.preferences.prometheusProvider = { type: "id_success_0" };
+      });
+      await handler.getPrometheusDetails();
+
+      expect(getPrometheusService).toHaveBeenCalledTimes(2);
     });
   });
 });

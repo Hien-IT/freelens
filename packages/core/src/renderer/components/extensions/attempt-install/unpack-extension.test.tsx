@@ -77,4 +77,44 @@ describe("unpackExtension", () => {
     });
     expect(notificationsStore.notifications[0].timeout).toBeGreaterThan(0);
   });
+
+  it("removes the directory of its own which the tarball was put in", async () => {
+    const tempDirectory = await fse.mkdtemp(path.join(workDir, "freelens-extension-"));
+    const tempFile = path.join(tempDirectory, "my-extension-0.1.0.tgz");
+
+    await fse.writeFile(tempFile, "not really a tarball");
+
+    await unpackExtension({
+      id: extensionId,
+      fileName: "my-extension-0.1.0.tgz",
+      data: Buffer.from("not really a tarball"),
+      tempFile,
+      manifest: { name: "my-extension", version: "0.1.0", engines: { freelens: "^2.0.0" } },
+      checksum: { kind: "sha256", value: "0".repeat(64) },
+    });
+
+    expect(await fse.pathExists(tempDirectory)).toBe(false);
+  });
+
+  it("refuses to write a build outside of the extensions directory", async () => {
+    const tempFile = path.join(workDir, "tmp", "my-extension-0.1.0.tgz");
+
+    await fse.outputFile(tempFile, "not really a tarball");
+
+    await unpackExtension({
+      id: extensionId,
+      fileName: "my-extension-0.1.0.tgz",
+      data: Buffer.from("not really a tarball"),
+      tempFile,
+      manifest: { name: "my-extension", version: "0.1.0/../../../escaped", engines: { freelens: "^2.0.0" } },
+      checksum: { kind: "sha256", value: "0".repeat(64) },
+    });
+
+    const notificationsStore = di.inject(notificationsStoreInjectable);
+
+    expect((await fse.readdir(workDir)).filter((entry) => entry.startsWith("escaped"))).toEqual([]);
+    expect(notificationsStore.notifications).toHaveLength(1);
+    expect(notificationsStore.notifications[0].status).toBe(NotificationStatus.ERROR);
+    expect(di.inject(activateInstalledBuildInjectable)).not.toHaveBeenCalled();
+  });
 });

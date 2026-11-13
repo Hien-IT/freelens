@@ -16,8 +16,19 @@ const persistStateToConfigInjectable = getInjectable({
     return (config, state) => {
       logger.info(`[BASE-STORE]: saving ${config.path}...`);
 
+      // Each key is saved on its own, so that one that fails does not keep the
+      // others from being saved, nor the caller from syncing the state over IPC
       for (const [key, value] of Object.entries(state)) {
-        config.set(key, value);
+        try {
+          if (value === undefined) {
+            // conf refuses to set a key to undefined
+            config.delete(key as never);
+          } else {
+            config.set(key, value);
+          }
+        } catch (error) {
+          logger.error(`[BASE-STORE]: failed to save "${key}" to ${config.path}`, error);
+        }
       }
     };
   },

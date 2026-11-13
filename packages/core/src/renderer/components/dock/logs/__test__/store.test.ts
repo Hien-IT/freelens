@@ -260,6 +260,23 @@ describe("LogStore request lifecycle", () => {
     expect(store.getLogs(tabId)).toEqual([lastLog, sameSecondLog]);
   });
 
+  it("keeps the lines and the polling when a poll fails", async () => {
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+
+    await store.load(tabId, computedPods, computedTabData);
+    callForLogs.mockRejectedValueOnce(new Error("network is down"));
+    await vi.advanceTimersByTimeAsync(10_000);
+
+    expect(store.getLogs(tabId)).toEqual([initialLog]);
+    expect(warn).toHaveBeenCalled();
+
+    callForLogs.mockResolvedValue(nextLog);
+    await vi.advanceTimersByTimeAsync(10_000);
+
+    expect(store.getLogs(tabId)).toEqual([initialLog, nextLog]);
+    warn.mockRestore();
+  });
+
   it("keeps two different lines that carry the same timestamp", async () => {
     const otherLog = "2026-01-01T00:00:00Z second line of that instant";
 

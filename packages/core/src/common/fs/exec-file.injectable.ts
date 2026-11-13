@@ -12,18 +12,33 @@ import type { AsyncResult } from "@freelensapp/utilities";
 
 export type ExecFileError = ExecFileException & { stderr: string };
 
+export interface ExecFileWithInputOptions extends ExecFileOptions {
+  /**
+   * Written to the standard input of the child, which is then closed. For a
+   * secret, which an argument would show in the process list.
+   */
+  input?: string;
+}
+
 export interface ExecFile {
   (filePath: string): AsyncResult<string, ExecFileError>;
-  (filePath: string, argsOrOptions: string[] | ExecFileOptions): AsyncResult<string, ExecFileError>;
-  (filePath: string, args: string[], options: ExecFileOptions): AsyncResult<string, ExecFileError>;
+  (filePath: string, argsOrOptions: string[] | ExecFileWithInputOptions): AsyncResult<string, ExecFileError>;
+  (filePath: string, args: string[], options: ExecFileWithInputOptions): AsyncResult<string, ExecFileError>;
 }
 
 const execFileInjectable = getInjectable({
   id: "exec-file",
 
   instantiate: (): ExecFile => {
-    return (filePath: string, argsOrOptions?: string[] | ExecFileOptions, maybeOptions?: ExecFileOptions) => {
-      const { args, options } = (() => {
+    return (
+      filePath: string,
+      argsOrOptions?: string[] | ExecFileWithInputOptions,
+      maybeOptions?: ExecFileWithInputOptions,
+    ) => {
+      const {
+        args,
+        options: { input, ...options },
+      } = (() => {
         if (Array.isArray(argsOrOptions)) {
           return {
             args: argsOrOptions,
@@ -39,7 +54,7 @@ const execFileInjectable = getInjectable({
 
       return new Promise((resolve) => {
         try {
-          execFile(filePath, args, options, (error, stdout, stderr) => {
+          const child = execFile(filePath, args, options, (error, stdout, stderr) => {
             if (error) {
               resolve({
                 callWasSuccessful: false,
@@ -52,6 +67,13 @@ const execFileInjectable = getInjectable({
               });
             }
           });
+
+          if (input !== undefined) {
+            // A child that exits without reading its input breaks the pipe;
+            // how the child ended is what the callback above reports.
+            child.stdin?.on("error", () => {});
+            child.stdin?.end(input);
+          }
         } catch (error) {
           // On Windows, spawn failures such as `spawn UNKNOWN` (errno -4094)
           // are thrown synchronously instead of being passed to the callback.

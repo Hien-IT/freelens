@@ -574,8 +574,9 @@ export class KubeApi<
     if (isJsonApiDataList(data, isPartialJsonApiData)) {
       const { apiVersion, items, metadata } = data;
 
+      // Only the listed namespace ("" for a cluster-wide list) is current as
+      // of this version: a watch of any other one resumes from its own.
       this.setResourceVersion(namespace, metadata.resourceVersion);
-      this.setResourceVersion("", metadata.resourceVersion);
 
       return items
         .map((item) => {
@@ -919,7 +920,7 @@ export class KubeApi<
               return callback(null, new KubeStatus(event.object));
             }
 
-            this.modifyWatchEvent(event);
+            this.modifyWatchEvent(event, namespace);
             callback(event, null);
           } catch (ignore) {
             // ignore parse errors
@@ -987,18 +988,22 @@ export class KubeApi<
     };
   }
 
-  protected modifyWatchEvent(event: IKubeWatchEvent<KubeJsonApiData<KubeObjectMetadata>>) {
+  /**
+   * @param watchedNamespace The namespace of the watch the event came from,
+   * `""` or `undefined` for a cluster-wide one
+   */
+  protected modifyWatchEvent(event: IKubeWatchEvent<KubeJsonApiData<KubeObjectMetadata>>, watchedNamespace?: string) {
     if (event.type === "ERROR") {
       return;
     }
 
     this.ensureMetadataSelfLink(event.object.metadata);
 
-    const { namespace, resourceVersion } = event.object.metadata;
+    const { resourceVersion } = event.object.metadata;
 
     assert(resourceVersion, "watch events failed to return resourceVersion from kube api");
 
-    this.setResourceVersion(namespace, resourceVersion);
-    this.setResourceVersion("", resourceVersion);
+    // Only the watched namespace has seen every event up to this version
+    this.setResourceVersion(watchedNamespace, resourceVersion);
   }
 }

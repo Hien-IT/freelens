@@ -6,7 +6,9 @@
 
 import { loggerInjectionToken } from "@freelensapp/logger";
 import { showErrorNotificationInjectable } from "@freelensapp/notifications";
+import { noop } from "@freelensapp/utilities";
 import { getInjectable } from "@ogre-tools/injectable";
+import fse from "fs-extra";
 import writeFileInjectable from "../../../../common/fs/write-file.injectable";
 import tempDirectoryPathInjectable from "../../../../common/os/temp-directory-path.injectable";
 import joinPathsInjectable from "../../../../common/path/join-paths.injectable";
@@ -23,7 +25,11 @@ export interface InstallRequestValidated {
   data: Buffer;
   id: LensExtensionId;
   manifest: LensExtensionManifest;
-  tempFile: string; // temp system path to packed extension for unpacking
+  /**
+   * The path of the packed extension for unpacking, alone in a directory
+   * created for this install, which goes with it once the install is over.
+   */
+  tempFile: string;
   source?: InstalledExtensionSource;
   checksum?: InstallChecksum;
 }
@@ -39,13 +45,18 @@ const createTempFilesAndValidateInjectable = getInjectable({
     const showErrorNotification = di.inject(showErrorNotificationInjectable);
     const tempDirectoryPath = di.inject(tempDirectoryPathInjectable);
 
-    const getTempExtensionPackagePath = (fileName: string) => joinPaths(tempDirectoryPath, "lens-extensions", fileName);
-
     return async ({ fileName, data, source, checksum }) => {
-      // validate packages
-      const tempFile = getTempExtensionPackagePath(fileName);
+      let tempDirectory: string | undefined;
 
       try {
+        // A directory of this install's own, created with a random name and
+        // readable by this user alone: the tarball is read again after it is
+        // validated, so nobody else may be able to replace it in between, and
+        // two installs of the same file name must not overwrite each other.
+        tempDirectory = await fse.mkdtemp(joinPaths(tempDirectoryPath, "freelens-extension-"));
+
+        const tempFile = joinPaths(tempDirectory, fileName);
+
         await writeFile(tempFile, data);
         const manifest = await validatePackage(tempFile);
 
@@ -61,6 +72,10 @@ const createTempFilesAndValidateInjectable = getInjectable({
           id: manifest.name,
         };
       } catch (error) {
+        if (tempDirectory) {
+          await fse.remove(tempDirectory).catch(noop);
+        }
+
         const message = getMessageFromError(error);
 
         logger.info(`[EXTENSION-INSTALLATION]: installing ${fileName} has failed: ${message}`, { error });

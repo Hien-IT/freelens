@@ -37,7 +37,7 @@ describe("remove helm repository from list of active repositories in preferences
     builder.beforeApplicationStart(({ mainDi }) => {
       mainDi.override(getActiveHelmRepositoriesInjectable, () => getActiveHelmRepositoriesMock);
       mainDi.override(execFileInjectable, () => execFileMock as unknown as ExecFile);
-      mainDi.override(helmBinaryPathInjectable, () => "some-helm-binary-path");
+      mainDi.override(helmBinaryPathInjectable, () => () => "some-helm-binary-path");
     });
 
     builder.beforeWindowStart(({ windowDi }) => {
@@ -100,7 +100,7 @@ describe("remove helm repository from list of active repositories in preferences
             "some-helm-binary-path",
             ["repo", "remove", "some-active-repository"],
             {
-              maxBuffer: 34359738368,
+              maxBuffer: 33554432,
               env: {},
             },
           );

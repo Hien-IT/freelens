@@ -126,25 +126,31 @@ describe("the identity of a shell session's PTY", () => {
         }) as Partial<KubeconfigManager> as KubeconfigManager,
     );
 
-    spawnPtyMock = vi.fn(
-      () =>
-        ({
-          cols: 80,
-          rows: 40,
-          pid: 12343,
-          handleFlowControl: false,
-          kill: vi.fn(),
-          onData: vi.fn(),
-          onExit: vi.fn(),
-          pause: vi.fn(),
-          process: "my-pty",
-          resize: vi.fn(),
-          resume: vi.fn(),
-          write: vi.fn(),
-          on: vi.fn(),
-          clear: vi.fn(),
-        }) as Partial<IPty> as IPty,
-    );
+    spawnPtyMock = vi.fn(() => {
+      const dataListeners = new Set<(data: string) => void>();
+
+      return {
+        cols: 80,
+        rows: 40,
+        pid: 12343,
+        handleFlowControl: false,
+        kill: vi.fn(),
+        onData: vi.fn((listener: (data: string) => void) => {
+          dataListeners.add(listener);
+
+          return { dispose: () => void dataListeners.delete(listener) };
+        }),
+        onExit: vi.fn(() => ({ dispose: vi.fn() })),
+        pause: vi.fn(),
+        process: "my-pty",
+        resize: vi.fn(),
+        resume: vi.fn(),
+        write: vi.fn(),
+        on: vi.fn(),
+        clear: vi.fn(),
+        emitData: (data: string) => dataListeners.forEach((listener) => listener(data)),
+      } as Partial<IPty> as IPty;
+    });
     di.override(spawnPtyInjectable, () => spawnPtyMock);
   });
 
@@ -176,12 +182,34 @@ describe("the identity of a shell session's PTY", () => {
       vi.mocked(socket.send).mock.calls.map(([message]) => JSON.parse(message as string));
 
     const emitOutput = (data: string) => {
-      const shellProcess = spawnPtyMock.mock.results[0].value as IPty;
+      const shellProcess = spawnPtyMock.mock.results[0].value as IPty & { emitData: (data: string) => void };
 
-      for (const [listener] of vi.mocked(shellProcess.onData).mock.calls) {
-        listener(data);
+      shellProcess.emitData(data);
+    };
+
+    const closeAbnormally = (socket: WebSocket) => {
+      for (const [event, listener] of [...vi.mocked(socket.on).mock.calls, ...vi.mocked(socket.once).mock.calls]) {
+        if (event === "close") {
+          (listener as (code: number) => void)(1006);
+        }
       }
     };
+
+    it("sends the output of the shell only to the socket that is connected now", async () => {
+      const firstSocket = websocket();
+
+      await di.inject(openStandaloneShellSessionInjectable)({ tabId, websocket: firstSocket });
+      closeAbnormally(firstSocket);
+
+      const secondSocket = websocket();
+
+      await di.inject(openStandaloneShellSessionInjectable)({ tabId, websocket: secondSocket });
+      vi.mocked(firstSocket.send).mockClear();
+      emitOutput("some-output");
+
+      expect(firstSocket.send).not.toHaveBeenCalled();
+      expect(sentMessages(secondSocket)).toContainEqual({ type: TerminalChannels.STDOUT, data: "some-output" });
+    });
 
     it("sends the last output of the shell again, right after it is connected", async () => {
       await openStandaloneSession();

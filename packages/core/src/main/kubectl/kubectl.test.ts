@@ -412,6 +412,21 @@ describe("kubectl", () => {
       expect(problems).toEqual([]);
     });
 
+    it.each([
+      [
+        "fails to run",
+        async () => ({ callWasSuccessful: false, error: Object.assign(new Error("exit 1"), { stderr: "" }) }),
+      ],
+      ["prints no JSON", async () => ({ callWasSuccessful: true, response: "not json" })],
+    ] as const)("never deletes the bundled kubectl when it %s", async (_, execFile) => {
+      await fs.mkdir(path.dirname(bundledPath()), { recursive: true });
+      await fs.writeFile(bundledPath(), "the bundled kubectl");
+      dependencies.execFile = execFile as KubectlDependencies["execFile"];
+
+      expect(await new Kubectl(dependencies, pinnedVersion).getPath()).toBe("kubectl");
+      expect(await fs.readFile(bundledPath(), "utf-8")).toBe("the bundled kubectl");
+    });
+
     describe("with a usable bundle of another version", () => {
       beforeEach(async () => {
         await fs.mkdir(path.dirname(bundledPath()), { recursive: true });

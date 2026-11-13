@@ -104,6 +104,13 @@ export class KubeObjectStore<
   public readonly bufferSize: number;
 
   private readonly loadedNamespaces = observable.box<string[]>();
+
+  /**
+   * The namespaces of the last load made with a given abort signal, so that a
+   * subscription given the same controller watches what its own load listed
+   * rather than what the last load of any other view did.
+   */
+  private readonly loadedNamespacesBySignal = new WeakMap<AbortSignal, string[]>();
   private readonly watchingController = new AbortController();
 
   constructor(
@@ -204,7 +211,7 @@ export class KubeObjectStore<
 
     if (!this.api.isNamespaced || isLoadingAll) {
       if (this.api.isNamespaced) {
-        this.loadedNamespaces.set([]);
+        this.recordLoadedNamespaces([], reqInit);
       }
 
       const res = this.api.list({ reqInit }, this.query);
@@ -236,7 +243,7 @@ export class KubeObjectStore<
       return (await res) ?? [];
     }
 
-    this.loadedNamespaces.set(namespaces);
+    this.recordLoadedNamespaces(namespaces, reqInit);
 
     const results = await Promise.allSettled(
       namespaces.map((namespace) => this.api.list({ namespace, reqInit }, this.query)),
@@ -266,6 +273,14 @@ export class KubeObjectStore<
     }
 
     return res;
+  }
+
+  private recordLoadedNamespaces(namespaces: string[], reqInit: RequestInit | undefined) {
+    this.loadedNamespaces.set(namespaces);
+
+    if (reqInit?.signal) {
+      this.loadedNamespacesBySignal.set(reqInit.signal, namespaces);
+    }
   }
 
   protected filterItemsOnLoad(items: K[]) {
@@ -515,15 +530,29 @@ export class KubeObjectStore<
     if (this.api.isNamespaced) {
       void (async () => {
         try {
-          const loadedNamespaces = await Promise.race([
-            rejectPromiseBy(abortController.signal),
-            waitUntilDefined(() => this.loadedNamespaces.get()),
-          ]);
+          const loadedNamespaces =
+            this.loadedNamespacesBySignal.get(abortController.signal) ??
+            (await Promise.race([
+              rejectPromiseBy(abortController.signal),
+              waitUntilDefined(() => this.loadedNamespaces.get()),
+            ]));
 
-          if (this.dependencies.context.isGlobalWatchEnabled() && loadedNamespaces.length === 0) {
+          if (loadedNamespaces.length > 0) {
+            for (const namespace of loadedNamespaces) {
+              this.watchNamespace(namespace, abortController, { onLoadFailure });
+            }
+          } else if (this.dependencies.context.isGlobalWatchEnabled()) {
             this.watchNamespace("", abortController, { onLoadFailure });
           } else {
-            for (const namespace of loadedNamespaces) {
+            // All namespaces were loaded with one list, but the cluster does
+            // not allow watching them at once: watch each one from that list
+            const resourceVersion = this.api.getResourceVersion("");
+
+            for (const namespace of this.dependencies.context.allNamespaces) {
+              if (resourceVersion) {
+                this.api.setResourceVersion(namespace, resourceVersion);
+              }
+
               this.watchNamespace(namespace, abortController, { onLoadFailure });
             }
           }

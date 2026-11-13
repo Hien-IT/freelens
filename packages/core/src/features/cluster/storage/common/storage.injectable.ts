@@ -27,6 +27,9 @@ const clustersPersistentStorageInjectable = getInjectable({
     const createPersistentStorage = di.inject(createPersistentStorageInjectable);
     const clustersState = di.inject(clustersStateInjectable);
     const logger = di.inject(loggerInjectionToken);
+    // The models that fail to load are written back as they are, so that a
+    // save does not drop them, and their preferences, from the file
+    let invalidClusterModels: ClusterModel[] = [];
 
     return createPersistentStorage<ClusterStoreModel>({
       configName: "lens-cluster-store",
@@ -40,6 +43,8 @@ const clustersPersistentStorageInjectable = getInjectable({
         const currentClusters = new Map(clustersState);
         const newClusters = new Map<ClusterId, Cluster>();
 
+        invalidClusterModels = [];
+
         for (const clusterModel of clusters) {
           try {
             let cluster = currentClusters.get(clusterModel.id);
@@ -52,17 +57,21 @@ const clustersPersistentStorageInjectable = getInjectable({
 
             newClusters.set(clusterModel.id, cluster);
           } catch (error) {
-            logger.warn(`[CLUSTER-STORE]: Failed to update/create a cluster: ${error}`);
+            logger.error(`[CLUSTER-STORE]: Failed to update/create a cluster, keeping it unchanged: ${error}`);
+            invalidClusterModels.push(clusterModel);
           }
         }
 
         clustersState.replace(newClusters);
       }),
       toJSON: () => ({
-        clusters: iter
-          .chain(clustersState.values())
-          .map((cluster) => cluster.toJSON())
-          .toArray(),
+        clusters: [
+          ...iter
+            .chain(clustersState.values())
+            .map((cluster) => cluster.toJSON())
+            .toArray(),
+          ...invalidClusterModels.filter((model) => !clustersState.has(model.id)),
+        ],
       }),
     });
   },

@@ -107,12 +107,11 @@ export function loadConfigFromString(content: string): ConfigResult {
 
 export function loadValidatedConfig(content: string, contextName: string): ValidateKubeConfigResult {
   const { options, error } = loadToOptions(content);
+  // loadToOptions strips the invalid entries, so an error elsewhere in the file
+  // must not prevent connecting to a context that is itself valid
+  const result = validateKubeConfig(loadFromOptions(options), contextName);
 
-  if (error) {
-    return { error };
-  }
-
-  return validateKubeConfig(loadFromOptions(options), contextName);
+  return result.error && error ? { error } : result;
 }
 
 export interface SplitConfigEntry {

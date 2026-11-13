@@ -3,12 +3,14 @@
  * Licensed under MIT License. See LICENSE in root directory for more information.
  */
 
+import path from "node:path";
 import { computed } from "mobx";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { Cluster } from "../../../common/cluster/cluster";
 import execFileInjectable from "../../../common/fs/exec-file.injectable";
 import removePathInjectable from "../../../common/fs/remove.injectable";
 import writeFileInjectable from "../../../common/fs/write-file.injectable";
+import userPreferencesStateInjectable from "../../../features/user-preferences/common/state.injectable";
 import freelensProxyTokenInjectable from "../../freelens-proxy/freelens-proxy-token.injectable";
 import { getDiForUnitTesting } from "../../getDiForUnitTesting";
 import kubeconfigManagerInjectable from "../../kubeconfig-manager/kubeconfig-manager.injectable";
@@ -29,6 +31,8 @@ import type { DiContainer } from "@ogre-tools/injectable";
 import type { Mock } from "vitest";
 
 import type { ExecFile } from "../../../common/fs/exec-file.injectable";
+import type { RemovePath } from "../../../common/fs/remove.injectable";
+import type { WriteFile } from "../../../common/fs/write-file.injectable";
 import type { KubeconfigManager, ProxyKubeconfigPaths } from "../../kubeconfig-manager/kubeconfig-manager";
 import type { ExecHelm } from "../exec-helm/exec-helm.injectable";
 
@@ -51,7 +55,7 @@ describe("helm with the proxy kubeconfig", () => {
       execFileMock = vi.fn(async () => ({ callWasSuccessful: true, response: "" }));
 
       di.override(execFileInjectable, () => execFileMock as unknown as ExecFile);
-      di.override(helmBinaryPathInjectable, () => "/some-helm");
+      di.override(helmBinaryPathInjectable, () => () => "/some-helm");
       di.override(execHelmEnvInjectable, () =>
         computed(() => ({ HTTPS_PROXY: "http://some-https-proxy:3128", KUBECACHEDIR: "/some-user-cache" })),
       );
@@ -94,16 +98,47 @@ describe("helm with the proxy kubeconfig", () => {
     });
   });
 
+  it("runs the helm set in the preferences at the time of the call", async () => {
+    const execFileMock = vi.fn<ExecFile>(async () => ({ callWasSuccessful: true, response: "" }));
+    const state = di.inject(userPreferencesStateInjectable);
+
+    di.override(execFileInjectable, () => execFileMock as unknown as ExecFile);
+    state.helmBinariesPath = "/some-helm";
+
+    const execHelm = di.inject(execHelmInjectable);
+
+    await execHelm(["version"]);
+    state.helmBinariesPath = "/some-other-helm";
+    await execHelm(["version"]);
+
+    expect(execFileMock.mock.calls.map(([file]) => file)).toEqual(["/some-helm", "/some-other-helm"]);
+  });
+
   describe("helm calls", () => {
     let execHelmMock: Mock<ExecHelm>;
+    let writeFileMock: Mock<WriteFile>;
+    let removePathMock: Mock<RemovePath>;
 
     beforeEach(() => {
       execHelmMock = vi.fn<ExecHelm>(async () => ({ callWasSuccessful: true, response: "[]" }));
+      writeFileMock = vi.fn<WriteFile>(async () => {});
+      removePathMock = vi.fn<RemovePath>(async () => {});
 
       di.override(execHelmInjectable, () => execHelmMock);
-      di.override(writeFileInjectable, () => vi.fn(async () => {}));
-      di.override(removePathInjectable, () => vi.fn(async () => {}));
+      di.override(writeFileInjectable, () => writeFileMock);
+      di.override(removePathInjectable, () => removePathMock);
     });
+
+    // The values may hold secrets: only the owner may read them, and nothing
+    // of them is left behind, the temporary directory included.
+    const expectValuesFileOwnerOnlyAndRemoved = () => {
+      const [valuesFilePath, values, options] = writeFileMock.mock.calls[0];
+
+      expect(execHelmMock.mock.calls[0][0]).toEqual(expect.arrayContaining(["--values", valuesFilePath]));
+      expect(values).toBe("some: values");
+      expect(options).toEqual({ mode: 0o600 });
+      expect(removePathMock).toHaveBeenCalledExactlyOnceWith(path.posix.dirname(valuesFilePath));
+    };
 
     const expectKubeCacheDir = () => {
       expect(execHelmMock).toHaveBeenCalledExactlyOnceWith(
@@ -165,7 +200,7 @@ describe("helm with the proxy kubeconfig", () => {
 
       await di.inject(installHelmChartInjectable)({
         chart: "some-repo/some-chart",
-        values: "",
+        values: "some: values",
         name: "some-release",
         namespace: "some-namespace",
         version: "1.0.0",
@@ -173,6 +208,7 @@ describe("helm with the proxy kubeconfig", () => {
       });
 
       expectKubeCacheDir();
+      expectValuesFileOwnerOnlyAndRemoved();
     });
 
     it("upgrades a release with the paths of the cluster's proxy kubeconfig", async () => {
@@ -194,11 +230,12 @@ describe("helm with the proxy kubeconfig", () => {
 
       await di.inject(updateHelmReleaseInjectable)(cluster, "some-release", "some-namespace", {
         chart: "some-repo/some-chart",
-        values: "",
+        values: "some: values",
         version: "1.0.0",
       });
 
       expectKubeCacheDir();
+      expectValuesFileOwnerOnlyAndRemoved();
     });
   });
 });

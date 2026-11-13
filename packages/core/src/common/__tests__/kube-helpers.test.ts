@@ -6,7 +6,7 @@
 
 import { KubeConfig } from "@kubernetes/client-node";
 import { beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
-import { loadConfigFromString, validateKubeConfig } from "../kube-helpers";
+import { loadConfigFromString, loadValidatedConfig, validateKubeConfig } from "../kube-helpers";
 
 const kubeconfig = `
 apiVersion: v1
@@ -249,6 +249,21 @@ describe("kube helpers", () => {
         expect(config.contexts.length).toBe(2);
         expect(config.contexts[0].name).toBe("kind-kind");
         expect(config.contexts[1].name).toBe("cluster-3");
+      });
+
+      it("a context without a user does not prevent validating another context", () => {
+        const content = JSON.stringify({
+          ...mockKubeConfig,
+          contexts: [...mockKubeConfig.contexts, { context: { cluster: "kind-kind" }, name: "no-user" }],
+        });
+
+        expect(loadConfigFromString(content).error).toBeInstanceOf(Error);
+
+        const result = loadValidatedConfig(content, "kind-kind");
+
+        expect(result.error).toBeUndefined();
+        expect(result.error ? undefined : result.context.name).toBe("kind-kind");
+        expect(loadValidatedConfig(content, "no-user").error).toBeInstanceOf(Error);
       });
     });
   });

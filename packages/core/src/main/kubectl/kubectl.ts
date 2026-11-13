@@ -353,7 +353,7 @@ export class Kubectl {
       }
 
       this.dependencies.logger.error(`Local kubectl failed to run properly (${execResult.error}), unlinking`);
-      await this.dependencies.unlink(path);
+      await this.discardBinary(path);
 
       return;
     }
@@ -362,7 +362,7 @@ export class Kubectl {
 
     if (!parseResult.callWasSuccessful) {
       this.dependencies.logger.error(`Local kubectl failed to run properly (${parseResult.error}), unlinking`);
-      await this.dependencies.unlink(path);
+      await this.discardBinary(path);
 
       return;
     }
@@ -379,7 +379,7 @@ export class Kubectl {
       !hasTypedProperty(output.clientVersion, "gitVersion", isString)
     ) {
       this.dependencies.logger.error(`Local kubectl failed to return correct shaped response, unlinking`);
-      await this.dependencies.unlink(path);
+      await this.discardBinary(path);
 
       return;
     }
@@ -396,9 +396,20 @@ export class Kubectl {
         this.dependencies.logger.error(
           `Local kubectl is version ${version}, expected ${this.kubectlVersion}, unlinking`,
         );
-        await this.dependencies.unlink(path);
+        await this.discardBinary(path);
 
         return false;
+    }
+  }
+
+  /**
+   * Deletes a kubectl that failed its check, when it is the download of this
+   * version. Any other path, the bundled kubectl above all, is part of the
+   * installation or the user's, and is left alone.
+   */
+  protected async discardBinary(path: string): Promise<void> {
+    if (path === this.path) {
+      await this.dependencies.unlink(path);
     }
   }
 

@@ -88,27 +88,33 @@ export class PortForward {
       `${this.forwardPort ?? ""}:${this.port}`,
     ];
 
-    this.process = spawn(kubectlBin, commandArgs, {
+    const childProcess = spawn(kubectlBin, commandArgs, {
       env: this.dependencies.withFreelensProxyCredentialEnv({ ...process.env, KUBECACHEDIR: cacheDirectoryPath }),
     });
-    PortForward.portForwards.push(this);
-    this.process.on("exit", () => {
+
+    this.process = childProcess;
+    childProcess.on("exit", () => {
       const index = PortForward.portForwards.indexOf(this);
 
       if (index > -1) {
         PortForward.portForwards.splice(index, 1);
       }
     });
+    // A kubectl that cannot be started emits `error`, which without a
+    // listener is thrown in the main process.
+    childProcess.on("error", (error) => {
+      this.dependencies.logger.error(`[PORT-FORWARD-ROUTE]: kubectl port-forward process failed: ${error}`);
+    });
 
-    this.process.stderr.on("data", (data) => {
+    childProcess.stderr.on("data", (data) => {
       this.dependencies.logger.debug(`[PORT-FORWARD-ROUTE]: kubectl port-forward process stderr: ${data}`);
     });
 
-    const internalPort = await this.dependencies.getPortFromStream(this.process.stdout, {
-      lineRegex: internalPortRegex,
-    });
-
     try {
+      const internalPort = await this.dependencies.getPortFromStream(childProcess.stdout, {
+        lineRegex: internalPortRegex,
+      });
+
       await tcpPortUsed.waitUntilUsedOnHost({
         host: this.address.split(",")[0],
         port: internalPort,
@@ -118,13 +124,17 @@ export class PortForward {
 
       // make sure this.forwardPort is set to the actual port used (if it was 0 then an available port is found by 'kubectl port-forward')
       this.forwardPort = internalPort;
-
-      return true;
     } catch (error) {
-      this.process.kill();
+      childProcess.kill();
 
       return false;
     }
+
+    // Listed only once it forwards: a failed start leaves no entry that a
+    // later request for the same port would be answered from.
+    PortForward.portForwards.push(this);
+
+    return true;
   }
 
   public async stop() {

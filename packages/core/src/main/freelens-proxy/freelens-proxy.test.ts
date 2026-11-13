@@ -360,10 +360,16 @@ describe("Freelens proxy protocols", () => {
             if (req.url === "/some-open-response" && res instanceof http2.Http2ServerResponse) {
               res.writeHead(200).write("some-start");
 
-              return;
+              return true;
+            }
+
+            if (req.url === "/some-unrouted-path") {
+              return false;
             }
 
             res.end(`some-response-over-${req.httpVersion}`);
+
+            return true;
           },
         }) as unknown as Router,
     );
@@ -439,6 +445,28 @@ describe("Freelens proxy protocols", () => {
 
   it("leaves the caching of the renderer's files to the client", async () => {
     expect((await getHeadersHttp1(port, "/some-path"))["cache-control"]).toBeUndefined();
+  });
+
+  it("answers 404 to a request no route matches", async () => {
+    expect(await getHttp1(port, "/some-unrouted-path")).toEqual({ statusCode: 404, body: "Not Found" });
+  });
+
+  it.each([
+    ["a dot segment", "/./api/v2/releases"],
+    ["an encoded dot segment", "/%2e/api/v2/releases"],
+    ["a parent segment", "/some-dir/../api/v2/releases"],
+    ["a backslash", "\\api/v2/releases"],
+    ["the absolute form", "https://127.0.0.1/api/v2/releases"],
+  ])("refuses a path with %s, which the router would match as the local router api", async (_name, path) => {
+    // Only the status: the absolute form gets a 400 without a body
+    expect((await getHttp1(port, path, { authorization: "Bearer not-the-token" })).statusCode).toBe(400);
+  });
+
+  it("still answers a path whose query has dots and slashes", async () => {
+    expect(await getHttp1(port, "/some-path?file=../some/./thing")).toEqual({
+      statusCode: 200,
+      body: "some-response-over-1.1",
+    });
   });
 });
 

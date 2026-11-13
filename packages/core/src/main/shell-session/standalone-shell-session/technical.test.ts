@@ -149,7 +149,7 @@ describe("technical unit tests for standalone shell sessions", () => {
 
             return { dispose: () => void dataListeners.delete(listener) };
           }),
-          onExit: vi.fn(),
+          onExit: vi.fn(() => ({ dispose: vi.fn() })),
           pause: vi.fn(),
           process: "my-pty",
           resize: vi.fn(),

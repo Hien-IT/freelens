@@ -5,9 +5,10 @@
  */
 
 import { getInjectable } from "@ogre-tools/injectable";
-import { temporaryFile } from "tempy";
+import { temporaryDirectory } from "tempy";
 import removePathInjectable from "../../common/fs/remove.injectable";
 import writeFileInjectable from "../../common/fs/write-file.injectable";
+import joinPathsInjectable from "../../common/path/join-paths.injectable";
 import userPreferencesStateInjectable from "../../features/user-preferences/common/state.injectable";
 import execHelmInjectable, { proxyKubeconfigHelmOptions } from "./exec-helm/exec-helm.injectable";
 
@@ -38,14 +39,13 @@ const installHelmChartInjectable = getInjectable({
   instantiate: (di): InstallHelmChart => {
     const writeFile = di.inject(writeFileInjectable);
     const removePath = di.inject(removePathInjectable);
+    const joinPaths = di.inject(joinPathsInjectable);
     const execHelm = di.inject(execHelmInjectable);
     const state = di.inject(userPreferencesStateInjectable);
 
     return async ({ chart, kubeconfig, name, namespace, values, version, forceConflicts }) => {
-      const valuesFilePath = temporaryFile({ name: "values.yaml" });
-
-      await writeFile(valuesFilePath, values);
-
+      const valuesDirectory = temporaryDirectory();
+      const valuesFilePath = joinPaths(valuesDirectory, "values.yaml");
       const args = ["install"];
 
       if (name) {
@@ -83,6 +83,8 @@ const installHelmChartInjectable = getInjectable({
       }
 
       try {
+        await writeFile(valuesFilePath, values, { mode: 0o600 });
+
         const result = await execHelm(args, proxyKubeconfigHelmOptions(kubeconfig));
 
         if (!result.callWasSuccessful) {
@@ -100,7 +102,7 @@ const installHelmChartInjectable = getInjectable({
           },
         };
       } finally {
-        await removePath(valuesFilePath);
+        await removePath(valuesDirectory);
       }
     };
   },

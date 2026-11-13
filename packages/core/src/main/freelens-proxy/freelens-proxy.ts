@@ -91,6 +91,24 @@ export function requiresToken(reqUrl: string) {
 }
 
 /**
+ * Whether the path of a request is the one the router matches. The token is
+ * required by the path as the client sent it, and the router matches the path
+ * that `URL` resolves dot segments, `%2e` and backslashes in, so `/./api/…`
+ * would reach the local router api without the token. A path that changes
+ * under that resolution, or that is not in origin form, is refused instead.
+ */
+export function isNormalizedRequestPath(reqUrl: string) {
+  if (!reqUrl.startsWith("/")) {
+    return false;
+  }
+
+  const pathEnd = reqUrl.search(/[?#]/);
+  const path = pathEnd === -1 ? reqUrl : reqUrl.slice(0, pathEnd);
+
+  return new URL(path, "http://localhost").pathname === path;
+}
+
+/**
  * API responses are not meant to be reused, so the client is told not to
  * store them. The Kubernetes API server answers with `no-cache, private`,
  * which is weaker, so the proxy replaces it.
@@ -442,6 +460,12 @@ export class FreelensProxy {
   }
 
   protected async handleRequest(req: ServerIncomingMessage, res: ServerResponse) {
+    if (!isNormalizedRequestPath(req.url)) {
+      res.setHeader("Cache-Control", noStore);
+
+      return this.respondWithError(res, 400, "Bad Request");
+    }
+
     // The route of the cluster as the client asked for it: the lookup points a
     // request of the main process at the kube api, and rewrites the path a
     // kubectl or helm client uses (`/<clusterId>/…`) to `/api-kube/…`.
@@ -536,7 +560,9 @@ export class FreelensProxy {
     res.setHeader("Content-Security-Policy", this.dependencies.contentSecurityPolicy);
 
     try {
-      await this.dependencies.router.route(cluster, req, res);
+      if (!(await this.dependencies.router.route(cluster, req, res))) {
+        this.respondWithError(res, 404, "Not Found");
+      }
     } catch (error) {
       this.dependencies.logger.error("[FREELENS-PROXY]: failed to route request", { url: req.url, error });
       this.respondWithError(res, 500, `Oops, something went wrong.\n${error}`);

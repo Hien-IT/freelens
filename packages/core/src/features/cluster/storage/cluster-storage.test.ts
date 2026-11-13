@@ -215,4 +215,58 @@ describe("cluster storage technical tests", () => {
       expect(storedClusters[2].id).toBe("cluster3");
     });
   });
+
+  describe("config with a cluster that fails to load", () => {
+    const invalidCluster = {
+      id: "invalid-cluster",
+      kubeConfigPath: "/temp-kube-config",
+      preferences: { terminalCWD: "/invalid" },
+    };
+
+    beforeEach(() => {
+      writeFileSync("/temp-kube-config", kubeconfig);
+      writeJsonSync("/some-directory-for-user-data/lens-cluster-store.json", {
+        __internal__: {
+          migrations: {
+            version: "99.99.99",
+          },
+        },
+        clusters: [
+          {
+            id: "cluster1",
+            kubeConfigPath: "/temp-kube-config",
+            contextName: "foo",
+          },
+          invalidCluster,
+        ],
+      });
+
+      getCustomKubeConfigFilePath = di.inject(getCustomKubeConfigFilePathInjectable);
+      clustersPersistentStorage = di.inject(clustersPersistentStorageInjectable);
+      clustersPersistentStorage.loadAndStartSyncing();
+    });
+
+    it("does not load it", () => {
+      expect(clusters.get().map((cluster) => cluster.id)).toEqual(["cluster1"]);
+    });
+
+    it("keeps it unchanged in the file when the store is saved", () => {
+      addCluster({
+        id: "cluster2",
+        contextName: "foo2",
+        kubeConfigPath: "/temp-kube-config",
+      });
+
+      const { clusters: storedClusters } = JSON.parse(
+        readFileSync("/some-directory-for-user-data/lens-cluster-store.json"),
+      );
+
+      expect(storedClusters.map((cluster: { id: string }) => cluster.id)).toEqual([
+        "cluster1",
+        "cluster2",
+        "invalid-cluster",
+      ]);
+      expect(storedClusters[2]).toEqual(invalidCluster);
+    });
+  });
 });

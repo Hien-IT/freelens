@@ -6,9 +6,10 @@
 
 import { loggerInjectionToken } from "@freelensapp/logger";
 import { getInjectable } from "@ogre-tools/injectable";
-import { temporaryFile } from "tempy";
+import { temporaryDirectory } from "tempy";
 import removePathInjectable from "../../../common/fs/remove.injectable";
 import writeFileInjectable from "../../../common/fs/write-file.injectable";
+import joinPathsInjectable from "../../../common/path/join-paths.injectable";
 import userPreferencesStateInjectable from "../../../features/user-preferences/common/state.injectable";
 import kubeconfigManagerInjectable from "../../kubeconfig-manager/kubeconfig-manager.injectable";
 import execHelmInjectable, { proxyKubeconfigHelmOptions } from "../exec-helm/exec-helm.injectable";
@@ -31,18 +32,20 @@ const updateHelmReleaseInjectable = getInjectable({
     const getHelmRelease = di.inject(getHelmReleaseInjectable);
     const writeFile = di.inject(writeFileInjectable);
     const removePath = di.inject(removePathInjectable);
+    const joinPaths = di.inject(joinPathsInjectable);
     const execHelm = di.inject(execHelmInjectable);
     const state = di.inject(userPreferencesStateInjectable);
 
     return async (cluster: Cluster, releaseName: string, namespace: string, data: UpdateChartArgs) => {
       const proxyKubeconfigManager = di.inject(kubeconfigManagerInjectable, cluster);
       const proxyKubeconfig = await proxyKubeconfigManager.ensurePaths();
-      const valuesFilePath = temporaryFile({ name: "values.yaml" });
+      const valuesDirectory = temporaryDirectory();
+      const valuesFilePath = joinPaths(valuesDirectory, "values.yaml");
 
       logger.debug(`[HELM]: upgrading "${releaseName}" in "${namespace}" to ${data.version}`);
 
       try {
-        await writeFile(valuesFilePath, data.values);
+        await writeFile(valuesFilePath, data.values, { mode: 0o600 });
 
         // If forceConflicts is enabled, always use server-side
         // Otherwise, use the preference setting
@@ -89,7 +92,7 @@ const updateHelmReleaseInjectable = getInjectable({
           release: releaseResult.response,
         };
       } finally {
-        await removePath(valuesFilePath);
+        await removePath(valuesDirectory);
       }
     };
   },

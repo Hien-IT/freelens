@@ -77,4 +77,42 @@ describe("PortForward", () => {
       },
     );
   });
+
+  it("kills kubectl and lists nothing when kubectl never says which port it forwards", async () => {
+    const kill = vi.fn();
+
+    vi.mocked(spawn).mockReturnValue({
+      on: vi.fn(),
+      kill,
+      stdout: {},
+      stderr: { on: vi.fn() },
+    } as unknown as ReturnType<typeof spawn>);
+
+    const portForward = new PortForward(
+      {
+        logger: { debug: vi.fn(), error: vi.fn(), info: vi.fn(), silly: vi.fn(), warn: vi.fn() } as Logger,
+        getKubectlBinPath: async () => "/some-kubectl",
+        getPortFromStream: async () => {
+          throw new Error("some-timeout");
+        },
+        withFreelensProxyCredentialEnv: (env) => env,
+      },
+      {
+        kubeconfigPath: "/some-directory-for-temp/kubeconfig-some-cluster-id",
+        cacheDirectoryPath: "/some-directory-for-temp/kubecache-some-cluster-id",
+      },
+      {
+        clusterId: "some-cluster-id",
+        kind: "pod",
+        namespace: "some-namespace",
+        name: "some-pod",
+        port: 80,
+        forwardPort: 0,
+      },
+    );
+
+    expect(await portForward.start()).toBe(false);
+    expect(kill).toHaveBeenCalled();
+    expect(PortForward.portForwards).toEqual([]);
+  });
 });

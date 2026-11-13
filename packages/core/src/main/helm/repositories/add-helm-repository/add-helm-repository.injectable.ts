@@ -34,8 +34,9 @@ const addHelmRepositoryInjectable = getInjectable({
         args.push("--username", username);
       }
 
+      // On the standard input, as an argument would show it in the process list.
       if (password) {
-        args.push("--password", password);
+        args.push("--password-stdin");
       }
 
       if (caFile) {
@@ -50,7 +51,7 @@ const addHelmRepositoryInjectable = getInjectable({
         args.push("--cert-file", certFile);
       }
 
-      const result = await execHelm(args);
+      const result = await execHelm(args, password ? { input: password } : {});
 
       if (result.callWasSuccessful) {
         emitHelmRepositoriesChanged();

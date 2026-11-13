@@ -49,7 +49,7 @@ describe("add custom helm repository in preferences", () => {
     builder.beforeApplicationStart(({ mainDi }) => {
       mainDi.override(getActiveHelmRepositoriesInjectable, () => getActiveHelmRepositoriesMock);
       mainDi.override(execFileInjectable, () => execFileMock as unknown as ExecFile);
-      mainDi.override(helmBinaryPathInjectable, () => "some-helm-binary-path");
+      mainDi.override(helmBinaryPathInjectable, () => () => "some-helm-binary-path");
     });
 
     builder.beforeWindowStart(({ windowDi }) => {
@@ -192,7 +192,7 @@ describe("add custom helm repository in preferences", () => {
                 "some-helm-binary-path",
                 ["repo", "add", "some-custom-repository", "http://some.url"],
                 {
-                  maxBuffer: 34359738368,
+                  maxBuffer: 33554432,
                   env: {},
                 },
               );
@@ -393,8 +393,7 @@ describe("add custom helm repository in preferences", () => {
                     "--insecure-skip-tls-verify",
                     "--username",
                     "some-username",
-                    "--password",
-                    "some-password",
+                    "--password-stdin",
                     "--ca-file",
                     "some-ca-cert-file",
                     "--key-file",
@@ -403,8 +402,9 @@ describe("add custom helm repository in preferences", () => {
                     "some-cert-file",
                   ],
                   {
-                    maxBuffer: 34359738368,
+                    maxBuffer: 33554432,
                     env: {},
+                    input: "some-password",
                   },
                 );
               });

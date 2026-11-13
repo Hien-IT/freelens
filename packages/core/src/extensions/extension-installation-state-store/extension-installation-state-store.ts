@@ -5,10 +5,8 @@
  */
 
 import { disposer } from "@freelensapp/utilities";
-import { ipcRenderer } from "electron";
 import { action, computed, observable } from "mobx";
 import * as uuid from "uuid";
-import { broadcastMessage } from "../../common/ipc";
 
 import type { Logger } from "@freelensapp/logger";
 import type { ExtendableDisposer } from "@freelensapp/utilities";
@@ -25,26 +23,12 @@ interface Dependencies {
 
 const Prefix = "[ExtensionInstallationStore]";
 
-const installingFromMainChannel = "extension-installation-state-store:install";
-const clearInstallingFromMainChannel = "extension-installation-state-store:clear-install";
-
 export class ExtensionInstallationStateStore {
   private readonly preInstallIds = observable.set<string>();
   private readonly uninstallingExtensions = observable.set<string>();
   private readonly installingExtensions = observable.set<string>();
 
   constructor(private readonly dependencies: Dependencies) {}
-
-  bindIpcListeners = () => {
-    ipcRenderer
-      .on(installingFromMainChannel, (event, extId) => {
-        this.setInstalling(extId);
-      })
-
-      .on(clearInstallingFromMainChannel, (event, extId) => {
-        this.clearInstalling(extId);
-      });
-  };
 
   /**
    * Strictly transitions an extension from not installing to installing
@@ -61,22 +45,6 @@ export class ExtensionInstallationStateStore {
     }
 
     this.installingExtensions.add(extId);
-  };
-
-  /**
-   * Broadcasts that an extension is being installed by the main process
-   * @param extId the ID of the extension
-   */
-  setInstallingFromMain = (extId: string): void => {
-    broadcastMessage(installingFromMainChannel, extId);
-  };
-
-  /**
-   * Broadcasts that an extension is no longer being installed by the main process
-   * @param extId the ID of the extension
-   */
-  clearInstallingFromMain = (extId: string): void => {
-    broadcastMessage(clearInstallingFromMainChannel, extId);
   };
 
   /**

@@ -22,6 +22,7 @@ import { extensionDisplayName, sanitizeExtensionName } from "../../../../extensi
 import activateInstalledBuildInjectable from "../../../../features/extensions/installer/common/activate-installed-build.injectable";
 import { computeTarballDigest, shortenDigest } from "../../../../features/extensions/installer/common/checksums";
 import extensionsRootInjectable from "../../../../features/extensions/installer/common/extensions-root.injectable";
+import { managedDirectoryOf } from "../../../../features/extensions/installer/common/managed-directory";
 import { versionDirectoryName } from "../../../../features/extensions/installer/common/version-directory";
 import { getMessageFromError } from "../get-message-from-error/get-message-from-error";
 import { disabledForReinstallNote, installFailureSubject } from "./disabled-for-reinstall";
@@ -59,6 +60,17 @@ export type UnpackExtension = (
  * a `.deb` is redundant once installed -- so the digest is computed here, while
  * the bytes are still in hand.
  */
+/**
+ * Removes the tarball of an install and the directory of its own that
+ * `createTempFilesAndValidate` put it in. `rmdir` removes the directory only
+ * once it is empty, so a directory shared with anything else stays.
+ */
+export const discardTarball = (tempFile: string) =>
+  fse
+    .unlink(tempFile)
+    .then(() => fse.rmdir(path.dirname(tempFile)))
+    .catch(noop);
+
 const unpackExtensionInjectable = getInjectable({
   id: "unpack-extension",
   instantiate: (di): UnpackExtension => {
@@ -114,6 +126,15 @@ const unpackExtensionInjectable = getInjectable({
       logger.info(`Unpacking extension ${displayName}`, { fileName, tempFile, buildFolder });
 
       try {
+        // The name and the version are validated with the manifest, but the
+        // path built from them is what gets written to: it has to be a build
+        // directory of its own, two levels below the extensions root.
+        const managedDirectory = managedDirectoryOf(extensionsRoot, buildFolder);
+
+        if (!managedDirectory || path.dirname(buildFolder) !== managedDirectory) {
+          throw new Error(`the install path ${buildFolder} is outside of the extensions directory`);
+        }
+
         // The checksum itself was checked in `attemptInstall`, before these
         // bytes were written out or read into: by here the only thing left to
         // say about it is that there was not one.
@@ -185,9 +206,11 @@ const unpackExtensionInjectable = getInjectable({
         // Remove install state once finished
         extensionInstallationStateStore.clearInstalling(id);
 
-        // clean up
-        fse.remove(unpackingTempFolder).catch(noop);
-        fse.unlink(tempFile).catch(noop);
+        // Clean up, along with the directory of this install's own which
+        // `createTempFilesAndValidate` put the tarball in. `rmdir` removes it
+        // only once it is empty, so a directory shared with anything else stays.
+        await fse.remove(unpackingTempFolder).catch(noop);
+        await discardTarball(tempFile);
       }
     };
   },

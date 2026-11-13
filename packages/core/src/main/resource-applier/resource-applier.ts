@@ -5,7 +5,7 @@
  */
 
 import * as yaml from "js-yaml";
-import { temporaryDirectory, temporaryFile } from "tempy";
+import { temporaryDirectory } from "tempy";
 import { defaultYamlDumpOptions } from "../../common/kube-helpers";
 
 import type { Logger } from "@freelensapp/logger";
@@ -44,8 +44,6 @@ export class ResourceApplier {
 
   private async getKubectlPath() {
     const kubectl = this.dependencies.createKubectl(this.cluster.version.get());
-
-    await kubectl.ensureKubectl();
 
     return kubectl.getPath();
   }
@@ -100,13 +98,14 @@ export class ResourceApplier {
   protected async kubectlApply(content: string): AsyncResult<string, string> {
     const kubectlPath = await this.getKubectlPath();
     const proxyKubeconfig = await this.dependencies.proxyKubeconfigManager.ensurePaths();
-    const fileName = temporaryFile({ name: "resource.yaml" });
+    const tmpDir = temporaryDirectory();
+    const fileName = this.dependencies.joinPaths(tmpDir, "resource.yaml");
     const args = ["apply", ...this.getKubeconfigArgs(proxyKubeconfig), "-o", "json", "-f", fileName];
 
     this.dependencies.logger.debug(`shooting manifests with ${kubectlPath}`, { args });
 
     try {
-      await this.dependencies.writeFile(fileName, content);
+      await this.dependencies.writeFile(fileName, content, { mode: 0o600 });
 
       const result = await this.dependencies.execFile(kubectlPath, args, { env: this.getExecEnv(proxyKubeconfig) });
 
@@ -119,7 +118,7 @@ export class ResourceApplier {
         error: result.error.stderr || result.error.message,
       };
     } finally {
-      await this.dependencies.deleteFile(fileName);
+      await this.dependencies.deleteFile(tmpDir);
     }
   }
 
@@ -140,29 +139,33 @@ export class ResourceApplier {
     const proxyKubeconfig = await this.dependencies.proxyKubeconfigManager.ensurePaths();
     const tmpDir = temporaryDirectory();
 
-    await Promise.all(
-      resources.map((resource, index) =>
-        this.dependencies.writeFile(this.dependencies.joinPaths(tmpDir, `${index}.yaml`), resource),
-      ),
-    );
+    try {
+      await Promise.all(
+        resources.map((resource, index) =>
+          this.dependencies.writeFile(this.dependencies.joinPaths(tmpDir, `${index}.yaml`), resource, { mode: 0o600 }),
+        ),
+      );
 
-    const args = [subCmd, ...this.getKubeconfigArgs(proxyKubeconfig), ...parentArgs, "-f", tmpDir];
+      const args = [subCmd, ...this.getKubeconfigArgs(proxyKubeconfig), ...parentArgs, "-f", tmpDir];
 
-    this.dependencies.logger.info(`[RESOURCE-APPLIER] running kubectl`, { args });
-    const result = await this.dependencies.execFile(kubectlPath, args, { env: this.getExecEnv(proxyKubeconfig) });
+      this.dependencies.logger.info(`[RESOURCE-APPLIER] running kubectl`, { args });
+      const result = await this.dependencies.execFile(kubectlPath, args, { env: this.getExecEnv(proxyKubeconfig) });
 
-    if (result.callWasSuccessful) {
-      return result;
+      if (result.callWasSuccessful) {
+        return result;
+      }
+
+      this.dependencies.logger.error(`[RESOURCE-APPLIER] kubectl errored: ${result.error.message}`);
+
+      const splitError = result.error.stderr.split(`.yaml": `);
+
+      return {
+        callWasSuccessful: false,
+        error: splitError[1] || result.error.message,
+      };
+    } finally {
+      await this.dependencies.deleteFile(tmpDir);
     }
-
-    this.dependencies.logger.error(`[RESOURCE-APPLIER] kubectl errored: ${result.error.message}`);
-
-    const splitError = result.error.stderr.split(`.yaml": `);
-
-    return {
-      callWasSuccessful: false,
-      error: splitError[1] || result.error.message,
-    };
   }
 
   protected sanitizeObject(resource: string) {

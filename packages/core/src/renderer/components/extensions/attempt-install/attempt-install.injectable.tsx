@@ -18,7 +18,7 @@ import { getMessageFromError } from "../get-message-from-error/get-message-from-
 import createTempFilesAndValidateInjectable from "./create-temp-files-and-validate.injectable";
 import { disabledForReinstallNote, installFailureSubject } from "./disabled-for-reinstall";
 import getExtensionDestFolderInjectable from "./get-extension-dest-folder.injectable";
-import unpackExtensionInjectable from "./unpack-extension.injectable";
+import unpackExtensionInjectable, { discardTarball } from "./unpack-extension.injectable";
 
 import type { Logger } from "@freelensapp/logger";
 import type { ShowNotification } from "@freelensapp/notifications";
@@ -138,11 +138,18 @@ const attemptInstall =
       return dispose();
     }
 
+    // An install that stops before `unpackExtension`, which cleans up after
+    // itself, removes its tarball here.
+    const abandon = () => {
+      dispose();
+      void discardTarball(validatedRequest.tempFile);
+    };
+
     const { name, version, description } = validatedRequest.manifest;
     const curState = installStateStore.getInstallationState(validatedRequest.id);
 
     if (curState !== ExtensionInstallationState.IDLE) {
-      dispose();
+      abandon();
 
       return void showErrorNotification(
         <div className="flex flex-col gap-2">
@@ -219,7 +226,7 @@ const attemptInstall =
     });
 
     if (!proceed) {
-      return dispose();
+      return abandon();
     }
 
     // The running build has to be gone from both processes before
@@ -243,7 +250,7 @@ const attemptInstall =
       logger.warn(`[EXTENSION-INSTALLATION]: cannot tear ${name}@${oldVersion} down to replace it: ${message}`, {
         error,
       });
-      dispose();
+      abandon();
 
       return void showErrorNotification(
         <div className="flex flex-col gap-2">
