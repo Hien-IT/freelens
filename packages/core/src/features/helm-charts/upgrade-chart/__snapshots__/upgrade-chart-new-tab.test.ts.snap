@@ -234,6 +234,40 @@ exports[`New Upgrade Helm Chart Dock Tab > given a namespace is selected > when 
               role="button"
               style="pointer-events: auto; opacity: 1; transition: transform 0ms linear;"
               tabindex="0"
+            >
+              <div
+                class="SidebarItem"
+                data-is-active-test="false"
+                data-testid="sidebar-item-traffic-map"
+              >
+                <a
+                  class="navItem"
+                  data-testid="link-for-sidebar-item-traffic-map"
+                  href="/helm/releases"
+                >
+                  <i
+                    class="Icon material focusable"
+                  >
+                    <span
+                      class="icon"
+                      data-icon-name="device_hub"
+                    >
+                      device_hub
+                    </span>
+                  </i>
+                  <span>
+                    Traffic Map
+                  </span>
+                </a>
+              </div>
+            </div>
+            <div
+              aria-describedby="DndDescribedBy-0"
+              aria-disabled="false"
+              aria-roledescription="sortable"
+              role="button"
+              style="pointer-events: auto; opacity: 1; transition: transform 0ms linear;"
+              tabindex="0"
             />
             <div
               aria-describedby="DndDescribedBy-0"
@@ -1137,6 +1171,40 @@ exports[`New Upgrade Helm Chart Dock Tab > given a namespace is selected > when 
                   </i>
                   <span>
                     Resource Map
+                  </span>
+                </a>
+              </div>
+            </div>
+            <div
+              aria-describedby="DndDescribedBy-2"
+              aria-disabled="false"
+              aria-roledescription="sortable"
+              role="button"
+              style="pointer-events: auto; opacity: 1; transition: transform 0ms linear;"
+              tabindex="0"
+            >
+              <div
+                class="SidebarItem"
+                data-is-active-test="false"
+                data-testid="sidebar-item-traffic-map"
+              >
+                <a
+                  class="navItem"
+                  data-testid="link-for-sidebar-item-traffic-map"
+                  href="/helm/releases"
+                >
+                  <i
+                    class="Icon material focusable"
+                  >
+                    <span
+                      class="icon"
+                      data-icon-name="device_hub"
+                    >
+                      device_hub
+                    </span>
+                  </i>
+                  <span>
+                    Traffic Map
                   </span>
                 </a>
               </div>
@@ -2194,6 +2262,40 @@ exports[`New Upgrade Helm Chart Dock Tab > given a namespace is selected > when 
                   </i>
                   <span>
                     Resource Map
+                  </span>
+                </a>
+              </div>
+            </div>
+            <div
+              aria-describedby="DndDescribedBy-3"
+              aria-disabled="false"
+              aria-roledescription="sortable"
+              role="button"
+              style="pointer-events: auto; opacity: 1; transition: transform 0ms linear;"
+              tabindex="0"
+            >
+              <div
+                class="SidebarItem"
+                data-is-active-test="false"
+                data-testid="sidebar-item-traffic-map"
+              >
+                <a
+                  class="navItem"
+                  data-testid="link-for-sidebar-item-traffic-map"
+                  href="/helm/releases"
+                >
+                  <i
+                    class="Icon material focusable"
+                  >
+                    <span
+                      class="icon"
+                      data-icon-name="device_hub"
+                    >
+                      device_hub
+                    </span>
+                  </i>
+                  <span>
+                    Traffic Map
                   </span>
                 </a>
               </div>
@@ -3305,6 +3407,40 @@ exports[`New Upgrade Helm Chart Dock Tab > given a namespace is selected > when 
                   </i>
                   <span>
                     Resource Map
+                  </span>
+                </a>
+              </div>
+            </div>
+            <div
+              aria-describedby="DndDescribedBy-4"
+              aria-disabled="false"
+              aria-roledescription="sortable"
+              role="button"
+              style="pointer-events: auto; opacity: 1; transition: transform 0ms linear;"
+              tabindex="0"
+            >
+              <div
+                class="SidebarItem"
+                data-is-active-test="false"
+                data-testid="sidebar-item-traffic-map"
+              >
+                <a
+                  class="navItem"
+                  data-testid="link-for-sidebar-item-traffic-map"
+                  href="/helm/releases"
+                >
+                  <i
+                    class="Icon material focusable"
+                  >
+                    <span
+                      class="icon"
+                      data-icon-name="device_hub"
+                    >
+                      device_hub
+                    </span>
+                  </i>
+                  <span>
+                    Traffic Map
                   </span>
                 </a>
               </div>
@@ -4452,6 +4588,40 @@ exports[`New Upgrade Helm Chart Dock Tab > given a namespace is selected > when 
                   </i>
                   <span>
                     Resource Map
+                  </span>
+                </a>
+              </div>
+            </div>
+            <div
+              aria-describedby="DndDescribedBy-9"
+              aria-disabled="false"
+              aria-roledescription="sortable"
+              role="button"
+              style="pointer-events: auto; opacity: 1; transition: transform 0ms linear;"
+              tabindex="0"
+            >
+              <div
+                class="SidebarItem"
+                data-is-active-test="false"
+                data-testid="sidebar-item-traffic-map"
+              >
+                <a
+                  class="navItem"
+                  data-testid="link-for-sidebar-item-traffic-map"
+                  href="/helm/releases"
+                >
+                  <i
+                    class="Icon material focusable"
+                  >
+                    <span
+                      class="icon"
+                      data-icon-name="device_hub"
+                    >
+                      device_hub
+                    </span>
+                  </i>
+                  <span>
+                    Traffic Map
                   </span>
                 </a>
               </div>
@@ -5767,6 +5937,40 @@ exports[`New Upgrade Helm Chart Dock Tab > given a namespace is selected > when 
               role="button"
               style="pointer-events: auto; opacity: 1; transition: transform 0ms linear;"
               tabindex="0"
+            >
+              <div
+                class="SidebarItem"
+                data-is-active-test="false"
+                data-testid="sidebar-item-traffic-map"
+              >
+                <a
+                  class="navItem"
+                  data-testid="link-for-sidebar-item-traffic-map"
+                  href="/helm/releases"
+                >
+                  <i
+                    class="Icon material focusable"
+                  >
+                    <span
+                      class="icon"
+                      data-icon-name="device_hub"
+                    >
+                      device_hub
+                    </span>
+                  </i>
+                  <span>
+                    Traffic Map
+                  </span>
+                </a>
+              </div>
+            </div>
+            <div
+              aria-describedby="DndDescribedBy-12"
+              aria-disabled="false"
+              aria-roledescription="sortable"
+              role="button"
+              style="pointer-events: auto; opacity: 1; transition: transform 0ms linear;"
+              tabindex="0"
             />
             <div
               aria-describedby="DndDescribedBy-12"
@@ -7062,6 +7266,40 @@ exports[`New Upgrade Helm Chart Dock Tab > given a namespace is selected > when 
                   </i>
                   <span>
                     Resource Map
+                  </span>
+                </a>
+              </div>
+            </div>
+            <div
+              aria-describedby="DndDescribedBy-13"
+              aria-disabled="false"
+              aria-roledescription="sortable"
+              role="button"
+              style="pointer-events: auto; opacity: 1; transition: transform 0ms linear;"
+              tabindex="0"
+            >
+              <div
+                class="SidebarItem"
+                data-is-active-test="false"
+                data-testid="sidebar-item-traffic-map"
+              >
+                <a
+                  class="navItem"
+                  data-testid="link-for-sidebar-item-traffic-map"
+                  href="/helm/releases"
+                >
+                  <i
+                    class="Icon material focusable"
+                  >
+                    <span
+                      class="icon"
+                      data-icon-name="device_hub"
+                    >
+                      device_hub
+                    </span>
+                  </i>
+                  <span>
+                    Traffic Map
                   </span>
                 </a>
               </div>

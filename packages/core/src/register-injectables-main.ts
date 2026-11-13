@@ -42,6 +42,7 @@ import { registerInjectables as registerFeaturesFeaturesPreferencesCommonInjecta
 import { registerInjectables as registerFeaturesFeaturesSecretCertificatesMainInjectables } from "./features/secret-certificates/main/register-injectables";
 import { registerInjectables as registerFeaturesFeaturesShellSyncMainInjectables } from "./features/shell-sync/main/register-injectables";
 import { registerInjectables as registerFeaturesFeaturesThemeSystemTypeMainInjectables } from "./features/theme/system-type/main/register-injectables";
+import { registerInjectables as registerFeaturesFeaturesTrafficMapMainInjectables } from "./features/traffic-map/main/register-injectables";
 import { registerInjectables as registerFeaturesFeaturesUserPreferencesMainInjectables } from "./features/user-preferences/main/register-injectables";
 import { registerInjectables as registerFeaturesFeaturesUserPreferencesInjectables } from "./features/user-preferences/register-injectables";
 import { registerInjectables as registerFeaturesFeaturesVarsBuildVersionMainInjectables } from "./features/vars/build-version/main/register-injectables";
@@ -90,6 +91,7 @@ export function registerInjectables(di: DiContainerForInjection): void {
   registerFeaturesFeaturesSecretCertificatesMainInjectables(di);
   registerFeaturesFeaturesShellSyncMainInjectables(di);
   registerFeaturesFeaturesThemeSystemTypeMainInjectables(di);
+  registerFeaturesFeaturesTrafficMapMainInjectables(di);
   registerFeaturesFeaturesUserPreferencesMainInjectables(di);
   registerFeaturesFeaturesUserPreferencesInjectables(di);
   registerFeaturesFeaturesVarsInjectables(di);

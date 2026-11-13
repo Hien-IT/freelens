@@ -1,0 +1,449 @@
+/**
+ * Copyright (c) Freelens Authors. All rights reserved.
+ * Licensed under MIT License. See LICENSE in root directory for more information.
+ */
+
+.trafficMapPage {
+  padding: calc(var(--padding) * 2);
+
+  // the <main> of the TabLayout: the header, and the map below it
+  main {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+}
+
+.header {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: var(--padding);
+  margin: 10px 0;
+  padding: 0 10px 5px;
+  border-bottom: 1px solid currentColor;
+}
+
+.title {
+  white-space: nowrap;
+}
+
+.namespaceFilter {
+  margin-left: auto;
+}
+
+.toolbar {
+  display: flex;
+  align-items: center;
+  gap: var(--padding);
+}
+
+.select {
+  min-width: 170px;
+}
+
+.source {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+}
+
+.sourceDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--colorOk);
+}
+
+.autoRefresh {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  white-space: nowrap;
+  color: var(--textColorSecondary);
+}
+
+.spinning {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.body {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  gap: var(--padding);
+}
+
+.filters {
+  flex-shrink: 0;
+  width: 220px;
+  overflow-y: auto;
+  padding-right: var(--padding);
+
+  section {
+    margin-bottom: calc(var(--padding) * 2);
+  }
+
+  h6 {
+    margin-bottom: 6px;
+    color: var(--textColorSecondary);
+    text-transform: uppercase;
+    font-size: smaller;
+  }
+}
+
+.main {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.canvas {
+  position: relative;
+  flex: 3;
+  min-height: 200px;
+}
+
+.graph {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  background: var(--secondaryBackground);
+}
+
+.status {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--padding);
+  height: 100%;
+  color: var(--textColorSecondary);
+}
+
+.stats {
+  position: absolute;
+  left: 8px;
+  bottom: 8px;
+  font-size: smaller;
+  color: var(--textColorSecondary);
+  pointer-events: none;
+}
+
+.legend {
+  flex-shrink: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 14px;
+  padding: 6px 0;
+  font-size: smaller;
+  color: var(--textColorSecondary);
+
+  > span {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+}
+
+.legendLine {
+  display: inline-block;
+  width: 18px;
+  border-top: 3px solid;
+}
+
+.legendDashed {
+  border-top-style: dashed;
+}
+
+.bottom {
+  flex: 2;
+  min-height: 140px;
+  display: flex;
+  flex-direction: column;
+  border-top: 1px solid var(--borderFaintColor);
+}
+
+.tabs {
+  display: flex;
+  gap: calc(var(--padding) * 2);
+  padding: 6px 0;
+
+  a {
+    color: var(--textColorSecondary);
+  }
+}
+
+.activeTab {
+  color: var(--textColorAccent) !important;
+  font-weight: bold;
+}
+
+.tabContent {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: smaller;
+
+  th {
+    position: sticky;
+    top: 0;
+    text-align: left;
+    padding: 4px 6px;
+    background: var(--contentColor);
+    color: var(--textColorSecondary);
+  }
+
+  td {
+    padding: 3px 6px;
+    border-bottom: 1px solid var(--borderFaintColor);
+    white-space: nowrap;
+  }
+
+  tbody tr {
+    cursor: pointer;
+
+    &:hover {
+      background: var(--secondaryBackground);
+    }
+  }
+}
+
+.selectedRow {
+  background: var(--secondaryBackground);
+  outline: 1px solid var(--primary);
+}
+
+.bad {
+  color: var(--colorError);
+}
+
+.ellipsis {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 360px;
+}
+
+.records {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.recordsBar {
+  display: flex;
+  align-items: center;
+  gap: var(--padding);
+}
+
+.recordDetails {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: 2px 12px;
+  margin: 4px 0;
+
+  dt {
+    color: var(--textColorSecondary);
+  }
+}
+
+.search {
+  width: 100%;
+  max-width: 280px;
+  padding: 4px 6px;
+  border: 1px solid var(--borderColor);
+  border-radius: 3px;
+  background: var(--inputControlBackground);
+  color: var(--textColorPrimary);
+}
+
+.candidate {
+  padding: 3px 4px;
+  cursor: pointer;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+
+  &:hover {
+    background: var(--secondaryBackground);
+  }
+}
+
+.focus {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.chip {
+  padding: 2px 8px;
+  border: 1px solid var(--borderColor);
+  border-radius: 10px;
+  background: transparent;
+  color: var(--textColorPrimary);
+  cursor: pointer;
+}
+
+.chipActive {
+  border-color: var(--primary);
+  background: var(--primary);
+  color: var(--textColorAccent);
+}
+
+.namespace {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 2px 0;
+  cursor: pointer;
+}
+
+.namespaceHidden {
+  opacity: 0.4;
+  text-decoration: line-through;
+}
+
+.swatch {
+  flex-shrink: 0;
+  width: 10px;
+  height: 10px;
+  border-radius: 2px;
+}
+
+.warning {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  margin-bottom: 6px;
+  padding: 6px 8px;
+  border-left: 3px solid var(--colorWarning);
+  background: var(--secondaryBackground);
+}
+
+.note {
+  color: var(--textColorSecondary);
+  font-size: smaller;
+}
+
+.details {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 320px;
+  max-height: calc(100% - 16px);
+  overflow-y: auto;
+  padding: calc(var(--padding) * 1.5);
+  border: 1px solid var(--borderColor);
+  border-radius: 4px;
+  background: var(--contentColor);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+
+  section {
+    margin-top: var(--padding);
+  }
+
+  h6 {
+    margin-bottom: 4px;
+    color: var(--textColorSecondary);
+    text-transform: uppercase;
+    font-size: smaller;
+  }
+}
+
+.detailsClose {
+  float: right;
+}
+
+.detailTitle {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: var(--padding);
+  word-break: break-all;
+}
+
+.detailActions {
+  margin-bottom: var(--padding);
+}
+
+.detailRow {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--padding);
+  padding: 2px 0;
+  font-size: smaller;
+}
+
+.detailLabel {
+  color: var(--textColorSecondary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.detailValue {
+  flex-shrink: 0;
+  text-align: right;
+}
+
+.setup {
+  max-width: 720px;
+  margin: calc(var(--padding) * 2) auto;
+  display: flex;
+  flex-direction: column;
+  gap: calc(var(--padding) * 1.5);
+
+  p {
+    line-height: 1.5;
+  }
+}
+
+.setupBox {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+  padding: calc(var(--padding) * 1.5);
+  border: 1px solid var(--borderColor);
+  border-radius: 4px;
+
+  h6 {
+    font-weight: bold;
+  }
+}
+
+.command {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 6px 8px;
+  border-radius: 3px;
+  background: var(--secondaryBackground);
+
+  code {
+    flex: 1;
+    overflow-x: auto;
+    white-space: nowrap;
+  }
+}

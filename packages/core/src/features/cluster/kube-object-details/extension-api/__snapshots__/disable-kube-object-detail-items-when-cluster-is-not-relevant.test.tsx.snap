@@ -352,6 +352,40 @@ exports[`disable kube object detail items when cluster is not relevant > given e
               role="button"
               style="pointer-events: auto; opacity: 1; transition: transform 0ms linear;"
               tabindex="0"
+            >
+              <div
+                class="SidebarItem"
+                data-is-active-test="false"
+                data-testid="sidebar-item-traffic-map"
+              >
+                <a
+                  class="navItem"
+                  data-testid="link-for-sidebar-item-traffic-map"
+                  href="/workloads"
+                >
+                  <i
+                    class="Icon material focusable"
+                  >
+                    <span
+                      class="icon"
+                      data-icon-name="device_hub"
+                    >
+                      device_hub
+                    </span>
+                  </i>
+                  <span>
+                    Traffic Map
+                  </span>
+                </a>
+              </div>
+            </div>
+            <div
+              aria-describedby="DndDescribedBy-4"
+              aria-disabled="false"
+              aria-roledescription="sortable"
+              role="button"
+              style="pointer-events: auto; opacity: 1; transition: transform 0ms linear;"
+              tabindex="0"
             />
             <div
               aria-describedby="DndDescribedBy-4"
@@ -1210,6 +1244,40 @@ exports[`disable kube object detail items when cluster is not relevant > given e
               role="button"
               style="pointer-events: auto; opacity: 1; transition: transform 0ms linear;"
               tabindex="0"
+            >
+              <div
+                class="SidebarItem"
+                data-is-active-test="false"
+                data-testid="sidebar-item-traffic-map"
+              >
+                <a
+                  class="navItem"
+                  data-testid="link-for-sidebar-item-traffic-map"
+                  href="/workloads"
+                >
+                  <i
+                    class="Icon material focusable"
+                  >
+                    <span
+                      class="icon"
+                      data-icon-name="device_hub"
+                    >
+                      device_hub
+                    </span>
+                  </i>
+                  <span>
+                    Traffic Map
+                  </span>
+                </a>
+              </div>
+            </div>
+            <div
+              aria-describedby="DndDescribedBy-2"
+              aria-disabled="false"
+              aria-roledescription="sortable"
+              role="button"
+              style="pointer-events: auto; opacity: 1; transition: transform 0ms linear;"
+              tabindex="0"
             />
             <div
               aria-describedby="DndDescribedBy-2"
@@ -2057,6 +2125,40 @@ exports[`disable kube object detail items when cluster is not relevant > given n
                   </i>
                   <span>
                     Resource Map
+                  </span>
+                </a>
+              </div>
+            </div>
+            <div
+              aria-describedby="DndDescribedBy-0"
+              aria-disabled="false"
+              aria-roledescription="sortable"
+              role="button"
+              style="pointer-events: auto; opacity: 1; transition: transform 0ms linear;"
+              tabindex="0"
+            >
+              <div
+                class="SidebarItem"
+                data-is-active-test="false"
+                data-testid="sidebar-item-traffic-map"
+              >
+                <a
+                  class="navItem"
+                  data-testid="link-for-sidebar-item-traffic-map"
+                  href="/workloads"
+                >
+                  <i
+                    class="Icon material focusable"
+                  >
+                    <span
+                      class="icon"
+                      data-icon-name="device_hub"
+                    >
+                      device_hub
+                    </span>
+                  </i>
+                  <span>
+                    Traffic Map
                   </span>
                 </a>
               </div>

@@ -46,6 +46,7 @@ import { registerInjectables as registerFeaturesFeaturesStandaloneTerminalRender
 import { registerInjectables as registerFeaturesFeaturesTerminalRendererInjectables } from "./features/terminal/renderer/register-injectables";
 import { registerInjectables as registerFeaturesFeaturesThemeSystemTypeRendererInjectables } from "./features/theme/system-type/renderer/register-injectables";
 import { registerInjectables as registerFeaturesFeaturesTopBarExtensionApiRendererInjectables } from "./features/top-bar/extension-api/renderer/register-injectables";
+import { registerInjectables as registerFeaturesFeaturesTrafficMapRendererInjectables } from "./features/traffic-map/renderer/register-injectables";
 import { registerInjectables as registerFeaturesFeaturesUserPreferencesInjectables } from "./features/user-preferences/register-injectables";
 import { registerInjectables as registerFeaturesFeaturesUserPreferencesRendererInjectables } from "./features/user-preferences/renderer/register-injectables";
 import { registerInjectables as registerFeaturesFeaturesVarsBuildVersionRendererInjectables } from "./features/vars/build-version/renderer/register-injectables";
@@ -98,6 +99,7 @@ export function registerInjectables(di: DiContainerForInjection): void {
   registerFeaturesFeaturesTerminalRendererInjectables(di);
   registerFeaturesFeaturesThemeSystemTypeRendererInjectables(di);
   registerFeaturesFeaturesTopBarExtensionApiRendererInjectables(di);
+  registerFeaturesFeaturesTrafficMapRendererInjectables(di);
   registerFeaturesFeaturesUserPreferencesRendererInjectables(di);
   registerFeaturesFeaturesUserPreferencesInjectables(di);
   registerFeaturesFeaturesVarsInjectables(di);
