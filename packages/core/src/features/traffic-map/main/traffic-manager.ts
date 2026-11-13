@@ -10,6 +10,7 @@ import { CarettaSource } from "./caretta-source";
 import { detectClusterInfo, recommend } from "./cluster-info";
 import { HubbleSource } from "./hubble/hubble-source";
 import { IstioSource } from "./istio-source";
+import { WorkloadResolver } from "./workload-resolver";
 
 import type {
   SourceStatus,
@@ -44,6 +45,7 @@ export class TrafficManager {
   /** The source that answers for flows: the one the user picked or, until then, the first available. */
   private active?: TrafficSourceName;
   private detection?: { at: number; result: Promise<SourcesResponse> };
+  private readonly workloads: WorkloadResolver;
 
   constructor(
     private readonly access: ClusterAccess,
@@ -59,6 +61,7 @@ export class TrafficManager {
     ];
 
     this.sources = new Map(all.map((source) => [source.name, source]));
+    this.workloads = new WorkloadResolver(access);
   }
 
   /** The sources as last detected, detected again when that is older than two minutes or `refresh` asks. */
@@ -157,6 +160,9 @@ export class TrafficManager {
     const namespaces = [...new Set(query.namespaces ?? [])].filter(Boolean).sort();
     const sinceSeconds = Math.min(Math.max(Math.round(query.sinceSeconds) || 300, 30), maxWindowSeconds);
     const response = await source.getFlows({ namespaces, sinceSeconds, limit: sourceFlowLimit });
+
+    // A pod whose workload the source did not name would be drawn on its own.
+    await this.workloads.resolve(response.flows);
     const drawn = query.groupByPod ? response.flows : graphFlows(response.flows);
 
     return {
