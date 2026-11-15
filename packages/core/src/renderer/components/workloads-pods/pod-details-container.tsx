@@ -19,11 +19,18 @@ import { findOptimalDefaultContainerOfPod } from "../dock/logs/default-container
 import { DrawerItem } from "../drawer";
 import { DurationAbsoluteTimestamp } from "../events";
 import { StatusBrick } from "../status-brick";
+import { formatTermination, getLastTermination, hasRestarted } from "./container-restart";
 import { containerStatusClassName } from "./container-status-class-name";
 import { ContainerEnvironment } from "./pod-container-env";
 import { PodContainerPort } from "./pod-container-port";
 
-import type { ContainerWithType, EphemeralContainerWithType, Pod, PodContainerStatus } from "@freelensapp/kube-object";
+import type {
+  ContainerStateTerminated,
+  ContainerWithType,
+  EphemeralContainerWithType,
+  Pod,
+  PodContainerStatus,
+} from "@freelensapp/kube-object";
 import type { PodDetailsContainerMetricsComponent } from "@freelensapp/metrics";
 
 import type { IComputedValue } from "mobx";
@@ -34,6 +41,12 @@ export interface PodDetailsContainerProps {
   pod: Pod;
   container: ContainerWithType | EphemeralContainerWithType;
 }
+
+/**
+ * The id of a container's section in the pod details, which the Target
+ * Container link of an ephemeral container points to.
+ */
+const containerAnchorId = (pod: Pod, containerName: string) => `pod-container-id-${pod.getName()}-${containerName}`;
 
 interface Dependencies {
   portForwardStore: PortForwardStore;
@@ -55,42 +68,59 @@ class NonInjectedPodDetailsContainer extends React.Component<PodDetailsContainer
 
   renderStatus(container: ContainerWithType | EphemeralContainerWithType, status?: PodContainerStatus) {
     const state = status ? Object.keys(status?.state ?? {})[0] : "unknown";
-    const terminated = status?.state ? (status?.state.terminated ?? "") : "";
+    const terminated = status?.state?.terminated;
+    const waiting = status?.state?.waiting;
 
     return (
-      <span className={cssNames("status", containerStatusClassName(container, status))}>
-        {state}
-        {container.type === "initContainers" ? ", init" : ""}
-        {container.type === "ephemeralContainers" ? ", ephemeral" : ""}
-        {status?.restartCount ? ", restarted" : ""}
-        {status?.ready ? ", ready" : ""}
-        {terminated ? ` - ${terminated.reason} (exit code: ${terminated.exitCode})` : ""}
-      </span>
+      <>
+        <span className={cssNames("status", containerStatusClassName(container, status))}>
+          {state}
+          {container.type === "initContainers" ? ", init" : ""}
+          {container.type === "ephemeralContainers" ? ", ephemeral" : ""}
+          {status?.restartCount ? ", restarted" : ""}
+          {status?.ready ? ", ready" : ""}
+          {terminated ? ` - ${formatTermination(terminated)}` : ""}
+          {waiting?.reason ? ` - ${waiting.reason}` : ""}
+        </span>
+        {waiting?.message && (
+          <>
+            <br />
+            {waiting.message}
+          </>
+        )}
+      </>
     );
   }
 
-  renderLastState(lastState: string, status: PodContainerStatus | null | undefined) {
-    const { lastState: lastContainerState = {} } = status ?? {};
-    const { terminated } = lastContainerState;
+  renderLastState(terminated: ContainerStateTerminated) {
+    const { reason, exitCode, signal, message, startedAt, finishedAt } = terminated;
 
-    if (terminated) {
-      return (
-        <span>
-          {lastState}
-          <br />
-          {`Reason: ${terminated.reason} - exit code: ${terminated.exitCode}`}
-          <br />
-          {"Started: "}
-          {<DurationAbsoluteTimestamp timestamp={terminated.startedAt} />}
-          <br />
-          {"Finished: "}
-          {<DurationAbsoluteTimestamp timestamp={terminated.finishedAt} />}
-          <br />
-        </span>
-      );
-    }
-
-    return null;
+    return (
+      <span>
+        {"terminated"}
+        <br />
+        {reason ? `Reason: ${reason} - exit code: ${exitCode}` : `Exit code: ${exitCode}`}
+        <br />
+        {signal ? (
+          <>
+            {`Signal: ${signal}`}
+            <br />
+          </>
+        ) : null}
+        {message ? (
+          <>
+            {`Message: ${message}`}
+            <br />
+          </>
+        ) : null}
+        {"Started: "}
+        {<DurationAbsoluteTimestamp timestamp={startedAt} />}
+        <br />
+        {"Finished: "}
+        {<DurationAbsoluteTimestamp timestamp={finishedAt} />}
+        <br />
+      </span>
+    );
   }
 
   render() {
@@ -98,10 +128,10 @@ class NonInjectedPodDetailsContainer extends React.Component<PodDetailsContainer
 
     if (!pod || !container) return null;
     const { name, image, imagePullPolicy, ports, volumeMounts, command, args, resources, resizePolicy } = container;
-    const id = `pod-container-id-${pod}-${name}`;
+    const id = containerAnchorId(pod, name);
     const targetContainerName = "targetContainerName" in container ? container.targetContainerName : undefined;
     const status = pod.getContainerStatuses().find((status) => status.name === container.name);
-    const lastState = status ? Object.keys(status?.lastState ?? {})[0] : "";
+    const lastTermination = getLastTermination(status);
     const imageId = status ? status.imageID : "";
     const liveness = pod.getLivenessProbe(container);
     const readiness = pod.getReadinessProbe(container);
@@ -128,11 +158,12 @@ class NonInjectedPodDetailsContainer extends React.Component<PodDetailsContainer
         )}
         {targetContainerName && (
           <DrawerItem name="Target Container">
-            <a href={`#pod-container-id-${pod.getName()}-${targetContainerName}`}>{targetContainerName}</a>
+            <a href={`#${containerAnchorId(pod, targetContainerName)}`}>{targetContainerName}</a>
           </DrawerItem>
         )}
         {status && <DrawerItem name="Status">{this.renderStatus(container, status)}</DrawerItem>}
-        {lastState && <DrawerItem name="Last Status">{this.renderLastState(lastState, status)}</DrawerItem>}
+        {hasRestarted(status) && <DrawerItem name="Restarts">{status.restartCount}</DrawerItem>}
+        {lastTermination && <DrawerItem name="Last Status">{this.renderLastState(lastTermination)}</DrawerItem>}
         <DrawerItem name="Image">
           <Badge label={image} tooltip={imageId} />
         </DrawerItem>

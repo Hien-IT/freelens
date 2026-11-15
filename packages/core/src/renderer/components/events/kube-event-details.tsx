@@ -9,7 +9,7 @@
  * Licensed under MIT License. See LICENSE in root directory for more information.
  */
 
-import { type KubeEvent, KubeObject } from "@freelensapp/kube-object";
+import { type KubeEvent, KubeObject, Pod } from "@freelensapp/kube-object";
 import { loggerInjectionToken } from "@freelensapp/logger";
 import { cssNames } from "@freelensapp/utilities";
 import { withInjectables } from "@ogre-tools/injectable-react";
@@ -17,6 +17,7 @@ import { observer } from "mobx-react";
 import React from "react";
 import subscribeStoresInjectable from "../../kube-watch-api/subscribe-stores.injectable";
 import { DrawerItem, DrawerTitle } from "../drawer";
+import { getLastTermination } from "../workloads-pods/container-restart";
 import { DurationAbsoluteTimestamp } from "./duration-absolute";
 import styles from "./kube-event-details.module.scss";
 import eventStoreInjectable from "./store.injectable";
@@ -96,6 +97,33 @@ class NonInjectedKubeEventDetails extends React.Component<KubeEventDetailsProps 
           </div>
         )}
         {events.length === 0 && <div className={styles.empty}>No events found</div>}
+        {events.length === 0 && this.renderExpiredEventsHint(object)}
+      </div>
+    );
+  }
+
+  /**
+   * Points to the last termination of the pod's restarted containers, which
+   * outlives the events that reported their restarts.
+   */
+  renderExpiredEventsHint(object: KubeObject) {
+    if (!(object instanceof Pod)) {
+      return null;
+    }
+
+    const restartedContainers = object
+      .getContainerStatuses()
+      .filter((status) => getLastTermination(status))
+      .map(({ name }) => name);
+
+    if (restartedContainers.length === 0) {
+      return null;
+    }
+
+    return (
+      <div className={cssNames(styles.empty, "mt-2")}>
+        {"Events expire, after one hour by default. Last Status above keeps the last termination of each "}
+        {`restarted container: ${restartedContainers.join(", ")}.`}
       </div>
     );
   }

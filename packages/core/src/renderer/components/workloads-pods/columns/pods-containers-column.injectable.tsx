@@ -11,6 +11,7 @@ import { startCase } from "es-toolkit";
 import React from "react";
 import { findOptimalDefaultContainerOfPod } from "../../dock/logs/default-container-helper";
 import { StatusBrick } from "../../status-brick";
+import { formatTermination, getLastTermination, hasRestarted } from "../container-restart";
 import { containerStatusClassName } from "../container-status-class-name";
 import { COLUMN_PRIORITY } from "./column-priority";
 
@@ -24,13 +25,14 @@ import type {
   PodContainerStatus,
 } from "@freelensapp/kube-object";
 
-const renderState = (
+export const renderState = (
   container: ContainerWithType | EphemeralContainerWithType,
   status: PodContainerStatus | undefined,
   isDefault: boolean,
 ) => {
   const state = status ? Object.keys(status?.state ?? {})[0] : "";
-  const terminated = status?.state ? (status?.state.terminated ?? "") : "";
+  const terminated = status?.state?.terminated;
+  const lastTermination = getLastTermination(status);
 
   if (!state) return;
   const statusState = status?.state ?? {};
@@ -50,7 +52,7 @@ const renderState = (
           {status?.restartCount ? ", restarted" : ""}
           {status?.ready ? ", ready" : ""}
           {isDefault ? ", default" : ""}
-          {terminated ? ` - ${terminated.reason} (exit code: ${terminated.exitCode})` : ""}
+          {terminated ? ` - ${formatTermination(terminated)}` : ""}
         </span>
       </div>
       {stateDetails && (
@@ -76,6 +78,18 @@ const renderState = (
                 <div className="value">{value ?? ""}</div>
               </React.Fragment>
             ))}
+        </>
+      )}
+      {hasRestarted(status) && (
+        <>
+          <div className="name">Restarts</div>
+          <div className="value">{status.restartCount}</div>
+        </>
+      )}
+      {lastTermination && (
+        <>
+          <div className="name">Last Termination</div>
+          <div className="value">{formatTermination(lastTermination)}</div>
         </>
       )}
     </>
