@@ -174,6 +174,7 @@
 
 .tabs {
   display: flex;
+  align-items: center;
   gap: calc(var(--padding) * 2);
   padding: 6px 0;
 
@@ -515,4 +516,14 @@
 .portRowActive {
   background: var(--secondaryBackground);
   outline: 1px solid var(--primary);
+}
+
+// Folded down to its tabs, the panel leaves the rest of the page to the graph.
+.bottomHidden {
+  flex: 0 0 auto;
+  min-height: 0;
+}
+
+.panelToggle {
+  margin-left: auto;
 }

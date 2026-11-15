@@ -197,23 +197,22 @@ export const TrafficGraphView = observer(({ model, colors }: TrafficGraphProps) 
     };
   }, [graph]);
 
-  // Fit the view when other nodes are drawn, and keep the user's zoom on a
-  // refresh of the same ones.
-  const nodeKey = data.nodes
-    .map((node) => node.id)
-    .sort()
-    .join("\n");
+  // Fit the graph when the user looks at something else (another scope, filter,
+  // focus or window), or the canvas changes size, but not when a refresh brings
+  // the same view's new data: the zoom and the position the user chose stay.
+  const fitKey = `${model.viewKey}|${size.width}x${size.height}`;
+  const hasNodes = data.nodes.length > 0;
 
   useEffect(() => {
-    if (fittedFor.current === nodeKey || size.width === 0) return;
+    if (!hasNodes || fittedFor.current === fitKey || size.width === 0) return;
 
     const timer = setTimeout(() => {
       graphRef.current?.zoomToFit(300, 80);
-      fittedFor.current = nodeKey;
+      fittedFor.current = fitKey;
     }, 50);
 
     return () => clearTimeout(timer);
-  }, [nodeKey, size.width, size.height]);
+  }, [fitKey, hasNodes]);
 
   const [hoveredNode, setHoveredNode] = useState<string | undefined>(undefined);
   const [hoveredLink, setHoveredLink] = useState<string | undefined>(undefined);

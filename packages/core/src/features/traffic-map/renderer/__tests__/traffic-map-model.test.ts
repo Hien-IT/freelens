@@ -160,4 +160,30 @@ describe("TrafficMapModel", () => {
     expect(model.filters.hiddenNamespaces).toEqual(["shop"]);
     expect(model.tooLarge).toBe(false);
   });
+
+  it("keeps the view across refreshes, and changes it with what the user looks at", async () => {
+    const { model, namespaces } = createModel(observable.array(["shop"]));
+
+    await model.detect(false);
+
+    const view = model.viewKey;
+
+    await model.load();
+
+    expect(model.viewKey).toBe(view);
+
+    model.select({ type: "node", id: "shop/web" });
+
+    expect(model.viewKey).toBe(view);
+
+    model.focus("shop/web");
+
+    expect(model.viewKey).not.toBe(view);
+
+    const focused = model.viewKey;
+
+    runInAction(() => namespaces.push("pay"));
+
+    expect(model.viewKey).not.toBe(focused);
+  });
 });

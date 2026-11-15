@@ -11,11 +11,12 @@ import hostedClusterIdInjectable from "../../../renderer/cluster-frame-context/h
 import showDetailsInjectable from "../../../renderer/components/kube-detail-params/show-details.injectable";
 import namespaceStoreInjectable from "../../../renderer/components/namespaces/store.injectable";
 import activeThemeInjectable from "../../../renderer/themes/active.injectable";
+import createStorageInjectable from "../../../renderer/utils/create-storage/create-storage.injectable";
 import { trafficMapChannel } from "../common/channels";
 
 import type { TrafficEndpoint } from "../common/types";
 import type { RequestTraffic } from "./traffic-map-model";
-import type { TrafficMapPageDependencies } from "./traffic-map-page";
+import type { TrafficMapPageDependencies, TrafficMapViewState } from "./traffic-map-page";
 
 const workloadPaths: Record<string, string> = {
   Deployment: "/apis/apps/v1/namespaces/{ns}/deployments/{name}",
@@ -60,6 +61,10 @@ const trafficMapDependenciesInjectable = getInjectable({
     const showDetails = di.inject(showDetailsInjectable);
     const openLinkInBrowser = di.inject(openLinkInBrowserInjectable);
     const logger = di.inject(loggerInjectionToken);
+    const viewState = di.inject(createStorageInjectable)<TrafficMapViewState>("traffic_map_view", {
+      bottomPanelHidden: false,
+      tab: "connections",
+    });
 
     const requestTraffic = (async (body) =>
       requestFromChannel(trafficMapChannel, { ...body, clusterId } as never)) as RequestTraffic;
@@ -67,6 +72,8 @@ const trafficMapDependenciesInjectable = getInjectable({
     return {
       requestTraffic,
       getNamespaces: () => (namespaceStore.areAllSelectedImplicitly ? [] : [...namespaceStore.contextNamespaces]),
+      getViewState: () => viewState.get(),
+      setViewState: (state) => viewState.merge(state),
       getCanvasColors: () => {
         const { colors } = activeTheme.get();
 

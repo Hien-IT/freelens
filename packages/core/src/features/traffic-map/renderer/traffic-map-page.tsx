@@ -29,9 +29,18 @@ import type { TrafficMapModelDependencies } from "./traffic-map-model";
 export interface TrafficMapPageDependencies extends TrafficMapModelDependencies {
   /** The colours of the active theme for the canvas; read while rendering, a theme change paints it again. */
   getCanvasColors(): TrafficCanvasColors;
+  /** How the user left the page, kept across visits: observable. */
+  getViewState(): TrafficMapViewState;
+  setViewState(state: Partial<TrafficMapViewState>): void;
   openLink(url: string): void;
   copyText(text: string): void;
   openObject(endpoint: TrafficEndpoint): void;
+}
+
+export interface TrafficMapViewState {
+  /** The panel of the connections and the flows is folded down to its tabs. */
+  bottomPanelHidden: boolean;
+  tab: "connections" | "flows";
 }
 
 function Legend() {
@@ -139,7 +148,9 @@ const Warning = observer(({ model }: { model: TrafficMapModel }) => {
 
 const Content = observer(
   ({ dependencies, model }: { dependencies: TrafficMapPageDependencies; model: TrafficMapModel }) => {
-    const [tab, setTab] = useState<"connections" | "flows">("connections");
+    const { bottomPanelHidden, tab } = dependencies.getViewState();
+    const showTab = (next: TrafficMapViewState["tab"]) =>
+      dependencies.setViewState({ tab: next, bottomPanelHidden: false });
 
     if (!model.sources) {
       return model.sourcesError ? (
@@ -194,21 +205,32 @@ const Content = observer(
             </div>
           </div>
           <Legend />
-          <div className={styles.bottom}>
+          <div className={cssNames(styles.bottom, { [styles.bottomHidden]: bottomPanelHidden })}>
             <div className={styles.tabs}>
               <a
-                className={cssNames({ [styles.activeTab]: tab === "connections" })}
-                onClick={() => setTab("connections")}
+                className={cssNames({ [styles.activeTab]: !bottomPanelHidden && tab === "connections" })}
+                onClick={() => showTab("connections")}
               >
                 Connections
               </a>
-              <a className={cssNames({ [styles.activeTab]: tab === "flows" })} onClick={() => setTab("flows")}>
+              <a
+                className={cssNames({ [styles.activeTab]: !bottomPanelHidden && tab === "flows" })}
+                onClick={() => showTab("flows")}
+              >
                 Flows
               </a>
+              <Icon
+                className={styles.panelToggle}
+                material={bottomPanelHidden ? "expand_less" : "expand_more"}
+                tooltip={bottomPanelHidden ? "Show the connections and flows" : "Hide the connections and flows"}
+                onClick={() => dependencies.setViewState({ bottomPanelHidden: !bottomPanelHidden })}
+              />
             </div>
-            <div className={styles.tabContent}>
-              {tab === "connections" ? <ConnectionsTable model={model} /> : <FlowRecordsTable model={model} />}
-            </div>
+            {!bottomPanelHidden && (
+              <div className={styles.tabContent}>
+                {tab === "connections" ? <ConnectionsTable model={model} /> : <FlowRecordsTable model={model} />}
+              </div>
+            )}
           </div>
         </div>
       </div>

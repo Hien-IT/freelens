@@ -273,6 +273,21 @@ export class TrafficMapModel {
     return buildTrafficGraph(this.visibleFlows, this.unit);
   }
 
+  /**
+   * What the user chose to look at: the namespaces, the window, the source,
+   * the grouping and the filters. The graph fits itself to the view when it
+   * changes, and keeps the zoom across refreshes of the same view.
+   */
+  @computed get viewKey(): string {
+    return JSON.stringify([
+      this.dependencies.getNamespaces(),
+      this.sinceSeconds,
+      this.sources?.active,
+      this.groupByPod,
+      this.filters,
+    ]);
+  }
+
   /** The size of the graph as the budget counts it. */
   @computed get graphSize(): number {
     return this.graph.nodes.length + 2 * this.graph.links.length;
