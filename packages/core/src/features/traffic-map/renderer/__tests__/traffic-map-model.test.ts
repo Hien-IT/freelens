@@ -124,4 +124,40 @@ describe("TrafficMapModel", () => {
 
     expect(model.visibleFlows.map((flow) => flow.destination.name)).toEqual(["db"]);
   });
+
+  it("does not draw a graph past its budget until asked, and narrows it to a namespace", async () => {
+    const many: TrafficFlow[] = Array.from({ length: 250 }, (_, index) => ({
+      ...flows[0],
+      source: { ...pod(`client-${index}`, `client-${index}`), namespace: index % 2 ? "shop" : "pay" },
+      destination: pod("api-1", "api"),
+    }));
+    const large: TrafficFlowsResult = {
+      ...result,
+      flows: many,
+      flowsTotal: many.length,
+      aggregated: aggregateFlows(graphFlows(many)),
+    };
+    const model = new TrafficMapModel({
+      requestTraffic: (async (body: { type: string }) =>
+        body.type === "sources"
+          ? { callWasSuccessful: true, response: sources }
+          : { callWasSuccessful: true, response: large }) as unknown as RequestTraffic,
+      getNamespaces: () => [],
+    });
+
+    await model.detect(false);
+
+    expect(model.graphSize).toBeGreaterThan(400);
+    expect(model.tooLarge).toBe(true);
+
+    model.setDrawAnyway(true);
+
+    expect(model.tooLarge).toBe(false);
+
+    model.setDrawAnyway(false);
+    model.onlyNamespace("pay");
+
+    expect(model.filters.hiddenNamespaces).toEqual(["shop"]);
+    expect(model.tooLarge).toBe(false);
+  });
 });

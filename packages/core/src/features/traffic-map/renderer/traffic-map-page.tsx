@@ -16,6 +16,7 @@ import { edgeColors } from "./graph";
 import { TrafficDetails } from "./traffic-details";
 import { TrafficFiltersPanel } from "./traffic-filters-panel";
 import { TrafficGraphView } from "./traffic-graph";
+import { TrafficGraphTooLarge } from "./traffic-graph-too-large";
 import styles from "./traffic-map.module.scss";
 import { TrafficMapModel, timeWindows } from "./traffic-map-model";
 import { TrafficSetup } from "./traffic-setup";
@@ -179,6 +180,8 @@ const Content = observer(
                 </p>
                 {total > 0 && <a onClick={() => model.resetFilters()}>Show all traffic</a>}
               </div>
+            ) : model.tooLarge ? (
+              <TrafficGraphTooLarge model={model} />
             ) : (
               <TrafficGraphView model={model} colors={dependencies.getCanvasColors()} />
             )}

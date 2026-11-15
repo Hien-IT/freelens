@@ -5,7 +5,7 @@
 
 import { describe, expect, it } from "vitest";
 import { BeylaSource, beylaRateQuery } from "../beyla-source";
-import { CarettaSource, carettaLinksQuery } from "../caretta-source";
+import { CarettaSource, carettaEndpoint, carettaLinksQuery } from "../caretta-source";
 import { PrometheusUnavailableError } from "../cluster-access";
 import { IstioSource, istioRateQuery } from "../istio-source";
 
@@ -156,14 +156,51 @@ describe("Caretta", () => {
     ],
   };
 
-  it("builds the links query kept to the namespaces", () => {
-    expect(carettaLinksQuery([])).toBe("caretta_links_observed");
-    expect(carettaLinksQuery(["shop"])).toBe(
-      'caretta_links_observed{client_namespace=~"shop"} or caretta_links_observed{server_namespace=~"shop"}',
+  it("asks for the bytes of each link in the window, and only links that carried some", () => {
+    const sum = (selector: string) =>
+      `(sum by (client_name, client_namespace, client_kind, server_name, server_namespace, server_kind, server_port, role) (increase(caretta_links_observed${selector}[300s])) > 0)`;
+
+    expect(carettaLinksQuery([], "300s")).toBe(sum(""));
+    expect(carettaLinksQuery(["shop"], "300s")).toBe(
+      `${sum('{client_namespace=~"shop"}')} or ${sum('{server_namespace=~"shop"}')}`,
     );
   });
 
-  it("reads the links from Caretta's own metrics store", async () => {
+  it("names outside addresses, nodes, pods and workloads as Caretta labels them", () => {
+    expect(carettaEndpoint("64.239.26.208", "external", "external")).toEqual({
+      name: "64.239.26.208",
+      namespace: "",
+      kind: "External",
+      ip: "64.239.26.208",
+    });
+    expect(carettaEndpoint("api.example.com", "external", "external")).toEqual({
+      name: "api.example.com",
+      namespace: "",
+      kind: "External",
+      names: ["api.example.com"],
+    });
+    expect(carettaEndpoint("node-a", "node", "node")).toEqual({ name: "node-a", namespace: "", kind: "Host" });
+    expect(carettaEndpoint("debug", "shop", "pod")).toEqual({ name: "debug", namespace: "shop", kind: "Pod" });
+    expect(carettaEndpoint("db", "shop", "Service")).toEqual({ name: "db", namespace: "shop", kind: "Service" });
+    expect(carettaEndpoint("web", "shop", "Deployment")).toEqual({
+      name: "web",
+      namespace: "shop",
+      kind: "Workload",
+      workload: "web",
+      workloadKind: "Deployment",
+    });
+  });
+
+  it("reads the bytes of the links from Caretta's own metrics store, once per link", async () => {
+    const link = {
+      client_name: "web",
+      client_namespace: "shop",
+      client_kind: "Deployment",
+      server_name: "db",
+      server_namespace: "shop",
+      server_kind: "StatefulSet",
+      server_port: "5432",
+    };
     const access = fakeAccess({
       objects: {
         ...pods,
@@ -173,20 +210,19 @@ describe("Caretta", () => {
         },
       },
       services: [
+        { metric: { ...link, role: "1" }, value: 4_096.4 },
+        { metric: { ...link, role: "2" }, value: 4_000 },
         {
           metric: {
             client_name: "web",
             client_namespace: "shop",
             client_kind: "Deployment",
-            server_name: "db",
-            server_namespace: "shop",
-            server_kind: "StatefulSet",
-            server_port: "5432",
+            server_name: "1.1.1.1",
+            server_namespace: "external",
+            server_kind: "external",
+            server_port: "443",
+            role: "1",
           },
-          value: 42.7,
-        },
-        {
-          metric: { client_name: "web", client_namespace: "shop", server_name: "1.1.1.1", server_port: "443" },
           value: 3,
         },
       ],
@@ -197,13 +233,15 @@ describe("Caretta", () => {
 
     const { flows } = await source.getFlows(options);
 
+    expect(flows).toHaveLength(2);
     expect(flows[0]).toMatchObject({
       source: { name: "web", kind: "Workload", workloadKind: "Deployment" },
       destination: { name: "db", kind: "Workload", workloadKind: "StatefulSet" },
       port: 5432,
-      connections: 42,
+      bytesSent: 4_096,
+      connections: 0,
     });
-    expect(flows[1].destination).toEqual({ name: "1.1.1.1", namespace: "", kind: "External" });
+    expect(flows[1].destination).toEqual({ name: "1.1.1.1", namespace: "", kind: "External", ip: "1.1.1.1" });
   });
 });
 

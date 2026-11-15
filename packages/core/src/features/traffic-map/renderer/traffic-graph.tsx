@@ -13,6 +13,7 @@ import styles from "./traffic-map.module.scss";
 
 import type { ForceGraphMethods } from "react-force-graph-2d";
 
+import type { VolumeUnit } from "./filters";
 import type { TrafficLink, TrafficNode } from "./graph";
 import type { TrafficMapModel } from "./traffic-map-model";
 
@@ -45,12 +46,12 @@ const kindLabels: Record<string, string> = {
   Unknown: "Unknown",
 };
 
-function linkTitle(link: TrafficLink, rateBased: boolean): string {
+function linkTitle(link: TrafficLink, unit: VolumeUnit): string {
   const { flow } = link;
   const parts = [
     flow.l7Protocol ?? flow.protocol.toUpperCase(),
     flow.port ? `:${flow.port}` : "",
-    formatVolume(link.volume, rateBased),
+    formatVolume(link.volume, unit),
   ];
   const latency = flow.latencyP50Ms ?? flow.avgLatencyMs;
 
@@ -86,7 +87,7 @@ function subtitleOf(node: TrafficNode): string {
   const { endpoint } = node;
   const kind = endpoint.workloadKind ?? kindLabels[endpoint.kind] ?? endpoint.kind;
 
-  if (endpoint.name === "Internet" && endpoint.kind === "External") return "Inbound from outside";
+  if (endpoint.name === "Internet" && endpoint.kind === "External") return "Outside the cluster";
 
   return endpoint.namespace ? `${endpoint.namespace} · ${kind}` : kind;
 }
@@ -144,7 +145,7 @@ export const TrafficGraphView = observer(({ model, colors }: TrafficGraphProps) 
   const size = useMemo(() => new ElementSize(), []);
   const graphRef = useRef<GraphMethods | undefined>(undefined);
   const fittedFor = useRef("");
-  const { graph, selection, rateBased } = model;
+  const { graph, selection, unit } = model;
 
   // Fresh objects for the library, which mutates them, placed in their
   // columns and pinned there.
@@ -277,7 +278,7 @@ export const TrafficGraphView = observer(({ model, colors }: TrafficGraphProps) 
             const ports = node.ports.length
               ? `:${node.ports.slice(0, 3).join(", :")}${node.ports.length > 3 ? ` +${node.ports.length - 3}` : ""}`
               : "";
-            const volume = formatVolume(node.volume, rateBased);
+            const volume = formatVolume(node.volume, unit);
 
             context.fillText(fit(context, ports, textWidth - 60), left, y + 50);
             context.textAlign = "right";
@@ -289,7 +290,7 @@ export const TrafficGraphView = observer(({ model, colors }: TrafficGraphProps) 
             context.fillStyle = color;
             context.fillRect((node.x ?? 0) - cardWidth / 2, (node.y ?? 0) - cardHeight / 2, cardWidth, cardHeight);
           }}
-          linkLabel={(link) => linkTitle(link, rateBased)}
+          linkLabel={(link) => linkTitle(link, unit)}
           linkCanvasObjectMode={() => "replace"}
           linkCanvasObject={(link, context, scale) => {
             const source = pointOf(link.source);
@@ -330,7 +331,7 @@ export const TrafficGraphView = observer(({ model, colors }: TrafficGraphProps) 
                 x: (curve[0].x + 3 * curve[1].x + 3 * curve[2].x + curve[3].x) / 8,
                 y: (curve[0].y + 3 * curve[1].y + 3 * curve[2].y + curve[3].y) / 8,
               };
-              const label = `${link.flow.port ? `:${link.flow.port} ` : ""}${formatVolume(link.volume, rateBased)}`;
+              const label = `${link.flow.port ? `:${link.flow.port} ` : ""}${formatVolume(link.volume, unit)}`;
 
               context.globalAlpha = 1;
               context.font = "10px sans-serif";

@@ -118,19 +118,48 @@ export function nodeIdOf(endpoint: TrafficEndpoint): string {
   return endpoint.namespace ? `${endpoint.namespace}/${endpoint.name}` : endpoint.name;
 }
 
-/** Whether a source measures rates (requests per second) rather than counting connections. */
-export function isRateSource(source: TrafficSourceName | undefined): boolean {
-  return source === "istio" || source === "beyla";
+/**
+ * What the volume of an edge measures, which depends on its source: Hubble
+ * counts connections, Istio measures request rates, and Caretta and Beyla
+ * measure the bytes that crossed it.
+ */
+export type VolumeUnit = "connections" | "rate" | "bytes";
+
+export function volumeUnitOf(source: TrafficSourceName | undefined): VolumeUnit {
+  switch (source) {
+    case "istio":
+      return "rate";
+    case "caretta":
+    case "beyla":
+      return "bytes";
+    default:
+      return "connections";
+  }
 }
 
-/** The volume of an edge: its request rate for a rate-based source, its connections otherwise. */
-export function volumeOf(flow: AggregatedFlow, rateBased: boolean): number {
-  return rateBased ? (flow.requestRate ?? flow.connections) : flow.connections || flow.flowCount;
+/** The names of a unit: as a label, and as the heading of a column. */
+export const volumeUnitTitles: Record<VolumeUnit, { label: string; column: string }> = {
+  connections: { label: "Connections", column: "Connections" },
+  rate: { label: "Request rate", column: "Req/s" },
+  bytes: { label: "Data", column: "Data" },
+};
+
+/** The volume of an edge in the unit of its source. */
+export function volumeOf(flow: AggregatedFlow, unit: VolumeUnit): number {
+  switch (unit) {
+    case "rate":
+      return flow.requestRate ?? flow.connections;
+    case "bytes":
+      return flow.bytesSent + flow.bytesRecv;
+    default:
+      return flow.connections || flow.flowCount;
+  }
 }
 
-export const minVolumeSteps = {
+export const minVolumeSteps: Record<VolumeUnit, number[]> = {
   connections: [0, 100, 1_000, 10_000, 100_000],
   rate: [0, 1, 10, 100, 1_000],
+  bytes: [0, 2 ** 20, 10 * 2 ** 20, 100 * 2 ** 20, 2 ** 30],
 };
 
 const internetEndpoint: TrafficEndpoint = { name: "Internet", namespace: "", kind: "External" };
@@ -179,24 +208,55 @@ export function mergeExternalPeers(flows: readonly Pick<AggregatedFlow, "externa
   return [...merged.values()].sort((a, b) => b.flowCount - a.flowCount || a.name.localeCompare(b.name));
 }
 
-/** Merges the edges that the Internet node now stands for, summing what they carry. */
+function sumCounts(into: Record<string, number> | undefined, from: Record<string, number> | undefined) {
+  if (!from) return into;
+
+  const result = { ...into };
+
+  for (const [key, count] of Object.entries(from)) {
+    result[key] = (result[key] ?? 0) + count;
+  }
+
+  return result;
+}
+
+/** The outside addresses of an edge, or the outside endpoint itself when the aggregation listed none. */
+function peersOf(flow: AggregatedFlow, outside: TrafficEndpoint): ExternalPeerStat[] {
+  if (flow.externalPeers?.length) return flow.externalPeers;
+
+  const name = outside.names?.[0] ?? outside.ip ?? outside.name;
+
+  return [{ name, ips: outside.ip ? [outside.ip] : [], flowCount: flow.flowCount, connections: flow.connections }];
+}
+
+/**
+ * Draws every address outside the cluster as one Internet node, on either
+ * end of an edge, merging the edges it then stands for and summing what they
+ * carried. The node keeps the list of the addresses it stands for.
+ */
 function collapseInternet(flows: readonly AggregatedFlow[]): AggregatedFlow[] {
   const merged = new Map<string, AggregatedFlow>();
   const result: AggregatedFlow[] = [];
 
   for (const flow of flows) {
-    const fromOutside = flow.source.kind === "External" && !isOutsideCluster(flow.destination);
+    const inbound = flow.source.kind === "External" && !isOutsideCluster(flow.destination);
+    const outbound = flow.destination.kind === "External" && !isOutsideCluster(flow.source);
 
-    if (!fromOutside) {
+    if (!inbound && !outbound) {
       result.push(flow);
       continue;
     }
 
-    const key = `${nodeIdOf(flow.destination)}|${flow.port}|${flow.directionUnknown ? "u" : "d"}`;
+    const outside = inbound ? flow.source : flow.destination;
+    const inside = inbound ? flow.destination : flow.source;
+    const key = `${inbound ? "in" : "out"}|${nodeIdOf(inside)}|${flow.port}|${flow.directionUnknown ? "u" : "d"}`;
     const existing = merged.get(key);
+    const peers = peersOf(flow, outside);
 
     if (!existing) {
-      const copy = { ...flow, source: internetEndpoint };
+      const copy: AggregatedFlow = inbound
+        ? { ...flow, source: internetEndpoint, externalPeers: peers }
+        : { ...flow, destination: internetEndpoint, externalPeers: peers };
 
       merged.set(key, copy);
       result.push(copy);
@@ -208,10 +268,10 @@ function collapseInternet(flows: readonly AggregatedFlow[]): AggregatedFlow[] {
     existing.bytesSent += flow.bytesSent;
     existing.bytesRecv += flow.bytesRecv;
     existing.lastSeen = Math.max(existing.lastSeen, flow.lastSeen);
-
-    if (flow.externalPeers) {
-      existing.externalPeers = mergeExternalPeers([existing, flow]);
-    }
+    existing.externalPeers = mergeExternalPeers([existing, { externalPeers: peers }]);
+    existing.verdictCounts = sumCounts(existing.verdictCounts, flow.verdictCounts);
+    existing.httpStatusCounts = sumCounts(existing.httpStatusCounts, flow.httpStatusCounts);
+    existing.dropReasons = sumCounts(existing.dropReasons, flow.dropReasons);
 
     if (flow.requestRate !== undefined) existing.requestRate = (existing.requestRate ?? 0) + flow.requestRate;
     if (flow.errorRate !== undefined) existing.errorRate = (existing.errorRate ?? 0) + flow.errorRate;
@@ -226,7 +286,7 @@ function collapseInternet(flows: readonly AggregatedFlow[]): AggregatedFlow[] {
 export function applyFilters(
   flows: readonly AggregatedFlow[],
   filters: TrafficFilters,
-  rateBased: boolean,
+  unit: VolumeUnit,
 ): AggregatedFlow[] {
   const hidden = new Set(filters.hiddenNamespaces);
 
@@ -237,7 +297,7 @@ export function applyFilters(
     if (filters.hideSystem && (isSystemEndpoint(source) || isSystemEndpoint(destination))) return false;
     if (filters.hideExternal && (isOutsideCluster(source) || isOutsideCluster(destination))) return false;
     if (!filters.focus && (hidden.has(source.namespace) || hidden.has(destination.namespace))) return false;
-    if (filters.minVolume > 0 && volumeOf(flow, rateBased) < filters.minVolume) return false;
+    if (filters.minVolume > 0 && volumeOf(flow, unit) < filters.minVolume) return false;
     if (!matchesL7(flow, filters.l7)) return false;
     if (filters.verdicts.length && !filters.verdicts.some((verdict) => (flow.verdictCounts?.[verdict] ?? 0) > 0)) {
       return false;

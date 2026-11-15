@@ -7,7 +7,7 @@ import { cssNames } from "@freelensapp/utilities";
 import { observer } from "mobx-react";
 import { useState } from "react";
 import { Checkbox } from "../../../renderer/components/checkbox";
-import { minVolumeSteps } from "./filters";
+import { minVolumeSteps, volumeUnitTitles } from "./filters";
 import { formatVolume, namespaceColor } from "./graph";
 import styles from "./traffic-map.module.scss";
 
@@ -47,10 +47,10 @@ const shownNamespaces = 8;
 
 /** The filters of the traffic map, and the search that focuses it on one node. */
 export const TrafficFiltersPanel = observer(({ model }: { model: TrafficMapModel }) => {
-  const { filters, facets, rateBased } = model;
+  const { filters, facets, unit } = model;
   const [focusSearch, setFocusSearch] = useState("");
   const [allNamespaces, setAllNamespaces] = useState(false);
-  const steps = rateBased ? minVolumeSteps.rate : minVolumeSteps.connections;
+  const steps = minVolumeSteps[unit];
   const needle = focusSearch.trim().toLowerCase();
   const candidates = needle ? model.focusCandidates.filter((id) => id.toLowerCase().includes(needle)).slice(0, 20) : [];
   const namespaces = allNamespaces ? facets.namespaces : facets.namespaces.slice(0, shownNamespaces);
@@ -115,13 +115,13 @@ export const TrafficFiltersPanel = observer(({ model }: { model: TrafficMapModel
       </section>
 
       <section>
-        <h6>Least {rateBased ? "request rate" : "connections"}</h6>
+        <h6>Least {volumeUnitTitles[unit].label.toLowerCase()}</h6>
         <Chips
-          values={steps.map((step) => (step === 0 ? "Any" : formatVolume(step, rateBased)))}
-          selected={[filters.minVolume === 0 ? "Any" : formatVolume(filters.minVolume, rateBased)]}
+          values={steps.map((step) => (step === 0 ? "Any" : formatVolume(step, unit)))}
+          selected={[filters.minVolume === 0 ? "Any" : formatVolume(filters.minVolume, unit)]}
           onToggle={(label) =>
             model.updateFilters({
-              minVolume: steps.find((step) => (step === 0 ? "Any" : formatVolume(step, rateBased)) === label) ?? 0,
+              minVolume: steps.find((step) => (step === 0 ? "Any" : formatVolume(step, unit)) === label) ?? 0,
             })
           }
         />

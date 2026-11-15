@@ -464,3 +464,36 @@
   white-space: nowrap;
   font-family: monospace;
 }
+
+.tooLarge {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--padding);
+  height: 100%;
+  overflow-y: auto;
+  padding: calc(var(--padding) * 3);
+
+  h6 {
+    margin-bottom: 4px;
+    color: var(--textColorSecondary);
+    text-transform: uppercase;
+    font-size: smaller;
+  }
+
+  .candidate {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+}
+
+.tooLargeColumns {
+  display: flex;
+  flex-wrap: wrap;
+  gap: calc(var(--padding) * 4);
+
+  section {
+    min-width: 260px;
+  }
+}

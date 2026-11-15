@@ -56,7 +56,7 @@ describe("applyFilters", () => {
   ];
 
   it("hides system traffic and draws the outside as one Internet node by default", () => {
-    const result = applyFilters(flows, defaultFilters, false);
+    const result = applyFilters(flows, defaultFilters, "connections");
 
     expect(result.map((flow) => `${flow.source.name}->${flow.destination.name}`)).toEqual([
       "web->api",
@@ -67,19 +67,52 @@ describe("applyFilters", () => {
   });
 
   it("keeps the edges at the focus", () => {
-    const result = applyFilters(flows, { ...defaultFilters, focus: "shop/db" }, false);
+    const result = applyFilters(flows, { ...defaultFilters, focus: "shop/db" }, "connections");
 
     expect(result.map((flow) => flow.destination.name)).toEqual(["db"]);
   });
 
   it("keeps the edges with a verdict, and hides namespaces", () => {
-    expect(applyFilters(flows, { ...defaultFilters, verdicts: ["dropped"] }, false)).toHaveLength(1);
-    expect(applyFilters(flows, { ...defaultFilters, hiddenNamespaces: ["shop"] }, false)).toHaveLength(0);
+    expect(applyFilters(flows, { ...defaultFilters, verdicts: ["dropped"] }, "connections")).toHaveLength(1);
+    expect(applyFilters(flows, { ...defaultFilters, hiddenNamespaces: ["shop"] }, "connections")).toHaveLength(0);
   });
 
   it("offers the verdicts only when something was not forwarded", () => {
     expect(availableFacets(flows).verdicts).toEqual(["dropped", "forwarded"]);
     expect(availableFacets(flows.slice(0, 1)).verdicts).toEqual([]);
+  });
+});
+
+describe("one Internet node", () => {
+  it("merges outside addresses on either end, and lists them on the merged edge", () => {
+    const merged = applyFilters(
+      [
+        edge(
+          workload("web"),
+          { name: "64.239.26.208", namespace: "", kind: "External", ip: "64.239.26.208" },
+          { port: 443, bytesSent: 10 },
+        ),
+        edge(
+          workload("web"),
+          { name: "198.51.100.7", namespace: "", kind: "External", ip: "198.51.100.7" },
+          { port: 443, bytesSent: 5 },
+        ),
+        edge(
+          workload("api"),
+          { name: "198.51.100.7", namespace: "", kind: "External", ip: "198.51.100.7" },
+          { port: 443 },
+        ),
+      ],
+      defaultFilters,
+      "bytes",
+    );
+
+    expect(merged.map((flow) => `${flow.source.name}->${flow.destination.name}`)).toEqual([
+      "web->Internet",
+      "api->Internet",
+    ]);
+    expect(merged[0]).toMatchObject({ bytesSent: 15, flowCount: 2, verdictCounts: { forwarded: 2 } });
+    expect(merged[0].externalPeers?.map((peer) => peer.name)).toEqual(["198.51.100.7", "64.239.26.208"]);
   });
 });
 
@@ -100,7 +133,7 @@ describe("mergeExternalPeers", () => {
         }),
       ],
       defaultFilters,
-      false,
+      "connections",
     );
 
     expect(merged).toHaveLength(1);
@@ -120,7 +153,7 @@ describe("buildTrafficGraph", () => {
         edge(workload("api"), workload("db"), { errorCount: 3, connections: 1 }),
         edge(workload("web"), workload("cache"), { connections: 1 }),
       ],
-      false,
+      "connections",
     );
 
     expect(graph.nodes.map((node) => node.id).sort()).toEqual(["shop/api", "shop/cache", "shop/db", "shop/web"]);
@@ -132,15 +165,16 @@ describe("buildTrafficGraph", () => {
     const flows = Array.from({ length: 20 }, (_, index) =>
       edge(workload(`client-${index}`), workload("api"), { connections: index + 1 }),
     );
-    const hot = buildTrafficGraph(flows, false).links.filter((link) => link.hot);
+    const hot = buildTrafficGraph(flows, "connections").links.filter((link) => link.hot);
 
     expect(hot.map((link) => link.volume)).toEqual([19, 20]);
   });
 
-  it("widens edges by the order of magnitude of their volume", () => {
-    expect(edgeWidth(1)).toBe(1.5);
-    expect(edgeWidth(100_000)).toBe(3.5);
-    expect(edgeWidth(1e12)).toBe(6);
+  it("widens edges by where their volume lies between the least and the busiest", () => {
+    expect(edgeWidth(1, 1, 1_000)).toBe(1.5);
+    expect(edgeWidth(1_000, 1, 1_000)).toBe(6);
+    expect(edgeWidth(31.622_776_6, 1, 1_000)).toBeCloseTo(3.75);
+    expect(edgeWidth(5, 5, 5)).toBe(3.75);
   });
 });
 

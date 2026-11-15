@@ -4,7 +4,7 @@
  */
 
 import { action, computed, observable, reaction, runInAction } from "mobx";
-import { applyFilters, availableFacets, defaultFilters, isRateSource, nodeIdOf } from "./filters";
+import { applyFilters, availableFacets, defaultFilters, nodeIdOf, volumeUnitOf } from "./filters";
 import { buildTrafficGraph, linkIdOf } from "./graph";
 
 import type {
@@ -17,7 +17,7 @@ import type {
   TrafficResultData,
   TrafficSourceName,
 } from "../common/types";
-import type { TrafficFilters } from "./filters";
+import type { TrafficFilters, VolumeUnit } from "./filters";
 import type { TrafficGraph } from "./graph";
 
 type RequestBody = TrafficRequest extends infer R ? (R extends unknown ? Omit<R, "clusterId"> : never) : never;
@@ -42,6 +42,13 @@ export const timeWindows = [
 ];
 
 const autoRefreshMs = 30_000;
+/**
+ * How much of a graph the map draws without asking, counted as its nodes and
+ * twice its edges: past it, the cards no longer fit a screen and the edges no
+ * longer read. Past the ceiling it is not drawn at all.
+ */
+export const graphBudget = 400;
+export const graphCeiling = 3000;
 const retryDelayMs = 2_000;
 const maxRetries = 5;
 
@@ -96,6 +103,8 @@ export class TrafficMapModel {
   @observable accessor sinceSeconds = 300;
   @observable accessor groupByPod = false;
   @observable accessor autoRefresh = false;
+  /** The user asked to draw a graph past the budget. */
+  @observable accessor drawAnyway = false;
 
   private retries = 0;
   private retryTimer?: ReturnType<typeof setTimeout>;
@@ -251,17 +260,39 @@ export class TrafficMapModel {
     this.selection = id ? { type: "node", id } : undefined;
   }
 
-  /** Whether the active source measures request rates rather than counting connections. */
-  @computed get rateBased(): boolean {
-    return isRateSource(this.result?.source ?? this.sources?.active);
+  /** What the volume of an edge measures, for the source of the flows. */
+  @computed get unit(): VolumeUnit {
+    return volumeUnitOf(this.result?.source ?? this.sources?.active);
   }
 
   @computed get visibleFlows(): AggregatedFlow[] {
-    return applyFilters(this.result?.aggregated ?? [], this.filters, this.rateBased);
+    return applyFilters(this.result?.aggregated ?? [], this.filters, this.unit);
   }
 
   @computed get graph(): TrafficGraph {
-    return buildTrafficGraph(this.visibleFlows, this.rateBased);
+    return buildTrafficGraph(this.visibleFlows, this.unit);
+  }
+
+  /** The size of the graph as the budget counts it. */
+  @computed get graphSize(): number {
+    return this.graph.nodes.length + 2 * this.graph.links.length;
+  }
+
+  /** The graph is too large to draw: the view offers ways to narrow it instead. */
+  @computed get tooLarge(): boolean {
+    return this.graphSize > graphCeiling || (!this.drawAnyway && this.graphSize > graphBudget);
+  }
+
+  @action setDrawAnyway(value: boolean) {
+    this.drawAnyway = value;
+  }
+
+  /** Hides every namespace of the traffic but one. */
+  @action onlyNamespace(namespace: string) {
+    this.filters = {
+      ...this.filters,
+      hiddenNamespaces: this.facets.namespaces.filter((candidate) => candidate !== namespace),
+    };
   }
 
   @computed get facets() {

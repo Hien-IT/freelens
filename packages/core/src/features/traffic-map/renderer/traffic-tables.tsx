@@ -6,7 +6,7 @@
 import { cssNames } from "@freelensapp/utilities";
 import { observer } from "mobx-react";
 import React, { useState } from "react";
-import { nodeIdOf, volumeOf } from "./filters";
+import { nodeIdOf, volumeOf, volumeUnitTitles } from "./filters";
 import { formatBytes, formatLatency, formatVolume, hasErrors, isDropped, linkIdOf } from "./graph";
 import styles from "./traffic-map.module.scss";
 
@@ -17,12 +17,12 @@ const maxRows = 500;
 
 /** The edges of the view, problems first and then the busiest. */
 export const ConnectionsTable = observer(({ model }: { model: TrafficMapModel }) => {
-  const { rateBased } = model;
+  const { unit } = model;
   const rows = [...model.visibleFlows]
     .sort(
       (a, b) =>
         Number(hasErrors(b) || isDropped(b)) - Number(hasErrors(a) || isDropped(a)) ||
-        volumeOf(b, rateBased) - volumeOf(a, rateBased),
+        volumeOf(b, unit) - volumeOf(a, unit),
     )
     .slice(0, maxRows);
   const selected = model.selection?.type === "link" ? model.selection.id : undefined;
@@ -40,7 +40,7 @@ export const ConnectionsTable = observer(({ model }: { model: TrafficMapModel })
           <th>Destination</th>
           <th>Port</th>
           <th>Protocol</th>
-          <th>{rateBased ? "Req/s" : "Connections"}</th>
+          <th>{volumeUnitTitles[unit].column}</th>
           <th>Errors</th>
           <th>Dropped</th>
         </tr>
@@ -60,9 +60,9 @@ export const ConnectionsTable = observer(({ model }: { model: TrafficMapModel })
               <td>{nodeIdOf(flow.destination)}</td>
               <td>{flow.port || "—"}</td>
               <td>{flow.l7Protocol ?? flow.protocol.toUpperCase()}</td>
-              <td>{formatVolume(volumeOf(flow, rateBased), rateBased)}</td>
+              <td>{formatVolume(volumeOf(flow, unit), unit)}</td>
               <td className={cssNames({ [styles.bad]: hasErrors(flow) })}>
-                {flow.errorRate ? formatVolume(flow.errorRate, true) : (flow.httpStatusCounts?.["5xx"] ?? "")}
+                {flow.errorRate ? formatVolume(flow.errorRate, "rate") : (flow.httpStatusCounts?.["5xx"] ?? "")}
               </td>
               <td className={cssNames({ [styles.bad]: isDropped(flow) })}>{flow.verdictCounts?.dropped ?? ""}</td>
             </tr>

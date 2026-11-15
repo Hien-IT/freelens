@@ -7,7 +7,7 @@ import { Button } from "@freelensapp/button";
 import { Icon } from "@freelensapp/icon";
 import { observer } from "mobx-react";
 import React, { useState } from "react";
-import { mergeExternalPeers, nodeIdOf, volumeOf } from "./filters";
+import { mergeExternalPeers, nodeIdOf, volumeOf, volumeUnitTitles } from "./filters";
 import { formatBytes, formatLatency, formatVolume, hasErrors } from "./graph";
 import styles from "./traffic-map.module.scss";
 
@@ -118,7 +118,7 @@ function errorShare(flow: AggregatedFlow): string | undefined {
 }
 
 const LinkDetails = observer(({ model, flow }: { model: TrafficMapModel; flow: AggregatedFlow }) => {
-  const { rateBased } = model;
+  const { unit } = model;
   const latency =
     flow.latencyP50Ms !== undefined
       ? `p50 ${formatLatency(flow.latencyP50Ms)} · p95 ${formatLatency(flow.latencyP95Ms)} · p99 ${formatLatency(flow.latencyP99Ms)}`
@@ -136,7 +136,7 @@ const LinkDetails = observer(({ model, flow }: { model: TrafficMapModel; flow: A
       )}
       <Row label="Port">{flow.port || "—"}</Row>
       <Row label="Protocol">{[flow.l7Protocol, flow.protocol.toUpperCase()].filter(Boolean).join(" / ")}</Row>
-      <Row label={rateBased ? "Request rate" : "Connections"}>{formatVolume(volumeOf(flow, rateBased), rateBased)}</Row>
+      <Row label={volumeUnitTitles[unit].label}>{formatVolume(volumeOf(flow, unit), unit)}</Row>
       <Row label="Flows">{flow.flowCount}</Row>
       {(flow.bytesSent > 0 || flow.bytesRecv > 0) && (
         <Row label="Data">
@@ -145,7 +145,7 @@ const LinkDetails = observer(({ model, flow }: { model: TrafficMapModel; flow: A
       )}
       {hasErrors(flow) && (
         <Row label="Errors (5xx)">
-          {flow.errorRate !== undefined ? formatVolume(flow.errorRate, true) : flow.httpStatusCounts?.["5xx"]}
+          {flow.errorRate !== undefined ? formatVolume(flow.errorRate, "rate") : flow.httpStatusCounts?.["5xx"]}
           {errorShare(flow) ? ` (${errorShare(flow)})` : ""}
         </Row>
       )}
@@ -188,7 +188,7 @@ const LinkDetails = observer(({ model, flow }: { model: TrafficMapModel; flow: A
 
 const NodeDetails = observer(
   ({ model, id, openObject }: { model: TrafficMapModel; id: string; openObject?(endpoint: TrafficEndpoint): void }) => {
-    const { rateBased } = model;
+    const { unit } = model;
     const node = model.graph.nodes.find((candidate) => candidate.id === id);
 
     if (!node) {
@@ -200,11 +200,11 @@ const NodeDetails = observer(
     const { endpoint } = node;
     const peers = (flows: AggregatedFlow[], side: "source" | "destination") =>
       [...flows]
-        .sort((a, b) => volumeOf(b, rateBased) - volumeOf(a, rateBased))
+        .sort((a, b) => volumeOf(b, unit) - volumeOf(a, unit))
         .map((flow) => (
           <Row key={`${nodeIdOf(flow[side])}:${flow.port}`} label={nodeIdOf(flow[side])}>
             {flow.port ? `:${flow.port} ` : ""}
-            {flow.l7Protocol ?? flow.protocol} · {formatVolume(volumeOf(flow, rateBased), rateBased)}
+            {flow.l7Protocol ?? flow.protocol} · {formatVolume(volumeOf(flow, unit), unit)}
             {hasErrors(flow) ? " · errors" : ""}
           </Row>
         ));
@@ -228,7 +228,7 @@ const NodeDetails = observer(
         <Row label="Type">{endpoint.workloadKind ?? endpoint.kind}</Row>
         {endpoint.workload && endpoint.workload !== endpoint.name && <Row label="Workload">{endpoint.workload}</Row>}
         {endpoint.ip && <Row label="IP">{endpoint.ip}</Row>}
-        <Row label={rateBased ? "Request rate" : "Connections"}>{formatVolume(node.volume, rateBased)}</Row>
+        <Row label={volumeUnitTitles[unit].label}>{formatVolume(node.volume, unit)}</Row>
         {endpoint.kind === "External" && <ExternalPeers peers={mergeExternalPeers([...incoming, ...outgoing])} />}
         {incoming.length > 0 && (
           <section>

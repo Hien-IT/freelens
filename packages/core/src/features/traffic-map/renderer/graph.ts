@@ -6,6 +6,7 @@
 import { nodeIdOf, volumeOf } from "./filters";
 
 import type { AggregatedFlow, TrafficEndpoint } from "../common/types";
+import type { VolumeUnit } from "./filters";
 
 export interface TrafficNode {
   id: string;
@@ -91,8 +92,25 @@ export function nodeColor(endpoint: TrafficEndpoint): string {
 }
 
 /** The width of an edge: the order of magnitude of its volume, between 1.5 and 6. */
-export function edgeWidth(volume: number): number {
-  return Math.min(6, Math.max(1.5, Math.log10(Math.max(volume, 1_000)) - 1.5));
+const minEdgeWidth = 1.5;
+const maxEdgeWidth = 6;
+
+/**
+ * The width of an edge, between 1.5 and 6: where its volume lies between the
+ * least and the busiest of the graph, on a logarithmic scale, so a graph of
+ * bytes and one of request rates look alike.
+ */
+export function edgeWidth(volume: number, least: number, busiest: number): number {
+  const low = Math.log10(Math.max(least, 1e-3));
+  const high = Math.log10(Math.max(busiest, 1e-3));
+
+  if (high - low < 1e-9) {
+    return (minEdgeWidth + maxEdgeWidth) / 2;
+  }
+
+  const share = (Math.log10(Math.max(volume, 1e-3)) - low) / (high - low);
+
+  return minEdgeWidth + Math.min(1, Math.max(0, share)) * (maxEdgeWidth - minEdgeWidth);
 }
 
 export function hasErrors(flow: AggregatedFlow): boolean {
@@ -120,8 +138,10 @@ export function linkIdOf(flow: AggregatedFlow): string {
  * The nodes and edges of the flows. The busiest tenth of the edges is the hot
  * path, which the graph animates.
  */
-export function buildTrafficGraph(flows: readonly AggregatedFlow[], rateBased: boolean): TrafficGraph {
-  const volumes = flows.map((flow) => volumeOf(flow, rateBased)).sort((a, b) => b - a);
+export function buildTrafficGraph(flows: readonly AggregatedFlow[], unit: VolumeUnit): TrafficGraph {
+  const volumes = flows.map((flow) => volumeOf(flow, unit)).sort((a, b) => b - a);
+  const busiest = volumes[0] ?? 0;
+  const least = volumes.filter((volume) => volume > 0).at(-1) ?? 0;
   const hotIndex = Math.floor(volumes.length * 0.1) - 1;
   const hotThreshold = hotIndex >= 0 ? volumes[hotIndex] : Number.POSITIVE_INFINITY;
   const nodes = new Map<string, TrafficNode>();
@@ -141,7 +161,7 @@ export function buildTrafficGraph(flows: readonly AggregatedFlow[], rateBased: b
   };
 
   for (const flow of flows) {
-    const volume = volumeOf(flow, rateBased);
+    const volume = volumeOf(flow, unit);
     const hot = volume > 0 && volume >= hotThreshold;
     const dropped = isDropped(flow);
     const source = nodeOf(flow.source);
@@ -166,7 +186,7 @@ export function buildTrafficGraph(flows: readonly AggregatedFlow[], rateBased: b
       target: target.id,
       flow,
       volume,
-      width: edgeWidth(volume),
+      width: edgeWidth(volume, least, busiest),
       color: edgeColor(flow, hot),
       hot,
       dropped,
@@ -190,13 +210,15 @@ export function sameShape(a: TrafficGraph, b: TrafficGraph): boolean {
   return b.nodes.every((node) => nodeIds.has(node.id)) && b.links.every((link) => linkIds.has(link.id));
 }
 
-/** A count or a rate in few characters: 1.2K, 3.4M. */
-export function formatVolume(value: number, rateBased: boolean): string {
-  const suffix = rateBased ? "/s" : "";
+/** A volume in its unit in few characters: 1.2K, 3.4M/s, 5.6 MiB. */
+export function formatVolume(value: number, unit: VolumeUnit): string {
+  if (unit === "bytes") return formatBytes(value);
+
+  const suffix = unit === "rate" ? "/s" : "";
 
   if (value >= 1e6) return `${(value / 1e6).toFixed(1)}M${suffix}`;
   if (value >= 1e3) return `${(value / 1e3).toFixed(1)}K${suffix}`;
-  if (rateBased && value < 10) return `${value.toFixed(2)}${suffix}`;
+  if (unit === "rate" && value < 10) return `${value.toFixed(2)}${suffix}`;
 
   return `${Math.round(value)}${suffix}`;
 }
