@@ -5,6 +5,7 @@
 
 import { Button } from "@freelensapp/button";
 import { Icon } from "@freelensapp/icon";
+import { cssNames } from "@freelensapp/utilities";
 import { observer } from "mobx-react";
 import React, { useState } from "react";
 import { mergeExternalPeers, nodeIdOf, volumeOf, volumeUnitTitles } from "./filters";
@@ -117,7 +118,8 @@ function errorShare(flow: AggregatedFlow): string | undefined {
   return undefined;
 }
 
-const LinkDetails = observer(({ model, flow }: { model: TrafficMapModel; flow: AggregatedFlow }) => {
+/** What one port of an edge carried. */
+const PortDetails = observer(({ model, flow }: { model: TrafficMapModel; flow: AggregatedFlow }) => {
   const { unit } = model;
   const latency =
     flow.latencyP50Ms !== undefined
@@ -128,12 +130,6 @@ const LinkDetails = observer(({ model, flow }: { model: TrafficMapModel; flow: A
 
   return (
     <>
-      <h5 className={styles.detailTitle}>
-        {nodeIdOf(flow.source)} {flow.directionUnknown ? "—" : "→"} {nodeIdOf(flow.destination)}
-      </h5>
-      {flow.directionUnknown && (
-        <p className={styles.note}>The source could not tell which end opened the connection.</p>
-      )}
       <Row label="Port">{flow.port || "—"}</Row>
       <Row label="Protocol">{[flow.l7Protocol, flow.protocol.toUpperCase()].filter(Boolean).join(" / ")}</Row>
       <Row label={volumeUnitTitles[unit].label}>{formatVolume(volumeOf(flow, unit), unit)}</Row>
@@ -182,6 +178,51 @@ const LinkDetails = observer(({ model, flow }: { model: TrafficMapModel; flow: A
       {(flow.source.kind === "External" || flow.destination.kind === "External") && (
         <ExternalPeers peers={flow.externalPeers ?? []} />
       )}
+    </>
+  );
+});
+
+/**
+ * An edge: the traffic between two nodes on each of its ports. With several
+ * ports, a list picks the one whose details show, the busiest first.
+ */
+const LinkDetails = observer(({ model, flows }: { model: TrafficMapModel; flows: readonly AggregatedFlow[] }) => {
+  const { unit } = model;
+  const [port, setPort] = useState<number | undefined>(undefined);
+  const [first] = flows;
+  const shown = flows.find((flow) => flow.port === port) ?? first;
+
+  return (
+    <>
+      <h5 className={styles.detailTitle}>
+        {nodeIdOf(first.source)} {first.directionUnknown ? "—" : "→"} {nodeIdOf(first.destination)}
+      </h5>
+      {first.directionUnknown && (
+        <p className={styles.note}>The source could not tell which end opened the connection.</p>
+      )}
+      {flows.length > 1 && (
+        <section>
+          <h6>Ports ({flows.length})</h6>
+          {flows.map((flow) => (
+            <div
+              key={flow.port}
+              className={cssNames(styles.portRow, { [styles.portRowActive]: flow === shown })}
+              onClick={() => setPort(flow.port)}
+            >
+              <span>
+                {flow.port ? `:${flow.port}` : "unknown port"} {flow.l7Protocol ?? flow.protocol.toUpperCase()}
+              </span>
+              <span className={styles.detailValue}>
+                {formatVolume(volumeOf(flow, unit), unit)}
+                {hasErrors(flow) ? " · errors" : ""}
+              </span>
+            </div>
+          ))}
+        </section>
+      )}
+      <section>
+        <PortDetails model={model} flow={shown} />
+      </section>
     </>
   );
 });
@@ -255,15 +296,15 @@ export const TrafficDetails = observer(({ model, openObject }: TrafficDetailsPro
     return null;
   }
 
-  const link = model.selectedLink;
+  const flows = model.selectedLinkFlows;
 
   return (
     <aside className={styles.details}>
       <Icon material="close" small className={styles.detailsClose} onClick={() => model.select(undefined)} />
       {selection.type === "node" ? (
         <NodeDetails model={model} id={selection.id} openObject={openObject} />
-      ) : link ? (
-        <LinkDetails model={model} flow={link} />
+      ) : flows.length ? (
+        <LinkDetails key={selection.id} model={model} flows={flows} />
       ) : (
         <p className={styles.note}>The connection is no longer in the view.</p>
       )}

@@ -497,3 +497,22 @@
     min-width: 260px;
   }
 }
+
+.portRow {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--padding);
+  padding: 2px 4px;
+  border-radius: 3px;
+  font-size: smaller;
+  cursor: pointer;
+
+  &:hover {
+    background: var(--secondaryBackground);
+  }
+}
+
+.portRowActive {
+  background: var(--secondaryBackground);
+  outline: 1px solid var(--primary);
+}

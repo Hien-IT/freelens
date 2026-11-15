@@ -161,6 +161,26 @@ describe("buildTrafficGraph", () => {
     expect(graph.nodes.find((node) => node.id === "shop/db")?.hasProblems).toBe(true);
   });
 
+  it("draws the ports of a pair as one edge, busiest first", () => {
+    const graph = buildTrafficGraph(
+      [
+        edge(workload("mailer"), workload("nats"), { port: 4222, connections: 2 }),
+        edge(workload("mailer"), workload("nats"), { port: 4318, connections: 13 }),
+        edge(workload("mailer"), workload("nats"), { port: 53, connections: 6, errorCount: 1 }),
+      ],
+      "connections",
+    );
+
+    expect(graph.links).toHaveLength(1);
+    expect(graph.links[0]).toMatchObject({
+      id: "shop/mailer->shop/nats",
+      ports: [4318, 53, 4222],
+      volume: 21,
+      color: edgeColors.error,
+    });
+    expect(graph.nodes.find((node) => node.id === "shop/nats")?.ports).toEqual([4318, 53, 4222]);
+  });
+
   it("marks the busiest tenth of the edges as hot", () => {
     const flows = Array.from({ length: 20 }, (_, index) =>
       edge(workload(`client-${index}`), workload("api"), { connections: index + 1 }),

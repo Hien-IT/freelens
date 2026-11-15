@@ -4,11 +4,12 @@
  */
 
 import { observer } from "mobx-react";
-import { useEffect, useMemo, useRef } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import ForceGraph2D from "react-force-graph-2d";
 import { ElementSize } from "../../resource-map/renderer/helpers/element-size";
+import { volumeOf } from "./filters";
 import { formatLatency, formatVolume, nodeColor } from "./graph";
-import { cardHeight, cardWidth, layoutColumns } from "./layout";
+import { cardHeight, cardWidth, edgeAnchors, layoutColumns } from "./layout";
 import styles from "./traffic-map.module.scss";
 
 import type { ForceGraphMethods } from "react-force-graph-2d";
@@ -31,7 +32,9 @@ export interface TrafficGraphProps {
   colors: TrafficCanvasColors;
 }
 
-type GraphMethods = ForceGraphMethods<TrafficNode, TrafficLink>;
+/** An edge as the canvas draws it: where it meets the sides of its cards, from their middles. */
+type DrawnLink = TrafficLink & { sourceOffset?: number; targetOffset?: number };
+type GraphMethods = ForceGraphMethods<TrafficNode, DrawnLink>;
 type Point = { x: number; y: number };
 
 const radius = 6;
@@ -46,20 +49,31 @@ const kindLabels: Record<string, string> = {
   Unknown: "Unknown",
 };
 
+/** The ports of an edge in few characters: `:4318, :4222 +1`. */
+function portsLabel(ports: readonly number[]): string {
+  if (ports.length === 0) return "";
+
+  return `:${ports.slice(0, 2).join(", :")}${ports.length > 2 ? ` +${ports.length - 2}` : ""}`;
+}
+
+/** The tooltip of an edge: a line per port. */
 function linkTitle(link: TrafficLink, unit: VolumeUnit): string {
-  const { flow } = link;
-  const parts = [
-    flow.l7Protocol ?? flow.protocol.toUpperCase(),
-    flow.port ? `:${flow.port}` : "",
-    formatVolume(link.volume, unit),
-  ];
-  const latency = flow.latencyP50Ms ?? flow.avgLatencyMs;
+  return link.flows
+    .map((flow) => {
+      const parts = [
+        flow.port ? `:${flow.port}` : "",
+        flow.l7Protocol ?? flow.protocol.toUpperCase(),
+        formatVolume(volumeOf(flow, unit), unit),
+      ];
+      const latency = flow.latencyP50Ms ?? flow.avgLatencyMs;
 
-  if (latency !== undefined) parts.push(formatLatency(latency));
-  if ((flow.errorCount ?? 0) > 0) parts.push(`${flow.errorCount} err`);
-  if (link.dropped) parts.push(`${flow.verdictCounts?.dropped} dropped`);
+      if (latency !== undefined) parts.push(formatLatency(latency));
+      if ((flow.errorCount ?? 0) > 0) parts.push(`${flow.errorCount} err`);
+      if (flow.verdictCounts?.dropped) parts.push(`${flow.verdictCounts.dropped} dropped`);
 
-  return parts.filter(Boolean).join(" · ");
+      return parts.filter(Boolean).join(" · ");
+    })
+    .join("<br>");
 }
 
 /** Text cut to a width, with an ellipsis. */
@@ -97,19 +111,19 @@ function subtitleOf(node: TrafficNode): string {
  * side of the callee's, or around the right sides when the callee is not
  * further right, as in a cycle.
  */
-function curveOf(source: Point, target: Point): [Point, Point, Point, Point] {
+function curveOf(source: Point, target: Point, sourceOffset = 0, targetOffset = 0): [Point, Point, Point, Point] {
   const half = cardWidth / 2;
 
   if (target.x > source.x) {
-    const start = { x: source.x + half, y: source.y };
-    const end = { x: target.x - half, y: target.y };
+    const start = { x: source.x + half, y: source.y + sourceOffset };
+    const end = { x: target.x - half, y: target.y + targetOffset };
     const bend = Math.max(40, (end.x - start.x) / 2);
 
     return [start, { x: start.x + bend, y: start.y }, { x: end.x - bend, y: end.y }, end];
   }
 
-  const start = { x: source.x + half, y: source.y };
-  const end = { x: target.x + half, y: target.y };
+  const start = { x: source.x + half, y: source.y + sourceOffset };
+  const end = { x: target.x + half, y: target.y + targetOffset };
   const bend = 60 + Math.abs(source.x - target.x) / 4;
 
   return [start, { x: start.x + bend, y: start.y }, { x: end.x + bend, y: end.y }, end];
@@ -155,7 +169,7 @@ export const TrafficGraphView = observer(({ model, colors }: TrafficGraphProps) 
       graph.links.map((link) => ({
         source: endpointId(link.source),
         target: endpointId(link.target),
-        undirected: link.flow.directionUnknown,
+        undirected: link.directionUnknown,
       })),
       (id) => {
         const node = graph.nodes.find((candidate) => candidate.id === id);
@@ -164,13 +178,22 @@ export const TrafficGraphView = observer(({ model, colors }: TrafficGraphProps) 
       },
     );
 
+    const anchors = edgeAnchors(
+      points,
+      graph.links.map((link) => ({ id: link.id, source: endpointId(link.source), target: endpointId(link.target) })),
+    );
+
     return {
       nodes: graph.nodes.map((node) => {
         const point = points.get(node.id) ?? { x: 0, y: 0 };
 
         return { ...node, x: point.x, y: point.y, fx: point.x, fy: point.y };
       }),
-      links: graph.links.map((link) => ({ ...link })),
+      links: graph.links.map((link) => ({
+        ...link,
+        sourceOffset: anchors.get(link.id)?.source ?? 0,
+        targetOffset: anchors.get(link.id)?.target ?? 0,
+      })),
     };
   }, [graph]);
 
@@ -192,35 +215,41 @@ export const TrafficGraphView = observer(({ model, colors }: TrafficGraphProps) 
     return () => clearTimeout(timer);
   }, [nodeKey, size.width, size.height]);
 
+  const [hoveredNode, setHoveredNode] = useState<string | undefined>(undefined);
+  const [hoveredLink, setHoveredLink] = useState<string | undefined>(undefined);
   const selectedNode = selection?.type === "node" ? selection.id : undefined;
   const selectedLink = selection?.type === "link" ? selection.id : undefined;
+  // The node whose edges stand out: the one under the pointer, else the selected one.
+  const focusNode = hoveredNode ?? (hoveredLink ? undefined : selectedNode);
+  const focusLink = hoveredLink ?? (hoveredNode ? undefined : selectedLink);
 
   const neighbours = useMemo(() => {
     const ids = new Set<string>();
 
-    if (!selectedNode) return ids;
+    if (!focusNode) return ids;
+
+    ids.add(focusNode);
 
     for (const link of graph.links) {
-      if (endpointId(link.source) === selectedNode || endpointId(link.target) === selectedNode) {
+      if (endpointId(link.source) === focusNode || endpointId(link.target) === focusNode) {
         ids.add(endpointId(link.source));
         ids.add(endpointId(link.target));
       }
     }
 
     return ids;
-  }, [graph, selectedNode]);
+  }, [graph, focusNode]);
 
+  const touchesFocus = (link: TrafficLink) =>
+    focusNode !== undefined && (endpointId(link.source) === focusNode || endpointId(link.target) === focusNode);
   const isDimmed = (link: TrafficLink) =>
-    (selectedNode !== undefined &&
-      endpointId(link.source) !== selectedNode &&
-      endpointId(link.target) !== selectedNode) ||
-    (selectedLink !== undefined && link.id !== selectedLink);
+    (focusNode !== undefined && !touchesFocus(link)) || (focusLink !== undefined && link.id !== focusLink);
   const animated = graph.links.some((link) => link.hot);
 
   return (
     <div className={styles.graph} ref={(element) => size.follow(element)}>
       {size.width > 0 && size.height > 0 && (
-        <ForceGraph2D<TrafficNode, TrafficLink>
+        <ForceGraph2D<TrafficNode, DrawnLink>
           ref={graphRef as never}
           width={size.width}
           height={size.height}
@@ -237,7 +266,7 @@ export const TrafficGraphView = observer(({ model, colors }: TrafficGraphProps) 
             const x = (node.x ?? 0) - cardWidth / 2;
             const y = (node.y ?? 0) - cardHeight / 2;
             const selected = node.id === selectedNode;
-            const dimmed = selectedNode !== undefined && !neighbours.has(node.id);
+            const dimmed = focusNode !== undefined && !neighbours.has(node.id);
 
             context.globalAlpha = dimmed ? 0.3 : 1;
 
@@ -292,16 +321,17 @@ export const TrafficGraphView = observer(({ model, colors }: TrafficGraphProps) 
           }}
           linkLabel={(link) => linkTitle(link, unit)}
           linkCanvasObjectMode={() => "replace"}
-          linkCanvasObject={(link, context, scale) => {
+          linkCanvasObject={(link, context) => {
             const source = pointOf(link.source);
             const target = pointOf(link.target);
 
             if (!source || !target) return;
 
-            const curve = curveOf(source, target);
-            const width = link.id === selectedLink ? link.width + 1.5 : link.width;
+            const curve = curveOf(source, target, link.sourceOffset, link.targetOffset);
+            const emphasized = link.id === focusLink || touchesFocus(link);
+            const width = emphasized ? link.width + 1.5 : link.width;
 
-            context.globalAlpha = isDimmed(link) ? 0.15 : 0.9;
+            context.globalAlpha = isDimmed(link) ? 0.08 : focusNode || focusLink ? 1 : 0.75;
             context.strokeStyle = link.color;
             context.fillStyle = link.color;
             context.lineWidth = width;
@@ -311,7 +341,7 @@ export const TrafficGraphView = observer(({ model, colors }: TrafficGraphProps) 
 
             if (link.hot) {
               // Dashes that move along the busiest edges, in the direction of the traffic.
-              context.globalAlpha = isDimmed(link) ? 0.15 : 1;
+              context.globalAlpha = isDimmed(link) ? 0.08 : 1;
               context.strokeStyle = "#ffffff";
               context.lineWidth = Math.max(1, width / 2);
               context.setLineDash([2, 14]);
@@ -321,17 +351,19 @@ export const TrafficGraphView = observer(({ model, colors }: TrafficGraphProps) 
               context.lineDashOffset = 0;
             }
 
-            if (!link.flow.directionUnknown) {
-              context.globalAlpha = isDimmed(link) ? 0.15 : 1;
+            if (!link.directionUnknown) {
+              context.globalAlpha = isDimmed(link) ? 0.08 : 1;
               drawArrow(context, curve[2], curve[3], 6 + width);
             }
 
-            if (scale > 0.9 && !isDimmed(link)) {
+            // Labels only on the edges that stand out, which keeps a busy map readable.
+            if (emphasized) {
               const middle = {
                 x: (curve[0].x + 3 * curve[1].x + 3 * curve[2].x + curve[3].x) / 8,
                 y: (curve[0].y + 3 * curve[1].y + 3 * curve[2].y + curve[3].y) / 8,
               };
-              const label = `${link.flow.port ? `:${link.flow.port} ` : ""}${formatVolume(link.volume, unit)}`;
+              const ports = portsLabel(link.ports);
+              const label = `${ports ? `${ports} · ` : ""}${formatVolume(link.volume, unit)}`;
 
               context.globalAlpha = 1;
               context.font = "10px sans-serif";
@@ -356,8 +388,10 @@ export const TrafficGraphView = observer(({ model, colors }: TrafficGraphProps) 
 
             context.strokeStyle = color;
             context.lineWidth = link.width + 8;
-            strokeCurve(context, curveOf(source, target));
+            strokeCurve(context, curveOf(source, target, link.sourceOffset, link.targetOffset));
           }}
+          onNodeHover={(node) => setHoveredNode(node?.id)}
+          onLinkHover={(link) => setHoveredLink(link?.id)}
           onNodeClick={(node) => model.select({ type: "node", id: node.id })}
           onLinkClick={(link) => model.select({ type: "link", id: link.id })}
           onBackgroundClick={() => model.select(undefined)}

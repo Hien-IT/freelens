@@ -4,7 +4,7 @@
  */
 
 import { describe, expect, it } from "vitest";
-import { cardHeight, layoutColumns, rowGap } from "../layout";
+import { cardHeight, edgeAnchors, layoutColumns, rowGap, spreadAnchors } from "../layout";
 
 const columnsOf = (points: ReturnType<typeof layoutColumns>) =>
   Object.fromEntries([...points].map(([id, point]) => [id, point.column]));
@@ -91,5 +91,39 @@ describe("layoutColumns", () => {
     expect(layoutColumns(["db", "web", "auth", "api"], edges)).toEqual(
       layoutColumns(["api", "auth", "web", "db"], edges),
     );
+  });
+});
+
+describe("edgeAnchors", () => {
+  it("spreads the ends on one side of a card in the order of the cards at the other end", () => {
+    const edges = ["a", "b", "c"].map((source) => ({ id: `${source}->sink`, source, target: "sink" }));
+    const points = layoutColumns(["a", "b", "c", "sink"], edges);
+    const anchors = edgeAnchors(points, edges);
+    const bySourceRow = [...edges].sort((x, y) => points.get(x.source)!.y - points.get(y.source)!.y);
+
+    expect(bySourceRow.map((edge) => anchors.get(edge.id)!.target)).toEqual(spreadAnchors(3));
+    expect(edges.map((edge) => anchors.get(edge.id)!.source)).toEqual([0, 0, 0]);
+  });
+
+  it("keeps the ends within the card, closer together on a busy side", () => {
+    expect(spreadAnchors(1)).toEqual([0]);
+    expect(spreadAnchors(3)).toEqual([-10, 0, 10]);
+
+    const busy = spreadAnchors(40);
+
+    expect(busy[0]).toBeGreaterThanOrEqual(-cardHeight / 2);
+    expect(busy.at(-1)).toBeLessThanOrEqual(cardHeight / 2);
+  });
+
+  it("brings an edge that runs back to the left to the right side of its target", () => {
+    const edges = [
+      { id: "a->b", source: "a", target: "b" },
+      { id: "b->a", source: "b", target: "a" },
+    ];
+    const points = layoutColumns(["a", "b"], edges);
+    const anchors = edgeAnchors(points, edges);
+
+    // a's right side holds its own edge out and the edge back from b.
+    expect([anchors.get("a->b")!.source, anchors.get("b->a")!.target].sort((x, y) => x - y)).toEqual([-5, 5]);
   });
 });

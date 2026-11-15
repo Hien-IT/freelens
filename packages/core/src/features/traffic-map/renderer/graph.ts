@@ -23,11 +23,16 @@ export interface TrafficNode {
   y?: number;
 }
 
+/** The traffic from one node to another, on every port, drawn as one edge. */
 export interface TrafficLink {
   id: string;
   source: string | TrafficNode;
   target: string | TrafficNode;
-  flow: AggregatedFlow;
+  /** The aggregated flows of the pair, one per port, busiest first. */
+  flows: AggregatedFlow[];
+  /** The ports of the flows, busiest first, without the zero of an unknown port. */
+  ports: number[];
+  directionUnknown: boolean;
   volume: number;
   width: number;
   color: string;
@@ -91,7 +96,6 @@ export function nodeColor(endpoint: TrafficEndpoint): string {
   return namespaceColor(endpoint.namespace);
 }
 
-/** The width of an edge: the order of magnitude of its volume, between 1.5 and 6. */
 const minEdgeWidth = 1.5;
 const maxEdgeWidth = 6;
 
@@ -121,32 +125,34 @@ export function isDropped(flow: AggregatedFlow): boolean {
   return (flow.verdictCounts?.dropped ?? 0) > 0;
 }
 
-function edgeColor(flow: AggregatedFlow, hot: boolean): string {
-  if (hasErrors(flow)) return edgeColors.error;
+function edgeColor(flows: readonly AggregatedFlow[], hot: boolean): string {
+  if (flows.some(hasErrors)) return edgeColors.error;
   if (hot) return edgeColors.hot;
-  if (flow.l7Protocol === "HTTP" || flow.l7Protocol === "gRPC") return edgeColors.http;
-  if (flow.l7Protocol === "DNS") return edgeColors.dns;
+  if (flows.some((flow) => flow.l7Protocol === "HTTP" || flow.l7Protocol === "gRPC")) return edgeColors.http;
+  if (flows.some((flow) => flow.l7Protocol === "DNS")) return edgeColors.dns;
 
   return edgeColors.tcp;
 }
 
+/** The id of the edge that a flow is drawn on: its two nodes and whether its direction is known, on any port. */
 export function linkIdOf(flow: AggregatedFlow): string {
-  return `${nodeIdOf(flow.source)}->${nodeIdOf(flow.destination)}:${flow.port}${flow.directionUnknown ? ":unoriented" : ""}`;
+  return `${nodeIdOf(flow.source)}->${nodeIdOf(flow.destination)}${flow.directionUnknown ? ":unoriented" : ""}`;
+}
+
+/** A key for one aggregated flow: its edge and its port. */
+export function flowKeyOf(flow: AggregatedFlow): string {
+  return `${linkIdOf(flow)}:${flow.port}`;
 }
 
 /**
- * The nodes and edges of the flows. The busiest tenth of the edges is the hot
- * path, which the graph animates.
+ * The nodes and edges of the flows: an edge per pair of nodes, whatever the
+ * ports, so the traffic between two workloads is one line. The busiest tenth
+ * of the edges is the hot path, which the graph animates.
  */
 export function buildTrafficGraph(flows: readonly AggregatedFlow[], unit: VolumeUnit): TrafficGraph {
-  const volumes = flows.map((flow) => volumeOf(flow, unit)).sort((a, b) => b - a);
-  const busiest = volumes[0] ?? 0;
-  const least = volumes.filter((volume) => volume > 0).at(-1) ?? 0;
-  const hotIndex = Math.floor(volumes.length * 0.1) - 1;
-  const hotThreshold = hotIndex >= 0 ? volumes[hotIndex] : Number.POSITIVE_INFINITY;
   const nodes = new Map<string, TrafficNode>();
   const portVolumes = new Map<string, Map<number, number>>();
-  const links: TrafficLink[] = [];
+  const pairs = new Map<string, AggregatedFlow[]>();
 
   const nodeOf = (endpoint: TrafficEndpoint) => {
     const id = nodeIdOf(endpoint);
@@ -161,33 +167,53 @@ export function buildTrafficGraph(flows: readonly AggregatedFlow[], unit: Volume
   };
 
   for (const flow of flows) {
-    const volume = volumeOf(flow, unit);
+    const id = linkIdOf(flow);
+
+    pairs.set(id, [...(pairs.get(id) ?? []), flow]);
+  }
+
+  const volumeOfPair = (pair: readonly AggregatedFlow[]) => pair.reduce((sum, flow) => sum + volumeOf(flow, unit), 0);
+  const volumes = [...pairs.values()].map(volumeOfPair).sort((a, b) => b - a);
+  const busiest = volumes[0] ?? 0;
+  const least = volumes.filter((volume) => volume > 0).at(-1) ?? 0;
+  const hotIndex = Math.floor(volumes.length * 0.1) - 1;
+  const hotThreshold = hotIndex >= 0 ? volumes[hotIndex] : Number.POSITIVE_INFINITY;
+  const links: TrafficLink[] = [];
+
+  for (const [id, pair] of pairs) {
+    const sorted = [...pair].sort((a, b) => volumeOf(b, unit) - volumeOf(a, unit) || a.port - b.port);
+    const [first] = sorted;
+    const volume = volumeOfPair(sorted);
     const hot = volume > 0 && volume >= hotThreshold;
-    const dropped = isDropped(flow);
-    const source = nodeOf(flow.source);
-    const target = nodeOf(flow.destination);
+    const dropped = sorted.some(isDropped);
+    const source = nodeOf(first.source);
+    const target = nodeOf(first.destination);
 
-    if (flow.port > 0 && !flow.directionUnknown) {
-      const ports = portVolumes.get(target.id) ?? new Map<number, number>();
+    for (const flow of sorted) {
+      if (flow.port > 0 && !flow.directionUnknown) {
+        const ports = portVolumes.get(target.id) ?? new Map<number, number>();
 
-      ports.set(flow.port, (ports.get(flow.port) ?? 0) + volume);
-      portVolumes.set(target.id, ports);
+        ports.set(flow.port, (ports.get(flow.port) ?? 0) + volumeOf(flow, unit));
+        portVolumes.set(target.id, ports);
+      }
     }
 
     for (const node of [source, target]) {
       node.volume += volume;
       node.hot ||= hot;
-      node.hasProblems ||= dropped || hasErrors(flow);
+      node.hasProblems ||= dropped || sorted.some(hasErrors);
     }
 
     links.push({
-      id: linkIdOf(flow),
+      id,
       source: source.id,
       target: target.id,
-      flow,
+      flows: sorted,
+      ports: sorted.map((flow) => flow.port).filter((port) => port > 0),
+      directionUnknown: Boolean(first.directionUnknown),
       volume,
       width: edgeWidth(volume, least, busiest),
-      color: edgeColor(flow, hot),
+      color: edgeColor(sorted, hot),
       hot,
       dropped,
     });

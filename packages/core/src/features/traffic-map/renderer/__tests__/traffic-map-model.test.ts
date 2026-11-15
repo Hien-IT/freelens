@@ -98,7 +98,7 @@ describe("TrafficMapModel", () => {
     await model.detect(false);
     model.select({ type: "link", id: linkIdOf(model.visibleFlows.find((flow) => flow.port === 5432)!) });
 
-    expect(model.selectedLink?.destination.name).toBe("db");
+    expect(model.selectedLinkFlows.map((flow) => flow.destination.name)).toEqual(["db"]);
     expect(model.selectedRecords.map((flow) => flow.destination.name)).toEqual(["db-0"]);
   });
 

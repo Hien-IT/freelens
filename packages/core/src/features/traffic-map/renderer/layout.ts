@@ -198,3 +198,68 @@ export function layoutColumns(
 
   return points;
 }
+
+/** How far apart, at most, the ends of the edges on one side of a card spread, and the gap between two ends. */
+const anchorSpan = cardHeight - 16;
+const anchorGap = 10;
+
+/** Offsets from the middle of a card side for `count` edge ends, top to bottom. */
+export function spreadAnchors(count: number): number[] {
+  if (count <= 1) return [0];
+
+  const step = Math.min(anchorGap, anchorSpan / (count - 1));
+  const total = step * (count - 1);
+
+  return Array.from({ length: count }, (_, index) => -total / 2 + index * step);
+}
+
+export interface AnchoredEdge {
+  id: string;
+  source: string;
+  target: string;
+}
+
+/**
+ * Where each edge meets its cards, as offsets from the middle of a card side.
+ * An edge leaves from the right side of its source and reaches the left side
+ * of its target, or its right side when it runs back to the left. The ends on
+ * one side of a card are spread along it in the order of the cards at their
+ * other end, so the edges into a busy card do not meet in one point, and
+ * cross less.
+ */
+export function edgeAnchors(
+  points: ReadonlyMap<string, LayoutPoint>,
+  edges: readonly AnchoredEdge[],
+): Map<string, { source: number; target: number }> {
+  const yOf = (id: string) => points.get(id)?.y ?? 0;
+  const xOf = (id: string) => points.get(id)?.x ?? 0;
+  const sides = new Map<string, { edge: string; end: "source" | "target"; otherY: number }[]>();
+  const addEnd = (side: string, edge: string, end: "source" | "target", otherY: number) =>
+    sides.set(side, [...(sides.get(side) ?? []), { edge, end, otherY }]);
+
+  for (const edge of edges) {
+    addEnd(`${edge.source}|right`, edge.id, "source", yOf(edge.target));
+    addEnd(
+      `${edge.target}|${xOf(edge.target) > xOf(edge.source) ? "left" : "right"}`,
+      edge.id,
+      "target",
+      yOf(edge.source),
+    );
+  }
+
+  const anchors = new Map<string, { source: number; target: number }>();
+
+  for (const ends of sides.values()) {
+    const sorted = [...ends].sort((a, b) => a.otherY - b.otherY || a.edge.localeCompare(b.edge));
+    const offsets = spreadAnchors(sorted.length);
+
+    sorted.forEach((end, index) => {
+      const anchor = anchors.get(end.edge) ?? { source: 0, target: 0 };
+
+      anchor[end.end] = offsets[index];
+      anchors.set(end.edge, anchor);
+    });
+  }
+
+  return anchors;
+}

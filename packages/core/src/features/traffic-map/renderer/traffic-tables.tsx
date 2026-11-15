@@ -7,7 +7,7 @@ import { cssNames } from "@freelensapp/utilities";
 import { observer } from "mobx-react";
 import React, { useState } from "react";
 import { nodeIdOf, volumeOf, volumeUnitTitles } from "./filters";
-import { formatBytes, formatLatency, formatVolume, hasErrors, isDropped, linkIdOf } from "./graph";
+import { flowKeyOf, formatBytes, formatLatency, formatVolume, hasErrors, isDropped, linkIdOf } from "./graph";
 import styles from "./traffic-map.module.scss";
 
 import type { TrafficFlow } from "../common/types";
@@ -51,7 +51,7 @@ export const ConnectionsTable = observer(({ model }: { model: TrafficMapModel })
 
           return (
             <tr
-              key={id}
+              key={flowKeyOf(flow)}
               className={cssNames({ [styles.selectedRow]: id === selected })}
               onClick={() => model.select({ type: "link", id })}
             >

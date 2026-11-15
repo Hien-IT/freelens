@@ -5,7 +5,7 @@
 
 import { action, computed, observable, reaction, runInAction } from "mobx";
 import { applyFilters, availableFacets, defaultFilters, nodeIdOf, volumeUnitOf } from "./filters";
-import { buildTrafficGraph, linkIdOf } from "./graph";
+import { buildTrafficGraph } from "./graph";
 
 import type {
   AggregatedFlow,
@@ -314,10 +314,15 @@ export class TrafficMapModel {
     return [...volumes].sort((a, b) => b[1] - a[1]).map(([id]) => id);
   }
 
-  @computed get selectedLink(): AggregatedFlow | undefined {
+  /** The aggregated flows of the selected edge, one per port, busiest first; empty without one. */
+  @computed get selectedLinkFlows(): AggregatedFlow[] {
     const selection = this.selection;
 
-    return selection?.type === "link" ? this.visibleFlows.find((flow) => linkIdOf(flow) === selection.id) : undefined;
+    if (selection?.type !== "link") {
+      return [];
+    }
+
+    return this.graph.links.find((link) => link.id === selection.id)?.flows ?? [];
   }
 
   /** The single flows behind the selection, or all of them, newest first. */
@@ -344,17 +349,19 @@ export class TrafficMapModel {
       );
     }
 
-    const link = this.selectedLink;
+    const [link] = this.selectedLinkFlows;
 
     if (!link) {
       return [];
     }
 
+    const ports = new Set(this.selectedLinkFlows.map((flow) => flow.port));
+
     return records.filter(
       (flow) =>
         endpointId(flow, "source") === nodeIdOf(link.source) &&
         endpointId(flow, "destination") === nodeIdOf(link.destination) &&
-        flow.port === link.port,
+        ports.has(flow.port),
     );
   }
 }
