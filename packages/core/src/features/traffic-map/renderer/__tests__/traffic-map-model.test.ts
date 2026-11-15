@@ -186,4 +186,20 @@ describe("TrafficMapModel", () => {
 
     expect(model.viewKey).not.toBe(focused);
   });
+
+  it("shows all traffic but keeps the merged Internet and cluster nodes", async () => {
+    const { model } = createModel();
+
+    await model.detect(false);
+    model.updateFilters({ verdicts: ["dropped"], minVolume: 100, collapseHosts: false });
+    model.resetFilters();
+
+    expect(model.filters).toMatchObject({
+      hideSystem: false,
+      verdicts: [],
+      minVolume: 0,
+      collapseInternet: true,
+      collapseHosts: false,
+    });
+  });
 });

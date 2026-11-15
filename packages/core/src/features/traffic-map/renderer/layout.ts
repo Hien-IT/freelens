@@ -164,7 +164,7 @@ export function layoutColumns(
 
   placeRows();
 
-  for (let pass = 0; pass < 4; pass++) {
+  for (let pass = 0; pass < 8; pass++) {
     for (let index = 1; index < columns.length; index++) {
       if (columns[index]) {
         sweep(columns[index], -1);

@@ -45,7 +45,6 @@ export interface TrafficMapViewState {
 
 function Legend() {
   const items: [string, string, string?][] = [
-    ["Hot path (busiest 10%)", edgeColors.hot],
     ["HTTP / gRPC", edgeColors.http],
     ["DNS", edgeColors.dns],
     ["Errors (5xx)", edgeColors.error],
@@ -64,7 +63,10 @@ function Legend() {
           {label}
         </span>
       ))}
-      <span>Arrow: who opened the connection · no arrow: unknown · thicker: more traffic</span>
+      <span>
+        Arrow: who opened the connection · no arrow: unknown · thicker: more traffic · moving dots: the busiest tenth ·
+        hover a card to bring out its connections
+      </span>
     </div>
   );
 }

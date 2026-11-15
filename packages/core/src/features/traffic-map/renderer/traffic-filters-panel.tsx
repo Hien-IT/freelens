@@ -108,6 +108,11 @@ export const TrafficFiltersPanel = observer(({ model }: { model: TrafficMapModel
           onChange={(collapseInternet) => model.updateFilters({ collapseInternet })}
         />
         <Checkbox
+          label="One node for the cluster's nodes"
+          value={filters.collapseHosts}
+          onChange={(collapseHosts) => model.updateFilters({ collapseHosts })}
+        />
+        <Checkbox
           label="Pods, not workloads"
           value={model.groupByPod}
           onChange={(value) => model.setGroupByPod(value)}

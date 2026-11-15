@@ -247,8 +247,14 @@ export class TrafficMapModel {
     this.filters = { ...this.filters, ...update };
   }
 
+  /**
+   * Clears every filter, the system traffic included, but keeps how the view
+   * draws what it shows: the Internet node and the cluster nodes stay merged.
+   */
   @action resetFilters() {
-    this.filters = { ...defaultFilters, hideSystem: false, collapseInternet: false };
+    const { collapseInternet, collapseHosts } = this.filters;
+
+    this.filters = { ...defaultFilters, hideSystem: false, collapseInternet, collapseHosts };
   }
 
   @action select(selection: TrafficSelection | undefined) {

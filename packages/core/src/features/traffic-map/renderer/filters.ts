@@ -87,8 +87,10 @@ export type L7Filter = "all" | "HTTP" | "DNS" | "TCP";
 export interface TrafficFilters {
   hideSystem: boolean;
   hideExternal: boolean;
-  /** Draw every connection from outside the cluster as one Internet node. */
+  /** Draw every address outside the cluster as one Internet node. */
   collapseInternet: boolean;
+  /** Draw the nodes of the cluster, the hosts that pods run on, as one node. */
+  collapseHosts: boolean;
   l7: L7Filter;
   /** Verdicts to keep; empty for all. */
   verdicts: readonly string[];
@@ -106,6 +108,7 @@ export const defaultFilters: TrafficFilters = {
   hideSystem: true,
   hideExternal: false,
   collapseInternet: true,
+  collapseHosts: true,
   l7: "all",
   verdicts: [],
   statusClasses: [],
@@ -164,6 +167,18 @@ export const minVolumeSteps: Record<VolumeUnit, number[]> = {
 
 const internetEndpoint: TrafficEndpoint = { name: "Internet", namespace: "", kind: "External" };
 
+/** The node that stands for every node of the cluster when they are drawn as one. */
+export const clusterNodesName = "Cluster nodes";
+const clusterNodesEndpoint: TrafficEndpoint = { name: clusterNodesName, namespace: "", kind: "Host" };
+
+/** Whether an endpoint is one of the nodes drawn as one: the Internet node or the cluster's nodes. */
+export function isCollapsedGroup(endpoint: TrafficEndpoint): boolean {
+  return (
+    (endpoint.kind === "External" && endpoint.name === internetEndpoint.name) ||
+    (endpoint.kind === "Host" && endpoint.name === clusterNodesName)
+  );
+}
+
 function hasStatusClass(flow: AggregatedFlow, classes: readonly string[]): boolean {
   return classes.some(
     (statusClass) =>
@@ -220,43 +235,59 @@ function sumCounts(into: Record<string, number> | undefined, from: Record<string
   return result;
 }
 
-/** The outside addresses of an edge, or the outside endpoint itself when the aggregation listed none. */
-function peersOf(flow: AggregatedFlow, outside: TrafficEndpoint): ExternalPeerStat[] {
-  if (flow.externalPeers?.length) return flow.externalPeers;
+/** The addresses or hosts an edge stands for at one end, or the endpoint itself when the aggregation listed none. */
+function membersOf(flow: AggregatedFlow, endpoint: TrafficEndpoint): ExternalPeerStat[] {
+  if (endpoint.kind === "External" && flow.externalPeers?.length) return flow.externalPeers;
 
-  const name = outside.names?.[0] ?? outside.ip ?? outside.name;
+  const name = endpoint.names?.[0] ?? endpoint.ip ?? endpoint.name;
 
-  return [{ name, ips: outside.ip ? [outside.ip] : [], flowCount: flow.flowCount, connections: flow.connections }];
+  return [{ name, ips: endpoint.ip ? [endpoint.ip] : [], flowCount: flow.flowCount, connections: flow.connections }];
 }
 
 /**
- * Draws every address outside the cluster as one Internet node, on either
- * end of an edge, merging the edges it then stands for and summing what they
- * carried. The node keeps the list of the addresses it stands for.
+ * Draws the endpoints of a group as one node, on either end of an edge: every
+ * address outside the cluster as the Internet node, and every node of the
+ * cluster as one "Cluster nodes" node. The edges a group then stands for are
+ * merged, summing what they carried, and keep the list of the addresses or
+ * hosts behind them. Traffic within one group, such as between two nodes, is
+ * left out.
  */
-function collapseInternet(flows: readonly AggregatedFlow[]): AggregatedFlow[] {
+function collapseGroups(
+  flows: readonly AggregatedFlow[],
+  { internet, hosts }: { internet: boolean; hosts: boolean },
+): AggregatedFlow[] {
+  const groupOf = (endpoint: TrafficEndpoint): TrafficEndpoint | undefined => {
+    if (internet && endpoint.kind === "External") return internetEndpoint;
+    if (hosts && endpoint.kind === "Host") return clusterNodesEndpoint;
+
+    return undefined;
+  };
   const merged = new Map<string, AggregatedFlow>();
   const result: AggregatedFlow[] = [];
 
   for (const flow of flows) {
-    const inbound = flow.source.kind === "External" && !isOutsideCluster(flow.destination);
-    const outbound = flow.destination.kind === "External" && !isOutsideCluster(flow.source);
+    const sourceGroup = groupOf(flow.source);
+    const destinationGroup = groupOf(flow.destination);
 
-    if (!inbound && !outbound) {
+    if (!sourceGroup && !destinationGroup) {
       result.push(flow);
       continue;
     }
 
-    const outside = inbound ? flow.source : flow.destination;
-    const inside = inbound ? flow.destination : flow.source;
-    const key = `${inbound ? "in" : "out"}|${nodeIdOf(inside)}|${flow.port}|${flow.directionUnknown ? "u" : "d"}`;
+    if (sourceGroup && sourceGroup === destinationGroup) {
+      continue;
+    }
+
+    const source = sourceGroup ?? flow.source;
+    const destination = destinationGroup ?? flow.destination;
+    // The members listed are those of the outside end when there is one.
+    const listed = destinationGroup === internetEndpoint || !sourceGroup ? flow.destination : flow.source;
+    const members = membersOf(flow, listed);
+    const key = `${nodeIdOf(source)}|${nodeIdOf(destination)}|${flow.port}|${flow.directionUnknown ? "u" : "d"}`;
     const existing = merged.get(key);
-    const peers = peersOf(flow, outside);
 
     if (!existing) {
-      const copy: AggregatedFlow = inbound
-        ? { ...flow, source: internetEndpoint, externalPeers: peers }
-        : { ...flow, destination: internetEndpoint, externalPeers: peers };
+      const copy: AggregatedFlow = { ...flow, source, destination, externalPeers: members };
 
       merged.set(key, copy);
       result.push(copy);
@@ -268,7 +299,7 @@ function collapseInternet(flows: readonly AggregatedFlow[]): AggregatedFlow[] {
     existing.bytesSent += flow.bytesSent;
     existing.bytesRecv += flow.bytesRecv;
     existing.lastSeen = Math.max(existing.lastSeen, flow.lastSeen);
-    existing.externalPeers = mergeExternalPeers([existing, { externalPeers: peers }]);
+    existing.externalPeers = mergeExternalPeers([existing, { externalPeers: members }]);
     existing.verdictCounts = sumCounts(existing.verdictCounts, flow.verdictCounts);
     existing.httpStatusCounts = sumCounts(existing.httpStatusCounts, flow.httpStatusCounts);
     existing.dropReasons = sumCounts(existing.dropReasons, flow.dropReasons);
@@ -307,8 +338,8 @@ export function applyFilters(
     return true;
   });
 
-  if (filters.collapseInternet) {
-    result = collapseInternet(result);
+  if (filters.collapseInternet || filters.collapseHosts) {
+    result = collapseGroups(result, { internet: filters.collapseInternet, hosts: filters.collapseHosts });
   }
 
   if (filters.focus) {

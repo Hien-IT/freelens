@@ -8,7 +8,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import ForceGraph2D from "react-force-graph-2d";
 import { ElementSize } from "../../resource-map/renderer/helpers/element-size";
 import { volumeOf } from "./filters";
-import { formatLatency, formatVolume, nodeColor } from "./graph";
+import { cardTitleOf, fitMiddle, formatLatency, formatVolume, nodeColor, restingEdgeAlpha } from "./graph";
 import { cardHeight, cardWidth, edgeAnchors, layoutColumns } from "./layout";
 import styles from "./traffic-map.module.scss";
 
@@ -39,7 +39,6 @@ type Point = { x: number; y: number };
 
 const radius = 6;
 const problemColor = "#ef4444";
-const hotColor = "#f97316";
 const kindLabels: Record<string, string> = {
   Pod: "Pod",
   Workload: "Workload",
@@ -76,7 +75,7 @@ function linkTitle(link: TrafficLink, unit: VolumeUnit): string {
     .join("<br>");
 }
 
-/** Text cut to a width, with an ellipsis. */
+/** Text cut to a width, with an ellipsis at its end. */
 function fit(context: CanvasRenderingContext2D, text: string, width: number): string {
   if (context.measureText(text).width <= width) return text;
 
@@ -86,6 +85,9 @@ function fit(context: CanvasRenderingContext2D, text: string, width: number): st
 
   return `${text.slice(0, end)}…`;
 }
+
+/** At most this many edges, every edge of the hot path moves; past it only the ones that stand out do. */
+const animateAllUpTo = 25;
 
 function roundedRect(context: CanvasRenderingContext2D, x: number, y: number, width: number, height: number) {
   context.beginPath();
@@ -243,7 +245,9 @@ export const TrafficGraphView = observer(({ model, colors }: TrafficGraphProps) 
     focusNode !== undefined && (endpointId(link.source) === focusNode || endpointId(link.target) === focusNode);
   const isDimmed = (link: TrafficLink) =>
     (focusNode !== undefined && !touchesFocus(link)) || (focusLink !== undefined && link.id !== focusLink);
-  const animated = graph.links.some((link) => link.hot);
+  const restingAlpha = restingEdgeAlpha(graph.links.length);
+  const animated =
+    graph.links.length <= animateAllUpTo ? graph.links.some((link) => link.hot) : Boolean(focusNode || focusLink);
 
   return (
     <div className={styles.graph} ref={(element) => size.follow(element)}>
@@ -273,14 +277,8 @@ export const TrafficGraphView = observer(({ model, colors }: TrafficGraphProps) 
             roundedRect(context, x, y, cardWidth, cardHeight);
             context.fillStyle = colors.card;
             context.fill();
-            context.lineWidth = selected ? 2.5 : node.hasProblems || node.hot ? 1.8 : 1;
-            context.strokeStyle = selected
-              ? colors.selected
-              : node.hasProblems
-                ? problemColor
-                : node.hot
-                  ? hotColor
-                  : colors.border;
+            context.lineWidth = selected ? 2.5 : node.hasProblems ? 1.8 : 1;
+            context.strokeStyle = selected ? colors.selected : node.hasProblems ? problemColor : colors.border;
             context.stroke();
 
             context.save();
@@ -297,7 +295,15 @@ export const TrafficGraphView = observer(({ model, colors }: TrafficGraphProps) 
             context.textBaseline = "alphabetic";
             context.fillStyle = colors.text;
             context.font = "600 13px sans-serif";
-            context.fillText(fit(context, node.endpoint.name, textWidth), left, y + 21);
+            context.fillText(
+              fitMiddle(
+                (text) => context.measureText(text).width,
+                cardTitleOf(node.endpoint.name, node.endpoint.workloadKind),
+                textWidth,
+              ),
+              left,
+              y + 21,
+            );
 
             context.fillStyle = colors.secondaryText;
             context.font = "11px sans-serif";
@@ -330,7 +336,7 @@ export const TrafficGraphView = observer(({ model, colors }: TrafficGraphProps) 
             const emphasized = link.id === focusLink || touchesFocus(link);
             const width = emphasized ? link.width + 1.5 : link.width;
 
-            context.globalAlpha = isDimmed(link) ? 0.08 : focusNode || focusLink ? 1 : 0.75;
+            context.globalAlpha = isDimmed(link) ? 0.06 : emphasized ? 1 : restingAlpha;
             context.strokeStyle = link.color;
             context.fillStyle = link.color;
             context.lineWidth = width;
@@ -338,9 +344,9 @@ export const TrafficGraphView = observer(({ model, colors }: TrafficGraphProps) 
             strokeCurve(context, curve);
             context.setLineDash([]);
 
-            if (link.hot) {
-              // Dashes that move along the busiest edges, in the direction of the traffic.
-              context.globalAlpha = isDimmed(link) ? 0.08 : 1;
+            if (link.hot && (emphasized || graph.links.length <= animateAllUpTo) && !isDimmed(link)) {
+              // Dots that move along the busiest edges, in the direction of the traffic.
+              context.globalAlpha = 1;
               context.strokeStyle = "#ffffff";
               context.lineWidth = Math.max(1, width / 2);
               context.setLineDash([2, 14]);
@@ -351,7 +357,7 @@ export const TrafficGraphView = observer(({ model, colors }: TrafficGraphProps) 
             }
 
             if (!link.directionUnknown) {
-              context.globalAlpha = isDimmed(link) ? 0.08 : 1;
+              context.globalAlpha = isDimmed(link) ? 0.06 : emphasized ? 1 : restingAlpha;
               drawArrow(context, curve[2], curve[3], 6 + width);
             }
 

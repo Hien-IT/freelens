@@ -8,7 +8,7 @@ import { Icon } from "@freelensapp/icon";
 import { cssNames } from "@freelensapp/utilities";
 import { observer } from "mobx-react";
 import React, { useState } from "react";
-import { mergeExternalPeers, nodeIdOf, volumeOf, volumeUnitTitles } from "./filters";
+import { clusterNodesName, mergeExternalPeers, nodeIdOf, volumeOf, volumeUnitTitles } from "./filters";
 import { formatBytes, formatLatency, formatVolume, hasErrors } from "./graph";
 import styles from "./traffic-map.module.scss";
 
@@ -33,14 +33,14 @@ function Row({ label, children }: { label: string; children: React.ReactNode }) 
 const shownPeers = 15;
 
 /** The domains and addresses outside the cluster that a node or an edge stands for. */
-function ExternalPeers({ peers }: { peers: readonly ExternalPeerStat[] }) {
+function ExternalPeers({ peers, title = "Outside addresses" }: { peers: readonly ExternalPeerStat[]; title?: string }) {
   const [search, setSearch] = useState("");
   const [all, setAll] = useState(false);
 
   if (peers.length === 0) {
     return (
       <section>
-        <h6>Outside addresses</h6>
+        <h6>{title}</h6>
         <p className={styles.note}>The source reports no address for this traffic.</p>
       </section>
     );
@@ -57,7 +57,9 @@ function ExternalPeers({ peers }: { peers: readonly ExternalPeerStat[] }) {
 
   return (
     <section>
-      <h6>Outside addresses ({peers.length})</h6>
+      <h6>
+        {title} ({peers.length})
+      </h6>
       {peers.length > shownPeers && (
         <input
           className={styles.search}
@@ -175,8 +177,12 @@ const PortDetails = observer(({ model, flow }: { model: TrafficMapModel; flow: A
         <Counts title="Verdicts" counts={flow.verdictCounts} />
       ) : null}
       <Counts title="Drop reasons" counts={flow.dropReasons} />
-      {(flow.source.kind === "External" || flow.destination.kind === "External") && (
+      {flow.source.kind === "External" || flow.destination.kind === "External" ? (
         <ExternalPeers peers={flow.externalPeers ?? []} />
+      ) : (
+        [flow.source, flow.destination].some(
+          (endpoint) => endpoint.kind === "Host" && endpoint.name === clusterNodesName,
+        ) && <ExternalPeers title="Nodes" peers={flow.externalPeers ?? []} />
       )}
     </>
   );
@@ -271,6 +277,9 @@ const NodeDetails = observer(
         {endpoint.ip && <Row label="IP">{endpoint.ip}</Row>}
         <Row label={volumeUnitTitles[unit].label}>{formatVolume(node.volume, unit)}</Row>
         {endpoint.kind === "External" && <ExternalPeers peers={mergeExternalPeers([...incoming, ...outgoing])} />}
+        {endpoint.kind === "Host" && endpoint.name === clusterNodesName && (
+          <ExternalPeers title="Nodes" peers={mergeExternalPeers([...incoming, ...outgoing])} />
+        )}
         {incoming.length > 0 && (
           <section>
             <h6>Incoming ({incoming.length})</h6>

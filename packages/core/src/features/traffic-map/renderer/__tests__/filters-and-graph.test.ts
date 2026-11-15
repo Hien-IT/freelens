@@ -5,7 +5,7 @@
 
 import { describe, expect, it } from "vitest";
 import { applyFilters, availableFacets, defaultFilters, isSystemEndpoint, mergeExternalPeers } from "../filters";
-import { buildTrafficGraph, edgeColors, edgeWidth } from "../graph";
+import { buildTrafficGraph, cardTitleOf, edgeColors, edgeWidth, fitMiddle, restingEdgeAlpha } from "../graph";
 import { selfLinkOf } from "../traffic-map-dependencies.injectable";
 
 import type { AggregatedFlow, TrafficEndpoint } from "../../common/types";
@@ -113,6 +113,55 @@ describe("one Internet node", () => {
     ]);
     expect(merged[0]).toMatchObject({ bytesSent: 15, flowCount: 2, verdictCounts: { forwarded: 2 } });
     expect(merged[0].externalPeers?.map((peer) => peer.name)).toEqual(["198.51.100.7", "64.239.26.208"]);
+  });
+});
+
+describe("one node for the cluster's nodes", () => {
+  const host = (name: string): TrafficEndpoint => ({ name, namespace: "", kind: "Host" });
+
+  it("merges the nodes of the cluster into one node, and lists them", () => {
+    const merged = applyFilters(
+      [
+        edge(host("node-a"), workload("api"), { port: 3000, bytesSent: 10 }),
+        edge(host("node-b"), workload("api"), { port: 3000, bytesSent: 5 }),
+        edge(host("node-a"), host("node-b"), { port: 10250 }),
+      ],
+      { ...defaultFilters, hideSystem: false },
+      "bytes",
+    );
+
+    expect(merged).toHaveLength(1);
+    expect(merged[0]).toMatchObject({ source: { name: "Cluster nodes", kind: "Host" }, bytesSent: 15 });
+    expect(merged[0].externalPeers?.map((peer) => peer.name).sort()).toEqual(["node-a", "node-b"]);
+  });
+
+  it("keeps the nodes apart when asked", () => {
+    const flows = applyFilters(
+      [edge(host("node-a"), workload("api")), edge(host("node-b"), workload("api"))],
+      { ...defaultFilters, hideSystem: false, collapseHosts: false },
+      "connections",
+    );
+
+    expect(flows.map((flow) => flow.source.name)).toEqual(["node-a", "node-b"]);
+  });
+});
+
+describe("drawing helpers", () => {
+  const measure = (text: string) => text.length;
+
+  it("keeps the start and the end of a long name", () => {
+    expect(fitMiddle(measure, "terminal-backend-afc-terminal-qr-zalopay", 24)).toBe("terminal-ba…l-qr-zalopay");
+    expect(fitMiddle(measure, "short", 24)).toBe("short");
+  });
+
+  it("drops the -deployment that a Deployment's kind already says", () => {
+    expect(cardTitleOf("pos-backend-afc-order-payment-deployment", "Deployment")).toBe("pos-backend-afc-order-payment");
+    expect(cardTitleOf("nats-deployment", "StatefulSet")).toBe("nats-deployment");
+  });
+
+  it("fades edges more as they get more", () => {
+    expect(restingEdgeAlpha(5)).toBeGreaterThan(restingEdgeAlpha(30));
+    expect(restingEdgeAlpha(30)).toBeGreaterThan(restingEdgeAlpha(200));
   });
 });
 

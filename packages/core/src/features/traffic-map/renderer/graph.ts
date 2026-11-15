@@ -47,7 +47,6 @@ export interface TrafficGraph {
 
 export const edgeColors = {
   error: "#ef4444",
-  hot: "#f97316",
   http: "#3b82f6",
   dns: "#06b6d4",
   tcp: "#6b7280",
@@ -125,9 +124,9 @@ export function isDropped(flow: AggregatedFlow): boolean {
   return (flow.verdictCounts?.dropped ?? 0) > 0;
 }
 
-function edgeColor(flows: readonly AggregatedFlow[], hot: boolean): string {
+/** The colour of an edge: errors first, then what it carries. Its volume shows in its width, not its colour. */
+function edgeColor(flows: readonly AggregatedFlow[]): string {
   if (flows.some(hasErrors)) return edgeColors.error;
-  if (hot) return edgeColors.hot;
   if (flows.some((flow) => flow.l7Protocol === "HTTP" || flow.l7Protocol === "gRPC")) return edgeColors.http;
   if (flows.some((flow) => flow.l7Protocol === "DNS")) return edgeColors.dns;
 
@@ -213,7 +212,7 @@ export function buildTrafficGraph(flows: readonly AggregatedFlow[], unit: Volume
       directionUnknown: Boolean(first.directionUnknown),
       volume,
       width: edgeWidth(volume, least, busiest),
-      color: edgeColor(sorted, hot),
+      color: edgeColor(sorted),
       hot,
       dropped,
     });
@@ -263,4 +262,41 @@ export function formatLatency(ms: number | undefined): string {
   if (ms >= 10) return `${Math.round(ms)} ms`;
 
   return `${ms.toFixed(1)} ms`;
+}
+
+/**
+ * A name cut to a width with an ellipsis in its middle, keeping its start and
+ * its end: workloads of one application often share a long prefix and differ
+ * only at the end, which an ellipsis at the end would hide.
+ */
+export function fitMiddle(measure: (text: string) => number, text: string, width: number): string {
+  if (measure(text) <= width) return text;
+
+  let keep = text.length - 1;
+
+  while (keep > 2) {
+    const head = Math.ceil(keep * 0.45);
+    const candidate = `${text.slice(0, head)}…${text.slice(text.length - (keep - head))}`;
+
+    if (measure(candidate) <= width) return candidate;
+
+    keep--;
+  }
+
+  return `${text.slice(0, 1)}…`;
+}
+
+/** The name a card shows: a Deployment's name without the "-deployment" that its kind already says. */
+export function cardTitleOf(name: string, workloadKind: string | undefined): string {
+  return workloadKind === "Deployment" && name.endsWith("-deployment") && name.length > "-deployment".length
+    ? name.slice(0, -"-deployment".length)
+    : name;
+}
+
+/** How opaque edges are at rest: the more of them, the fainter, so the cards and the structure stay readable. */
+export function restingEdgeAlpha(edgeCount: number): number {
+  if (edgeCount > 40) return 0.3;
+  if (edgeCount > 15) return 0.5;
+
+  return 0.75;
 }
