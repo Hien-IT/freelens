@@ -42,14 +42,14 @@ export const TrafficGraphTooLarge = observer(({ model }: { model: TrafficMapMode
           : "Too much traffic to draw at once"}
       </h4>
       <p className={styles.note}>
-        {graph.nodes.length} endpoints and {graph.links.length} connections. Narrow the view, or raise the least traffic
-        in the filters; the Connections tab below lists every connection.
+        {graph.nodes.length} endpoints and {graph.links.length} connections. Narrow the view, or raise the minimum
+        traffic in the filters; the Connections tab below lists every connection.
       </p>
 
       <div className={styles.tooLargeColumns}>
         {byNodes.length > 1 && (
           <section>
-            <h6>Only one namespace</h6>
+            <h6 className={styles.sectionTitle}>Only one namespace</h6>
             {byNodes.map(([namespace, count]) => (
               <div key={namespace} className={styles.candidate} onClick={() => model.onlyNamespace(namespace)}>
                 <span className={styles.swatch} style={{ background: namespaceColor(namespace) }} />
@@ -59,7 +59,7 @@ export const TrafficGraphTooLarge = observer(({ model }: { model: TrafficMapMode
           </section>
         )}
         <section>
-          <h6>Focus on a busy workload</h6>
+          <h6 className={styles.sectionTitle}>Focus on a busy workload</h6>
           {busiest.map((node) => (
             <div key={node.id} className={styles.candidate} onClick={() => model.focus(node.id)}>
               {node.id} <span className={styles.note}>· {formatVolume(node.volume, unit)}</span>

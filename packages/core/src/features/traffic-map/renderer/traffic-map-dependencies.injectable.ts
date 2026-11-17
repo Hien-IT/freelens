@@ -8,6 +8,7 @@ import { requestFromChannelInjectionToken } from "@freelensapp/messaging";
 import { getInjectable } from "@ogre-tools/injectable";
 import openLinkInBrowserInjectable from "../../../common/utils/open-link-in-browser.injectable";
 import hostedClusterIdInjectable from "../../../renderer/cluster-frame-context/hosted-cluster-id.injectable";
+import confirmInjectable from "../../../renderer/components/confirm-dialog/confirm.injectable";
 import showDetailsInjectable from "../../../renderer/components/kube-detail-params/show-details.injectable";
 import namespaceStoreInjectable from "../../../renderer/components/namespaces/store.injectable";
 import activeThemeInjectable from "../../../renderer/themes/active.injectable";
@@ -50,6 +51,14 @@ export function selfLinkOf(endpoint: TrafficEndpoint): string | undefined {
   }
 }
 
+/** How the page looks on a first visit; also fills in the fields that a view state stored by an older version lacks. */
+const defaultViewState: TrafficMapViewState = {
+  bottomPanelHidden: false,
+  bottomPanelHeight: 260,
+  filtersHidden: false,
+  tab: "connections",
+};
+
 const trafficMapDependenciesInjectable = getInjectable({
   id: "traffic-map-dependencies",
 
@@ -60,11 +69,9 @@ const trafficMapDependenciesInjectable = getInjectable({
     const activeTheme = di.inject(activeThemeInjectable);
     const showDetails = di.inject(showDetailsInjectable);
     const openLinkInBrowser = di.inject(openLinkInBrowserInjectable);
+    const confirm = di.inject(confirmInjectable);
     const logger = di.inject(loggerInjectionToken);
-    const viewState = di.inject(createStorageInjectable)<TrafficMapViewState>("traffic_map_view", {
-      bottomPanelHidden: false,
-      tab: "connections",
-    });
+    const viewState = di.inject(createStorageInjectable)<TrafficMapViewState>("traffic_map_view", defaultViewState);
 
     const requestTraffic = (async (body) =>
       requestFromChannel(trafficMapChannel, { ...body, clusterId } as never)) as RequestTraffic;
@@ -72,7 +79,7 @@ const trafficMapDependenciesInjectable = getInjectable({
     return {
       requestTraffic,
       getNamespaces: () => (namespaceStore.areAllSelectedImplicitly ? [] : [...namespaceStore.contextNamespaces]),
-      getViewState: () => viewState.get(),
+      getViewState: () => ({ ...defaultViewState, ...viewState.get() }),
       setViewState: (state) => viewState.merge(state),
       getCanvasColors: () => {
         const { colors } = activeTheme.get();
@@ -88,6 +95,7 @@ const trafficMapDependenciesInjectable = getInjectable({
       openLink: (url) => {
         openLinkInBrowser(url).catch((error) => logger.warn("[TRAFFIC-MAP]: cannot open a link", error));
       },
+      confirm,
       copyText: (text) => {
         navigator.clipboard.writeText(text).catch((error) => logger.warn("[TRAFFIC-MAP]: cannot copy", error));
       },

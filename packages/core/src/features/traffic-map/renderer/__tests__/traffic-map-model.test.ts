@@ -4,10 +4,10 @@
  */
 
 import { observable, runInAction } from "mobx";
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { aggregateFlows, graphFlows } from "../../common/aggregation";
 import { linkIdOf } from "../graph";
-import { TrafficMapModel } from "../traffic-map-model";
+import { installPollMs, maxInstallPolls, TrafficMapModel } from "../traffic-map-model";
 
 import type { SourcesResponse, TrafficFlow, TrafficFlowsResult } from "../../common/types";
 import type { RequestTraffic } from "../traffic-map-model";
@@ -185,6 +185,176 @@ describe("TrafficMapModel", () => {
     runInAction(() => namespaces.push("pay"));
 
     expect(model.viewKey).not.toBe(focused);
+  });
+
+  describe("installing a source", () => {
+    const notYet: SourcesResponse = {
+      cluster: { platform: "generic", cni: "flannel", dataplaneV2: false },
+      detected: [{ name: "caretta", status: "present" }],
+    };
+    const ready: SourcesResponse = {
+      cluster: notYet.cluster,
+      active: "caretta",
+      detected: [{ name: "caretta", status: "available" }],
+    };
+
+    /** A model whose install answers `installed`, and whose detections answer `detections` in turn, the last one after. */
+    function createInstallingModel(installed: unknown, detections: SourcesResponse[] = [notYet]) {
+      let detection = 0;
+      const requestTraffic = vi.fn(async (body: { type: string }) => {
+        switch (body.type) {
+          case "install-source":
+            return installed;
+          case "sources":
+            return {
+              callWasSuccessful: true,
+              response: detections[Math.min(detection++, detections.length - 1)],
+            };
+          case "flows":
+            return { callWasSuccessful: true, response: result };
+          default:
+            return { callWasSuccessful: false, error: "unexpected" };
+        }
+      });
+      const model = new TrafficMapModel({
+        requestTraffic: requestTraffic as unknown as RequestTraffic,
+        getNamespaces: () => [],
+      });
+      const detectionCalls = () => requestTraffic.mock.calls.filter(([body]) => body.type === "sources").length;
+
+      return { model, requestTraffic, detectionCalls };
+    }
+
+    afterEach(() => {
+      vi.useRealTimers();
+    });
+
+    it("loads the flows of the source the install made active, without detecting again", async () => {
+      vi.useFakeTimers();
+
+      const { model, requestTraffic, detectionCalls } = createInstallingModel({
+        callWasSuccessful: true,
+        response: ready,
+      });
+      const installing = model.installSource("caretta");
+
+      expect(model.installing).toBe(true);
+      await installing;
+
+      expect(requestTraffic).toHaveBeenCalledWith({ type: "install-source", source: "caretta" });
+      expect(model.installing).toBe(false);
+      expect(model.installed).toBe("caretta");
+      expect(model.sources).toBe(ready);
+      expect(model.result).toBe(result);
+      expect(model.waitingForSource).toBe(false);
+
+      await vi.advanceTimersByTimeAsync(installPollMs * 3);
+
+      expect(detectionCalls()).toBe(0);
+    });
+
+    it("detects again until the installed source is active", async () => {
+      vi.useFakeTimers();
+
+      const { model, detectionCalls } = createInstallingModel({ callWasSuccessful: true, response: notYet }, [
+        notYet,
+        notYet,
+        ready,
+      ]);
+
+      await model.installSource("caretta");
+
+      expect(model.installed).toBe("caretta");
+      expect(model.sources?.active).toBeUndefined();
+      expect(model.waitingForSource).toBe(true);
+
+      await vi.advanceTimersByTimeAsync(installPollMs * 2);
+
+      expect(detectionCalls()).toBe(2);
+      expect(model.waitingForSource).toBe(true);
+
+      await vi.advanceTimersByTimeAsync(installPollMs);
+
+      expect(detectionCalls()).toBe(3);
+      expect(model.sources?.active).toBe("caretta");
+      expect(model.waitingForSource).toBe(false);
+
+      await vi.advanceTimersByTimeAsync(installPollMs * 5);
+
+      expect(detectionCalls()).toBe(3);
+    });
+
+    it("gives up after its last try", async () => {
+      vi.useFakeTimers();
+
+      const { model, detectionCalls } = createInstallingModel({ callWasSuccessful: true, response: notYet });
+
+      await model.installSource("caretta");
+      await vi.advanceTimersByTimeAsync(installPollMs * maxInstallPolls);
+
+      expect(detectionCalls()).toBe(maxInstallPolls);
+      expect(model.waitingForSource).toBe(false);
+      expect(model.installed).toBe("caretta");
+
+      await vi.advanceTimersByTimeAsync(installPollMs * 5);
+
+      expect(detectionCalls()).toBe(maxInstallPolls);
+    });
+
+    it("stops detecting when the page goes away", async () => {
+      vi.useFakeTimers();
+
+      const { model, detectionCalls } = createInstallingModel({ callWasSuccessful: true, response: notYet });
+      const dispose = model.start();
+
+      // The detection that start() runs.
+      await vi.advanceTimersByTimeAsync(0);
+
+      const before = detectionCalls();
+
+      await model.installSource("caretta");
+      await vi.advanceTimersByTimeAsync(installPollMs * 2);
+
+      expect(detectionCalls()).toBe(before + 2);
+
+      dispose();
+      await vi.advanceTimersByTimeAsync(installPollMs * 5);
+
+      expect(detectionCalls()).toBe(before + 2);
+    });
+
+    it("keeps the error of a failed install, and does not wait for the source", async () => {
+      vi.useFakeTimers();
+
+      const { model, detectionCalls } = createInstallingModel({
+        callWasSuccessful: false,
+        error: "Error: INSTALLATION FAILED: forbidden",
+      });
+
+      await model.installSource("caretta");
+
+      expect(model.installError).toBe("Error: INSTALLATION FAILED: forbidden");
+      expect(model.installing).toBe(false);
+      expect(model.installed).toBeUndefined();
+      expect(model.waitingForSource).toBe(false);
+
+      await vi.advanceTimersByTimeAsync(installPollMs * 3);
+
+      expect(detectionCalls()).toBe(0);
+    });
+
+    it("clears the error of the last install when it starts again", async () => {
+      const { model } = createInstallingModel({ callWasSuccessful: false, error: "first" });
+
+      await model.installSource("caretta");
+
+      expect(model.installError).toBe("first");
+
+      const again = model.installSource("caretta");
+
+      expect(model.installError).toBeUndefined();
+      await again;
+    });
   });
 
   it("shows all traffic but keeps the merged Internet and cluster nodes", async () => {

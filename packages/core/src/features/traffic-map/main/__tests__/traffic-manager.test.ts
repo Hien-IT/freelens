@@ -4,7 +4,7 @@
  */
 
 import { describe, expect, it, vi } from "vitest";
-import { platformOfNode, recommend } from "../cluster-info";
+import { helmChartOf, platformOfNode, recommend } from "../cluster-info";
 import { TrafficManager } from "../traffic-manager";
 
 import type { DetectionResult, FlowsResponse, TrafficFlow, TrafficSourceName } from "../../common/types";
@@ -140,5 +140,33 @@ describe("recommend", () => {
 
     expect(recommendation).toMatchObject({ name: "caretta", helmChart: { chartName: "caretta" } });
     expect(recommendation?.reason).toContain("AWS VPC CNI");
+  });
+
+  it("offers the command that installs the same chart, release and namespace as the chart it names", () => {
+    const recommendation = recommend({ platform: "generic", cni: "flannel", dataplaneV2: false }, []);
+    const chart = helmChartOf("caretta")!;
+
+    expect(recommendation?.helmChart).toEqual(chart);
+    expect(recommendation?.installCommand).toBe(
+      `helm repo add ${chart.repo} ${chart.repoUrl} && ` +
+        `helm install ${chart.releaseName} ${chart.repo}/${chart.chartName} ` +
+        `--namespace ${chart.namespace} --create-namespace --set resources.limits.memory=512Mi`,
+    );
+    expect(chart.values).toContain("memory: 512Mi");
+  });
+});
+
+describe("helmChartOf", () => {
+  it("knows the chart of Caretta, and of no other source", () => {
+    expect(helmChartOf("caretta")).toMatchObject({
+      repoUrl: "https://helm.groundcover.com/",
+      chartName: "caretta",
+      releaseName: "caretta",
+      namespace: "caretta",
+    });
+    expect(helmChartOf("caretta")?.version).toBeUndefined();
+    expect(helmChartOf("hubble")).toBeUndefined();
+    expect(helmChartOf("istio")).toBeUndefined();
+    expect(helmChartOf("beyla")).toBeUndefined();
   });
 });

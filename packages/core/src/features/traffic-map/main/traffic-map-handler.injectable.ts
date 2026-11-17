@@ -7,6 +7,7 @@ import { loggerInjectionToken } from "@freelensapp/logger";
 import { getInjectable } from "@ogre-tools/injectable";
 import getClusterByIdInjectable from "../../cluster/storage/common/get-by-id.injectable";
 import { trafficSourceNames } from "../common/types";
+import installTrafficSourceInjectable from "./install-traffic-source.injectable";
 import trafficManagersInjectable from "./traffic-managers.injectable";
 
 import type { TrafficRequest, TrafficResponse } from "../common/types";
@@ -19,6 +20,7 @@ const trafficMapHandlerInjectable = getInjectable({
   instantiate: (di): TrafficMapHandler => {
     const getClusterById = di.inject(getClusterByIdInjectable);
     const managers = di.inject(trafficManagersInjectable);
+    const installTrafficSource = di.inject(installTrafficSourceInjectable);
     const logger = di.inject(loggerInjectionToken);
 
     const handle = async (request: TrafficRequest): Promise<unknown> => {
@@ -41,6 +43,22 @@ const trafficMapHandlerInjectable = getInjectable({
           }
 
           return manager.setActiveSource(request.source);
+        case "install-source":
+          if (!trafficSourceNames.includes(request.source)) {
+            throw new Error(`Unknown traffic source ${request.source}`);
+          }
+
+          logger.info("[TRAFFIC-MAP]: installing a traffic source with Helm", {
+            source: request.source,
+            clusterId: cluster.id,
+          });
+          await installTrafficSource(cluster, request.source);
+          logger.info("[TRAFFIC-MAP]: installed a traffic source with Helm", {
+            source: request.source,
+            clusterId: cluster.id,
+          });
+
+          return manager.detectSources(true);
         default:
           throw new Error("Unknown traffic map request");
       }

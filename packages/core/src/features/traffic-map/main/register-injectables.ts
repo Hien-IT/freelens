@@ -8,6 +8,7 @@
 
 import closeTrafficManagersOnQuitInjectable from "./close-traffic-managers-on-quit.injectable";
 import createClusterAccessInjectable from "./create-cluster-access.injectable";
+import installTrafficSourceInjectable from "./install-traffic-source.injectable";
 import trafficManagersInjectable from "./traffic-managers.injectable";
 import trafficMapChannelListenerInjectable from "./traffic-map-channel-listener.injectable";
 import trafficMapHandlerInjectable from "./traffic-map-handler.injectable";
@@ -22,6 +23,11 @@ export function registerInjectables(di: DiContainerForInjection): void {
   }
   try {
     di.register(createClusterAccessInjectable);
+  } catch (e) {
+    /* Ignore duplicate registration */
+  }
+  try {
+    di.register(installTrafficSourceInjectable);
   } catch (e) {
     /* Ignore duplicate registration */
   }

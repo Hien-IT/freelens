@@ -35,10 +35,10 @@ export interface TrafficMapModelDependencies {
 export type TrafficSelection = { type: "node"; id: string } | { type: "link"; id: string };
 
 export const timeWindows = [
-  { seconds: 60, label: "Last 1 minute" },
-  { seconds: 300, label: "Last 5 minutes" },
-  { seconds: 900, label: "Last 15 minutes" },
-  { seconds: 3600, label: "Last hour" },
+  { seconds: 60, label: "Last 1 minute", shortLabel: "1m" },
+  { seconds: 300, label: "Last 5 minutes", shortLabel: "5m" },
+  { seconds: 900, label: "Last 15 minutes", shortLabel: "15m" },
+  { seconds: 3600, label: "Last hour", shortLabel: "1h" },
 ];
 
 const autoRefreshMs = 30_000;
@@ -51,6 +51,9 @@ export const graphBudget = 400;
 export const graphCeiling = 3000;
 const retryDelayMs = 2_000;
 const maxRetries = 5;
+/** After an install, how often and how many times to detect again until the new source reports traffic. */
+export const installPollMs = 5_000;
+export const maxInstallPolls = 24;
 
 /** The state of the Traffic Map of a cluster: its sources, its flows and what the user chose to see. */
 export class TrafficMapModel {
@@ -106,10 +109,21 @@ export class TrafficMapModel {
   /** The user asked to draw a graph past the budget. */
   @observable accessor drawAnyway = false;
 
+  /** A source is being installed with Helm. */
+  @observable accessor installing = false;
+  /** Why the last install failed. */
+  @observable accessor installError: string | undefined = undefined;
+  /** The source the last install installed. */
+  @observable accessor installed: TrafficSourceName | undefined = undefined;
+  /** The installed source is detected again until it reports traffic, or the detection gives up. */
+  @observable accessor waitingForSource = false;
+
   private retries = 0;
   private retryTimer?: ReturnType<typeof setTimeout>;
   private refreshTimer?: ReturnType<typeof setInterval>;
   private loadId = 0;
+  private installPollTimer?: ReturnType<typeof setTimeout>;
+  private installPollId = 0;
 
   constructor(private readonly dependencies: TrafficMapModelDependencies) {}
 
@@ -137,6 +151,7 @@ export class TrafficMapModel {
       disposeAutoRefresh();
       clearInterval(this.refreshTimer);
       clearTimeout(this.retryTimer);
+      this.stopWaitingForSource();
       this.loadId++;
     };
   }
@@ -179,6 +194,82 @@ export class TrafficMapModel {
     if (response.callWasSuccessful) {
       await this.load();
     }
+  }
+
+  /**
+   * Installs a source with the Helm chart that main knows for it. Main answers
+   * with a new detection: when a source is active, its flows load; otherwise
+   * the sources are detected again every few seconds until one is, a few
+   * minutes at most, as the pods of the new source start and gather traffic.
+   */
+  async installSource(source: TrafficSourceName) {
+    this.stopWaitingForSource();
+    runInAction(() => {
+      this.installing = true;
+      this.installError = undefined;
+      this.installed = undefined;
+    });
+
+    const response = await this.dependencies.requestTraffic({ type: "install-source", source });
+
+    runInAction(() => {
+      this.installing = false;
+
+      if (response.callWasSuccessful) {
+        this.sources = response.response;
+        this.installed = source;
+      } else {
+        this.installError = response.error;
+      }
+    });
+
+    if (!response.callWasSuccessful) {
+      return;
+    }
+
+    if (response.response.active) {
+      await this.load();
+    } else {
+      this.waitForSource();
+    }
+  }
+
+  private waitForSource() {
+    const id = ++this.installPollId;
+    let polls = 0;
+
+    runInAction(() => {
+      this.waitingForSource = true;
+    });
+
+    const poll = () => {
+      this.installPollTimer = setTimeout(async () => {
+        polls++;
+        await this.detect(true);
+
+        if (id !== this.installPollId) {
+          return;
+        }
+
+        if (this.sources?.active || polls >= maxInstallPolls) {
+          runInAction(() => {
+            this.waitingForSource = false;
+          });
+        } else {
+          poll();
+        }
+      }, installPollMs);
+    };
+
+    poll();
+  }
+
+  private stopWaitingForSource() {
+    clearTimeout(this.installPollTimer);
+    this.installPollId++;
+    runInAction(() => {
+      this.waitingForSource = false;
+    });
   }
 
   async load() {

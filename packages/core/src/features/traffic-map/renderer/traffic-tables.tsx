@@ -5,71 +5,260 @@
 
 import { cssNames } from "@freelensapp/utilities";
 import { observer } from "mobx-react";
-import React, { useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { nodeIdOf, volumeOf, volumeUnitTitles } from "./filters";
-import { flowKeyOf, formatBytes, formatLatency, formatVolume, hasErrors, isDropped, linkIdOf } from "./graph";
+import {
+  edgeColors,
+  flowKeyOf,
+  formatBytes,
+  formatLatency,
+  formatVolume,
+  hasErrors,
+  isDropped,
+  linkIdOf,
+  nodeColor,
+} from "./graph";
 import styles from "./traffic-map.module.scss";
 
-import type { TrafficFlow } from "../common/types";
+import type { AggregatedFlow, TrafficEndpoint, TrafficFlow } from "../common/types";
+import type { VolumeUnit } from "./filters";
 import type { TrafficMapModel } from "./traffic-map-model";
 
 const maxRows = 500;
 
-/** The edges of the view, problems first and then the busiest. */
-export const ConnectionsTable = observer(({ model }: { model: TrafficMapModel }) => {
-  const { unit } = model;
-  const rows = [...model.visibleFlows]
-    .sort(
-      (a, b) =>
-        Number(hasErrors(b) || isDropped(b)) - Number(hasErrors(a) || isDropped(a)) ||
-        volumeOf(b, unit) - volumeOf(a, unit),
-    )
-    .slice(0, maxRows);
-  const selected = model.selection?.type === "link" ? model.selection.id : undefined;
+type SortKey = "source" | "destination" | "port" | "protocol" | "volume" | "errors" | "dropped";
 
-  if (rows.length === 0) {
-    return <p className={styles.note}>No connections in the current view.</p>;
-  }
+interface SortOrder {
+  key: SortKey;
+  descending: boolean;
+}
+
+function protocolOf(flow: AggregatedFlow): string {
+  return flow.l7Protocol ?? flow.protocol.toUpperCase();
+}
+
+/** The errors of a connection: its error rate where the source measures rates, else how many failed. */
+function errorsOf(flow: AggregatedFlow): number {
+  return flow.errorRate || flow.httpStatusCounts?.["5xx"] || flow.errorCount || 0;
+}
+
+const sortValues: Record<SortKey, (flow: AggregatedFlow, unit: VolumeUnit) => string | number> = {
+  source: (flow) => nodeIdOf(flow.source),
+  destination: (flow) => nodeIdOf(flow.destination),
+  port: (flow) => flow.port ?? 0,
+  protocol: (flow) => protocolOf(flow),
+  volume: (flow, unit) => volumeOf(flow, unit) ?? 0,
+  errors: (flow) => errorsOf(flow),
+  dropped: (flow) => flow.verdictCounts?.dropped ?? 0,
+};
+
+const numericColumns: ReadonlySet<SortKey> = new Set(["port", "volume", "errors", "dropped"]);
+
+/** Problems first, then the busiest. */
+function defaultOrder(unit: VolumeUnit) {
+  return (a: AggregatedFlow, b: AggregatedFlow) =>
+    Number(hasErrors(b) || isDropped(b)) - Number(hasErrors(a) || isDropped(a)) ||
+    volumeOf(b, unit) - volumeOf(a, unit);
+}
+
+/** The order of a column, ties broken by the connection so that the order does not depend on the input. */
+function columnOrder({ key, descending }: SortOrder, unit: VolumeUnit) {
+  const valueOf = sortValues[key];
+  const numberOf = (value: string | number) => (typeof value === "number" && Number.isFinite(value) ? value : 0);
+
+  return (a: AggregatedFlow, b: AggregatedFlow) => {
+    const left = valueOf(a, unit);
+    const right = valueOf(b, unit);
+    const order = numericColumns.has(key)
+      ? numberOf(left) - numberOf(right)
+      : String(left).localeCompare(String(right));
+
+    return (descending ? -order : order) || flowKeyOf(a).localeCompare(flowKeyOf(b));
+  };
+}
+
+/** A column header that sorts the table: by its column, then the other way, then back to the default order. */
+function SortHeader({
+  column,
+  label,
+  sort,
+  onSort,
+}: {
+  column: SortKey;
+  label: string;
+  sort?: SortOrder;
+  onSort(sort: SortOrder | undefined): void;
+}) {
+  const active = sort?.key === column;
+  const numeric = numericColumns.has(column);
+  const next = (): SortOrder | undefined => {
+    if (!active) return { key: column, descending: numeric };
+    if (sort.descending === numeric) return { key: column, descending: !numeric };
+
+    return undefined;
+  };
 
   return (
-    <table className={styles.table}>
-      <thead>
-        <tr>
-          <th>Source</th>
-          <th />
-          <th>Destination</th>
-          <th>Port</th>
-          <th>Protocol</th>
-          <th>{volumeUnitTitles[unit].column}</th>
-          <th>Errors</th>
-          <th>Dropped</th>
-        </tr>
-      </thead>
-      <tbody>
-        {rows.map((flow) => {
-          const id = linkIdOf(flow);
+    <th
+      className={cssNames({ [styles.numeric]: numeric })}
+      aria-sort={active ? (sort.descending ? "descending" : "ascending") : undefined}
+    >
+      <button type="button" className={styles.sortButton} title={label} onClick={() => onSort(next())}>
+        <span className={styles.sortLabel}>{label}</span>
+        {active && <span className={styles.sortArrow}>{sort.descending ? "↓" : "↑"}</span>}
+      </button>
+    </th>
+  );
+}
 
-          return (
-            <tr
-              key={flowKeyOf(flow)}
-              className={cssNames({ [styles.selectedRow]: id === selected })}
-              onClick={() => model.select({ type: "link", id })}
-            >
-              <td>{nodeIdOf(flow.source)}</td>
-              <td>{flow.directionUnknown ? "—" : "→"}</td>
-              <td>{nodeIdOf(flow.destination)}</td>
-              <td>{flow.port || "—"}</td>
-              <td>{flow.l7Protocol ?? flow.protocol.toUpperCase()}</td>
-              <td>{formatVolume(volumeOf(flow, unit), unit)}</td>
-              <td className={cssNames({ [styles.bad]: hasErrors(flow) })}>
-                {flow.errorRate ? formatVolume(flow.errorRate, "rate") : (flow.httpStatusCounts?.["5xx"] ?? "")}
-              </td>
-              <td className={cssNames({ [styles.bad]: isDropped(flow) })}>{flow.verdictCounts?.dropped ?? ""}</td>
-            </tr>
-          );
-        })}
-      </tbody>
-    </table>
+/** A node in a cell: its colour, and its id with the namespace in the background. */
+function EndpointCell({ endpoint }: { endpoint: TrafficEndpoint }) {
+  const id = nodeIdOf(endpoint);
+  const prefix = endpoint.namespace && id.startsWith(`${endpoint.namespace}/`) ? `${endpoint.namespace}/` : "";
+
+  return (
+    <td title={id}>
+      <span className={styles.endpointSwatch} style={{ background: nodeColor(endpoint) }} />
+      {prefix && <span className={styles.namespacePrefix}>{prefix}</span>}
+      {id.slice(prefix.length)}
+    </td>
+  );
+}
+
+function protocolColor(protocol: string): string | undefined {
+  if (protocol === "HTTP" || protocol === "gRPC") return edgeColors.http;
+  if (protocol === "DNS") return edgeColors.dns;
+
+  return undefined;
+}
+
+const Empty = () => <span className={styles.empty}>—</span>;
+
+export interface ConnectionsTableProps {
+  model: TrafficMapModel;
+  /** Text that the source, the destination, the port or the protocol of a connection contains, in any case. */
+  filter?: string;
+}
+
+/** The edges of the view, problems first and then the busiest, or in the order of a column. */
+export const ConnectionsTable = observer(({ model, filter = "" }: ConnectionsTableProps) => {
+  const { unit } = model;
+  const [sort, setSort] = useState<SortOrder | undefined>(undefined);
+  const selectedRow = useRef<HTMLTableRowElement>(null);
+  const selected = model.selection?.type === "link" ? model.selection.id : undefined;
+
+  useEffect(() => {
+    selectedRow.current?.scrollIntoView?.({ block: "nearest" });
+  }, [selected]);
+
+  const needle = filter.trim().toLowerCase();
+  const matching = needle
+    ? model.visibleFlows.filter((flow) =>
+        [nodeIdOf(flow.source), nodeIdOf(flow.destination), String(flow.port), flow.l7Protocol ?? "", flow.protocol]
+          .join(" ")
+          .toLowerCase()
+          .includes(needle),
+      )
+    : model.visibleFlows;
+  const rows = [...matching].sort(sort ? columnOrder(sort, unit) : defaultOrder(unit)).slice(0, maxRows);
+  const busiest = Math.max(0, ...rows.map((flow) => volumeOf(flow, unit)));
+  const firstSelected = rows.find((flow) => linkIdOf(flow) === selected);
+
+  if (rows.length === 0) {
+    return (
+      <p className={styles.note}>
+        {needle ? "No connections match the filter." : "No connections in the current view."}
+      </p>
+    );
+  }
+
+  const header = (column: SortKey, label: string) => (
+    <SortHeader column={column} label={label} sort={sort} onSort={setSort} />
+  );
+
+  return (
+    <>
+      <table className={cssNames(styles.table, styles.connectionsTable)}>
+        <colgroup>
+          <col className={styles.endpointColumn} />
+          <col className={styles.arrowColumn} />
+          <col className={styles.endpointColumn} />
+          <col />
+          <col />
+          <col />
+          <col />
+          <col />
+        </colgroup>
+        <thead>
+          <tr>
+            {header("source", "Source")}
+            <th aria-label="Direction" />
+            {header("destination", "Destination")}
+            {header("port", "Port")}
+            {header("protocol", "Protocol")}
+            {header("volume", volumeUnitTitles[unit].column)}
+            {header("errors", "Errors")}
+            {header("dropped", "Dropped")}
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map((flow) => {
+            const id = linkIdOf(flow);
+            const volume = volumeOf(flow, unit);
+            const protocol = protocolOf(flow);
+            const failed = flow.httpStatusCounts?.["5xx"] || flow.errorCount;
+            const select = () => model.select({ type: "link", id });
+
+            return (
+              <tr
+                key={flowKeyOf(flow)}
+                ref={flow === firstSelected ? selectedRow : undefined}
+                className={cssNames(styles.row, { [styles.selectedRow]: id === selected })}
+                tabIndex={0}
+                aria-selected={id === selected}
+                onClick={select}
+                onKeyDown={(event) => {
+                  if (event.key === "Enter" || event.key === " ") {
+                    event.preventDefault();
+                    select();
+                  }
+                }}
+              >
+                <EndpointCell endpoint={flow.source} />
+                <td className={styles.arrowCell}>{flow.directionUnknown ? "—" : "→"}</td>
+                <EndpointCell endpoint={flow.destination} />
+                <td className={styles.numeric}>{flow.port || <Empty />}</td>
+                <td>
+                  <span className={styles.protocolBadge} style={{ color: protocolColor(protocol) }}>
+                    {protocol}
+                  </span>
+                </td>
+                <td className={styles.numeric}>
+                  <div>{formatVolume(volume, unit)}</div>
+                  <div className={styles.volumeTrack}>
+                    <div
+                      className={styles.volumeBar}
+                      style={{ width: volume > 0 && busiest > 0 ? `max(1px, ${(volume / busiest) * 100}%)` : 0 }}
+                    />
+                  </div>
+                </td>
+                <td className={cssNames(styles.numeric, { [styles.bad]: hasErrors(flow) })}>
+                  {flow.errorRate ? formatVolume(flow.errorRate, "rate") : failed || <Empty />}
+                </td>
+                <td className={cssNames(styles.numeric, { [styles.bad]: isDropped(flow) })}>
+                  {flow.verdictCounts?.dropped || <Empty />}
+                </td>
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
+      {matching.length > rows.length && (
+        <p className={styles.note}>
+          Showing the first {maxRows} of {matching.length} connections.
+        </p>
+      )}
+    </>
   );
 });
 
@@ -119,9 +308,9 @@ const RecordDetails = ({ flow }: { flow: TrafficFlow }) => (
     )}
     {(flow.bytesSent > 0 || flow.bytesRecv > 0) && (
       <>
-        <dt>Data</dt>
+        <dt>Sent / received</dt>
         <dd>
-          {formatBytes(flow.bytesSent)} sent · {formatBytes(flow.bytesRecv)} received
+          {formatBytes(flow.bytesSent)} / {formatBytes(flow.bytesRecv)}
         </dd>
       </>
     )}
@@ -204,7 +393,7 @@ export const FlowRecordsTable = observer(({ model }: { model: TrafficMapModel })
           <tbody>
             {records.slice(0, maxRows).map((flow, index) => (
               <React.Fragment key={index}>
-                <tr onClick={() => setExpanded(expanded === index ? undefined : index)}>
+                <tr className={styles.row} onClick={() => setExpanded(expanded === index ? undefined : index)}>
                   <td>{new Date(flow.lastSeen).toLocaleTimeString()}</td>
                   <td>{endpointLabel(flow, "source")}</td>
                   <td>

@@ -14,218 +14,11 @@
   }
 }
 
-.header {
-  flex-shrink: 0;
-  display: flex;
-  align-items: center;
-  gap: var(--padding);
-  margin: 10px 0;
-  padding: 0 10px 5px;
-  border-bottom: 1px solid currentColor;
-}
+// Shared
 
-.title {
-  white-space: nowrap;
-}
-
-.namespaceFilter {
-  margin-left: auto;
-}
-
-.toolbar {
-  display: flex;
-  align-items: center;
-  gap: var(--padding);
-}
-
-.select {
-  min-width: 170px;
-}
-
-.source {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  white-space: nowrap;
-}
-
-.sourceDot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: var(--colorOk);
-}
-
-.autoRefresh {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  white-space: nowrap;
+.note {
   color: var(--textColorSecondary);
-}
-
-.spinning {
-  animation: spin 1s linear infinite;
-}
-
-@keyframes spin {
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-.body {
-  flex: 1;
-  min-height: 0;
-  display: flex;
-  gap: var(--padding);
-}
-
-.filters {
-  flex-shrink: 0;
-  width: 220px;
-  overflow-y: auto;
-  padding-right: var(--padding);
-
-  section {
-    margin-bottom: calc(var(--padding) * 2);
-  }
-
-  h6 {
-    margin-bottom: 6px;
-    color: var(--textColorSecondary);
-    text-transform: uppercase;
-    font-size: smaller;
-  }
-}
-
-.main {
-  flex: 1;
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-}
-
-.canvas {
-  position: relative;
-  flex: 3;
-  min-height: 200px;
-}
-
-.graph {
-  position: absolute;
-  inset: 0;
-  overflow: hidden;
-  background: var(--secondaryBackground);
-}
-
-.status {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: var(--padding);
-  height: 100%;
-  color: var(--textColorSecondary);
-}
-
-.stats {
-  position: absolute;
-  left: 8px;
-  bottom: 8px;
   font-size: smaller;
-  color: var(--textColorSecondary);
-  pointer-events: none;
-}
-
-.legend {
-  flex-shrink: 0;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 4px 14px;
-  padding: 6px 0;
-  font-size: smaller;
-  color: var(--textColorSecondary);
-
-  > span {
-    display: flex;
-    align-items: center;
-    gap: 4px;
-  }
-}
-
-.legendLine {
-  display: inline-block;
-  width: 18px;
-  border-top: 3px solid;
-}
-
-.legendDashed {
-  border-top-style: dashed;
-}
-
-.bottom {
-  flex: 2;
-  min-height: 140px;
-  display: flex;
-  flex-direction: column;
-  border-top: 1px solid var(--borderFaintColor);
-}
-
-.tabs {
-  display: flex;
-  align-items: center;
-  gap: calc(var(--padding) * 2);
-  padding: 6px 0;
-
-  a {
-    color: var(--textColorSecondary);
-  }
-}
-
-.activeTab {
-  color: var(--textColorAccent) !important;
-  font-weight: bold;
-}
-
-.tabContent {
-  flex: 1;
-  min-height: 0;
-  overflow: auto;
-}
-
-.table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: smaller;
-
-  th {
-    position: sticky;
-    top: 0;
-    text-align: left;
-    padding: 4px 6px;
-    background: var(--contentColor);
-    color: var(--textColorSecondary);
-  }
-
-  td {
-    padding: 3px 6px;
-    border-bottom: 1px solid var(--borderFaintColor);
-    white-space: nowrap;
-  }
-
-  tbody tr {
-    cursor: pointer;
-
-    &:hover {
-      background: var(--secondaryBackground);
-    }
-  }
-}
-
-.selectedRow {
-  background: var(--secondaryBackground);
-  outline: 1px solid var(--primary);
 }
 
 .bad {
@@ -239,27 +32,20 @@
   max-width: 360px;
 }
 
-.records {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
+.swatch {
+  flex-shrink: 0;
+  width: 10px;
+  height: 10px;
+  border-radius: 2px;
 }
 
-.recordsBar {
-  display: flex;
-  align-items: center;
-  gap: var(--padding);
-}
-
-.recordDetails {
-  display: grid;
-  grid-template-columns: max-content 1fr;
-  gap: 2px 12px;
-  margin: 4px 0;
-
-  dt {
-    color: var(--textColorSecondary);
-  }
+.sectionTitle {
+  margin-bottom: 6px;
+  padding: 0;
+  color: var(--textColorSecondary);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  font-size: smaller;
 }
 
 .search {
@@ -267,27 +53,40 @@
   max-width: 280px;
   padding: 4px 6px;
   border: 1px solid var(--borderColor);
-  border-radius: 3px;
+  border-radius: 4px;
   background: var(--inputControlBackground);
   color: var(--textColorPrimary);
-}
 
-.candidate {
-  padding: 3px 4px;
-  cursor: pointer;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-
-  &:hover {
-    background: var(--secondaryBackground);
+  &:focus-visible {
+    outline: 2px solid var(--primary);
+    outline-offset: -1px;
   }
 }
 
-.focus {
-  display: flex;
-  align-items: center;
-  gap: 6px;
+.linkButton {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--primary);
+  font-family: inherit;
+  font-size: var(--font-size-small);
+  cursor: pointer;
+
+  &:hover {
+    text-decoration: underline;
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--primary);
+    outline-offset: 2px;
+  }
+}
+
+// An Icon with an onClick: the Icon draws its own focus ring, in the colour it reads from this property.
+.iconButton {
+  --icon-focus-color: var(--primary);
+
+  padding: 3px;
 }
 
 .chips {
@@ -302,33 +101,176 @@
   border-radius: 10px;
   background: transparent;
   color: var(--textColorPrimary);
+  font-family: inherit;
+  font-size: var(--font-size-small);
+  white-space: nowrap;
   cursor: pointer;
+
+  &:hover {
+    background: var(--sidebarItemHoverBackground);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--primary);
+    outline-offset: 1px;
+  }
 }
 
-.chipActive {
+.chipActive,
+.chipActive:hover {
   border-color: var(--primary);
   background: var(--primary);
   color: var(--textColorAccent);
 }
 
-.namespace {
+// Buttons joined into one control, of which one is chosen.
+.segmented {
+  display: inline-flex;
+  flex-wrap: wrap;
+  flex-shrink: 0;
+  max-width: 100%;
+}
+
+.segment {
+  margin-left: -1px;
+  padding: 3px 8px;
+  border: 1px solid var(--borderColor);
+  background: transparent;
+  color: var(--textColorSecondary);
+  font-family: inherit;
+  font-size: var(--font-size-small);
+  line-height: 16px;
+  white-space: nowrap;
+  cursor: pointer;
+
+  &:first-child {
+    margin-left: 0;
+    border-radius: 4px 0 0 4px;
+  }
+
+  &:last-child {
+    border-radius: 0 4px 4px 0;
+  }
+
+  &:hover {
+    background: var(--sidebarItemHoverBackground);
+    color: var(--textColorPrimary);
+  }
+
+  &:focus-visible {
+    position: relative;
+    z-index: 1;
+    outline: 2px solid var(--primary);
+    outline-offset: 1px;
+  }
+}
+
+.segmentActive,
+.segmentActive:hover {
+  position: relative;
+  border-color: var(--primary);
+  background: var(--primary);
+  color: var(--textColorAccent);
+}
+
+// Header
+
+.header {
+  flex-shrink: 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px var(--padding);
+  margin: 10px 0;
+  padding: 0 10px 8px;
+  border-bottom: 1px solid var(--borderFaintColor);
+}
+
+.title {
+  margin-right: var(--padding);
+  white-space: nowrap;
+}
+
+.toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px calc(var(--padding) * 1.5);
+}
+
+.headerEnd {
   display: flex;
   align-items: center;
+  gap: var(--padding);
+  margin-left: auto;
+}
+
+.namespaceFilter {
+  min-width: 0;
+}
+
+.select {
+  min-width: 170px;
+}
+
+.source {
+  display: inline-flex;
+  align-items: center;
   gap: 6px;
-  padding: 2px 0;
-  cursor: pointer;
+  padding: 3px 10px;
+  border: 1px solid var(--borderFaintColor);
+  border-radius: 12px;
+  background: var(--secondaryBackground);
+  font-size: var(--font-size-small);
+  white-space: nowrap;
 }
 
-.namespaceHidden {
-  opacity: 0.4;
-  text-decoration: line-through;
+.sourceDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--colorOk);
 }
 
-.swatch {
-  flex-shrink: 0;
-  width: 10px;
-  height: 10px;
-  border-radius: 2px;
+.refreshGroup {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.spinning {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.updated {
+  white-space: nowrap;
+}
+
+.stale {
+  color: var(--colorWarning);
+}
+
+// Layout
+
+.body {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  gap: calc(var(--padding) * 1.5);
+}
+
+.main {
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
 }
 
 .warning {
@@ -341,71 +283,785 @@
   background: var(--secondaryBackground);
 }
 
-.note {
+.status {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--padding);
+  height: 100%;
   color: var(--textColorSecondary);
-  font-size: smaller;
 }
 
+// Filters
+
+.filters {
+  flex: 0 0 240px;
+  width: 240px;
+  min-height: 0;
+  overflow-y: auto;
+  padding-right: 12px;
+  border-right: 1px solid var(--borderFaintColor);
+}
+
+.filtersTop {
+  padding-bottom: 12px;
+}
+
+.resetButton {
+  width: 100%;
+  padding: 5px 10px;
+  border: 1px solid var(--borderColor);
+  border-radius: 4px;
+  background: transparent;
+  color: var(--textColorPrimary);
+  font-family: inherit;
+  font-size: var(--font-size-small);
+  cursor: pointer;
+
+  &:hover:not(:disabled) {
+    border-color: var(--primary);
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: default;
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--primary);
+    outline-offset: 1px;
+  }
+}
+
+.filterSection {
+  padding: 12px 0;
+  border-top: 1px solid var(--borderFaintColor);
+}
+
+.checks {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.searchField {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.searchIcon {
+  position: absolute;
+  left: 6px;
+  color: var(--textColorSecondary);
+  pointer-events: none;
+}
+
+.searchInput {
+  width: 100%;
+  padding: 5px 8px 5px 26px;
+  border: 1px solid var(--borderColor);
+  border-radius: 4px;
+  background: var(--inputControlBackground);
+  color: var(--textColorPrimary);
+  font-family: inherit;
+  font-size: var(--font-size-small);
+
+  &:focus-visible {
+    outline: 2px solid var(--primary);
+    outline-offset: -1px;
+  }
+}
+
+.focusCandidates {
+  max-height: 220px;
+  overflow-y: auto;
+  margin-top: 4px;
+  border: 1px solid var(--borderColor);
+  border-radius: 4px;
+  background: var(--inputControlBackground);
+}
+
+.focusCandidate {
+  display: block;
+  width: 100%;
+  padding: 4px 8px;
+  border: 0;
+  background: transparent;
+  color: var(--textColorPrimary);
+  font-family: inherit;
+  font-size: var(--font-size-small);
+  text-align: left;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  cursor: pointer;
+
+  &:hover {
+    background: var(--sidebarItemHoverBackground);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--primary);
+    outline-offset: -2px;
+  }
+}
+
+.focusPill {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 4px 2px 10px;
+  border: 1px solid var(--primary);
+  border-radius: 12px;
+  background: var(--secondaryBackground);
+  font-size: var(--font-size-small);
+}
+
+.focusId {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.namespace {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 4px;
+  border-radius: 4px;
+  font-size: var(--font-size-small);
+  cursor: pointer;
+
+  &:hover {
+    background: var(--sidebarItemHoverBackground);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--primary);
+    outline-offset: -2px;
+  }
+}
+
+.namespaceName {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.namespaceHidden {
+  opacity: 0.45;
+}
+
+.namespaceHidden .namespaceName {
+  text-decoration: line-through;
+}
+
+// Shown on the hover of its row; transparent rather than hidden, so that the keyboard still reaches it.
+.onlyButton {
+  flex-shrink: 0;
+  padding: 0 6px;
+  border: 0;
+  border-radius: 4px;
+  background: transparent;
+  color: var(--primary);
+  font-family: inherit;
+  font-size: 11px;
+  opacity: 0;
+  cursor: pointer;
+
+  &:hover {
+    text-decoration: underline;
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--primary);
+  }
+}
+
+.namespace:hover .onlyButton,
+.namespace:focus-within .onlyButton {
+  opacity: 1;
+}
+
+// Graph
+
+.canvas {
+  position: relative;
+  isolation: isolate;
+  flex: 1;
+  min-height: 200px;
+  overflow: hidden;
+  border: 1px solid var(--borderFaintColor);
+  border-radius: 6px;
+  background: var(--secondaryBackground);
+}
+
+.graph {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+}
+
+.stats {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  z-index: 1;
+  max-width: calc(100% - 16px);
+  padding: 3px 10px;
+  border: 1px solid var(--borderFaintColor);
+  border-radius: 12px;
+  background: var(--contentColor);
+  color: var(--textColorSecondary);
+  font-size: var(--font-size-small);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+// Clicks pass through to the graph under it, but for its icon.
+.legend {
+  position: absolute;
+  left: 8px;
+  bottom: 8px;
+  z-index: 1;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 12px;
+  max-width: calc(100% - 64px);
+  padding: 4px 10px;
+  border: 1px solid var(--borderFaintColor);
+  border-radius: 12px;
+  background: var(--contentColor);
+  color: var(--textColorSecondary);
+  font-size: 11px;
+  pointer-events: none;
+}
+
+.legendItem {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  white-space: nowrap;
+}
+
+.legendLine {
+  display: inline-block;
+  width: 16px;
+  border-top: 3px solid;
+}
+
+.legendDashed {
+  border-top-style: dashed;
+}
+
+// A line in the colours of two cards, as a plain edge is drawn: a background, as a border cannot be a gradient.
+.legendGradient {
+  height: 3px;
+  border-top: 0;
+}
+
+.legendInfo {
+  cursor: help;
+  pointer-events: auto;
+}
+
+.zoomControls {
+  position: absolute;
+  right: 8px;
+  bottom: 8px;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--borderFaintColor);
+  border-radius: 6px;
+  background: var(--contentColor);
+}
+
+.zoomButton {
+  --icon-focus-color: var(--primary);
+
+  padding: 5px;
+  color: var(--textColorPrimary);
+}
+
+.zoomButton + .zoomButton {
+  border-top: 1px solid var(--borderFaintColor);
+}
+
+// Details
+
+// Kept clear of the zoom controls at the bottom right of the canvas.
 .details {
   position: absolute;
   top: 8px;
   right: 8px;
-  width: 320px;
-  max-height: calc(100% - 16px);
+  z-index: 2;
+  width: 340px;
+  max-width: calc(100% - 16px);
+  max-height: calc(100% - 112px);
   overflow-y: auto;
-  padding: calc(var(--padding) * 1.5);
+  padding: 12px;
   border: 1px solid var(--borderColor);
-  border-radius: 4px;
+  border-radius: 6px;
   background: var(--contentColor);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
-
-  section {
-    margin-top: var(--padding);
-  }
-
-  h6 {
-    margin-bottom: 4px;
-    color: var(--textColorSecondary);
-    text-transform: uppercase;
-    font-size: smaller;
-  }
+  box-shadow: 0 4px 16px var(--boxShadow);
 }
 
-.detailsClose {
-  float: right;
+.detailsHeader {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--padding);
+  margin-bottom: var(--padding);
 }
 
 .detailTitle {
+  flex: 1;
+  min-width: 0;
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: 6px;
-  margin-bottom: var(--padding);
-  word-break: break-all;
+  padding: 0;
+}
+
+// Long ids wrap anywhere rather than overflow, but only where a line has to break.
+.detailName {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+// The source of an edge on its first line, the arrow and the destination on the second.
+.linkTitle {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.kindBadge {
+  flex-shrink: 0;
+  padding: 1px 6px;
+  border: 1px solid var(--borderColor);
+  border-radius: 4px;
+  color: var(--textColorSecondary);
+  font-size: 11px;
+  font-weight: normal;
 }
 
 .detailActions {
   margin-bottom: var(--padding);
 }
 
+.detailSection {
+  margin-top: var(--padding);
+  padding-top: var(--padding);
+  border-top: 1px solid var(--borderFaintColor);
+}
+
 .detailRow {
   display: flex;
   justify-content: space-between;
+  align-items: baseline;
   gap: var(--padding);
   padding: 2px 0;
-  font-size: smaller;
+  font-size: var(--font-size-small);
 }
 
 .detailLabel {
-  color: var(--textColorSecondary);
+  min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  color: var(--textColorSecondary);
 }
 
 .detailValue {
   flex-shrink: 0;
   text-align: right;
+  font-variant-numeric: tabular-nums;
 }
+
+.peer {
+  padding: 2px 0;
+  border-bottom: 1px solid var(--borderFaintColor);
+  font-size: var(--font-size-small);
+}
+
+.peerName {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-family: var(--font-monospace);
+}
+
+.portRow {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--padding);
+  width: 100%;
+  padding: 3px 6px;
+  border: 0;
+  border-radius: 4px;
+  background: transparent;
+  color: inherit;
+  font-family: inherit;
+  font-size: var(--font-size-small);
+  text-align: left;
+  cursor: pointer;
+
+  &:hover {
+    background: var(--sidebarItemHoverBackground);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--primary);
+    outline-offset: -2px;
+  }
+}
+
+.portRowActive,
+.portRowActive:hover {
+  background: var(--tableBgcSelected);
+  box-shadow: inset 0 0 0 1px var(--primary);
+}
+
+// Bottom panel
+
+// Its height is set inline; it gives way before the canvas when the page is too short for both.
+.bottom {
+  position: relative;
+  flex: 0 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  margin-top: var(--padding);
+}
+
+// Holds the resizing anchor over the gap between the canvas and the panel.
+.resizeEdge {
+  position: absolute;
+  top: -10px;
+  left: 0;
+  right: 0;
+  height: 12px;
+}
+
+.tabBar {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: var(--padding);
+  border-bottom: 1px solid var(--borderFaintColor);
+}
+
+.tabList {
+  display: flex;
+}
+
+.tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: -1px;
+  padding: 6px 12px;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  background: transparent;
+  color: var(--textColorSecondary);
+  font-family: inherit;
+  font-size: var(--font-size);
+  cursor: pointer;
+
+  &:hover {
+    color: var(--textColorPrimary);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--primary);
+    outline-offset: -2px;
+  }
+}
+
+.tabActive {
+  border-bottom-color: var(--primary);
+  color: var(--textColorPrimary);
+}
+
+.count {
+  min-width: 18px;
+  padding: 0 6px;
+  border-radius: 9px;
+  background: var(--borderFaintColor);
+  color: var(--textColorSecondary);
+  font-size: 11px;
+  line-height: 16px;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+
+.tabTools {
+  display: flex;
+  align-items: center;
+  gap: var(--padding);
+  margin-left: auto;
+}
+
+.tableFilter {
+  width: 200px;
+  padding: 3px 8px;
+  border: 1px solid var(--borderColor);
+  border-radius: 4px;
+  background: var(--inputControlBackground);
+  color: var(--textColorPrimary);
+  font-family: inherit;
+  font-size: var(--font-size-small);
+
+  &:focus-visible {
+    outline: 2px solid var(--primary);
+    outline-offset: -1px;
+  }
+}
+
+.tabContent {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+}
+
+// Tables
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--font-size-small);
+
+  th {
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    height: 28px;
+    padding: 0 8px;
+    background: var(--tableHeaderBackground);
+    color: var(--tableHeaderColor);
+    font-weight: normal;
+    text-align: left;
+    white-space: nowrap;
+    overflow: hidden;
+  }
+
+  td {
+    height: 28px;
+    padding: 2px 8px;
+    border-bottom: 1px solid var(--borderFaintColor);
+    white-space: nowrap;
+  }
+}
+
+// Fixed columns, so that the arrow stays next to the source; scrolls sideways rather than squeeze them.
+.connectionsTable {
+  table-layout: fixed;
+  min-width: 640px;
+
+  td {
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+}
+
+.endpointColumn {
+  width: 30%;
+}
+
+.arrowColumn {
+  width: 32px;
+}
+
+.row {
+  // A row scrolled into view stops below the sticky header.
+  scroll-margin-top: 28px;
+  cursor: pointer;
+
+  &:nth-child(even) {
+    background: var(--tableBgcStripe);
+  }
+
+  &:hover {
+    background: var(--sidebarItemHoverBackground);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--primary);
+    outline-offset: -2px;
+  }
+}
+
+.selectedRow,
+.selectedRow:nth-child(even),
+.selectedRow:hover {
+  background: var(--tableBgcSelected);
+  color: var(--tableSelectedRowColor);
+}
+
+// An accent that shows whatever the selected background is; on the first cell, as a row's shadow does not paint
+// reliably with collapsed borders.
+.selectedRow > td:first-child {
+  box-shadow: inset 3px 0 0 var(--primary);
+}
+
+.table .numeric {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.sortButton {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  max-width: 100%;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+
+  &:focus-visible {
+    outline: 2px solid var(--primary);
+    outline-offset: 2px;
+  }
+}
+
+.sortLabel {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sortArrow {
+  flex-shrink: 0;
+  color: var(--primary);
+}
+
+.arrowCell {
+  color: var(--textColorSecondary);
+  text-align: center;
+}
+
+.endpointSwatch {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  margin-right: 6px;
+  border-radius: 2px;
+  vertical-align: middle;
+}
+
+.namespacePrefix {
+  color: var(--textColorSecondary);
+}
+
+.protocolBadge {
+  display: inline-block;
+  padding: 0 6px;
+  border: 1px solid var(--borderColor);
+  border-radius: 4px;
+  color: var(--textColorSecondary);
+  font-size: 11px;
+  line-height: 16px;
+}
+
+.volumeTrack {
+  display: flex;
+  justify-content: flex-end;
+  height: 3px;
+  margin-top: 2px;
+}
+
+.volumeBar {
+  height: 3px;
+  border-radius: 2px;
+  background: var(--primary);
+  opacity: 0.6;
+}
+
+.empty {
+  color: var(--textColorSecondary);
+  opacity: 0.6;
+}
+
+.records {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.recordsBar {
+  display: flex;
+  align-items: center;
+  gap: var(--padding);
+  padding-top: 6px;
+}
+
+.recordDetails {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: 2px 12px;
+  margin: 4px 0;
+
+  dt {
+    color: var(--textColorSecondary);
+  }
+}
+
+// Too large to draw
+
+.tooLarge {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--padding);
+  height: 100%;
+  overflow-y: auto;
+  padding: calc(var(--padding) * 3);
+}
+
+.tooLargeColumns {
+  display: flex;
+  flex-wrap: wrap;
+  gap: calc(var(--padding) * 4);
+
+  section {
+    min-width: 260px;
+  }
+}
+
+.candidate {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 4px;
+  border-radius: 4px;
+  cursor: pointer;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+
+  &:hover {
+    background: var(--sidebarItemHoverBackground);
+  }
+}
+
+// Setup
 
 .setup {
   max-width: 720px;
@@ -427,10 +1083,46 @@
   padding: calc(var(--padding) * 1.5);
   border: 1px solid var(--borderColor);
   border-radius: 4px;
+}
 
-  h6 {
-    font-weight: bold;
-  }
+.facts {
+  width: 100%;
+  max-width: 360px;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--padding);
+}
+
+.installNote {
+  display: flex;
+  align-items: center;
+  gap: var(--padding);
+  color: var(--textColorSecondary);
+}
+
+// The message of the dialog that confirms an install.
+.confirmMessage {
+  display: flex;
+  flex-direction: column;
+  gap: var(--padding);
+  max-width: 520px;
+  line-height: 1.5;
+}
+
+.values {
+  max-height: 200px;
+  overflow: auto;
+  padding: var(--padding);
+  border: 1px solid var(--borderFaintColor);
+  border-radius: 4px;
+  background: var(--secondaryBackground);
+  font-family: var(--font-monospace);
+  font-size: var(--font-size-small);
+  white-space: pre;
 }
 
 .command {
@@ -447,83 +1139,4 @@
     overflow-x: auto;
     white-space: nowrap;
   }
-}
-
-.peer {
-  padding: 2px 0;
-  border-bottom: 1px solid var(--borderFaintColor);
-  font-size: smaller;
-
-  .detailRow {
-    font-size: inherit;
-  }
-}
-
-.peerName {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  font-family: monospace;
-}
-
-.tooLarge {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: var(--padding);
-  height: 100%;
-  overflow-y: auto;
-  padding: calc(var(--padding) * 3);
-
-  h6 {
-    margin-bottom: 4px;
-    color: var(--textColorSecondary);
-    text-transform: uppercase;
-    font-size: smaller;
-  }
-
-  .candidate {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-  }
-}
-
-.tooLargeColumns {
-  display: flex;
-  flex-wrap: wrap;
-  gap: calc(var(--padding) * 4);
-
-  section {
-    min-width: 260px;
-  }
-}
-
-.portRow {
-  display: flex;
-  justify-content: space-between;
-  gap: var(--padding);
-  padding: 2px 4px;
-  border-radius: 3px;
-  font-size: smaller;
-  cursor: pointer;
-
-  &:hover {
-    background: var(--secondaryBackground);
-  }
-}
-
-.portRowActive {
-  background: var(--secondaryBackground);
-  outline: 1px solid var(--primary);
-}
-
-// Folded down to its tabs, the panel leaves the rest of the page to the graph.
-.bottomHidden {
-  flex: 0 0 auto;
-  min-height: 0;
-}
-
-.panelToggle {
-  margin-left: auto;
 }

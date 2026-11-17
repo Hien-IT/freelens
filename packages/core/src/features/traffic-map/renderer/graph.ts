@@ -36,6 +36,11 @@ export interface TrafficLink {
   volume: number;
   width: number;
   color: string;
+  /**
+   * The edge carries nothing that a colour of its own says (no errors, no
+   * HTTP, gRPC or DNS): the graph draws it in the colours of its two cards.
+   */
+  plain: boolean;
   hot: boolean;
   dropped: boolean;
 }
@@ -52,7 +57,8 @@ export const edgeColors = {
   tcp: "#6b7280",
 };
 
-const namespacePalette = [
+/** The colours of the namespaces, which also tell the plain edges apart. */
+export const namespacePalette = [
   "#dc2626",
   "#2563eb",
   "#16a34a",
@@ -124,13 +130,13 @@ export function isDropped(flow: AggregatedFlow): boolean {
   return (flow.verdictCounts?.dropped ?? 0) > 0;
 }
 
-/** The colour of an edge: errors first, then what it carries. Its volume shows in its width, not its colour. */
-function edgeColor(flows: readonly AggregatedFlow[]): string {
-  if (flows.some(hasErrors)) return edgeColors.error;
-  if (flows.some((flow) => flow.l7Protocol === "HTTP" || flow.l7Protocol === "gRPC")) return edgeColors.http;
-  if (flows.some((flow) => flow.l7Protocol === "DNS")) return edgeColors.dns;
+/** What colours an edge: errors first, then what it carries. Its volume shows in its width, not its colour. */
+function edgeKind(flows: readonly AggregatedFlow[]): keyof typeof edgeColors {
+  if (flows.some(hasErrors)) return "error";
+  if (flows.some((flow) => flow.l7Protocol === "HTTP" || flow.l7Protocol === "gRPC")) return "http";
+  if (flows.some((flow) => flow.l7Protocol === "DNS")) return "dns";
 
-  return edgeColors.tcp;
+  return "tcp";
 }
 
 /** The id of the edge that a flow is drawn on: its two nodes and whether its direction is known, on any port. */
@@ -187,6 +193,7 @@ export function buildTrafficGraph(flows: readonly AggregatedFlow[], unit: Volume
     const dropped = sorted.some(isDropped);
     const source = nodeOf(first.source);
     const target = nodeOf(first.destination);
+    const kind = edgeKind(sorted);
 
     for (const flow of sorted) {
       if (flow.port > 0 && !flow.directionUnknown) {
@@ -212,7 +219,8 @@ export function buildTrafficGraph(flows: readonly AggregatedFlow[], unit: Volume
       directionUnknown: Boolean(first.directionUnknown),
       volume,
       width: edgeWidth(volume, least, busiest),
-      color: edgeColor(sorted),
+      color: edgeColors[kind],
+      plain: kind === "tcp",
       hot,
       dropped,
     });
@@ -295,8 +303,8 @@ export function cardTitleOf(name: string, workloadKind: string | undefined): str
 
 /** How opaque edges are at rest: the more of them, the fainter, so the cards and the structure stay readable. */
 export function restingEdgeAlpha(edgeCount: number): number {
-  if (edgeCount > 40) return 0.3;
-  if (edgeCount > 15) return 0.5;
+  if (edgeCount > 40) return 0.4;
+  if (edgeCount > 15) return 0.55;
 
-  return 0.75;
+  return 0.8;
 }

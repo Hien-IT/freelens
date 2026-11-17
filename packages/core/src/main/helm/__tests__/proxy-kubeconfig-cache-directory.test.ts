@@ -211,6 +211,70 @@ describe("helm with the proxy kubeconfig", () => {
       expectValuesFileOwnerOnlyAndRemoved();
     });
 
+    describe("the arguments of an install", () => {
+      beforeEach(() => {
+        di.inject(userPreferencesStateInjectable).helmServerSide = false;
+        execHelmMock.mockResolvedValue({ callWasSuccessful: true, response: "NAME: some-release\n" });
+      });
+
+      const installArgs = () => execHelmMock.mock.calls[0][0];
+      const valuesFilePath = () => writeFileMock.mock.calls[0][0];
+
+      it("are the same as before for a chart of a repository and a version", async () => {
+        await di.inject(installHelmChartInjectable)({
+          chart: "some-repo/some-chart",
+          values: "some: values",
+          name: "some-release",
+          namespace: "some-namespace",
+          version: "1.0.0",
+          kubeconfig,
+        });
+
+        expect(installArgs()).toEqual([
+          "install",
+          "some-release",
+          "some-repo/some-chart",
+          "--version",
+          "1.0.0",
+          "--values",
+          valuesFilePath(),
+          "--namespace",
+          "some-namespace",
+          "--kubeconfig",
+          kubeconfig.kubeconfigPath,
+          "--server-side=false",
+        ]);
+      });
+
+      it("install from a repository URL into a namespace Helm creates, at the latest version without one", async () => {
+        await di.inject(installHelmChartInjectable)({
+          chart: "some-chart",
+          repoUrl: "https://some-repository.example/charts/",
+          createNamespace: true,
+          values: "some: values",
+          name: "some-release",
+          namespace: "some-namespace",
+          kubeconfig,
+        });
+
+        expect(installArgs()).toEqual([
+          "install",
+          "some-release",
+          "some-chart",
+          "--repo",
+          "https://some-repository.example/charts/",
+          "--values",
+          valuesFilePath(),
+          "--namespace",
+          "some-namespace",
+          "--kubeconfig",
+          kubeconfig.kubeconfigPath,
+          "--create-namespace",
+          "--server-side=false",
+        ]);
+      });
+    });
+
     it("upgrades a release with the paths of the cluster's proxy kubeconfig", async () => {
       const cluster = new Cluster({
         id: "some-cluster-id",

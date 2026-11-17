@@ -162,6 +162,7 @@ describe("drawing helpers", () => {
   it("fades edges more as they get more", () => {
     expect(restingEdgeAlpha(5)).toBeGreaterThan(restingEdgeAlpha(30));
     expect(restingEdgeAlpha(30)).toBeGreaterThan(restingEdgeAlpha(200));
+    expect([restingEdgeAlpha(15), restingEdgeAlpha(40), restingEdgeAlpha(41)]).toEqual([0.8, 0.55, 0.4]);
   });
 });
 
@@ -207,6 +208,8 @@ describe("buildTrafficGraph", () => {
 
     expect(graph.nodes.map((node) => node.id).sort()).toEqual(["shop/api", "shop/cache", "shop/db", "shop/web"]);
     expect(graph.links.map((link) => link.color)).toEqual([edgeColors.http, edgeColors.error, edgeColors.tcp]);
+    // Only the edge that carries nothing coloured of its own is drawn in the colours of its cards.
+    expect(graph.links.map((link) => link.plain)).toEqual([false, false, true]);
     expect(graph.nodes.find((node) => node.id === "shop/db")?.hasProblems).toBe(true);
   });
 

@@ -3,6 +3,7 @@
  * Licensed under MIT License. See LICENSE in root directory for more information.
  */
 
+import { Icon } from "@freelensapp/icon";
 import { cssNames } from "@freelensapp/utilities";
 import { observer } from "mobx-react";
 import { useState } from "react";
@@ -11,7 +12,9 @@ import { minVolumeSteps, volumeUnitTitles } from "./filters";
 import { formatVolume, namespaceColor } from "./graph";
 import styles from "./traffic-map.module.scss";
 
-import type { L7Filter } from "./filters";
+import type { KeyboardEvent } from "react";
+
+import type { L7Filter, VolumeUnit } from "./filters";
 import type { TrafficMapModel } from "./traffic-map-model";
 
 function toggle(values: readonly string[], value: string): string[] {
@@ -34,6 +37,7 @@ function Chips({
           key={value}
           type="button"
           className={cssNames(styles.chip, { [styles.chipActive]: selected.includes(value) })}
+          aria-pressed={selected.includes(value)}
           onClick={() => onToggle(value)}
         >
           {value}
@@ -41,6 +45,21 @@ function Chips({
       ))}
     </div>
   );
+}
+
+/** A step of the least volume in as few characters as the narrow panel needs: 10K, 100 MiB, 1K/s. */
+function stepLabel(step: number, unit: VolumeUnit): string {
+  return step === 0 ? "Any" : formatVolume(step, unit).replace(/\.0+(?=\D|$)/, "");
+}
+
+/** Enter and Space act on an element that is not a button but behaves as one. */
+function onActivate(action: () => void) {
+  return (event: KeyboardEvent) => {
+    if (event.target === event.currentTarget && (event.key === "Enter" || event.key === " ")) {
+      event.preventDefault();
+      action();
+    }
+  };
 }
 
 const shownNamespaces = 8;
@@ -54,87 +73,116 @@ export const TrafficFiltersPanel = observer(({ model }: { model: TrafficMapModel
   const needle = focusSearch.trim().toLowerCase();
   const candidates = needle ? model.focusCandidates.filter((id) => id.toLowerCase().includes(needle)).slice(0, 20) : [];
   const namespaces = allNamespaces ? facets.namespaces : facets.namespaces.slice(0, shownNamespaces);
+  const unfiltered = model.visibleFlows.length === (model.result?.aggregated.length ?? 0) && !filters.focus;
 
   return (
     <aside className={styles.filters}>
-      <section>
-        <h6>Focus</h6>
+      <div className={styles.filtersTop}>
+        <button type="button" className={styles.resetButton} disabled={unfiltered} onClick={() => model.resetFilters()}>
+          Show all traffic
+        </button>
+      </div>
+
+      <section className={styles.filterSection}>
+        <h6 className={styles.sectionTitle}>Focus</h6>
         {filters.focus ? (
-          <div className={styles.focus}>
-            <span className={styles.ellipsis}>{filters.focus}</span>
-            <button type="button" className={styles.chip} onClick={() => model.focus(undefined)}>
-              Clear
-            </button>
+          <div className={styles.focusPill} title={filters.focus}>
+            <span className={styles.focusId}>{filters.focus}</span>
+            <Icon
+              material="close"
+              smallest
+              className={styles.iconButton}
+              tooltip="Clear the focus"
+              aria-label="Clear the focus"
+              onClick={() => model.focus(undefined)}
+            />
           </div>
         ) : (
           <>
-            <input
-              className={styles.search}
-              placeholder="Workload, service or address…"
-              value={focusSearch}
-              onChange={(event) => setFocusSearch(event.target.value)}
-            />
-            {candidates.map((id) => (
-              <div
-                key={id}
-                className={styles.candidate}
-                onClick={() => {
-                  model.focus(id);
-                  setFocusSearch("");
-                }}
-              >
-                {id}
+            <div className={styles.searchField}>
+              <Icon material="search" smallest className={styles.searchIcon} />
+              <input
+                className={styles.searchInput}
+                placeholder="Workload, service or address…"
+                aria-label="Focus on a workload, service or address"
+                value={focusSearch}
+                onChange={(event) => setFocusSearch(event.target.value)}
+              />
+            </div>
+            {candidates.length > 0 && (
+              <div className={styles.focusCandidates}>
+                {candidates.map((id) => (
+                  <button
+                    key={id}
+                    type="button"
+                    className={styles.focusCandidate}
+                    title={id}
+                    onClick={() => {
+                      model.focus(id);
+                      setFocusSearch("");
+                    }}
+                  >
+                    {id}
+                  </button>
+                ))}
               </div>
-            ))}
+            )}
           </>
         )}
       </section>
 
-      <section>
-        <h6>Show</h6>
-        <Checkbox
-          label="Hide system traffic"
-          value={filters.hideSystem}
-          onChange={(hideSystem) => model.updateFilters({ hideSystem })}
-        />
-        <Checkbox
-          label="Hide outside the cluster"
-          value={filters.hideExternal}
-          onChange={(hideExternal) => model.updateFilters({ hideExternal })}
-        />
-        <Checkbox
-          label="One Internet node"
-          value={filters.collapseInternet}
-          onChange={(collapseInternet) => model.updateFilters({ collapseInternet })}
-        />
-        <Checkbox
-          label="One node for the cluster's nodes"
-          value={filters.collapseHosts}
-          onChange={(collapseHosts) => model.updateFilters({ collapseHosts })}
-        />
-        <Checkbox
-          label="Pods, not workloads"
-          value={model.groupByPod}
-          onChange={(value) => model.setGroupByPod(value)}
-        />
+      <section className={styles.filterSection}>
+        <h6 className={styles.sectionTitle}>Show</h6>
+        <div className={styles.checks}>
+          <Checkbox
+            label="Hide system traffic"
+            value={filters.hideSystem}
+            onChange={(hideSystem) => model.updateFilters({ hideSystem })}
+          />
+          <Checkbox
+            label="Hide traffic outside the cluster"
+            value={filters.hideExternal}
+            onChange={(hideExternal) => model.updateFilters({ hideExternal })}
+          />
+          <Checkbox
+            label="Merge the Internet into one node"
+            value={filters.collapseInternet}
+            onChange={(collapseInternet) => model.updateFilters({ collapseInternet })}
+          />
+          <Checkbox
+            label="Merge the cluster's nodes into one node"
+            value={filters.collapseHosts}
+            onChange={(collapseHosts) => model.updateFilters({ collapseHosts })}
+          />
+          <Checkbox
+            label="Show pods instead of workloads"
+            value={model.groupByPod}
+            onChange={(value) => model.setGroupByPod(value)}
+          />
+        </div>
       </section>
 
-      <section>
-        <h6>Least {volumeUnitTitles[unit].label.toLowerCase()}</h6>
-        <Chips
-          values={steps.map((step) => (step === 0 ? "Any" : formatVolume(step, unit)))}
-          selected={[filters.minVolume === 0 ? "Any" : formatVolume(filters.minVolume, unit)]}
-          onToggle={(label) =>
-            model.updateFilters({
-              minVolume: steps.find((step) => (step === 0 ? "Any" : formatVolume(step, unit)) === label) ?? 0,
-            })
-          }
-        />
+      <section className={styles.filterSection}>
+        <h6 className={styles.sectionTitle}>Minimum {volumeUnitTitles[unit].label.toLowerCase()}</h6>
+        <div className={styles.segmented} role="group" aria-label={`Minimum ${volumeUnitTitles[unit].label}`}>
+          {steps.map((step) => (
+            <button
+              key={step}
+              type="button"
+              className={cssNames(styles.segment, { [styles.segmentActive]: filters.minVolume === step })}
+              title={step === 0 ? "Any" : formatVolume(step, unit)}
+              aria-pressed={filters.minVolume === step}
+              onClick={() => model.updateFilters({ minVolume: step })}
+            >
+              {stepLabel(step, unit)}
+            </button>
+          ))}
+        </div>
       </section>
 
       {facets.hasL7 && (
-        <section>
-          <h6>Protocol</h6>
+        <section className={styles.filterSection}>
+          <h6 className={styles.sectionTitle}>Protocol</h6>
           <Chips
             values={["all", "HTTP", "DNS", "TCP"]}
             selected={[filters.l7]}
@@ -144,8 +192,8 @@ export const TrafficFiltersPanel = observer(({ model }: { model: TrafficMapModel
       )}
 
       {facets.statusClasses.length > 0 && (
-        <section>
-          <h6>HTTP status</h6>
+        <section className={styles.filterSection}>
+          <h6 className={styles.sectionTitle}>HTTP status</h6>
           <Chips
             values={facets.statusClasses}
             selected={filters.statusClasses}
@@ -155,8 +203,8 @@ export const TrafficFiltersPanel = observer(({ model }: { model: TrafficMapModel
       )}
 
       {facets.verdicts.length > 0 && (
-        <section>
-          <h6>Verdict</h6>
+        <section className={styles.filterSection}>
+          <h6 className={styles.sectionTitle}>Verdict</h6>
           <Chips
             values={facets.verdicts}
             selected={filters.verdicts}
@@ -166,31 +214,48 @@ export const TrafficFiltersPanel = observer(({ model }: { model: TrafficMapModel
       )}
 
       {facets.namespaces.length > 0 && (
-        <section>
-          <h6>Namespaces</h6>
-          {namespaces.map((namespace) => (
-            <div
-              key={namespace}
-              className={cssNames(styles.namespace, {
-                [styles.namespaceHidden]: filters.hiddenNamespaces.includes(namespace),
-              })}
-              onClick={() => model.updateFilters({ hiddenNamespaces: toggle(filters.hiddenNamespaces, namespace) })}
-            >
-              <span className={styles.swatch} style={{ background: namespaceColor(namespace) }} />
-              <span className={styles.ellipsis}>{namespace}</span>
-            </div>
-          ))}
+        <section className={styles.filterSection}>
+          <h6 className={styles.sectionTitle}>Namespaces</h6>
+          {namespaces.map((namespace) => {
+            const hidden = filters.hiddenNamespaces.includes(namespace);
+            const toggleNamespace = () =>
+              model.updateFilters({ hiddenNamespaces: toggle(filters.hiddenNamespaces, namespace) });
+
+            return (
+              <div
+                key={namespace}
+                role="button"
+                tabIndex={0}
+                aria-pressed={!hidden}
+                className={cssNames(styles.namespace, { [styles.namespaceHidden]: hidden })}
+                onClick={toggleNamespace}
+                onKeyDown={onActivate(toggleNamespace)}
+              >
+                <span className={styles.swatch} style={{ background: namespaceColor(namespace) }} />
+                <span className={styles.namespaceName} title={namespace}>
+                  {namespace}
+                </span>
+                <button
+                  type="button"
+                  className={styles.onlyButton}
+                  title={`Show only ${namespace}`}
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    model.onlyNamespace(namespace);
+                  }}
+                >
+                  only
+                </button>
+              </div>
+            );
+          })}
           {facets.namespaces.length > shownNamespaces && (
-            <a onClick={() => setAllNamespaces(!allNamespaces)}>
+            <button type="button" className={styles.linkButton} onClick={() => setAllNamespaces(!allNamespaces)}>
               {allNamespaces ? "Show fewer" : `+${facets.namespaces.length - shownNamespaces} more`}
-            </a>
+            </button>
           )}
         </section>
       )}
-
-      <button type="button" className={styles.chip} onClick={() => model.resetFilters()}>
-        Show all traffic
-      </button>
     </aside>
   );
 });

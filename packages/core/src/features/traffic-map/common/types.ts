@@ -222,6 +222,11 @@ export interface HelmChartInfo {
   repo: string;
   repoUrl: string;
   chartName: string;
+  /** The name of the release the chart is installed as. */
+  releaseName: string;
+  /** The namespace of that release. */
+  namespace: string;
+  /** The version of the chart; unset, Helm installs the latest. */
   version?: string;
   /** Values to install the chart with, as YAML. */
   values?: string;
@@ -259,7 +264,9 @@ export interface TrafficFlowsQuery {
 export type TrafficRequest =
   | { clusterId: ClusterId; type: "sources"; refresh?: boolean }
   | { clusterId: ClusterId; type: "flows"; query: TrafficFlowsQuery }
-  | { clusterId: ClusterId; type: "set-source"; source: TrafficSourceName };
+  | { clusterId: ClusterId; type: "set-source"; source: TrafficSourceName }
+  /** Installs a source with the Helm chart that main knows for it; answers with a new detection. */
+  | { clusterId: ClusterId; type: "install-source"; source: TrafficSourceName };
 
 export type TrafficResponse<T> = { callWasSuccessful: true; response: T } | { callWasSuccessful: false; error: string };
 
@@ -267,4 +274,5 @@ export interface TrafficResultData {
   sources: SourcesResponse;
   flows: TrafficFlowsResult;
   "set-source": SourcesResponse;
+  "install-source": SourcesResponse;
 }

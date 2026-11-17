@@ -19,7 +19,15 @@ export interface InstallHelmChartData {
   values: string;
   name?: string;
   namespace: string;
-  version: string;
+  /** The version of the chart; without one, Helm installs the latest. */
+  version?: string;
+  /**
+   * The URL of the repository of the chart, which `chart` is then the name of:
+   * Helm installs from it without adding it to the user's repositories.
+   */
+  repoUrl?: string;
+  /** Create the namespace when it does not exist. */
+  createNamespace?: boolean;
   kubeconfig: ProxyKubeconfigPaths;
   forceConflicts?: boolean;
 }
@@ -43,7 +51,17 @@ const installHelmChartInjectable = getInjectable({
     const execHelm = di.inject(execHelmInjectable);
     const state = di.inject(userPreferencesStateInjectable);
 
-    return async ({ chart, kubeconfig, name, namespace, values, version, forceConflicts }) => {
+    return async ({
+      chart,
+      kubeconfig,
+      name,
+      namespace,
+      values,
+      version,
+      repoUrl,
+      createNamespace,
+      forceConflicts,
+    }) => {
       const valuesDirectory = temporaryDirectory();
       const valuesFilePath = joinPaths(valuesDirectory, "values.yaml");
       const args = ["install"];
@@ -52,17 +70,21 @@ const installHelmChartInjectable = getInjectable({
         args.push(name);
       }
 
-      args.push(
-        chart,
-        "--version",
-        version,
-        "--values",
-        valuesFilePath,
-        "--namespace",
-        namespace,
-        "--kubeconfig",
-        kubeconfig.kubeconfigPath,
-      );
+      args.push(chart);
+
+      if (version !== undefined) {
+        args.push("--version", version);
+      }
+
+      if (repoUrl) {
+        args.push("--repo", repoUrl);
+      }
+
+      args.push("--values", valuesFilePath, "--namespace", namespace, "--kubeconfig", kubeconfig.kubeconfigPath);
+
+      if (createNamespace) {
+        args.push("--create-namespace");
+      }
 
       if (!name) {
         args.push("--generate-name");

@@ -3,7 +3,7 @@
  * Licensed under MIT License. See LICENSE in root directory for more information.
  */
 
-import type { ClusterInfo, Recommendation, SourceStatus } from "../common/types";
+import type { ClusterInfo, HelmChartInfo, Recommendation, SourceStatus, TrafficSourceName } from "../common/types";
 import type { ClusterAccess, KubeObjectJson } from "./cluster-access";
 
 const providerPlatforms: [prefix: string, platform: string][] = [
@@ -107,12 +107,30 @@ export async function detectClusterInfo(access: ClusterAccess): Promise<ClusterI
 }
 
 const carettaDocs = "https://github.com/groundcover-com/caretta";
-const carettaChart = {
+const carettaMemoryLimit = "512Mi";
+const carettaChart: HelmChartInfo = {
   repo: "groundcover",
   repoUrl: "https://helm.groundcover.com/",
   chartName: "caretta",
-  values: "resources:\n  limits:\n    memory: 512Mi\n",
+  releaseName: "caretta",
+  namespace: "caretta",
+  values: `resources:\n  limits:\n    memory: ${carettaMemoryLimit}\n`,
 };
+
+/** The command that installs Caretta by hand, with the same chart, release, namespace and memory limit. */
+const carettaInstallCommand =
+  `helm repo add ${carettaChart.repo} ${carettaChart.repoUrl} && ` +
+  `helm install ${carettaChart.releaseName} ${carettaChart.repo}/${carettaChart.chartName} ` +
+  `--namespace ${carettaChart.namespace} --create-namespace --set resources.limits.memory=${carettaMemoryLimit}`;
+
+/**
+ * The Helm chart that a source is installed with, when Freelens can install
+ * it. Main looks the chart up by the name of the source, so that a request to
+ * install one can only install a chart named here.
+ */
+export function helmChartOf(source: TrafficSourceName): HelmChartInfo | undefined {
+  return source === "caretta" ? carettaChart : undefined;
+}
 
 const cniTitles: Record<string, string> = {
   calico: "Calico",
@@ -159,7 +177,7 @@ export function recommend(info: ClusterInfo, detected: readonly SourceStatus[]):
     reason: `Caretta provides lightweight eBPF-based traffic visibility for ${on}, without changing the network of the cluster.`,
     docsUrl: carettaDocs,
     helmChart: carettaChart,
-    installCommand: `helm repo add ${carettaChart.repo} ${carettaChart.repoUrl} && helm install caretta ${carettaChart.repo}/${carettaChart.chartName} --namespace caretta --create-namespace --set resources.limits.memory=512Mi`,
+    installCommand: carettaInstallCommand,
     ...(info.cni === "gke-native"
       ? {
           alternativeName: "hubble" as const,
