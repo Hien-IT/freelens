@@ -22,7 +22,7 @@ import type { InstallRequest } from "./attempt-install.injectable";
 
 export interface InstallRequestValidated {
   fileName: string;
-  data: Buffer;
+  data: Uint8Array;
   id: LensExtensionId;
   manifest: LensExtensionManifest;
   /**
@@ -53,9 +53,11 @@ const createTempFilesAndValidateInjectable = getInjectable({
         // readable by this user alone: the tarball is read again after it is
         // validated, so nobody else may be able to replace it in between, and
         // two installs of the same file name must not overwrite each other.
-        tempDirectory = await fse.mkdtemp(joinPaths(tempDirectoryPath, "freelens-extension-"));
+        const directory: string = await fse.mkdtemp(joinPaths(tempDirectoryPath, "freelens-extension-"));
 
-        const tempFile = joinPaths(tempDirectory, fileName);
+        tempDirectory = directory;
+
+        const tempFile = joinPaths(directory, fileName);
 
         await writeFile(tempFile, data);
         const manifest = await validatePackage(tempFile);
