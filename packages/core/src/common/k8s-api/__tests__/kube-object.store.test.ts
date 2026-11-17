@@ -904,4 +904,113 @@ describe("KubeObjectStore", () => {
       expect(watch).toHaveBeenCalledTimes(1);
     });
   });
+
+  describe("namespace filtering", () => {
+    const createObject = (name: string, namespace?: string) =>
+      new KubeObject({
+        apiVersion: "v1",
+        kind: "Foo",
+        metadata: {
+          name,
+          resourceVersion: "1",
+          uid: `${namespace}-${name}`,
+          namespace,
+          selfLink: `/some/${namespace}/${name}`,
+        },
+      });
+
+    const inA = createObject("in-a", "a");
+    const inB = createObject("in-b", "b");
+    const clusterWide = createObject("cluster-wide");
+    const inC = createObject("in-c", "c");
+
+    const createStore = (contextNamespaces: string[]) => {
+      const store = new KubeObjectStore<KubeObject>(
+        {
+          context: {
+            allNamespaces: ["a", "b", "c"],
+            contextNamespaces,
+            hasSelectedAll: false,
+            isGlobalWatchEnabled: () => true,
+            isLoadingAll: () => false,
+          },
+          logger: { debug: noop, error: noop, info: noop, silly: noop, warn: noop },
+        },
+        {} as KubeApi<KubeObject>,
+      );
+
+      store.items.replace([inA, inB, clusterWide, inC]);
+
+      return store;
+    };
+
+    it("keeps the objects of the context namespaces and the cluster-wide ones in store order", () => {
+      expect(createStore(["c", "a"]).contextItems).toEqual([inA, clusterWide, inC]);
+      expect(createStore([]).contextItems).toEqual([clusterWide]);
+    });
+
+    it("returns the objects of the given namespaces in store order, without the cluster-wide ones", () => {
+      const store = createStore([]);
+
+      expect(store.getAllByNs(["c", "a"])).toEqual([inA, inC]);
+      expect(store.getAllByNs("b")).toEqual([inB]);
+      expect(store.getAllByNs("none")).toEqual([]);
+    });
+
+    it("returns every object for no namespaces unless strict", () => {
+      const store = createStore([]);
+
+      expect(store.getAllByNs([])).toEqual([inA, inB, clusterWide, inC]);
+      expect(store.getAllByNs([], true)).toEqual([]);
+    });
+  });
+
+  describe("lookups by id and path", () => {
+    const createObject = (name: string, uid: string, selfLink: string) =>
+      new KubeObject({
+        apiVersion: "v1",
+        kind: "Foo",
+        metadata: { name, resourceVersion: "1", uid, namespace: "default", selfLink },
+      });
+
+    const first = createObject("first", "uid-1", "/path/1");
+    const second = createObject("second", "uid-2", "/path/2");
+    const sameAsFirst = createObject("same-as-first", "uid-1", "/path/1");
+
+    const createStore = () => {
+      const store = new FakeKubeObjectStore(() => [], {});
+
+      store.items.replace([first, second, sameAsFirst]);
+
+      return store;
+    };
+
+    it("returns the first object of an id or a path, as a find over the items does", () => {
+      const store = createStore();
+
+      expect(store.getById("uid-1")).toBe(first);
+      expect(store.getById("uid-2")).toBe(second);
+      expect(store.getById("none")).toBeUndefined();
+      expect(store.getByPath("/path/1")).toBe(first);
+      expect(store.getByPath("/path/2")).toBe(second);
+      expect(store.getByPath("/none")).toBeUndefined();
+    });
+
+    it("follows added, replaced and removed objects", () => {
+      const store = createStore();
+      const third = createObject("third", "uid-3", "/path/3");
+      const newSecond = createObject("second", "uid-2", "/path/2");
+
+      expect(store.getById("uid-3")).toBeUndefined();
+
+      store.items.push(third);
+      store.items[1] = newSecond;
+      store.items.remove(first);
+
+      expect(store.getById("uid-3")).toBe(third);
+      expect(store.getByPath("/path/2")).toBe(newSecond);
+      expect(store.getById("uid-1")).toBe(sameAsFirst);
+      expect(store.getByPath("/path/1")).toBe(sameAsFirst);
+    });
+  });
 });
