@@ -42,9 +42,17 @@
     // unindented, which Biome cannot do, so yamlfmt formats them with the
     // .yamlfmt.yaml of their directory. pnpm writes its own lockfile and
     // workspace file, and Trunk rewrites its own .trunk/trunk.yaml on every
-    // trunk upgrade.
+    // trunk upgrade. The Specify CLI of Spec Kit manages .specify/ and the
+    // .claude/skills/speckit-* skills, records the digest of each skill it
+    // writes, and refuses to upgrade over a changed one, so only the
+    // constitution, which the project writes, is checked there. Biome does not
+    // descend into an excluded directory, so its directory is re-included too.
     "includes": [
       "**",
+      "!**/.specify/**",
+      "**/.specify/memory",
+      "**/.specify/memory/constitution.md",
+      "!**/.claude/skills/speckit-*/**",
       "!**/.trunk/**",
       "!**/build/**",
       "!**/dist/**",

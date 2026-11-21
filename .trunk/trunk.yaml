@@ -147,6 +147,16 @@ lint:
         - biome
       paths:
         - packages/resource-templates/templates/**
+    # The Specify CLI of Spec Kit manages .specify/ and the
+    # .claude/skills/speckit-* skills, records the digest of each skill it
+    # writes, and refuses to upgrade over a changed one, so no linter formats
+    # them. The constitution is written by the project and stays checked.
+    - linters:
+        - ALL
+      paths:
+        - .specify/**
+        - "!.specify/memory/constitution.md"
+        - .claude/skills/speckit-*/**
     # Vitest/testing-library snapshots are generated artifacts whose DOM
     # serializer emits whitespace-only lines (e.g. indented empty elements and
     # inline SVG <style> blocks). git-diff-check only flags such lines when they

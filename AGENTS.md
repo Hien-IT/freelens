@@ -840,6 +840,35 @@ claude plugin validate .
 claude plugin validate ./plugins/freelens
 ```
 
+## Spec-Driven Development (Spec Kit)
+
+The repository is set up for [Spec Kit](https://github.com/github/spec-kit)
+with its Claude Code integration. A feature goes through `/speckit-specify`,
+`/speckit-plan`, `/speckit-tasks` and `/speckit-implement`, and its artifacts
+land in `specs/<number>-<name>/`. The skills are installed user-invocable only:
+Claude runs one when it is typed as a slash command, never on its own.
+
+The constitution, `.specify/memory/constitution.md`, is what each plan is
+checked against. It names the rules of this file and of `docs/` and links to
+them rather than copying them, so a change of such a rule here changes the
+constitution with it, through `/speckit-constitution`.
+
+Everything else under `.specify/` and the `.claude/skills/speckit-*` skills is
+written by the Specify CLI, which records the digest of each skill and refuses
+to upgrade over a changed one. Do not edit those files by hand; customize a
+template with an override in `.specify/templates/overrides/`. `biome.jsonc` and
+`.trunk/trunk.yaml` leave them out, the constitution excepted.
+
+The CLI is not a dependency of the project; install it as Spec Kit's
+installation guide says, pinned to a release. The integration runs with its
+event handlers off, so that it writes no hook into `.claude/settings.json` (see
+Security). Passing `--integration-options` replaces the stored options, so an
+upgrade repeats them:
+
+```sh
+specify integration upgrade claude --integration-options="--events false --no-model-invocation"
+```
+
 ## Before Opening a Pull Request
 
 A test that fails on `main` and passes on the branch proves the claim of the
