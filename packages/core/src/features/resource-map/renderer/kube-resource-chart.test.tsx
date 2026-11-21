@@ -112,7 +112,10 @@ interface GraphProps {
   width: number;
   height: number;
   onEngineStop(): void;
+  onNodeHover(node: ChartDataSeries | null, previous: ChartDataSeries | null): void;
   nodeCanvasObject(node: ChartDataSeries, ctx: CanvasRenderingContext2D, globalScale: number): void;
+  onRenderFramePost(ctx: CanvasRenderingContext2D, globalScale: number): void;
+  linkColor(link: LinkObject): string;
   maxZoom: number;
   ref?: { current: unknown };
 }
@@ -131,6 +134,15 @@ vi.mock("react-force-graph-2d", () => ({
     }
     return <canvas />;
   },
+}));
+
+// The application's Icon takes its logger from the injection container, which the map is rendered without.
+vi.mock("@freelensapp/icon", () => ({
+  Icon: ({ material, onClick, ...props }: { material?: string; onClick?: () => void; "aria-label"?: string }) => (
+    <i role={onClick ? "button" : undefined} aria-label={props["aria-label"]} onClick={onClick}>
+      {material}
+    </i>
+  ),
 }));
 
 const host = {
@@ -326,11 +338,39 @@ describe("KubeResourceChart", () => {
       expect(view.left).toBeGreaterThanOrEqual(0);
       expect(view.right).toBeLessThanOrEqual(props.width);
       expect(view.top).toBeGreaterThanOrEqual(0);
-      // The box holds the circles of the nodes: the name of a node of the bottom row reaches below it.
-      const name = nameBelowCircle(props.nodeCanvasObject, props.graphData.nodes[0], view.zoom);
+      // The box holds the circles of the nodes: the name of a node of the bottom row reaches below it. The
+      // name of the hovered node is drawn at every zoom.
+      const [node] = props.graphData.nodes;
+      act(() => props.onNodeHover(node, null));
+      const { nodeCanvasObject, onRenderFramePost, graphData } = graph.props as GraphProps;
+      const name = nameBelowCircle(nodeCanvasObject, onRenderFramePost, graphData.nodes, node, view.zoom);
+      expect(name).toBeGreaterThan(0);
       expect(view.bottom + name).toBeLessThanOrEqual(props.height);
     },
   );
+
+  it("fades the links out of focus of the hovered node, and zooms with its buttons up to its largest zoom", async () => {
+    const service = webService();
+    host.stores.services.items.replace([service]);
+    host.stores.pods.items.replace(["web-1", "web-2"].map((name) => pod(name, "shop", { labels: { app: "web" } })));
+    render(<KubeServiceChart object={service} dependencies={dependencies()} />);
+    await waitFor(() => expect(graph.props?.graphData.links).toHaveLength(2));
+    const props = () => graph.props as GraphProps;
+    const [web1, web2] = ["Pod/shop/web-1", "Pod/shop/web-2"].map((id) =>
+      props().graphData.links.find((link) => (link.source as ChartDataSeries).id === id),
+    ) as LinkObject[];
+    const hovered = props().graphData.nodes.find((node) => node.id === "Pod/shop/web-1") ?? null;
+
+    act(() => props().onNodeHover(hovered, null));
+
+    expect(props().linkColor(web1)).toBe("rgba(76, 175, 80, 1)");
+    expect(props().linkColor(web2)).toBe("rgba(76, 175, 80, 0.08)");
+
+    fit.zoom(1);
+    act(() => screen.getByRole("button", { name: "Zoom in" }).click());
+
+    expect(fit.zoom).toHaveBeenLastCalledWith(1.2, 200);
+  });
 
   it("takes the points of its nodes again when its container resizes, as the graph keeps the center of its view", async () => {
     let resize = (_width: number, _height: number) => {};

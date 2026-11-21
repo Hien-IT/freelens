@@ -9,6 +9,8 @@ import React from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { MapTooltip } from "./map-tooltip";
 
+import type { AnchorRect } from "./map-tooltip";
+
 // The tooltips of the kinds render the application's components, which need
 // more than the test gives them; the test is about which one the map shows,
 // and where.
@@ -184,5 +186,67 @@ describe("MapTooltip", () => {
 
     expect(tooltip.style.left).toBe("388px");
     expect(tooltip.style.top).toBe("368px");
+  });
+
+  it("lists under its content the objects folded into the card, by kind, and nothing without them", () => {
+    const object = new Pod({ apiVersion: "v1", kind: "Pod", metadata: metadata("web-1") });
+    const folded = [
+      new Service({ apiVersion: "v1", kind: "Service", metadata: metadata("pos-backend-afc-order-cache") }),
+      new KubeObject({ apiVersion: "v1", kind: "ConfigMap", metadata: metadata("web-config") }),
+      new KubeObject({ apiVersion: "v1", kind: "Secret", metadata: metadata("web-secret") }),
+      new KubeObject({ apiVersion: "v1", kind: "Secret", metadata: metadata("web-env") }),
+    ];
+    const { rerender } = render(<MapTooltip object={object} includes={folded} />);
+
+    const includes = screen.getByTestId("resource-map-tooltip-includes");
+    expect(includes.textContent).toContain("Includes");
+    const rows = [...includes.querySelectorAll(".DrawerItem")].map((row) => [
+      row.querySelector(".name")?.textContent,
+      [...(row.querySelector(".value")?.children ?? [])].map((name) => name.textContent),
+    ]);
+    expect(rows).toEqual([
+      ["Service", ["pos-backend-afc-order-cache"]],
+      ["Config Map", ["web-config"]],
+      ["Secret", ["web-secret", "web-env"]],
+    ]);
+
+    rerender(<MapTooltip object={object} />);
+
+    expect(screen.queryByTestId("resource-map-tooltip-includes")).toBeNull();
+  });
+
+  describe("anchored to a card", () => {
+    const anchored = () => {
+      const tooltipRef = React.createRef<MapTooltip>();
+      const object = new Pod({ apiVersion: "v1", kind: "Pod", metadata: metadata("web-1") });
+      render(
+        <div data-testid="map">
+          <MapTooltip ref={tooltipRef} object={object} />
+        </div>,
+      );
+      const map = screen.getByTestId("map");
+      const tooltip = screen.getByTestId("resource-map-tooltip");
+      Object.defineProperties(map, { clientWidth: { value: 800 }, clientHeight: { value: 600 } });
+      Object.defineProperties(tooltip, { offsetWidth: { value: 300 }, offsetHeight: { value: 120 } });
+      return { map, tooltip, anchor: (rect: AnchorRect) => tooltipRef.current?.anchor(map, rect) };
+    };
+
+    it("sits 8 px below the card, aligned with its left side", () => {
+      const { tooltip, anchor } = anchored();
+
+      anchor({ left: 100, top: 200, width: 200, height: 56 });
+
+      expect(tooltip.style.left).toBe("100px");
+      expect(tooltip.style.top).toBe("264px");
+    });
+
+    it("sits above a card with no room below it, and inside the container", () => {
+      const { tooltip, anchor } = anchored();
+
+      anchor({ left: 700, top: 500, width: 200, height: 56 });
+
+      expect(tooltip.style.left).toBe("500px");
+      expect(tooltip.style.top).toBe("372px");
+    });
   });
 });

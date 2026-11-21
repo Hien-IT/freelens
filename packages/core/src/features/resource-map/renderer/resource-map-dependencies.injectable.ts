@@ -78,7 +78,14 @@ const resourceMapDependenciesInjectable = getInjectable({
       getCanvasColors: () => {
         const { colors } = activeTheme.get();
 
-        return { background: colors.secondaryBackground, text: colors.textColorPrimary };
+        return {
+          background: colors.secondaryBackground,
+          text: colors.textColorPrimary,
+          secondaryText: colors.textColorSecondary,
+          card: colors.contentColor,
+          border: colors.borderColor,
+          selected: colors.primary,
+        };
       },
       showDetails: (selfLink) => showDetails(selfLink),
       showHelmRelease: ({ namespace, name }) => navigateToHelmReleases({ namespace, name }),

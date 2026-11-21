@@ -1,0 +1,318 @@
+/**
+ * Copyright (c) Freelens Authors. All rights reserved.
+ * Licensed under MIT License. See LICENSE in root directory for more information.
+ */
+
+// the Resource Map: its toolbar, and its canvas below in the rest of its height
+.map {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+}
+
+// the container of the canvas of a map, which the overlays are positioned in
+.canvas {
+  position: relative;
+  isolation: isolate;
+  width: 100%;
+  height: 100%;
+
+  // the canvas container of force-graph, a third-party class, with the rules
+  // of the stylesheet that force-graph adds to the document
+  :global(.force-graph-container) {
+    background-color: var(--secondaryBackground);
+
+    canvas {
+      display: block;
+      user-select: none;
+      outline: none;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    :global(.clickable) {
+      cursor: pointer;
+    }
+
+    :global(.grabbable) {
+      cursor: grab;
+
+      &:active {
+        cursor: grabbing;
+      }
+    }
+  }
+}
+
+// the canvas of the Resource Map, framed as the Traffic Map frames its own
+.frame {
+  flex: 1;
+  min-height: 0;
+  height: auto;
+  overflow: hidden;
+  border: 1px solid var(--borderFaintColor);
+  border-radius: 6px;
+  background: var(--secondaryBackground);
+}
+
+// the graph, under the overlays of the canvas; the pointer leaves it for them
+.graph {
+  position: absolute;
+  inset: 0;
+}
+
+.status {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+}
+
+.noResources {
+  margin: 200px auto;
+  color: var(--textColorSecondary);
+}
+
+// the map of a details panel, as wide as the panel; the content of the
+// drawer is a flex column, where a map that shrinks would lose its height
+.details {
+  flex-shrink: 0;
+  height: 400px;
+}
+
+// the list of the nodes on the canvas, for assistive technology and the
+// integration tests: in the page, out of sight
+.nodeList {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
+// The toolbar above the canvas: the search, then the chips, wrapping.
+.toolbar {
+  flex-shrink: 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 12px;
+  padding: 0 0 8px;
+}
+
+.searchRow {
+  display: flex;
+  align-items: center;
+  gap: var(--padding);
+  max-width: 100%;
+}
+
+.searchField {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 240px;
+  max-width: 100%;
+}
+
+.searchIcon {
+  position: absolute;
+  left: 6px;
+  color: var(--textColorSecondary);
+  pointer-events: none;
+}
+
+.searchInput {
+  width: 100%;
+  padding: 5px 8px 5px 26px;
+  border: 1px solid var(--borderColor);
+  border-radius: 4px;
+  background: var(--inputControlBackground);
+  color: var(--textColorPrimary);
+  font-family: inherit;
+  font-size: var(--font-size-small);
+
+  &:focus-visible {
+    outline: 2px solid var(--primary);
+    outline-offset: -1px;
+  }
+}
+
+.searchNote {
+  color: var(--textColorSecondary);
+  font-size: var(--font-size-small);
+  white-space: nowrap;
+}
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+  max-width: 100%;
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 2px 8px 2px 3px;
+  border: 1px solid var(--borderColor);
+  border-radius: 10px;
+  background: var(--contentColor);
+  color: var(--textColorPrimary);
+  font-family: inherit;
+  font-size: var(--font-size-small);
+  white-space: nowrap;
+  cursor: pointer;
+
+  &:hover {
+    background: var(--sidebarItemHoverBackground);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--primary);
+    outline-offset: 1px;
+  }
+}
+
+// A hidden kind: its chip stays, to show it again.
+.chipHidden {
+  border-style: dashed;
+  color: var(--textColorSecondary);
+  opacity: 0.6;
+
+  .chipLabel {
+    text-decoration: line-through;
+  }
+
+  .chipIcon {
+    filter: grayscale(1);
+  }
+}
+
+// A chip without an icon: its label starts at its edge.
+.chipPlain {
+  padding-left: 8px;
+}
+
+// The focused release.
+.chipActive,
+.chipActive:hover {
+  border-color: var(--primary);
+  background: var(--primary);
+  color: var(--textColorAccent);
+
+  .chipCount {
+    color: inherit;
+  }
+}
+
+// The colour of a release, as the stripe of its cards.
+.releaseSwatch {
+  width: 4px;
+  height: 14px;
+  border-radius: 2px;
+}
+
+// The icon of a kind on a disc of its colour, as the canvas draws it.
+.chipIcon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--kind-color, var(--borderColor));
+}
+
+.chipCount {
+  color: var(--textColorSecondary);
+  font-variant-numeric: tabular-nums;
+}
+
+.linkButton {
+  padding: 0 4px;
+  border: 0;
+  background: none;
+  color: var(--primary);
+  font-family: inherit;
+  font-size: var(--font-size-small);
+  cursor: pointer;
+
+  &:hover {
+    text-decoration: underline;
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--primary);
+    outline-offset: 2px;
+  }
+}
+
+.allHidden {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--padding);
+  color: var(--textColorSecondary);
+}
+
+// The numbers of the map and the legend of the health of pods, in a row under the canvas.
+.stats {
+  flex-shrink: 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 12px;
+  padding: 6px 2px 0;
+  color: var(--textColorSecondary);
+  font-size: 11px;
+}
+
+.legendItem {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  white-space: nowrap;
+}
+
+.legendDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+
+.zoomControls {
+  position: absolute;
+  right: 8px;
+  bottom: 8px;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--borderFaintColor);
+  border-radius: 6px;
+  background: var(--contentColor);
+}
+
+// An Icon with an onClick: the Icon draws its own focus ring, in the colour it reads from this property.
+.zoomButton {
+  --icon-focus-color: var(--primary);
+
+  padding: 5px;
+  color: var(--textColorPrimary);
+}
+
+.zoomButton + .zoomButton {
+  border-top: 1px solid var(--borderFaintColor);
+}

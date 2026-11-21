@@ -78,10 +78,18 @@ export const mapStoreResources: Record<keyof MapStores, KubeResource> = {
 
 /** The colours that the maps paint on their canvas. */
 export interface CanvasColors {
-  /** The fill of the outer ring of a controller. */
+  /** The canvas, behind the names of the nodes and in the outer ring of a controller. */
   background: string;
-  /** The labels of the nodes. */
+  /** The names of the nodes and the cards. */
   text: string;
+  /** The second line of a card and the headers of the columns. */
+  secondaryText: string;
+  /** The fill of a card. */
+  card: string;
+  /** The border of a card. */
+  border: string;
+  /** The border of a hovered or selected card. */
+  selected: string;
 }
 
 /** A Helm release, by its namespace and name, as a map node stands for it. */

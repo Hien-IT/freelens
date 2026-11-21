@@ -13,6 +13,7 @@ import { DrawerTitle } from "../../../renderer/components/drawer";
 import { logPrefix } from "./dependencies";
 import { loadConfigImages } from "./helpers/config";
 import { childPodsOf, type DetailsGraph, type DetailsGraphObjects } from "./helpers/details-graph";
+import { drawLabels, fontFamilyOf, hoverFocus, linkColor, linkWidth, nodeEmphasis, paintNode } from "./helpers/draw";
 import { ElementSize } from "./helpers/element-size";
 import {
   applyMapForces,
@@ -22,11 +23,13 @@ import {
   nodePointsOf,
   refWithSetter,
   smallGraphZoom,
+  zoomGraphBy,
 } from "./helpers/graph-methods";
 import { helmReleaseKind } from "./helpers/helm";
 import { sameGraph } from "./helpers/namespace-graph";
-import styles from "./kube-force-chart.module.scss";
+import styles from "./kube-resource-map.module.scss";
 import { MapNodeList } from "./map-node-list";
+import { MapZoomControls } from "./map-zoom-controls";
 import { MapTooltip } from "./tooltips/map-tooltip";
 
 import type { KubeApiListOptions } from "@freelensapp/kube-api";
@@ -52,7 +55,6 @@ interface State {
     nodes: ChartDataSeries[];
     links: LinkObject[];
   };
-  highlightLinks: Set<LinkObject>;
   hoverNode?: ChartDataSeries;
 }
 
@@ -145,7 +147,13 @@ export class KubeResourceChart<K extends KubeObject = KubeObject> extends React.
   private readonly tooltip = React.createRef<MapTooltip>();
   // The size of the container, which the graph takes.
   private readonly size = new ElementSize();
-  private readonly followContainer = (element: HTMLDivElement | null) => this.size.follow(element);
+  // The font of the application, for the names on the canvas, and the widths of the names in it.
+  private fontFamily = "sans-serif";
+  private readonly labelWidths = new Map<string, number>();
+  private readonly followContainer = (element: HTMLDivElement | null) => {
+    this.size.follow(element);
+    if (element) this.fontFamily = fontFamilyOf(element);
+  };
 
   // What the map takes from the application, which does not change; a field,
   // as mobx-react lets no reaction read this.props.
@@ -179,7 +187,6 @@ export class KubeResourceChart<K extends KubeObject = KubeObject> extends React.
       nodes: [],
       links: [],
     },
-    highlightLinks: new Set<LinkObject>(),
   };
 
   constructor(props: KubeResourceChartProps<K>) {
@@ -410,10 +417,36 @@ export class KubeResourceChart<K extends KubeObject = KubeObject> extends React.
       this.nodes = graph.nodes;
       this.links = graph.links;
       this.unsettle();
-      this.setState({
-        data: graph,
-        highlightLinks: new Set<LinkObject>(),
-      });
+      this.setState({ data: graph });
+    }
+  };
+
+  private readonly engineStopped = () => {
+    if (this.initZoomDone) {
+      this.settle();
+    } else if (this.nodes.length > 10) {
+      this.initZoomDone = true;
+      this.fit(400);
+      this.settleTimer = setTimeout(() => this.settle(), 400);
+    } else {
+      this.initZoomDone = true;
+      this.fit(0);
+      this.settle();
+    }
+  };
+
+  private fit(durationMs: number) {
+    fitGraph(this.chart, this.size, this.nodes.length > 10 ? maxZoom : smallGraphZoom, durationMs);
+  }
+
+  private readonly nodeClicked = (node: ChartDataSeries) => {
+    const { object } = node;
+    if (object) {
+      if (object.kind === helmReleaseKind) {
+        this.dependencies.showHelmRelease({ namespace: object.getNs(), name: object.getName() });
+      } else {
+        this.dependencies.showDetails(object.selfLink);
+      }
     }
   };
 
@@ -483,18 +516,8 @@ export class KubeResourceChart<K extends KubeObject = KubeObject> extends React.
     return stores.daemonSets.getChildPods(controller);
   }
 
-  getLinksForNode(node: ChartDataSeries): LinkObject[] {
-    return this.links.filter(
-      (link) => (link.source as ChartDataSeries).id == node.id || (link.target as ChartDataSeries).id == node.id,
-    );
-  }
-
   handleNodeHover(node: ChartDataSeries | null) {
-    const highlightLinks = new Set<LinkObject>();
-    if (node) {
-      this.getLinksForNode(node).forEach((link) => highlightLinks.add(link));
-    }
-    this.setState({ highlightLinks, hoverNode: node ?? undefined });
+    this.setState({ hoverNode: node ?? undefined });
   }
 
   render() {
@@ -503,105 +526,57 @@ export class KubeResourceChart<K extends KubeObject = KubeObject> extends React.
     }
 
     const colors = this.dependencies.getCanvasColors();
-    const { hoverNode } = this.state;
+    const { data, hoverNode } = this.state;
+    const ownId = this.props.object.getId();
+    const focus = hoverFocus(hoverNode, data.links);
     return (
       <>
         <DrawerTitle>Resources</DrawerTitle>
         <div
           ref={this.followContainer}
-          className={`${styles.kubeForceChart} ${styles.details}`}
+          className={`${styles.canvas} ${styles.details}`}
           data-settled={this.settled || undefined}
           onMouseMove={(event) => this.tooltip.current?.follow(event)}
         >
           <MapTooltip ref={this.tooltip} object={hoverNode?.object} />
           <MapNodeList points={this.nodePoints} />
           <ForceGraph2D
-            graphData={this.state.data}
+            graphData={data}
             ref={this.chartRef}
             width={this.size.width}
             height={this.size.height}
             autoPauseRedraw={false}
             maxZoom={maxZoom}
             cooldownTicks={200}
-            onEngineStop={() => {
-              if (this.initZoomDone) {
-                this.settle();
-              } else if (this.nodes.length > 10) {
-                this.initZoomDone = true;
-                fitGraph(this.chart, this.size, maxZoom, 400);
-                this.settleTimer = setTimeout(() => this.settle(), 400);
-              } else {
-                this.initZoomDone = true;
-                fitGraph(this.chart, this.size, smallGraphZoom, 0);
-                this.settle();
-              }
-            }}
-            linkWidth={(link) => (this.state.highlightLinks.has(link) ? 2 : 1)}
+            onEngineStop={this.engineStopped}
+            linkWidth={(link) => linkWidth(link, focus)}
             onNodeHover={(node) => this.handleNodeHover(node)}
             onNodeDrag={(node) => this.handleNodeHover(node)}
             nodeVal="value"
             nodeLabel={() => ""}
             nodeVisibility={"visible"}
-            linkColor={(link) => {
-              return (link.source as ChartDataSeries).color ?? "";
-            }}
-            onNodeClick={(node) => {
-              const { object } = node;
-              if (object) {
-                if (object.kind === helmReleaseKind) {
-                  this.dependencies.showHelmRelease({ namespace: object.getNs(), name: object.getName() });
-                } else {
-                  this.dependencies.showDetails(object.selfLink);
-                }
-              }
-            }}
-            nodeCanvasObject={(node, ctx, globalScale) => {
-              const padAmount = 0;
-              const { name, value, color, image, object } = node;
-              const label = name;
-              const fontSize = 9;
-              const x = node.x ?? 0;
-              const y = node.y ?? 0;
-
-              const r = Math.sqrt(Math.max(0, value || 10)) * 4 + padAmount;
-
-              // draw outer circle
-              if (object.getId() === this.props.object.getId()) {
-                ctx.beginPath();
-                ctx.lineWidth = 2;
-                ctx.arc(x, y, r + 3, 0, 2 * Math.PI, false);
-                ctx.strokeStyle = color ?? "";
-                ctx.stroke();
-                ctx.fillStyle = colors.background;
-                ctx.fill();
-                ctx.closePath();
-              }
-
-              // draw circle
-              const size = hoverNode == node ? r + 1 : r;
-
-              ctx.beginPath();
-              ctx.arc(x, y, size, 0, 2 * Math.PI, false);
-              ctx.fillStyle = color || "rgba(31, 120, 180, 0.92)";
-              ctx.fill();
-
-              // draw icon
-              if (image) {
-                try {
-                  ctx.drawImage(image, x - 15, y - 15, 30, 30);
-                } catch (error) {
-                  this.dependencies.logger.error(`${logPrefix}: cannot draw the icon of ${node.kind}`, error);
-                }
-              }
-
-              // draw label
-              ctx.textAlign = "center";
-              ctx.font = `${fontSize}px Arial`;
-              ctx.textBaseline = "middle";
-              ctx.fillStyle = colors.text;
-              ctx.fillText(label, x, y + r + 10 / globalScale);
-            }}
+            linkColor={(link) => linkColor(link, focus)}
+            onNodeClick={this.nodeClicked}
+            nodeCanvasObject={(node, ctx) =>
+              paintNode(ctx, node, {
+                emphasis: nodeEmphasis(node, focus),
+                ring: node.object.getId() === ownId,
+                colors,
+                onIconError: (error) =>
+                  this.dependencies.logger.error(`${logPrefix}: cannot draw the icon of ${node.kind}`, error),
+              })
+            }
+            onRenderFramePost={(ctx, globalScale) =>
+              drawLabels(ctx, globalScale, {
+                nodes: data.nodes,
+                focus,
+                colors,
+                fontFamily: this.fontFamily,
+                widths: this.labelWidths,
+              })
+            }
           />
+          <MapZoomControls zoomBy={(factor) => zoomGraphBy(this.chart, factor, maxZoom)} fit={() => this.fit(400)} />
         </div>
       </>
     );

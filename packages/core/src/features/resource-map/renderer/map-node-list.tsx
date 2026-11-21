@@ -3,7 +3,7 @@
  * Licensed under MIT License. See LICENSE in root directory for more information.
  */
 
-import styles from "./kube-force-chart.module.scss";
+import styles from "./kube-resource-map.module.scss";
 
 import type { NodePoint } from "./helpers/graph-methods";
 

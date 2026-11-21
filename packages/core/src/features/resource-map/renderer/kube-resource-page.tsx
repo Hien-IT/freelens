@@ -3,11 +3,9 @@
  * Licensed under MIT License. See LICENSE in root directory for more information.
  */
 
-import { Icon } from "@freelensapp/icon";
 import { TabLayout } from "../../../renderer/components/layout/tab-layout";
 import { NamespaceSelectFilter } from "../../../renderer/components/namespaces/namespace-select-filter";
-import { KubeForceChart } from "./kube-force-chart";
-import { KubeResourceChartLegend } from "./kube-resource-chart-legend";
+import { KubeResourceMap } from "./kube-resource-map";
 import styles from "./kube-resource-page.module.scss";
 
 import type { ResourceMapDependencies } from "./dependencies";
@@ -21,17 +19,14 @@ export function KubeResourcePage({ dependencies }: KubeResourcePageProps) {
   return (
     <TabLayout className={styles.kubeResourcePage}>
       <header className={styles.header}>
-        <h2 className={styles.title}>
-          <span>Resource Map</span>
-          <Icon material="info" tooltip={<KubeResourceChartLegend />} />
-        </h2>
+        <h2 className={styles.title}>Resource Map</h2>
         <div className={styles.namespaceFilter}>
           <NamespaceSelectFilter id="resource-map-namespace-filter" />
         </div>
       </header>
 
       <div className={styles.map}>
-        <KubeForceChart dependencies={dependencies} />
+        <KubeResourceMap dependencies={dependencies} />
       </div>
     </TabLayout>
   );
@@ -45,7 +40,7 @@ export function KubeResourceOverviewDetail({ dependencies }: KubeResourcePagePro
         <h5>Resources</h5>
       </div>
       <div className={styles.overviewContent}>
-        <KubeForceChart dependencies={dependencies} />
+        <KubeResourceMap dependencies={dependencies} />
       </div>
     </div>
   );

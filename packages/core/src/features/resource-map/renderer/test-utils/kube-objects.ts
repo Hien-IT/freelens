@@ -33,9 +33,24 @@ export function kubeObject<T extends KubeObject>(kind: string, metadata: Metadat
   } as T;
 }
 
+/**
+ * The state of a fake pod: a phase of the model, or a running pod that is
+ * crash-looping, not ready, or being deleted, or an evicted one.
+ */
+export type FakePodStatus =
+  | "Running"
+  | "Pending"
+  | "Succeeded"
+  | "Failed"
+  | "Unknown"
+  | "CrashLoopBackOff"
+  | "NotReady"
+  | "Terminating"
+  | "Evicted";
+
 export interface PodSpec {
-  /** One of the values `Pod.getStatusMessage()` returns, `Running` by default. */
-  status?: string;
+  /** `Running` by default. */
+  status?: FakePodStatus;
   labels?: Record<string, string>;
   /** The kind and name of its owner, such as a StatefulSet, whose uid is the one `kubeObject` gives it. */
   owner?: { kind: string; name: string };
@@ -43,21 +58,50 @@ export interface PodSpec {
   volumes?: { name: string; secret?: { secretName?: string }; [source: string]: unknown }[];
 }
 
-/** A pod; like the real one, it takes the names of its secrets from its secret volumes. */
+const phaseOf: Record<FakePodStatus, string> = {
+  Running: "Running",
+  Pending: "Pending",
+  Succeeded: "Succeeded",
+  Failed: "Failed",
+  Unknown: "Unknown",
+  CrashLoopBackOff: "Running",
+  NotReady: "Running",
+  Terminating: "Running",
+  Evicted: "Failed",
+};
+
+/**
+ * A pod; like the real one, it takes the names of its secrets from its secret
+ * volumes. Its phase, reason, container states, deletion and `hasIssues()`
+ * follow its `status` as the model's would.
+ */
 export function pod(name: string, namespace: string, spec: PodSpec = {}) {
   const volumes = spec.volumes ?? [];
-  return kubeObject<Pod>(
-    "Pod",
-    { name, namespace, labels: spec.labels },
-    {
-      getStatusMessage: () => spec.status ?? "Running",
-      getContainers: () => spec.containers ?? [],
-      getVolumes: () => volumes,
-      getSecrets: () => volumes.flatMap((volume) => (volume.secret?.secretName ? [volume.secret.secretName] : [])),
-      getOwnerRefs: () =>
-        spec.owner ? [{ ...spec.owner, namespace, uid: `${spec.owner.kind}/${namespace}/${spec.owner.name}` }] : [],
-    },
-  );
+  const status = spec.status ?? "Running";
+  const metadata = {
+    name,
+    namespace,
+    labels: spec.labels,
+    ...(status === "Terminating" ? { deletionTimestamp: "2026-01-01T00:00:00Z" } : {}),
+  };
+  return kubeObject<Pod>("Pod", metadata, {
+    getStatusMessage: () => (status === "Evicted" || status === "Terminating" ? status : phaseOf[status]),
+    getStatusPhase: () => phaseOf[status],
+    getReason: () => (status === "Evicted" ? "Evicted" : ""),
+    getContainerStatuses: () => [
+      {
+        name,
+        ready: status === "Running" || status === "Terminating",
+        state: status === "CrashLoopBackOff" ? { waiting: { reason: "CrashLoopBackOff" } } : { running: {} },
+      },
+    ],
+    hasIssues: () => !["Running", "Succeeded", "Terminating"].includes(status),
+    getContainers: () => spec.containers ?? [],
+    getVolumes: () => volumes,
+    getSecrets: () => volumes.flatMap((volume) => (volume.secret?.secretName ? [volume.secret.secretName] : [])),
+    getOwnerRefs: () =>
+      spec.owner ? [{ ...spec.owner, namespace, uid: `${spec.owner.kind}/${namespace}/${spec.owner.name}` }] : [],
+  });
 }
 
 /**

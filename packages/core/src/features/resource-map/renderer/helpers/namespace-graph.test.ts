@@ -18,6 +18,7 @@ import type {
   StatefulSet,
 } from "@freelensapp/kube-object";
 
+import type { FakePodStatus } from "../test-utils/kube-objects";
 import type { NamespaceGraph, NamespaceGraphObjects } from "./namespace-graph";
 import type { ChartDataSeries } from "./types";
 
@@ -299,21 +300,19 @@ describe("buildNamespaceGraph", () => {
     expect(graph.links).toEqual([]);
   });
 
-  it("colours a pod by the status message that the model gives it", () => {
-    // The values of Pod.getStatusMessage(): Evicted, Terminating, Finalizing,
-    // the phase (Pending, Running, Succeeded, Failed, Unknown) or Waiting.
-    const colors = {
+  it("colours a pod by its health, which every pod has", () => {
+    const colors: Record<FakePodStatus, string> = {
       Running: "#4caf50",
-      Succeeded: "#4caf50",
-      Terminating: "#9dabb5",
-      Pending: "#2F4F4F",
+      NotReady: "#e6b422",
+      Pending: "#e6b422",
+      CrashLoopBackOff: "#ce3933",
       Failed: "#ce3933",
-      Evicted: "#80f58e",
-      Finalizing: "#80f58e",
-      Unknown: "#80f58e",
-      Waiting: "#80f58e",
+      Unknown: "#ce3933",
+      Evicted: "#ce3933",
+      Succeeded: "#9dabb5",
+      Terminating: "#9dabb5",
     };
-    const statuses = Object.keys(colors);
+    const statuses = Object.keys(colors) as FakePodStatus[];
     const input = objects({ pods: statuses.map((status, i) => pod(`web-${i}`, "shop", { status })) });
 
     const graph = buildNamespaceGraph(input, ["shop"]);

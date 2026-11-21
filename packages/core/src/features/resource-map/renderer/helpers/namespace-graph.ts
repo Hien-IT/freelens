@@ -3,7 +3,7 @@
  * Licensed under MIT License. See LICENSE in root directory for more information.
  */
 
-import { config } from "./config";
+import { config, podHealth, podHealthStyles } from "./config";
 import { createHelmReleaseObject, getHelmReleaseName } from "./helm";
 
 import type {
@@ -158,16 +158,7 @@ class NamespaceGraphBuilder {
     const { secrets, configMaps, pvcs } = this.objects;
     const namespace = pod.getNs();
     const podNode = this.addNode(pod);
-    const status = pod.getStatusMessage();
-    if (["Running", "Succeeded"].includes(status)) {
-      podNode.color = "#4caf50";
-    } else if (["Terminating", "Terminated", "Completed"].includes(status)) {
-      podNode.color = "#9dabb5";
-    } else if (["Pending", "ContainerCreating"].includes(status)) {
-      podNode.color = "#2F4F4F";
-    } else if (["CrashLoopBackOff", "Failed", "Error"].includes(status)) {
-      podNode.color = "#ce3933";
-    }
+    podNode.color = podHealthStyles[podHealth(pod)].color;
 
     pod.getContainers().forEach((container) => {
       container.env?.forEach((env) => {

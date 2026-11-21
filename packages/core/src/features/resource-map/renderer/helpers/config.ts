@@ -14,6 +14,8 @@ import secretSvg from "../assets/icons/secret.svg?raw";
 import stsSvg from "../assets/icons/sts.svg?raw";
 import svcSvg from "../assets/icons/svc.svg?raw";
 
+import type { Pod } from "@freelensapp/kube-object";
+
 // An icon as a data URL, which an <img> and the canvas of the map load
 // without a request, in the main frame and in the frame of a cluster alike.
 const svgUrl = (svg: string) => `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`;
@@ -91,6 +93,40 @@ export const config: Config = {
     size: 20,
   },
 };
+
+/** The label of a kind for people, or the kind itself for one the maps have no configuration of. */
+export const kindLabel = (kind: string) => config[kind.toLowerCase()]?.label ?? kind;
+
+/** How a pod is doing, as the maps colour it. */
+export type PodHealth = "running" | "pending" | "failed" | "done";
+
+/** The colour and the legend label of every health of a pod, in the order of the legend. */
+export const podHealthStyles: Record<PodHealth, { color: string; label: string }> = {
+  running: { color: "#4caf50", label: "Running" },
+  pending: { color: "#e6b422", label: "Pending / not ready" },
+  failed: { color: "#ce3933", label: "Failed" },
+  done: { color: "#9dabb5", label: "Completed / terminating" },
+};
+
+// A container waits to restart after crashing, as the private check of the Pod model tells it.
+const isCrashLooping = (pod: Pod) =>
+  pod.getContainerStatuses().some(({ state }) => state?.waiting?.reason === "CrashLoopBackOff");
+
+/**
+ * How a pod is doing, from its model: failed (phase Failed or Unknown,
+ * evicted, or a container crash-looping), done (phase Succeeded, or being
+ * deleted), pending (phase Pending, or running with containers not ready), or
+ * running.
+ */
+export function podHealth(pod: Pod): PodHealth {
+  const phase = pod.getStatusPhase();
+  if (phase === "Failed" || phase === "Unknown" || pod.getReason() === "Evicted" || isCrashLooping(pod)) {
+    return "failed";
+  }
+  if (phase === "Succeeded" || pod.metadata.deletionTimestamp) return "done";
+  if (phase === "Pending" || pod.hasIssues()) return "pending";
+  return "running";
+}
 
 /**
  * Loads the icon of every kind into an image, once, for the canvas of the
