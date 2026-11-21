@@ -10,6 +10,28 @@ spec trước qua "cổng".
   ngôn ngữ với repo. Đổi sang tiếng Việt nếu muốn.
 - Lệnh có ghi **(chưa chạy thử)** chưa được kiểm tra trên máy này.
 
+## Quyết định đã chốt
+
+| Câu hỏi                             | Quyết định                                                                                                           |
+| ----------------------------------- | -------------------------------------------------------------------------------------------------------------------- |
+| Mục tiêu                            | Bản cài nhỏ hơn, ít RAM hơn, nhanh hơn với cluster lớn, bảo mật và không phụ thuộc Electron                          |
+| Quan hệ với upstream                | Fork nội bộ, ngừng merge `upstream/main` của freelensapp/freelens                                                    |
+| Extension                           | Bản Tauri không có hệ extension                                                                                      |
+| Nền tảng                            | Chỉ macOS (WKWebView)                                                                                                |
+| Main process                        | Viết lại bằng Rust (kube-rs, tokio), port dần theo từng mảng tính năng; không dùng Node sidecar                      |
+| Nhân lực                            | Một người cùng Claude: spec nhỏ, mỗi lần implement một phase, review từng diff                                       |
+| Cổng của spike 001                  | `.dmg` ≤ 85 MB (−60%), RSS lúc đứng yên ≤ 394 MB (−50%), khởi động ≤ 2.37 s, so với `specs/baseline.md`              |
+| Đo hiệu năng                        | Profile main process với một cluster kind local trước khi viết spec 001 (mục 0.4)                                    |
+| Phạm vi trước khi thay bản Electron | Đủ tính năng: phần cơ bản cùng terminal và exec vào pod, Helm, metrics (Prometheus), port-forward                    |
+| Chip                                | Chỉ Apple Silicon (arm64)                                                                                            |
+| Ký và phân phối                     | Chưa có Apple Developer ID: ký ad-hoc, không notarize, phân phối nội bộ; người dùng tự cho phép app trong Gatekeeper |
+| Bản Electron                        | Giữ build song song một thời gian sau khi bản Tauri đạt đủ tính năng, rồi mới xoá                                    |
+
+Hệ quả cho các spec bên dưới: không còn spec extension, chỉ kiểm tra trên
+WKWebView với arm64, và phần lớn khối lượng là các spec port từng mảng của main
+sang Rust, kể cả terminal, Helm, metrics và port-forward. Auto-update chưa nằm
+trong phạm vi cho đến khi có Developer ID hoặc chốt cách cập nhật khác.
+
 ## 0. Chuẩn bị (một lần)
 
 ### 0.1 Nhánh làm việc
@@ -60,18 +82,56 @@ grep -rl 'node-pty' packages/*/src --include='*.ts' | grep -v test
 File renderer và common còn cần Node nằm trong danh sách renderer của
 `scripts/type-check-environments/legacy.jsonc`.
 
+Danh sách mảng tính năng của main, để chia các spec port sang Rust:
+
+```bash
+ls -d packages/core/src/main/*/ packages/core/src/features/*/main
+```
+
+### 0.4 Profile main process với cluster kind
+
+Mục tiêu "nhanh hơn với cluster lớn" cần một số đo gốc trước spec 001. Máy này
+có Docker nhưng chưa có kind. Các lệnh dưới đây **(chưa chạy thử)**.
+
+Cài kind và tạo cluster, ghi kubeconfig ra file riêng để không đổi
+`~/.kube/config` và context hiện tại của bạn:
+
+```bash
+brew install kind
+```
+
+```bash
+kind create cluster --name freelens-profile --kubeconfig "${TMPDIR%/}/kind-freelens-profile.yaml"
+```
+
+Tạo tải để danh sách đủ lớn, ví dụ 3000 ConfigMap:
+
+```bash
+export KUBECONFIG="${TMPDIR%/}/kind-freelens-profile.yaml" && kubectl create namespace load && for i in $(seq 1 3000); do printf 'apiVersion: v1\nkind: ConfigMap\nmetadata:\n  name: cm-%s\n  namespace: load\ndata:\n  k: v\n---\n' "$i"; done | kubectl apply -f -
+```
+
+Sau đó chạy app với inspector của main ở cổng 5858, trong một thư mục dữ liệu
+riêng chỉ đồng bộ đúng file kubeconfig trên, mở cluster, xem danh sách
+ConfigMap và Pod, và ghi CPU profile của main trong 60 giây qua CDP. Claude
+làm được bước này trong phiên làm việc. Ghi kết quả vào `specs/baseline.md`,
+mục "Hiệu năng main". Xoá cluster khi xong:
+
+```bash
+kind delete cluster --name freelens-profile --kubeconfig "${TMPDIR%/}/kind-freelens-profile.yaml"
+```
+
 ## 1. Cập nhật constitution (một lần)
 
 Principle II (tách main/renderer) và III (Extension API là contract) đụng thẳng
 vào việc port, nên sửa constitution trước khi viết spec nào:
 
 ```text
-/speckit-constitution Add principles for porting to Tauri 2:
-(1) The Electron build stays the shipping build until the Tauri build reaches parity; both build and pass their tests side by side.
-(2) Rust code lives in its own workspace package and passes cargo fmt --check, cargo clippy --all-targets -- -D warnings and cargo test; Cargo.lock is committed.
-(3) Extension API v2 is unchanged; any breaking change becomes a new API version documented in docs/extensions/api.md with a migration path.
-(4) Bundled binaries (freelens-k8s-proxy, kubectl, helm) stay verified against freelens/binaries.lock.json in the Tauri build too.
-(5) Extend Principle II with a Rust core environment beside main and renderer, and the rule that the renderer runs without Node.
+/speckit-constitution Add principles for porting to Tauri 2. This repository is now an internal fork that no longer follows upstream freelensapp/freelens.
+(1) The Tauri build targets macOS on Apple Silicon only, ad-hoc signed for internal distribution. The Electron build stays the working build until the Tauri build reaches parity, including terminal, Helm, metrics and port-forward, and keeps building and passing its tests for a while after that.
+(2) The Tauri build has no extension system. Principle III applies to the Electron build only, and no Tauri work depends on packages/extensions.
+(3) The main process of the Tauri build is written in Rust (kube-rs, tokio) in its own workspace package, ported area by area; no Node runtime ships with it. Rust code passes cargo fmt --check, cargo clippy --all-targets -- -D warnings and cargo test; Cargo.lock is committed.
+(4) Extend Principle II with the Rust core as an environment beside main and renderer, and the rule that the renderer runs without Node.
+(5) Bundled or downloaded binaries (freelens-k8s-proxy, kubectl, helm) stay verified against freelens/binaries.lock.json and packages/kubectl-versions/build/checksums.json.
 ```
 
 Sau đó đọc diff của `.specify/memory/constitution.md`, kiểm tra số phiên bản
@@ -141,18 +201,18 @@ printf '{"feature_directory":"specs/002-messaging-for-tauri"}\n' > .specify/feat
 
 ### 001 `tauri-shell-spike`: thử nghiệm và quyết định đi tiếp hay dừng
 
-Phụ thuộc: mục 0 và 1.
+Phụ thuộc: mục 0 (kể cả profile ở 0.4) và mục 1.
 
 ```text
-/speckit-specify SPECIFY_FEATURE_DIRECTORY=specs/001-tauri-shell-spike Freelens needs an experimental desktop build that runs side by side with the shipping Electron build, to find out whether a different desktop shell reduces installer size and memory enough to justify a port. A user can launch it, see the catalog, and open one cluster in its own frame. Success: installer at least <X>% smaller than in specs/baseline.md, idle memory at least <Y>% lower, startup no slower, on macOS, Windows and Linux. Out of scope: extensions, terminal, auto-update, tray. The Electron build keeps building and passing its tests.
+/speckit-specify SPECIFY_FEATURE_DIRECTORY=specs/001-tauri-shell-spike Freelens needs an experimental macOS build on a different desktop shell, with its core written from scratch, that runs side by side with the current Electron build, to prove that the port meets its size and memory goals before the full port starts. A user can launch it, see the catalog of clusters from a kubeconfig file, and open one cluster in its own frame showing its namespaces. Success, measured as in specs/baseline.md: installer at most 85 MB, idle memory at most 394 MB RSS, startup no slower than 2.37 s. Out of scope: terminal, auto-update, tray, extensions, Windows and Linux. The Electron build keeps building and passing its tests.
 ```
 
 ```text
-/speckit-clarify measurement method, which cluster the frame test uses, what "opens a cluster" means
+/speckit-clarify measurement method, which kubeconfig and cluster the frame test uses, what "opens a cluster" means
 ```
 
 ```text
-/speckit-plan Tauri 2 on Rust stable, in a new workspace package (propose its path). Reuse the electron-vite renderer bundle unchanged where possible. research.md compares (A) rewriting the main process in Rust with kube-rs and tokio against (B) keeping the TypeScript main process in a Node sidecar behind an adapter for the electron APIs, and recommends one with evidence from this spike. Prove the per-cluster iframe on *.renderer.freelens.app and the freelens-extension:// scheme on WKWebView, WebView2 and WebKitGTK. Record every constitution deviation in Complexity Tracking.
+/speckit-plan Tauri 2 on Rust stable with kube-rs and tokio, in a new workspace package (propose its path). Reuse the electron-vite renderer bundle unchanged where possible. Prove the per-cluster frame on *.renderer.freelens.app with a custom URI scheme on WKWebView. research.md also: (1) inventories the main-process areas under packages/core/src/main and packages/core/src/features/*/main and proposes one spec per area, ordered by dependency; (2) measures how much of the installer the bundled helm, kubectl and freelens-k8s-proxy take, and evaluates downloading kubectl and helm on first use with pinned checksums (packages/kubectl-versions already does this for kubectl) to reach 85 MB. Record every constitution deviation in Complexity Tracking.
 ```
 
 ```text
@@ -167,30 +227,32 @@ Phụ thuộc: mục 0 và 1.
 /speckit-implement Phase 1 and Phase 2 only
 ```
 
-**Cổng (đi tiếp hay dừng):** các số đo đạt tiêu chí; iframe và scheme chạy trên
-cả ba webview; `research.md` đã chọn A hoặc B. Không đạt thì dừng port. Spec 003
+**Cổng (đi tiếp hay dừng):** `.dmg` ≤ 85 MB, RSS ≤ 394 MB, khởi động ≤ 2.37 s;
+frame cluster và custom scheme chạy trên WKWebView; `research.md` có danh sách
+mảng của main và đề xuất spec cho từng mảng. Không đạt thì dừng port. Spec 003
 vẫn đáng làm vì có ích cho cả bản Electron.
 
 ### 002 `messaging-for-tauri`: kênh main ↔ renderer
 
-Phụ thuộc: 001 qua cổng. Code tính năng đã đi qua các package trong
-`packages/technical-features/messaging`; bản Electron nằm ở `messaging-for-main`
-và `messaging-for-renderer`.
+Phụ thuộc: 001 qua cổng. Code tính năng phía renderer đã đi qua các package
+trong `packages/technical-features/messaging`; bản Electron nằm ở
+`messaging-for-renderer`. Phía main giờ là Rust, nên mỗi channel thành một
+command hoặc event của Tauri.
 
 ```text
-/speckit-specify SPECIFY_FEATURE_DIRECTORY=specs/002-messaging-for-tauri Every request and message channel between the main side and the renderer works in the Tauri build exactly as in the Electron build, with no change to feature code or to what extensions see. Success: every channel the Electron build registers is served in the Tauri build; no feature code outside the messaging packages talks to Electron IPC directly; the unit and integration tests pass unchanged.
+/speckit-specify SPECIFY_FEATURE_DIRECTORY=specs/002-messaging-for-tauri The renderer talks to the new core through the same request and message channels it uses today, with no change to feature code in the renderer. Success: the renderer side has an implementation of the channels for the new shell; there is a list of every channel the Electron build registers with the core area that will answer it; no feature code outside the messaging packages talks to Electron IPC directly; the unit tests pass unchanged.
 ```
 
 ```text
-/speckit-plan Add Tauri implementations beside messaging-for-main and messaging-for-renderer, using the same injection tokens; follow the shape of messaging-fake-bridge for tests. First list every file outside the messaging packages that uses ipcMain or ipcRenderer directly and move it onto the channels. Use the main-process architecture chosen in specs/001-tauri-shell-spike/research.md.
+/speckit-plan Add a Tauri implementation beside messaging-for-renderer, using the same injection tokens; follow the shape of messaging-fake-bridge for tests. On the Rust side, a typed command and event layer that the core areas register their channels with. First list every file outside the messaging packages that uses ipcMain or ipcRenderer directly and move it onto the channels.
 ```
 
 ```text
-/speckit-analyze channels registered in Electron but missing in Tauri
+/speckit-analyze channels registered in Electron without an owner in the Rust core
 ```
 
 **Cổng:** grep `ipcMain|ipcRenderer` ở mục 0.3 chỉ còn trả về file trong các
-package messaging; mọi channel chạy được trong bản Tauri.
+package messaging; mỗi channel có một mảng của core nhận trách nhiệm.
 
 ### 003 `renderer-without-node`: renderer không cần Node
 
@@ -203,7 +265,7 @@ Phụ thuộc: không có, làm song song với 001 được. Hiện cửa sổ 
 ```
 
 ```text
-/speckit-plan Go file by file through the renderer legacy list; each Node use becomes a request channel answered in main (AGENTS.md, "Values computed in main"). Remove each file from the legacy list and from the noNodejsModules exemption in biome.jsonc together. Turning off nodeIntegration and nodeIntegrationInSubFrames is the last task. Extensions: follow "Node and Electron in the renderer" in docs/extensions/migrating-from-v1.md and do not change Extension API v2.
+/speckit-plan Go file by file through the renderer legacy list; each Node use becomes a request channel answered in main (AGENTS.md, "Values computed in main"). Remove each file from the legacy list and from the noNodejsModules exemption in biome.jsonc together. Turning off nodeIntegration and nodeIntegrationInSubFrames is the last task. Do not change Extension API v2, which the Electron build still has.
 ```
 
 ```text
@@ -213,91 +275,99 @@ Phụ thuộc: không có, làm song song với 001 được. Hiện cửa sổ 
 **Cổng:** danh sách renderer trong `legacy.jsonc` rỗng; `pnpm type:check` pass;
 app chạy với `nodeIntegration: false`.
 
-### 004 `cluster-frames-and-schemes`: frame của cluster và scheme extension
+### 004 `cluster-frames`: frame riêng cho từng cluster
 
 Phụ thuộc: 001 qua cổng.
 
 ```text
-/speckit-specify SPECIFY_FEATURE_DIRECTORY=specs/004-cluster-frames-and-schemes Each cluster view keeps running isolated in its own origin, and extension assets keep loading through the extension scheme, in the Tauri build on all three platforms. Success: two clusters open at the same time without sharing state; extension assets load; the Electron build is unchanged.
+/speckit-specify SPECIFY_FEATURE_DIRECTORY=specs/004-cluster-frames Each open cluster runs isolated in its own origin in the macOS build, as it does in the Electron build. Success: three clusters open at the same time without sharing state, cookies or storage; closing one does not affect the others; the Electron build is unchanged.
 ```
 
 ```text
-/speckit-plan Map what setup-hostnames, register-scheme-as-privileged and handle-extension-scheme do in Electron to Tauri custom URI scheme protocols and webview settings. Document the differences between WKWebView, WebView2 and WebKitGTK in research.md, with a fallback for any webview that does not allow cross-origin frames on a custom scheme.
+/speckit-plan Map what setup-hostnames does in Electron (the *.renderer.freelens.app host mapping and the local proxy) to Tauri custom URI scheme protocols and WKWebView settings, building on the frame proven in specs/001-tauri-shell-spike. The freelens-extension:// scheme is not needed: the Tauri build has no extensions.
 ```
 
 ```text
-/speckit-checklist cross-platform webview behaviour and origin isolation
+/speckit-checklist origin isolation on WKWebView
 ```
 
-**Cổng:** chạy được trên macOS, Windows và Linux; hai cluster mở cùng lúc không
-dùng chung state.
+**Cổng:** ba cluster mở cùng lúc trên macOS, không dùng chung state.
 
 ### 005 `terminal-pty`: terminal
 
 Phụ thuộc: 002.
 
 ```text
-/speckit-specify SPECIFY_FEATURE_DIRECTORY=specs/005-terminal-pty The terminal dock works in the Tauri build with the same shells, environment and behaviour as in the Electron build. Success: the shell starts with the environment the host gives kubectl and helm (contract C15 in docs/extensions/api.md); resize, copy and paste, and several tabs work on all three platforms.
+/speckit-specify SPECIFY_FEATURE_DIRECTORY=specs/005-terminal-pty The terminal dock works in the macOS build with the same shells, environment and behaviour as in the Electron build. Success: the shell starts with the environment the host gives kubectl and helm (contract C15 in docs/extensions/api.md describes it); resize, copy and paste, and several tabs work.
 ```
 
 ```text
-/speckit-plan Compare portable-pty in Rust against keeping node-pty in the Node sidecar, according to the choice in specs/001-tauri-shell-spike/research.md. xterm.js stays in the renderer; the data path uses the channels from specs/002-messaging-for-tauri.
+/speckit-plan portable-pty in the Rust core; xterm.js stays in the renderer; the data path uses the channels from specs/002-messaging-for-tauri. The login-shell environment is computed in the core, as the Electron main does today.
 ```
 
-**Cổng:** terminal chạy trên cả ba nền tảng, có kiểm tra môi trường shell.
+**Cổng:** terminal chạy trên macOS, có test kiểm tra môi trường shell.
 
-### 006 `desktop-integration`: tray, menu, deep link, updater, cấu hình
+### 006 `desktop-integration`: menu bar, menu, deep link, cấu hình
 
 Phụ thuộc: 002.
 
 ```text
-/speckit-specify SPECIFY_FEATURE_DIRECTORY=specs/006-desktop-integration Tray, application menu, freelens:// deep links, auto-update and persisted settings behave in the Tauri build as in the Electron build. Success: a user who switches from the Electron build keeps all settings and catalog entries; deep links open the right view; an update is offered and installed on each platform.
+/speckit-specify SPECIFY_FEATURE_DIRECTORY=specs/006-desktop-integration The menu bar item, application menu, freelens:// deep links and persisted settings behave in the macOS build as in the Electron build. Success: a user who switches from the Electron build keeps all settings and catalog entries; deep links open the right view. Out of scope: auto-update, because the build is not signed with an Apple Developer ID.
 ```
 
 ```text
-/speckit-plan Use the Tauri plugins for tray, menu, deep links, updater and storage. Settings stay in the same files and format that conf writes today, so both builds read them. Handle updater signing keys under Principle VI.
+/speckit-plan Use the Tauri plugins for tray, menu, deep links and storage. Settings stay in the same files and format that conf writes today, so both builds read them while they run side by side.
 ```
 
 ```text
-/speckit-checklist settings migration and update signing
+/speckit-checklist settings migration between the Electron and Tauri builds
 ```
 
-**Cổng:** cấu hình của bản Electron được đọc nguyên vẹn; deep link và cập nhật
-chạy trên cả ba nền tảng.
+**Cổng:** cấu hình của bản Electron được đọc nguyên vẹn; deep link chạy trên
+macOS.
 
-### 007 `extension-runtime`: extension
+### 007 trở đi `main-<mảng>`: port từng mảng của main sang Rust
 
-Phụ thuộc: 002, 003, 004.
-
-```text
-/speckit-specify SPECIFY_FEATURE_DIRECTORY=specs/007-extension-runtime Extensions written for Extension API v2 keep working in the Tauri build, or the break becomes a new, documented API version with a migration path. Success: packages/fixture-extension and freelensapp/freelens-example-extension load and pass their checks; docs/extensions/api.md states which contracts hold in the Tauri build.
-```
-
-```text
-/speckit-plan Main-side extensions need a JavaScript runtime: compare a Node sidecar against a new API version that runs extensions only in the renderer. The host stays the single instance of React, mobx and monaco, proven with identity assertions (AGENTS.md, "Extension API"). Run packages/core/src/extensions/__tests__/extension-api-declared-values.test.ts.
-```
+Phụ thuộc: 002, và danh sách mảng trong `specs/001-tauri-shell-spike/research.md`.
+Mỗi mảng một spec, làm theo thứ tự phụ thuộc mà research đề xuất (ví dụ:
+kubeconfig sync và catalog, kết nối cluster và proxy, helm, port-forward,
+metrics). Terminal, Helm, metrics và port-forward đều phải xong trước khi bản
+Tauri thay bản Electron. Mẫu cho một mảng, thay `<nnn>`, `<mảng>` và phần mô tả:
 
 ```text
-/speckit-analyze contracts C1 to C15 in docs/extensions/api.md
-```
-
-**Cổng:** fixture extension và example extension chạy; `docs/extensions/api.md`
-được cập nhật.
-
-### 008 `packaging-ci`: đóng gói và CI
-
-Phụ thuộc: 001 đến 007.
-
-```text
-/speckit-specify SPECIFY_FEATURE_DIRECTORY=specs/008-packaging-ci Signed installers of the Tauri build for macOS, Windows and Linux on x64 and arm64 are built in CI and bundle the same verified freelens-k8s-proxy, kubectl and helm as the Electron build.
+/speckit-specify SPECIFY_FEATURE_DIRECTORY=specs/<nnn>-main-<mảng> In the macOS build, <what the user can do in this area> works as in the Electron build. Success: every channel of this area in the list from specs/002-messaging-for-tauri is answered by the new core; the behaviour checked by the existing tests of this area holds; <a measurable target, such as list latency or CPU on the kind cluster of specs/baseline.md>.
 ```
 
 ```text
-/speckit-plan Ship the three binaries as Tauri sidecars, verified against freelens/binaries.lock.json the way the Electron build does (AGENTS.md, "Bundled Binary Versions"). Commit Cargo.lock; add cargo fmt, clippy and test to CI; keep the Electron jobs until the switch.
+/speckit-plan Port the injectables of this area under packages/core/src/main and packages/core/src/features/<area>/main to the Rust core. Keep the on-disk formats the Electron build writes. Port or rewrite the unit tests of the area as cargo tests.
 ```
 
-**Cổng:** CI tạo được bản cài đã ký cho cả 6 tổ hợp; các số đo trong
-`specs/baseline.md` vẫn đạt tiêu chí của spec 001.
+```text
+/speckit-analyze channels of this area without a Rust handler, and behaviour of the existing tests not covered
+```
+
+**Cổng của mỗi mảng:** mọi channel của mảng có handler trong Rust, cargo test
+pass, và chỉ tiêu đo của mảng đạt.
+
+### `<nnn>-packaging-ci`: đóng gói và CI (spec cuối)
+
+Phụ thuộc: mọi spec trước.
+
+```text
+/speckit-specify SPECIFY_FEATURE_DIRECTORY=specs/<nnn>-packaging-ci An ad-hoc signed installer of the Tauri build for macOS on Apple Silicon is built in CI for internal distribution, with freelens-k8s-proxy, kubectl and helm verified as in the Electron build or downloaded on first use with pinned checksums, and with instructions for allowing the app in Gatekeeper.
+```
+
+```text
+/speckit-clarify which binaries are bundled and which are downloaded; where the internal download lives
+```
+
+```text
+/speckit-plan Build for aarch64-apple-darwin only, ad-hoc signed, without notarization. Verify bundled binaries against freelens/binaries.lock.json the way the Electron build does (AGENTS.md, "Bundled Binary Versions"). Add cargo fmt, clippy and test to CI. Keep the Electron jobs while both builds run side by side.
+```
+
+**Cổng:** CI tạo được bản cài arm64 ký ad-hoc, cài và chạy được trên một máy
+khác sau khi cho phép trong Gatekeeper; các số đo trong `specs/baseline.md` vẫn
+đạt tiêu chí của spec 001.
 
 ## 4. Sự cố thường gặp
 
