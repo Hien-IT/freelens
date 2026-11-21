@@ -4,6 +4,7 @@
  * Licensed under MIT License. See LICENSE in root directory for more information.
  */
 
+import { inspect } from "node:util";
 import { KubeConfig } from "@kubernetes/client-node";
 import { beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { loadConfigFromString, loadValidatedConfig, validateKubeConfig } from "../kube-helpers";
@@ -130,6 +131,22 @@ describe("kube helpers", () => {
         const emptyContexts = `apiVersion: v1\ncontexts: []`;
 
         expect(loadConfigFromString(emptyContexts).error).toBeUndefined();
+      });
+
+      it("a validation error does not carry the file's contents", () => {
+        const { error } = loadConfigFromString(
+          "-----BEGIN PRIVATE KEY----- secret-key-material -----END PRIVATE KEY-----",
+        );
+
+        expect(error?.message).toBe('"value" must be of type object');
+        expect(inspect(error, { depth: Number.POSITIVE_INFINITY })).not.toContain("secret-key-material");
+      });
+
+      it("a YAML syntax error does not carry the file's contents", () => {
+        const load = () => loadConfigFromString("users:\n- name: a\n  user:\n    token: secret-token\n  bad: [\n");
+
+        expect(load).toThrow(/^invalid YAML: .+ at line \d+$/);
+        expect(load).not.toThrow("secret-token");
       });
     });
 

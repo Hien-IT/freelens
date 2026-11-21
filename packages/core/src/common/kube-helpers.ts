@@ -52,9 +52,36 @@ interface OptionsResult {
   error: Joi.ValidationError | undefined;
 }
 
+// Kubeconfig files hold credentials, and the errors of js-yaml (a source snippet)
+// and joi (`_original`, `details[].context.value`) carry the file's contents, so
+// neither leaves this module with them: callers log these errors.
+function parseYaml(rawYaml: string): unknown {
+  try {
+    // js-yaml v5 throws on empty input instead of returning undefined
+    return rawYaml.trim() ? yaml.load(rawYaml) : undefined;
+  } catch (error) {
+    if (error instanceof yaml.YAMLException) {
+      throw new Error(`invalid YAML: ${error.reason}${error.mark ? ` at line ${error.mark.line + 1}` : ""}`);
+    }
+
+    throw error;
+  }
+}
+
+function withoutValues(error: Joi.ValidationError | undefined): Joi.ValidationError | undefined {
+  if (error) {
+    error._original = undefined;
+
+    for (const { context } of error.details) {
+      delete context?.value;
+    }
+  }
+
+  return error;
+}
+
 function loadToOptions(rawYaml: string): OptionsResult {
-  // js-yaml v5 throws on empty input instead of returning undefined
-  const parsed = rawYaml.trim() ? yaml.load(rawYaml) : undefined;
+  const parsed = parseYaml(rawYaml);
   const { error } = kubeConfigSchema.validate(parsed, {
     abortEarly: false,
     allowUnknown: true,
@@ -78,7 +105,7 @@ function loadToOptions(rawYaml: string): OptionsResult {
 
   return {
     options: { clusters, users, contexts, currentContext },
-    error,
+    error: withoutValues(error),
   };
 }
 
