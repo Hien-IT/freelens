@@ -28,7 +28,7 @@
 // exceed Node's default heap; run with NODE_OPTIONS=--max-old-space-size=8192
 // if the build aborts with an out-of-memory error.
 
-import { readFileSync } from "node:fs";
+import { existsSync, readdirSync, readFileSync, rmSync } from "node:fs";
 import { builtinModules, createRequire } from "node:module";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -335,9 +335,41 @@ function rendererBuildBasePlugin(base: string) {
   };
 }
 
+// Remove a build's own output from static/build before it writes the new one.
+//
+// emptyOutDir stays false because the main and renderer builds and
+// build:resources (license.txt, tray/) all write into static/build, and turbo
+// may run build:resources alongside this build. Without this, every build
+// leaves its content-hashed bundles behind, and electron-builder packs all of
+// them into app.asar. Watch builds (`electron-vite dev`) are left alone.
+function removeOwnOutputPlugin(isOwnOutput: (name: string) => boolean) {
+  let watching = false;
+
+  return {
+    name: "freelens:remove-own-output",
+    apply: "build" as const,
+    configResolved(config: { build: { watch?: unknown } }) {
+      watching = Boolean(config.build.watch);
+    },
+    buildStart() {
+      if (watching || !existsSync(buildDir)) {
+        return;
+      }
+
+      for (const name of readdirSync(buildDir)) {
+        if (isOwnOutput(name)) {
+          rmSync(resolve(buildDir, name), { recursive: true, force: true });
+        }
+      }
+    },
+  };
+}
+
 export default defineConfig({
   main: {
     plugins: [
+      // main.js, its chunks and their source maps
+      removeOwnOutputPlugin((name) => /\.js(\.map)?$/.test(name)),
       standardDecorators(),
       externalizeDepsPlugin({ exclude: [...workspacePackages, ...bundledCjsPackages] }),
       rewriteElectronNamedImportsPlugin(),
@@ -369,6 +401,7 @@ export default defineConfig({
   renderer: {
     root: resolve(root, "src/renderer"),
     plugins: [
+      removeOwnOutputPlugin((name) => name === "index.html" || name === "assets"),
       // Oxc cannot lower standard decorators, so standardDecorators() does
       // it first; @vitejs/plugin-react v6 then runs its dev-only
       // react-refresh pass through Oxc on the lowered code.
