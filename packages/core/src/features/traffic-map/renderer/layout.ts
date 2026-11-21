@@ -95,6 +95,16 @@ function rowLimitOf(counts: readonly number[]): number {
   return best;
 }
 
+export interface LayoutOptions {
+  /**
+   * The column of each node, in place of the one the edges give it. Within a
+   * column the nodes are still ordered by their neighbours, in whatever column
+   * those are, and the nodes without an edge come last. A column without a
+   * node takes no room: the next one closes up, and keeps its number.
+   */
+  columnOf?: (id: string) => number;
+}
+
 /**
  * Places the nodes in columns, left to right in the direction of the traffic:
  * a node that nobody calls is in the first column, and every other node is one
@@ -113,7 +123,12 @@ export function layoutColumns(
   nodes: readonly string[],
   edges: readonly LayoutEdge[],
   sortKey: (id: string) => string = (id) => id,
+  { columnOf }: LayoutOptions = {},
 ): Map<string, LayoutPoint> {
+  if (columnOf) {
+    return layoutPinnedColumns(nodes, edges, sortKey, columnOf);
+  }
+
   const outgoing = new Map<string, string[]>(nodes.map((id) => [id, []]));
   const incomingCount = new Map<string, number>(nodes.map((id) => [id, 0]));
 
@@ -211,8 +226,54 @@ export function layoutColumns(
     (columns[index] ??= []).push(id);
   }
 
-  // Order the columns by the average row of the neighbours, a few sweeps
-  // left to right and back.
+  orderColumns(columns, column, nodes, edges, sortKey, { adjacentOnly: true });
+
+  return placeColumns(columns, { closeGaps: false });
+}
+
+/** {@link layoutColumns} with the column of every node given. */
+function layoutPinnedColumns(
+  nodes: readonly string[],
+  edges: readonly LayoutEdge[],
+  sortKey: (id: string) => string,
+  columnOf: (id: string) => number,
+): Map<string, LayoutPoint> {
+  const column = new Map(nodes.map((id) => [id, columnOf(id)]));
+  const sorted = [...nodes].sort((a, b) => sortKey(a).localeCompare(sortKey(b)));
+  const columns: string[][] = [];
+
+  for (const id of sorted) {
+    (columns[column.get(id)!] ??= []).push(id);
+  }
+
+  const neighbours = orderColumns(columns, column, nodes, edges, sortKey, { adjacentOnly: false });
+
+  // The nodes without an edge after the others of their column, in the order they have.
+  for (const ids of columns) {
+    if (!ids) continue;
+
+    const alone = ids.filter((id) => neighbours.get(id)!.length === 0);
+
+    ids.splice(0, ids.length, ...ids.filter((id) => neighbours.get(id)!.length > 0), ...alone);
+  }
+
+  return placeColumns(columns, { closeGaps: true });
+}
+
+/**
+ * Orders the nodes of every column by the average row of their neighbours, a
+ * few sweeps left to right and back: the neighbours in the column next to it
+ * on that side, or with `adjacentOnly` false in any column on that side.
+ * Returns the neighbours of every node.
+ */
+function orderColumns(
+  columns: string[][],
+  column: ReadonlyMap<string, number>,
+  nodes: readonly string[],
+  edges: readonly LayoutEdge[],
+  sortKey: (id: string) => string,
+  { adjacentOnly }: { adjacentOnly: boolean },
+): Map<string, string[]> {
   const neighbours = new Map<string, string[]>(nodes.map((id) => [id, []]));
 
   for (const edge of edges) {
@@ -222,13 +283,17 @@ export function layoutColumns(
     neighbours.get(edge.target)!.push(edge.source);
   }
 
+  const onSide = (other: string, id: string, side: number) =>
+    adjacentOnly
+      ? column.get(other) === column.get(id)! + side
+      : Math.sign(column.get(other)! - column.get(id)!) === side;
   const row = new Map<string, number>();
   const placeRows = () => columns.forEach((ids) => ids?.forEach((id, index) => row.set(id, index)));
   const sweep = (ids: string[], side: number) => {
     const barycenter = (id: string) => {
       const rows = neighbours
         .get(id)!
-        .filter((other) => column.get(other) === column.get(id)! + side)
+        .filter((other) => onSide(other, id, side))
         .map((other) => row.get(other)!);
 
       return rows.length ? rows.reduce((sum, value) => sum + value, 0) / rows.length : row.get(id)!;
@@ -256,13 +321,27 @@ export function layoutColumns(
     }
   }
 
+  return neighbours;
+}
+
+/**
+ * The points of the nodes of ordered columns, each column a block of
+ * sub-columns centred on the middle. An empty column keeps its place, unless
+ * `closeGaps`, where it takes none.
+ */
+function placeColumns(columns: readonly (string[] | undefined)[], { closeGaps }: { closeGaps: boolean }) {
   const points = new Map<string, LayoutPoint>();
-  const counts = Array.from({ length: columns.length }, (_, index) => columns[index]?.length ?? 0);
+  const counts = Array.from({ length: columns.length }, (_, index) => columns[index]?.length ?? 0).filter(
+    (count) => count > 0 || !closeGaps,
+  );
   const limit = rowLimitOf(counts);
   let blockLeft = -cardWidth / 2;
 
   for (let index = 0; index < columns.length; index++) {
     const ids = columns[index] ?? [];
+
+    if (closeGaps && ids.length === 0) continue;
+
     const { subColumns, rows } = wrapOf(ids.length, limit);
     const blockRight = blockLeft + blockWidthOf(subColumns);
     const height = blockHeightOf(rows);

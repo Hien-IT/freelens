@@ -241,6 +241,82 @@ describe("layoutColumns of a tall column", () => {
   });
 });
 
+describe("layoutColumns with pinned columns", () => {
+  // Kinds of a namespace: an Ingress with its certificate, two Services, two workloads, their config, and a
+  // card that nothing uses.
+  const pinned: Record<string, number> = {
+    ingress: 0,
+    "svc-a": 1,
+    "svc-b": 1,
+    "wl-a": 2,
+    "wl-b": 2,
+    tls: 3,
+    "cfg-a": 3,
+    "cfg-b": 3,
+    lonely: 3,
+  };
+  const columnOf = (id: string) => pinned[id];
+  const edges = [
+    { source: "ingress", target: "svc-b" },
+    { source: "ingress", target: "tls" },
+    { source: "svc-a", target: "wl-a" },
+    { source: "svc-b", target: "wl-b" },
+    { source: "wl-a", target: "cfg-b" },
+    { source: "wl-b", target: "cfg-a" },
+  ];
+  const rowOrder = (points: ReturnType<typeof layoutColumns>, column: number) =>
+    [...points]
+      .filter(([, point]) => point.column === column)
+      .sort(([, a], [, b]) => a.y - b.y)
+      .map(([id]) => id);
+
+  it("puts every node in its own column, whatever its edges", () => {
+    const points = layoutColumns(Object.keys(pinned), edges, (id) => id, { columnOf });
+
+    expect(columnsOf(points)).toEqual(pinned);
+  });
+
+  it("orders a column by the rows of the neighbours in any column, and the nodes without an edge last", () => {
+    // By its sort key the lonely card comes first; by name cfg-a comes before cfg-b. The certificate, whose only
+    // neighbour is two columns left, follows the row of that neighbour, the top one.
+    const points = layoutColumns(Object.keys(pinned), edges, (id) => (id === "lonely" ? "a" : id), { columnOf });
+
+    expect(rowOrder(points, 1)).toEqual(["svc-a", "svc-b"]);
+    expect(rowOrder(points, 2)).toEqual(["wl-a", "wl-b"]);
+    expect(rowOrder(points, 3)).toEqual(["cfg-b", "tls", "cfg-a", "lonely"]);
+  });
+
+  it("closes up an empty column: the next one takes its place and keeps its number", () => {
+    const withoutServices = Object.keys(pinned).filter((id) => pinned[id] !== 1);
+    const points = layoutColumns(withoutServices, edges, (id) => id, { columnOf });
+    const left = (column: number) => Math.min(...inColumn(points, column).map((point) => point.blockLeft));
+
+    expect(inColumn(points, 1)).toEqual([]);
+    expect(left(2) - inColumn(points, 0)[0].blockRight).toBe(columnGap);
+    expect(columnsOf(points)).toMatchObject({ ingress: 0, "wl-a": 2, "cfg-a": 3 });
+  });
+
+  it("wraps a tall pinned column into sub-columns of balanced rows", () => {
+    const ids = ["api", ...clients];
+    const points = layoutColumns(
+      ids,
+      clients.map((source) => ({ source, target: "api" })),
+      (id) => id,
+      { columnOf: (id) => (id === "api" ? 1 : 0) },
+    );
+    const first = inColumn(points, 0);
+    const subColumns = new Set(first.map((point) => point.x));
+
+    expect(subColumns.size).toBeGreaterThan(1);
+    expect(new Set(first.map((point) => point.y)).size).toBe(Math.ceil(32 / subColumns.size));
+    expect(inColumn(points, 1)).toHaveLength(1);
+  });
+
+  it("leaves the layout without pinned columns as it was", () => {
+    expect(layoutColumns(tall.nodes, tall.edges, (id) => id, {})).toEqual(layoutColumns(tall.nodes, tall.edges));
+  });
+});
+
 describe("edgeRoute", () => {
   it("joins the outer sides of two plain columns with the single curve it always drew", () => {
     const points = layoutColumns(["web", "api"], [{ source: "web", target: "api" }]);
