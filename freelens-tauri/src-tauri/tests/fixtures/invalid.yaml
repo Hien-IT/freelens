@@ -1,0 +1,4 @@
+# Not a kubeconfig: contexts must be a list.
+apiVersion: v1
+kind: Config
+contexts: not a list

@@ -1,0 +1,5 @@
+src-tauri/target/
+src-tauri/payload/
+src-tauri/gen/
+# The root .gitignore drops every *.lock; Cargo.lock is committed (constitution, VIII).
+!src-tauri/Cargo.lock

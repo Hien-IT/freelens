@@ -7,6 +7,7 @@
   },
   "include": [
     "freelens/src/renderer/**/*",
+    "freelens-tauri/ui/src/renderer/**/*",
     "freelens/src/common/**/*",
     "freelens/src/freelens-extension-api.ts",
     "packages/core/src/**/renderer/**/*",

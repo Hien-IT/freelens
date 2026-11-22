@@ -1,0 +1,32 @@
+# Fake credentials only: the tests check that none of them reaches a view.
+apiVersion: v1
+kind: Config
+clusters:
+  - name: alpha
+    cluster:
+      server: https://127.0.0.1:1
+  - name: beta
+    cluster:
+      server: https://127.0.0.1:1
+contexts:
+  - name: context-a
+    context:
+      cluster: alpha
+      user: token-user
+  - name: context-b
+    context:
+      cluster: beta
+      user: cert-user
+  - name: context-c
+    context:
+      cluster: alpha
+      user: cert-user
+current-context: context-a
+users:
+  - name: token-user
+    user:
+      token: FAKE-TOKEN-0001
+  - name: cert-user
+    user:
+      client-certificate-data: RkFLRS1DRVJU
+      client-key-data: RkFLRS1LRVk=

@@ -1,5 +1,6 @@
 packages:
   - freelens
+  - freelens-tauri
   - packages/**
 
 # Versions here are pinned exactly. Every workspace package resolves its
@@ -52,6 +53,8 @@ catalog:
   tailwindcss: 4.3.5
   turbo: 2.11.11
   vite: 8.3.8
+  # Tauri (experimental build)
+  '@tauri-apps/cli': 2.12.6
   # Electron
   electron: 44.10.1
   '@electron/notarize': 3.1.2

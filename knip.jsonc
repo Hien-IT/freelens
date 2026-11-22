@@ -31,7 +31,12 @@
     // `vitest --coverage`, which never exist in CI.
     ".playwright-mcp/**",
     "logs/**",
-    "**/coverage/**"
+    "**/coverage/**",
+    // Build output and staged bundle payload of the experimental Tauri build,
+    // which nothing imports.
+    "freelens-tauri/src-tauri/target/**",
+    "freelens-tauri/src-tauri/payload/**",
+    "freelens-tauri/ui/dist/**"
   ],
 
   "workspaces": {
@@ -41,7 +46,10 @@
         // which builds the path with join() where knip cannot see it
         "vitest.electron-stub.ts",
         // probes compiled by `type:check:environments` only, with no importer
-        "scripts/type-check-environments/expected-failures/**/*.ts"
+        "scripts/type-check-environments/expected-failures/**/*.ts",
+        // measurement scripts of the Tauri port, run by hand with node (see
+        // specs/baseline.md)
+        "specs/*.mjs"
       ],
       // Trunk runs SVGO, so no dependency turns on the plugin that finds
       // svgo.config.js.
@@ -52,7 +60,10 @@
       "ignoreBinaries": [".*Freelens.exe", "jq", "open", "powershell", "xdg-open", "yq"],
       "ignoreDependencies": [
         // used to run pnpm in monorepo workspaces from the root
-        "pnpm"
+        "pnpm",
+        // specs/profile-main.mjs resolves it from freelens/package.json with
+        // createRequire, so it uses the version the integration tests use
+        "playwright"
       ],
       "ignoreUnresolved": [
         // vitest.config.ts wires per-project setup files and the canvas mock;

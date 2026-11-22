@@ -1,0 +1,84 @@
+#!/bin/bash
+# Copyright (c) Freelens Authors. All rights reserved.
+# Licensed under MIT License. See LICENSE in root directory for more information.
+#
+# Measures the experimental build (spike) or the current build (electron) as
+# specs/measure-baseline.sh does: time to the first window and RSS after an
+# idle period, three times. Output: contracts/measurement-report.md.
+#
+# The app is started with `open -n`, so that LaunchServices makes it its own
+# responsible process; started from a shell, the shell's application would be
+# responsible for it and for its WebKit helpers (research R7).
+#
+# usage: measure.sh <spike|electron> <app bundle or dmg> <runs> <idle seconds>
+set -u
+MODE=$1 SOURCE=$2 RUNS=$3 IDLE=$4
+HERE=$(cd "$(dirname "$0")" && pwd)
+
+case $MODE in
+  spike) EXE=freelens-spike LOADED='Window "main" loaded' ;;
+  electron) EXE=Freelens LOADED='"first-application-window" loaded' ;;
+  *)
+    echo "unknown mode: $MODE" >&2
+    exit 2
+    ;;
+esac
+
+W=$(mktemp -d "${TMPDIR%/}/freelens-measure.XXXXXX")
+echo "workdir=$W"
+# A fresh copy per session, as the baseline measures a freshly unzipped bundle.
+# From a dmg, the copy is what installing the app by dragging it would give.
+if [[ $SOURCE == *.dmg ]]; then
+  echo "dmg_bytes=$(stat -f %z "$SOURCE")"
+  echo "dmg_format=$(hdiutil imageinfo "$SOURCE" 2>/dev/null | sed -n 's/^Format Description: //p')"
+  mkdir "$W/mnt"
+  hdiutil attach -nobrowse -readonly -mountpoint "$W/mnt" "$SOURCE" >/dev/null 2>&1
+  APP_IN_DMG=$(find "$W/mnt" -maxdepth 1 -name '*.app' | head -1)
+  BUNDLE="$W/$(basename "$APP_IN_DMG")"
+  ditto "$APP_IN_DMG" "$BUNDLE"
+  hdiutil detach "$W/mnt" >/dev/null 2>&1
+else
+  BUNDLE="$W/$(basename "$SOURCE")"
+  ditto "$SOURCE" "$BUNDLE"
+fi
+echo "app_kbytes=$(du -sk "$BUNDLE" | cut -f1)"
+
+now() { perl -MTime::HiRes=time -e 'printf "%.3f", time'; }
+main_pid() { pgrep -f -- "$BUNDLE/Contents/MacOS/$EXE" | head -1; }
+
+for run in $(seq 1 "$RUNS"); do
+  D="$W/run$run"
+  mkdir -p "$D"
+  touch "$D/stdout.log" "$D/stderr.log"
+
+  t0=$(now)
+  if [[ $MODE == spike ]]; then
+    open -n -F --stdout "$D/stdout.log" --stderr "$D/stderr.log" "$BUNDLE" --args --kubeconfig=none
+  else
+    mkdir -p "$D/Freelens"
+    printf '{"preferences":{"syncKubeconfigEntries":[]}}\n' >"$D/Freelens/lens-user-store.json"
+    open -n -F --env "FREELENS_INTEGRATION_TESTING_DIR=$D" --stdout "$D/stdout.log" --stderr "$D/stderr.log" \
+      "$BUNDLE" --args --user-data-dir="$D/userdata"
+  fi
+  for _ in $(seq 1 1200); do
+    grep -qF -- "$LOADED" "$D/stdout.log" "$D/stderr.log" && break
+    sleep 0.05
+  done
+  t1=$(now)
+  loaded=$(cat "$D/stdout.log" "$D/stderr.log" | grep -cF -- "$LOADED")
+  pid=$(main_pid)
+
+  sleep "$IDLE"
+  python3 -I "$HERE/responsible-rss.py" "$pid" >"$D/rss.txt"
+  sed "s/^proc=/run=$run proc=/" "$D/rss.txt" | grep 'proc='
+  rss=$(sed -n 's/^rss_mb=//p' "$D/rss.txt")
+  procs=$(grep -c '^proc=' "$D/rss.txt")
+  kube_refs=$(cat "$D/stdout.log" "$D/stderr.log" | grep -c '/\.kube')
+  printf 'build=%s run=%s loaded=%s startup_s=%.2f rss_mb=%s procs=%s kube_refs=%s\n' \
+    "$MODE" "$run" "$loaded" "$(echo "$t1 - $t0" | bc)" "$rss" "$procs" "$kube_refs"
+
+  kill "$pid"
+  sleep 3
+  left=$(python3 -I "$HERE/responsible-rss.py" "$pid" | grep -c '^proc=')
+  if [[ $left -gt 0 ]]; then echo "warning: $left processes of run $run still running"; fi
+done
