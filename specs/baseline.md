@@ -57,3 +57,90 @@ Script giải nén bản zip vào một thư mục tạm, chạy app với thư 
 nên không đụng bản Freelens đã cài, và in kích thước, thời gian khởi động, RSS
 cho từng lần. Cột `kube_refs` phải bằng 0: nghĩa là app không đọc `~/.kube`.
 Xoá thư mục tạm (dòng `workdir=`) sau khi đo xong, vì nó còn giữ log của app.
+
+## Hiệu năng main
+
+Số đo gốc cho mục tiêu "nhanh hơn với cluster lớn". Đo ngày 2026-11-22 trên
+cùng máy với phần Kết quả.
+
+### Kết quả
+
+Mỗi lần chạy, script mở catalog, mở cluster, vào Config Maps, chọn All
+Namespaces, vào Pods, rồi để app yên đến hết 60 s tính từ thao tác đầu tiên.
+Ba lần ghi CPU profile của main, ba lần không ghi để đối chứng. Mỗi ô là trung
+vị, trong ngoặc là ba lần đo.
+
+| Chỉ số                                                    | Có profile                | Không profile             |
+| --------------------------------------------------------- | ------------------------- | ------------------------- |
+| Kết nối cluster: từ lúc bấm đến khi sidebar hiện (ms)     | 453 (434 / 453 / 458)     | 882 (882 / 946 / 446)     |
+| Hàng ConfigMap đầu tiên, sau khi chọn All Namespaces (ms) | 106 (85 / 787 / 106)      | 84 (103 / 4 / 84)         |
+| Hàng Pod đầu tiên, sau khi bấm Pods (ms)                  | 25 (25 / 25 / 25)         | 25 (26 / 6 / 25)          |
+| CPU của main trong 60 s (s)                               | 1.98 (2.02 / 1.98 / 1.98) | 0.75 (0.75 / 0.75 / 0.64) |
+| CPU của renderer (s)                                      | 1.96 (2.00 / 1.96 / 1.63) | 1.81 (1.81 / 1.99 / 1.65) |
+| CPU của hai tiến trình `Freelens Helper` còn lại (s)      | 0.77 (0.77 / 0.78 / 0.69) | 0.76 (0.76 / 0.82 / 0.67) |
+| CPU của freelens-k8s-proxy (s)                            | 0.06 (0.08 / 0.06 / 0.06) | 0.06 (0.10 / 0.06 / 0.06) |
+| RSS của main lúc kết thúc (MB)                            | 271 (319 / 250 / 271)     | 246 (244 / 251 / 246)     |
+| Tổng RSS lúc kết thúc, trừ freelens-k8s-proxy (MB)        | 715 (953 / 655 / 715)     | 715 (709 / 729 / 715)     |
+
+CPU profile của main, ba lần có profile:
+
+| Chỉ số                                              | Trung vị              |
+| --------------------------------------------------- | --------------------- |
+| JS của main bận trong 60 s (ms)                     | 185 (184 / 192 / 185) |
+| Trong đó GC (ms)                                    | 39 (43 / 39 / 35)     |
+| Bận từ lúc bấm cluster đến khi sidebar hiện (ms)    | 67 (65 / 78 / 67)     |
+| Bận từ khi Pods hiện đến hết 60 s, khoảng 59 s (ms) | 73 (77 / 73 / 67)     |
+
+Theo package, thời gian tự thân nằm ở V8 kể cả GC (71–90 ms), nội bộ Node
+(43–64 ms), undici (13–24 ms), mã của `main.js` (6–14 ms) và mobx (7–9 ms).
+
+Nhận xét:
+
+- Với 3014 ConfigMap, JS của main bận khoảng 0,3% thời gian, và cả tiến trình
+  main dùng 0,75 s CPU mỗi phút khi không có profiler. Renderer dùng nhiều CPU
+  hơn main.
+- Profiler đẩy CPU của main từ khoảng 0,75 s lên khoảng 2 s, nên so CPU với bản
+  Tauri thì dùng cột "Không profile".
+- Phần chênh giữa 0,75 s CPU của tiến trình main và khoảng 0,19 s JS có thể là
+  việc native của tiến trình trình duyệt Electron; điều này chưa được kiểm
+  chứng.
+
+### Điều kiện
+
+- **Bản build:** `freelens/dist/mac-arm64/Freelens.app`, phiên bản 2.1.0-0,
+  cùng lần đóng gói với file zip trong `freelens/dist`.
+- **Cluster:** kind v0.33.0, Kubernetes v1.37.0, một node arm64, 9 pod hệ
+  thống, namespace `load` có 3000 ConfigMap (3014 tính cả các namespace khác).
+- **Trạng thái app:** mỗi lần chạy dùng một thư mục dữ liệu mới, chỉ đồng bộ
+  file kubeconfig của kind (`syncKubeconfigEntries`). Log không có `/.kube`,
+  nghĩa là app không đọc `~/.kube`.
+- **Điều khiển:** main chạy với `--inspect=5858`, app với
+  `--remote-debugging-port=9223`, và Playwright điều khiển UI qua CDP trong cả
+  sáu lần. Vì vậy CPU của main và renderer gồm cả phần việc của CDP.
+- **Profile:** lấy mẫu mặc định của V8, khoảng 40 500 mẫu trong 60 s.
+- **Thời gian:** mỗi mốc là lúc Playwright thấy phần tử, nên sai lệch tới vài
+  chục ms; hai giá trị 787 ms và 4 ms của hàng ConfigMap là nhiễu kiểu này.
+  Thời gian kết nối cluster chia hai nhóm, khoảng 450 ms và khoảng 900 ms,
+  chưa rõ vì sao.
+- **CPU:** `ps -o time` của main và các tiến trình con trực tiếp (các helper,
+  freelens-k8s-proxy), lấy hiệu giữa thao tác đầu tiên và lúc kết thúc.
+- **RSS:** cách tính như phần Kết quả, nhưng đo lúc cluster đang mở, và không
+  tính freelens-k8s-proxy.
+
+### Đo lại
+
+Tạo cluster kind và 3000 ConfigMap như mục 0.4 của
+`specs/tauri-port-runbook.md`, rồi chạy từ thư mục gốc của repo, với `<thư mục>`
+là thư mục chứa file kubeconfig của kind:
+
+```bash
+node specs/profile-main.mjs <thư mục> <thư mục>/kind-freelens-profile.yaml "$PWD/freelens/dist/mac-arm64/Freelens.app" 60
+```
+
+```bash
+node specs/analyze-profile.mjs <thư mục>/main.cpuprofile <thư mục>/marks.json
+```
+
+`NO_PROFILE=1` chạy không có profiler. Mỗi lần chạy ghi đè `main.cpuprofile`,
+`marks.json` và `stdout.log` trong `<thư mục>`, nên đổi tên chúng trước lần
+sau.

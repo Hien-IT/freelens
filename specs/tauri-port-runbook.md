@@ -90,8 +90,16 @@ ls -d packages/core/src/main/*/ packages/core/src/features/*/main
 
 ### 0.4 Profile main process với cluster kind
 
-Mục tiêu "nhanh hơn với cluster lớn" cần một số đo gốc trước spec 001. Máy này
-có Docker nhưng chưa có kind. Các lệnh dưới đây **(chưa chạy thử)**.
+Mục tiêu "nhanh hơn với cluster lớn" cần một số đo gốc trước spec 001. Kết quả
+nằm ở mục "Hiệu năng main" của `specs/baseline.md`.
+
+Nếu môi trường đặt `DOCKER_DEFAULT_PLATFORM=linux/amd64`, kind kéo node image
+amd64 và `kind create cluster` lỗi ở bước kubeadm. Đặt biến này thành
+`linux/arm64` cho các lệnh kind:
+
+```bash
+export DOCKER_DEFAULT_PLATFORM=linux/arm64
+```
 
 Cài kind và tạo cluster, ghi kubeconfig ra file riêng để không đổi
 `~/.kube/config` và context hiện tại của bạn:
@@ -110,11 +118,12 @@ Tạo tải để danh sách đủ lớn, ví dụ 3000 ConfigMap:
 export KUBECONFIG="${TMPDIR%/}/kind-freelens-profile.yaml" && kubectl create namespace load && for i in $(seq 1 3000); do printf 'apiVersion: v1\nkind: ConfigMap\nmetadata:\n  name: cm-%s\n  namespace: load\ndata:\n  k: v\n---\n' "$i"; done | kubectl apply -f -
 ```
 
-Sau đó chạy app với inspector của main ở cổng 5858, trong một thư mục dữ liệu
-riêng chỉ đồng bộ đúng file kubeconfig trên, mở cluster, xem danh sách
-ConfigMap và Pod, và ghi CPU profile của main trong 60 giây qua CDP. Claude
-làm được bước này trong phiên làm việc. Ghi kết quả vào `specs/baseline.md`,
-mục "Hiệu năng main". Xoá cluster khi xong:
+Sau đó `specs/profile-main.mjs` chạy app với inspector của main ở cổng 5858,
+trong một thư mục dữ liệu riêng chỉ đồng bộ đúng file kubeconfig trên. Script
+mở cluster, chọn All Namespaces (danh sách mặc định chỉ lọc namespace
+`default`), xem danh sách ConfigMap và Pod, và ghi CPU profile của main trong
+60 giây qua CDP. Cách chạy nằm ở mục "Hiệu năng main" của `specs/baseline.md`.
+Xoá cluster khi xong:
 
 ```bash
 kind delete cluster --name freelens-profile --kubeconfig "${TMPDIR%/}/kind-freelens-profile.yaml"
