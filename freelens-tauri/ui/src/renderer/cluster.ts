@@ -18,7 +18,12 @@ function alert(text: string): void {
 }
 
 async function showNamespaces(): Promise<void> {
-  const response = await fetch("/api-kube/api/v1/namespaces");
+  // The Loading state of the data model, until the core answers.
+  const loading = document.createElement("p");
+  loading.setAttribute("role", "status");
+  loading.textContent = "Loading namespaces…";
+  document.body.append(loading);
+  const response = await fetch("/api-kube/api/v1/namespaces").finally(() => loading.remove());
 
   if (response.status === 502) {
     alert("The cluster cannot be reached.");

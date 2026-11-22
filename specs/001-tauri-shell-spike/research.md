@@ -163,6 +163,13 @@ committed, ran each attempt and reported it as a mark:
   therefore a second line of defence that these attempts never reach;
 - the frame's `localStorage` does not see the key the main window set.
 
+**Two cluster frames (T041), passed**, on macOS 27.2.1 with the debug build and
+`tests/fixtures/three-contexts.yaml`, two cluster frames open at once and a
+temporary page in `ui/dist` reporting marks: the second frame does not see the
+`localStorage` key the first one set, reading the first frame's document or
+`localStorage` through `window.parent.frames` throws, and fetching
+`/api-kube/api/v1/namespaces` on the first frame's host fails.
+
 **Alternatives considered**: a loopback HTTP server in the core with
 `<clusterId>.localhost` hosts (needs a port, a server and, for TLS, a
 certificate that WKWebView trusts, which wry does not let the core accept);

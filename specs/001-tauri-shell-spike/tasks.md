@@ -230,3 +230,12 @@ by name, never with `git add -A`.
 - Scratch output of builds and measurements goes under `$TMPDIR`, never into
   the repository.
 - The commands of quickstart.md are the acceptance checks of each phase.
+
+---
+
+## Phase 7: Convergence
+
+- [ ] T040 Run `pnpm test:integration` of the Electron build on this branch, after `pnpm build:app` repackages `freelens/dist` and with a kind context the tests can reach, and record the result for SC-007 in `specs/baseline.md` per SC-007 (partial) Partly done: on the repackaged app, the three test files that need no cluster pass (4 tests, 2 skipped). The four KinD tests fail to find `kind-kind` in the catalog, because the run put the kind kubeconfig in a temporary `HOME` to keep the user's kubeconfigs out of it, and the app reads `~/.kube` from `os.userInfo().homedir`, not from `HOME`. Running them needs a kind context in a real file under `~/.kube`, which is the user's decision.
+- [x] T041 Check, with two cluster frames open at once, that content in one cannot read the document, the `localStorage` keys or the `/api-kube` data of the other, and record the result under R4 of `specs/001-tauri-shell-spike/research.md` per SC-005 (partial)
+- [x] T042 Show a loading line in `freelens-tauri/ui/src/renderer/cluster.ts` until the namespace request answers, for the `Loading` state of `data-model.md` `Cluster view.state` per plan: data model (partial)
+- [x] T043 Correct the `knip.jsonc` line of the source tree in `specs/001-tauri-shell-spike/plan.md`, which names a workspace for `freelens-tauri` where the change added ignore entries and spec-script entries per plan: project structure (contradicts)

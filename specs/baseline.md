@@ -218,8 +218,13 @@ Rủi ro mang sang các spec sau:
   003, nên RAM thật của bản port còn phải đo lại khi đó.
 - Watch của Kubernetes chưa được thử: custom scheme trả response một lần, nên
   spec 002 phải có kênh truyền liên tục.
-- Chưa chạy `pnpm test:integration` của bản Electron trên nhánh này (task T035
-  của spec 001).
+- `pnpm test:integration` chạy trên bản Electron đóng gói lại từ nhánh này: ba
+  file test không cần cluster (preferences, command palette, extensions) đạt,
+  4 test đạt và 2 bỏ qua. Bốn test KinD lỗi vì catalog không có context
+  `kind-kind`: lần chạy đặt kubeconfig của kind trong một HOME tạm, nhưng app
+  đọc `~/.kube` từ thư mục home của tài khoản (`os.userInfo()`), không từ biến
+  `HOME`. Bốn test đó chưa được kiểm chứng (task T040 của spec 001); chạy chúng
+  cần context kind trong một file thật của `~/.kube`.
 
 ### Đo lại
 

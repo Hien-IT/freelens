@@ -135,7 +135,7 @@ freelens-tauri/
 pnpm-workspace.yaml          # + freelens-tauri; catalog + @tauri-apps/cli
 tsconfig.typecheck.json      # + freelens-tauri/ui/src/**/*
 tsconfig.renderer.json       # + freelens-tauri/ui/src/renderer/**/*
-knip.jsonc                   # + workspace freelens-tauri
+knip.jsonc                   # + ignores for the build output and payload of freelens-tauri, spec scripts as entries
 specs/profile-main.mjs       # + scenario that opens the Namespaces view
 ```
 
