@@ -260,8 +260,11 @@ command hoặc event của Tauri.
 /speckit-analyze channels registered in Electron without an owner in the Rust core
 ```
 
-**Cổng:** grep `ipcMain|ipcRenderer` ở mục 0.3 chỉ còn trả về file trong các
-package messaging; mỗi channel có một mảng của core nhận trách nhiệm.
+**Cổng:** grep `ipcMain|ipcRenderer` ở mục 0.3, bỏ qua
+`packages/core/src/extensions/` (hệ extension chỉ có ở bản Electron, được miễn
+theo clarification của spec 002), chỉ còn trả về file trong các package
+messaging; mỗi channel có một mảng của core nhận trách nhiệm, hoặc ghi lý do
+không port.
 
 ### 003 `renderer-without-node`: renderer không cần Node
 
