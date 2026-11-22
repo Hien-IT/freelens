@@ -90,6 +90,15 @@ grep -rlE 'webContents\.(send|sendToFrame)|\.sendToFrame\(|sender\.send\(' packa
 Expected: both print nothing. `packages/*/src` does not reach the messaging
 packages, which are deeper.
 
+SC-004, the one place a build picks its implementation of the channels
+(FR-002):
+
+```bash
+grep -rlE 'messagingFeatureForRenderer|@freelensapp/messaging-for-renderer' packages/*/src freelens/src --include='*.ts' --include='*.tsx' | grep -v test
+```
+
+Expected: only `freelens/src/renderer/index.ts`.
+
 The Electron build's checks (SC-005):
 
 ```bash

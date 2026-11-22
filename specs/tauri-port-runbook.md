@@ -85,7 +85,7 @@ File renderer và common còn cần Node nằm trong danh sách renderer của
 Danh sách mảng tính năng của main, để chia các spec port sang Rust:
 
 ```bash
-ls -d packages/core/src/main/*/ packages/core/src/features/*/main
+ls -d packages/core/src/main/*/ && find packages/core/src/features -type d -name main | sort
 ```
 
 ### 0.4 Profile main process với cluster kind
@@ -292,7 +292,7 @@ app chạy với `nodeIntegration: false`.
 Phụ thuộc: 001 qua cổng.
 
 ```text
-/speckit-specify SPECIFY_FEATURE_DIRECTORY=specs/004-cluster-frames Each open cluster runs isolated in its own origin in the macOS build, as it does in the Electron build. Success: three clusters open at the same time without sharing state, cookies or storage; closing one does not affect the others; the Electron build is unchanged.
+/speckit-specify SPECIFY_FEATURE_DIRECTORY=specs/004-cluster-frames Each open cluster runs isolated in its own origin in the macOS build, as it does in the Electron build. Success: three clusters open at the same time without sharing state, cookies or storage; closing one does not affect the others; the Electron build is unchanged; every channel that specs/002-messaging-for-tauri/contracts/channel-list.md gives to cluster-frames is answered by the new core, or the views stop sending it.
 ```
 
 ```text
@@ -310,7 +310,7 @@ Phụ thuộc: 001 qua cổng.
 Phụ thuộc: 002.
 
 ```text
-/speckit-specify SPECIFY_FEATURE_DIRECTORY=specs/005-terminal-pty The terminal dock works in the macOS build with the same shells, environment and behaviour as in the Electron build. Success: the shell starts with the environment the host gives kubectl and helm (contract C15 in docs/extensions/api.md describes it); resize, copy and paste, and several tabs work.
+/speckit-specify SPECIFY_FEATURE_DIRECTORY=specs/005-terminal-pty The terminal dock works in the macOS build with the same shells, environment and behaviour as in the Electron build. Success: the shell starts with the environment the host gives kubectl and helm (contract C15 in docs/extensions/api.md describes it); resize, copy and paste, and several tabs work; every channel that specs/002-messaging-for-tauri/contracts/channel-list.md gives to terminal-pty is answered by the new core.
 ```
 
 ```text
@@ -324,7 +324,7 @@ Phụ thuộc: 002.
 Phụ thuộc: 002.
 
 ```text
-/speckit-specify SPECIFY_FEATURE_DIRECTORY=specs/006-desktop-integration The menu bar item, application menu, freelens:// deep links and persisted settings behave in the macOS build as in the Electron build. Success: a user who switches from the Electron build keeps all settings and catalog entries; deep links open the right view. Out of scope: auto-update, because the build is not signed with an Apple Developer ID.
+/speckit-specify SPECIFY_FEATURE_DIRECTORY=specs/006-desktop-integration The menu bar item, application menu, window controls and history, freelens:// deep links and persisted settings behave in the macOS build as in the Electron build. Success: a user who switches from the Electron build keeps all settings and catalog entries; deep links open the right view; every channel that specs/002-messaging-for-tauri/contracts/channel-list.md gives to desktop-integration is answered by the new core. Out of scope: auto-update, because the build is not signed with an Apple Developer ID.
 ```
 
 ```text
@@ -351,7 +351,7 @@ Tauri thay bản Electron. Mẫu cho một mảng, thay `<nnn>`, `<mảng>` và 
 ```
 
 ```text
-/speckit-plan Port the injectables of this area under packages/core/src/main and packages/core/src/features/<area>/main to the Rust core. Keep the on-disk formats the Electron build writes. Port or rewrite the unit tests of the area as cargo tests.
+/speckit-plan Port the injectables of this area to the Rust core: those in the directories R9 of specs/001-tauri-shell-spike/research.md gives it, nested main directories under packages/core/src/features included, and those the Electron column of specs/002-messaging-for-tauri/contracts/channel-list.md names for its channels. Keep the on-disk formats the Electron build writes. Port or rewrite the unit tests of the area as cargo tests.
 ```
 
 ```text
