@@ -197,7 +197,8 @@ The `--messaging-check` run of research R9 uses `build-version`,
 `frame-communication-admin-channel`, `ipc:broadcast-main` and
 `renderer:navigate` from the rows above, and two check-only channels that the
 Electron build does not have: `messaging-check:report` (msg, v→m) and
-`messaging-check:echo` (req, v→m, `{ bytes }` → a string of that length).
+`messaging-check:echo` (req, v→m, `{ text }` → the same `text`, so the size
+crosses both ways).
 
 ## Answer times
 

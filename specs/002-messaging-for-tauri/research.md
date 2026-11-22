@@ -255,8 +255,10 @@ The pages declare these channels with `getRequestChannel` and
 results on the check-only message channel `messaging-check:report`, and the
 core prints them as `contracts/check-log.md` describes (FR-011, SC-003).
 
-The same run requests answers of about 1 KB, 1 MB and 10 MB on the check-only
-request channel `messaging-check:echo` and reports the time of each (SC-007).
+The same run sends texts of about 1 KB, 1 MB and 10 MB on the check-only
+request channel `messaging-check:echo`, which answers each with the same text,
+and reports the round-trip time of each (SC-007); the 10 MB one is also the
+large request body of R14.
 Both check-only channels are registered only with the flag and are not in the
 Electron build. The Electron build's figures come from
 `measure-electron-ipc.cjs`, which times `ipcRenderer.invoke` with the same
