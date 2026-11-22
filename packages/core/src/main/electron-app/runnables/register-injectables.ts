@@ -15,7 +15,6 @@ import setupCleanupOfBackendOnQuitInjectable from "./setup-cleanup-of-backend-on
 import setupDeepLinkingInjectable from "./setup-deep-linking.injectable";
 import setupDeveloperToolsInDevelopmentEnvironmentInjectable from "./setup-developer-tools-in-development-environment.injectable";
 import setupDeviceShutdownInjectable from "./setup-device-shutdown.injectable";
-import { registerInjectables as registerSetupIpcMainHandlersInjectables } from "./setup-ipc-main-handlers/register-injectables";
 import setupMainWindowVisibilityAfterActivationInjectable from "./setup-main-window-visibility-after-activation.injectable";
 import setupPasteHandlerInjectable from "./setup-paste-handler.injectable";
 import setupRunnablesAfterWindowIsOpenedInjectable from "./setup-runnables-after-window-is-opened.injectable";
@@ -80,11 +79,6 @@ export function registerInjectables(di: DiContainerForInjection): void {
   }
   try {
     registerDockVisibilityInjectables(di);
-  } catch (e) {
-    /* Ignore duplicate registration */
-  }
-  try {
-    registerSetupIpcMainHandlersInjectables(di);
   } catch (e) {
     /* Ignore duplicate registration */
   }

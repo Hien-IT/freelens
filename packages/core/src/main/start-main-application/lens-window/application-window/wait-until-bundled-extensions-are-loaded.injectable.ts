@@ -4,20 +4,27 @@
  * Licensed under MIT License. See LICENSE in root directory for more information.
  */
 
+import { enlistMessageChannelListenerInjectionToken } from "@freelensapp/messaging";
 import { delay } from "@freelensapp/utilities";
 import { getInjectable } from "@ogre-tools/injectable";
-import { bundledExtensionsLoaded } from "../../../../common/ipc/extension-handling";
-import ipcMainInjectionToken from "../../../../common/ipc/ipc-main-injection-token";
+import { bundledExtensionsLoadedChannel } from "../../../../common/ipc/extension-handling";
 
 const waitUntilBundledExtensionsAreLoadedInjectable = getInjectable({
   id: "wait-until-bundled-extensions-are-loaded",
 
   instantiate: (di) => {
-    const ipcMain = di.inject(ipcMainInjectionToken);
+    const enlistMessageChannelListener = di.inject(enlistMessageChannelListenerInjectionToken);
 
     return async () => {
       const viewHasLoaded = new Promise<void>((resolve) => {
-        ipcMain.once(bundledExtensionsLoaded, () => resolve());
+        const stopListening = enlistMessageChannelListener({
+          id: "wait-until-bundled-extensions-are-loaded",
+          channel: bundledExtensionsLoadedChannel,
+          handler: () => {
+            stopListening();
+            resolve();
+          },
+        });
       });
 
       await viewHasLoaded;

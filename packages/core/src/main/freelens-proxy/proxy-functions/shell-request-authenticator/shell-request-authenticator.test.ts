@@ -3,18 +3,18 @@
  * Licensed under MIT License. See LICENSE in root directory for more information.
  */
 
-import { beforeEach, describe, expect, it, vi } from "vitest";
-import { ShellRequestAuthenticator, standaloneShellScope } from "./shell-request-authenticator";
+import { createContainer } from "@ogre-tools/injectable";
+import { beforeEach, describe, expect, it } from "vitest";
+import clusterShellTokenListenerInjectable from "./cluster-shell-token-listener.injectable";
+import { standaloneShellScope } from "./shell-request-authenticator";
+import shellRequestAuthenticatorInjectable from "./shell-request-authenticator.injectable";
+import standaloneShellTokenListenerInjectable from "./standalone-shell-token-listener.injectable";
 
-import type Electron from "electron";
+import type { ShellRequestAuthenticator } from "./shell-request-authenticator";
 
-type Handler = (event: Electron.IpcMainInvokeEvent, ...args: any[]) => any;
+type Handler = (request: any) => any;
 
 const handlers = new Map<string, Handler>();
-
-vi.mock("../../../../common/ipc", () => ({
-  ipcMainHandle: (channel: string, handler: Handler) => void handlers.set(channel, handler),
-}));
 
 describe("shell request authenticator", () => {
   let authenticator: ShellRequestAuthenticator;
@@ -26,15 +26,30 @@ describe("shell request authenticator", () => {
       throw new Error(`no handler was registered for ${channel}`);
     }
 
-    const token = (await handler({} as Electron.IpcMainInvokeEvent, ...args)) as Uint8Array;
+    // A request channel carries the list of the legacy arguments when there are several.
+    const token = (await handler(args.length > 1 ? args : args[0])) as Uint8Array;
 
     return Buffer.from(token).toString("base64");
   };
 
   beforeEach(() => {
     handlers.clear();
-    authenticator = new ShellRequestAuthenticator();
-    authenticator.init();
+
+    const di = createContainer("shell-request-authenticator");
+
+    di.register(
+      shellRequestAuthenticatorInjectable,
+      clusterShellTokenListenerInjectable,
+      standaloneShellTokenListenerInjectable,
+    );
+    authenticator = di.inject(shellRequestAuthenticatorInjectable);
+
+    for (const listener of [
+      di.inject(clusterShellTokenListenerInjectable),
+      di.inject(standaloneShellTokenListenerInjectable),
+    ]) {
+      handlers.set(listener.channel.id, listener.handler as Handler);
+    }
   });
 
   it("authenticates a token minted for a cluster", async () => {

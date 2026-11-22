@@ -193,7 +193,7 @@ vi.mock("electron", () => ({
   },
 }));
 
-vi.mock("../../common/ipc", async (importOriginal) => ({
+vi.mock("../ipc/common/legacy-ipc", async (importOriginal) => ({
   ...(await importOriginal<object>()),
   broadcastMessage: ipc.broadcastMessage,
   ipcMainHandle: ipc.ipcMainHandle,
@@ -201,7 +201,7 @@ vi.mock("../../common/ipc", async (importOriginal) => ({
   ipcRendererOn: ipc.ipcRendererOn,
 }));
 
-vi.mock("../../renderer/ipc", async (importOriginal) => ({
+vi.mock("../ipc/renderer/requests", async (importOriginal) => ({
   ...(await importOriginal<object>()),
   // The initial state is answered at once: what is under test is what happens
   // after every process is up.

@@ -5,6 +5,7 @@
  */
 
 import { loggerInjectionToken } from "@freelensapp/logger";
+import { enlistMessageChannelListenerInjectionToken } from "@freelensapp/messaging";
 import { getInjectable } from "@ogre-tools/injectable";
 import addClusterInjectable from "../../features/cluster/storage/common/add.injectable";
 import clustersInjectable from "../../features/cluster/storage/common/clusters.injectable";
@@ -32,6 +33,7 @@ const clusterManagerInjectable = getInjectable({
       updateEntityMetadata: di.inject(updateEntityMetadataInjectable),
       updateEntitySpec: di.inject(updateEntitySpecInjectable),
       getClusterConnection: (cluster) => di.inject(clusterConnectionInjectable, cluster),
+      enlistMessageChannelListener: di.inject(enlistMessageChannelListenerInjectionToken),
     }),
 });
 

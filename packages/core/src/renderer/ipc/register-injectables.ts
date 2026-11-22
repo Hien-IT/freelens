@@ -6,6 +6,7 @@
  * This replaces the webpack-based auto-registration system.
  */
 
+import broadcastMessageImplementationInjectable from "./broadcast-message-implementation.injectable";
 import legacyOnChannelListenInjectable from "./legacy-channel-listen.injectable";
 import listNamespacesForbiddenHandlerInjectable from "./list-namespaces-forbidden-handler.injectable";
 import registerIpcListenersInjectable from "./register-ipc-listeners.injectable";
@@ -13,6 +14,11 @@ import registerIpcListenersInjectable from "./register-ipc-listeners.injectable"
 import type { DiContainerForInjection } from "@ogre-tools/injectable";
 
 export function registerInjectables(di: DiContainerForInjection): void {
+  try {
+    di.register(broadcastMessageImplementationInjectable);
+  } catch (e) {
+    /* Ignore duplicate registration */
+  }
   try {
     di.register(legacyOnChannelListenInjectable);
   } catch (e) {

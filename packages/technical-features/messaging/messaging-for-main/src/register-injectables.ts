@@ -13,7 +13,9 @@ import requestFromChannelInjectable from "./request-from-channel/request-from-ch
 import allowCommunicationListenerInjectable from "./send-message-to-channel/allow-communication-listener.injectable";
 import frameIdsInjectable from "./send-message-to-channel/frameIds.injectable";
 import getWebContentsInjectable from "./send-message-to-channel/get-web-contents.injectable";
+import getWebContentsByIdInjectable from "./send-message-to-channel/get-web-contents-by-id.injectable";
 import sendMessageToChannelInjectable from "./send-message-to-channel/send-message-to-channel.injectable";
+import sendMessageToWindowInjectable from "./send-message-to-channel/send-message-to-window.injectable";
 
 import type { DiContainerForInjection } from "@ogre-tools/injectable";
 
@@ -39,6 +41,11 @@ export function registerInjectables(di: DiContainerForInjection): void {
     /* Ignore duplicate registration */
   }
   try {
+    di.register(getWebContentsByIdInjectable);
+  } catch (e) {
+    /* Ignore duplicate registration */
+  }
+  try {
     di.register(getWebContentsInjectable);
   } catch (e) {
     /* Ignore duplicate registration */
@@ -55,6 +62,11 @@ export function registerInjectables(di: DiContainerForInjection): void {
   }
   try {
     di.register(sendMessageToChannelInjectable);
+  } catch (e) {
+    /* Ignore duplicate registration */
+  }
+  try {
+    di.register(sendMessageToWindowInjectable);
   } catch (e) {
     /* Ignore duplicate registration */
   }

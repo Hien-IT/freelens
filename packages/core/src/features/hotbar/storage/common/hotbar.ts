@@ -8,8 +8,9 @@ import { tuple } from "@freelensapp/utilities";
 import { type IObservableArray, type IObservableValue, observable, runInAction, toJS } from "mobx";
 import * as uuid from "uuid";
 import { getShortName } from "../../../../common/catalog/helpers";
-import { broadcastMessage } from "../../../../common/ipc";
+import broadcastMessageInjectable from "../../../../common/ipc/broadcast-message.injectable";
 import { hotbarTooManyItemsChannel } from "../../../../common/ipc/hotbar";
+import { getDiForExtensionApi } from "../../../../extensions/extension-api-di";
 import { defaultHotbarCells } from "./types";
 
 import type { Logger } from "@freelensapp/logger";
@@ -150,7 +151,7 @@ export class Hotbar {
           this.items[emptyCellIndex] = newItem;
         });
       } else {
-        broadcastMessage(hotbarTooManyItemsChannel);
+        getDiForExtensionApi().inject(broadcastMessageInjectable)(hotbarTooManyItemsChannel);
       }
     } else if (0 <= cellIndex && cellIndex < this.items.length) {
       runInAction(() => {

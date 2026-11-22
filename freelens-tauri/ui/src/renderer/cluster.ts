@@ -6,6 +6,9 @@
 // The page of a cluster frame. It lists the namespaces once, through the core,
 // which holds the credentials (specs/001-tauri-shell-spike/contracts/scheme-routes.md).
 
+// Only a --messaging-check run loads the check and its dependencies.
+const messagingCheck = new URLSearchParams(location.search).has("messaging-check");
+
 interface NamespaceList {
   items: { metadata: { name: string } }[];
 }
@@ -52,6 +55,13 @@ async function showNamespaces(): Promise<void> {
 }
 
 showNamespaces().catch((error: unknown) => alert(`Cannot list namespaces: ${String(error)}`));
+
+if (messagingCheck) {
+  void import("./messaging-check").then(
+    ({ runMessagingCheck }) => runMessagingCheck(),
+    () => fetch("/api/mark?name=messaging-check-failed"),
+  );
+}
 
 // A module, so that its top-level names stay local to the page.
 export {};

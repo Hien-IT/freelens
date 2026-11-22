@@ -33,6 +33,7 @@
       "@freelensapp/messaging-for-renderer": [
         "./packages/technical-features/messaging/messaging-for-renderer/index.ts"
       ],
+      "@freelensapp/messaging-for-tauri": ["./packages/technical-features/messaging/messaging-for-tauri/index.ts"],
       "@freelensapp/metrics": ["./packages/metrics/index.ts"],
       "@freelensapp/notifications": ["./packages/ui-components/notifications/index.ts"],
       "@freelensapp/prometheus": ["./packages/technical-features/prometheus/index.ts"],

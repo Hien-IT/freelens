@@ -6,6 +6,7 @@
 
 import { applicationInformationToken } from "@freelensapp/application";
 import { loggerInjectionToken } from "@freelensapp/logger";
+import { sendMessageToWindowInjectionToken } from "@freelensapp/messaging";
 import { getInjectable } from "@ogre-tools/injectable";
 import { BrowserWindow } from "electron";
 import pathExistsSyncInjectable from "../../../../common/fs/path-exists-sync.injectable";
@@ -200,11 +201,11 @@ const createElectronWindowInjectable = getInjectable({
         show: () => browserWindow.show(),
         close: () => browserWindow.close(),
         send: ({ channel, data, frameInfo }) => {
-          if (frameInfo) {
-            browserWindow.webContents.sendToFrame([frameInfo.processId, frameInfo.frameId], channel, data);
-          } else {
-            browserWindow.webContents.send(channel, data);
-          }
+          di.inject(sendMessageToWindowInjectionToken)(
+            { windowId: browserWindow.webContents.id, frame: frameInfo },
+            channel,
+            data,
+          );
         },
 
         reload: () => {

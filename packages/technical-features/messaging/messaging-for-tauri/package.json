@@ -1,0 +1,39 @@
+{
+  "name": "@freelensapp/messaging-for-tauri",
+  "version": "2.1.0-0",
+  "private": true,
+  "description": "Implementations for 'messaging' in the views of the Tauri build",
+  "homepage": "https://freelens.app",
+  "bugs": {
+    "url": "https://github.com/freelensapp/freelens/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/freelensapp/freelens.git"
+  },
+  "license": "MIT",
+  "type": "module",
+  "author": {
+    "name": "Freelens Authors",
+    "email": "freelens@freelens.app"
+  },
+  "main": "./index.ts",
+  "types": "./index.ts",
+  "scripts": {
+    "clean:dist": "pnpm dlx rimraf@6.1.4 dist",
+    "test:unit": "vitest run -c ../../../../vitest.config.ts --project @freelensapp/messaging-for-tauri"
+  },
+  "dependencies": {
+    "@freelensapp/application": "workspace:^",
+    "@freelensapp/feature-core": "workspace:^",
+    "@freelensapp/messaging": "workspace:^",
+    "@ogre-tools/injectable": "catalog:"
+  },
+  "devDependencies": {
+    "@freelensapp/typescript": "workspace:^",
+    "@ogre-tools/injectable-extension-for-mobx": "catalog:",
+    "mobx": "catalog:",
+    "typescript": "catalog:",
+    "vitest": "catalog:"
+  }
+}

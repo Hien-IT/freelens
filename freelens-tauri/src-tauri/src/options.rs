@@ -26,6 +26,9 @@ pub struct LaunchOptions {
     /// `--open-cluster=<context name>`: opened once the catalog is shown, for
     /// measurement runs.
     pub open_cluster: Option<String>,
+    /// `--messaging-check`: registers the check-only channels and runs the
+    /// rounds of `specs/002-messaging-for-tauri/contracts/check-log.md`.
+    pub messaging_check: bool,
 }
 
 #[derive(Debug, PartialEq, Eq)]
@@ -50,6 +53,7 @@ where
 {
     let mut kubeconfig = KubeconfigChoice::Default;
     let mut open_cluster = None;
+    let mut messaging_check = false;
 
     for arg in args {
         match arg.split_once('=') {
@@ -58,6 +62,7 @@ where
             Some(("--kubeconfig", path)) => kubeconfig = KubeconfigChoice::File(cwd.join(path)),
             Some(("--open-cluster", "")) => return Err(OptionsError::MissingValue(arg)),
             Some(("--open-cluster", name)) => open_cluster = Some(name.to_string()),
+            None if arg == "--messaging-check" => messaging_check = true,
             None if arg == "--kubeconfig" || arg == "--open-cluster" => {
                 return Err(OptionsError::MissingValue(arg));
             }
@@ -68,6 +73,7 @@ where
     Ok(LaunchOptions {
         kubeconfig,
         open_cluster,
+        messaging_check,
     })
 }
 
@@ -151,6 +157,16 @@ mod tests {
                 Err(OptionsError::MissingValue(arg.into()))
             );
         }
+    }
+
+    #[test]
+    fn messaging_check_takes_no_value() {
+        assert!(parse_args(&["--messaging-check"]).unwrap().messaging_check);
+        assert!(!parse_args(&[]).unwrap().messaging_check);
+        assert_eq!(
+            parse_args(&["--messaging-check=yes"]),
+            Err(OptionsError::Unknown("--messaging-check=yes".into()))
+        );
     }
 
     #[test]

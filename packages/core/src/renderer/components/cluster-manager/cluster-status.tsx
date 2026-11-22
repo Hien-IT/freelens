@@ -6,6 +6,7 @@
 
 import { Button } from "@freelensapp/button";
 import { Icon } from "@freelensapp/icon";
+import { enlistMessageChannelListenerInjectionToken } from "@freelensapp/messaging";
 import { Spinner } from "@freelensapp/spinner";
 import { cssNames, hasTypedProperty, isObject, isString } from "@freelensapp/utilities";
 import { withInjectables } from "@ogre-tools/injectable-react";
@@ -13,11 +14,12 @@ import { computed, observable } from "mobx";
 import { observer } from "mobx-react";
 import React from "react";
 import navigateToEntitySettingsInjectable from "../../../common/front-end-routing/routes/entity-settings/navigate-to-entity-settings.injectable";
-import { ipcRendererOn } from "../../../common/ipc";
+import { getConnectionUpdateChannel } from "../../../common/ipc/cluster";
 import requestClusterActivationInjectable from "../../../features/cluster/activation/renderer/request-activation.injectable";
 import catalogEntityRegistryInjectable from "../../api/catalog/entity/registry.injectable";
 import styles from "./cluster-status.module.scss";
 
+import type { EnlistMessageChannelListener } from "@freelensapp/messaging";
 import type { IClassName } from "@freelensapp/utilities";
 
 import type { Cluster } from "../../../common/cluster/cluster";
@@ -35,6 +37,7 @@ interface Dependencies {
   navigateToEntitySettings: NavigateToEntitySettings;
   entityRegistry: CatalogEntityRegistry;
   requestClusterActivation: RequestClusterActivation;
+  enlistMessageChannelListener: EnlistMessageChannelListener;
 }
 
 @observer
@@ -65,18 +68,22 @@ class NonInjectedClusterStatus extends React.Component<ClusterStatusProps & Depe
 
   componentDidMount() {
     this.disposers.push(
-      ipcRendererOn(`cluster:${this.cluster.id}:connection-update`, (evt, res: unknown) => {
-        if (
-          isObject(res) &&
-          hasTypedProperty(res, "message", isString) &&
-          hasTypedProperty(res, "level", function (val): val is KubeAuthUpdate["level"] {
-            return ["info", "warning", "error"].includes(val as string);
-          })
-        ) {
-          this.authOutput.push(res);
-        } else {
-          console.warn(`Got invalid connection update for ${this.cluster.id}`, { update: res });
-        }
+      this.props.enlistMessageChannelListener({
+        id: "cluster-status-connection-update",
+        channel: getConnectionUpdateChannel(this.cluster.id),
+        handler: (res: unknown) => {
+          if (
+            isObject(res) &&
+            hasTypedProperty(res, "message", isString) &&
+            hasTypedProperty(res, "level", function (val): val is KubeAuthUpdate["level"] {
+              return ["info", "warning", "error"].includes(val as string);
+            })
+          ) {
+            this.authOutput.push(res);
+          } else {
+            console.warn(`Got invalid connection update for ${this.cluster.id}`, { update: res });
+          }
+        },
       }),
     );
   }
@@ -182,5 +189,6 @@ export const ClusterStatus = withInjectables<Dependencies, ClusterStatusProps>(N
     navigateToEntitySettings: di.inject(navigateToEntitySettingsInjectable),
     entityRegistry: di.inject(catalogEntityRegistryInjectable),
     requestClusterActivation: di.inject(requestClusterActivationInjectable),
+    enlistMessageChannelListener: di.inject(enlistMessageChannelListenerInjectionToken),
   }),
 });

@@ -11,6 +11,14 @@
     "tauri:dev": "pnpm tauri:ui && tauri dev",
     "tauri:build": "pnpm tauri:ui && bash scripts/stage-payload.sh && tauri build"
   },
+  "dependencies": {
+    "@freelensapp/feature-core": "workspace:^",
+    "@freelensapp/messaging": "workspace:^",
+    "@freelensapp/messaging-for-tauri": "workspace:^",
+    "@ogre-tools/injectable": "catalog:",
+    "@ogre-tools/injectable-extension-for-mobx": "catalog:",
+    "mobx": "catalog:"
+  },
   "devDependencies": {
     "@tauri-apps/cli": "catalog:",
     "vite": "catalog:"

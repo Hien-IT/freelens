@@ -5,6 +5,7 @@
  */
 
 import { loggerInjectionToken } from "@freelensapp/logger";
+import { enlistMessageChannelListenerInjectionToken } from "@freelensapp/messaging";
 import { showErrorNotificationInjectable, showShortInfoNotificationInjectable } from "@freelensapp/notifications";
 import { getInjectable } from "@ogre-tools/injectable";
 import extensionLoaderInjectable from "../../../extensions/extension-loader/extension-loader.injectable";
@@ -21,6 +22,7 @@ const lensProtocolRouterRendererInjectable = getInjectable({
       logger: di.inject(loggerInjectionToken),
       showErrorNotification: di.inject(showErrorNotificationInjectable),
       showShortInfoNotification: di.inject(showShortInfoNotificationInjectable),
+      enlistMessageChannelListener: di.inject(enlistMessageChannelListenerInjectionToken),
     }),
 });
 

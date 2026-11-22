@@ -49,7 +49,9 @@
         "scripts/type-check-environments/expected-failures/**/*.ts",
         // measurement scripts of the Tauri port, run by hand with node (see
         // specs/baseline.md)
-        "specs/*.mjs"
+        "specs/*.mjs",
+        // and the Electron one of spec 002, run with the build's Electron binary
+        "specs/*/*.cjs"
       ],
       // Trunk runs SVGO, so no dependency turns on the plugin that finds
       // svgo.config.js.

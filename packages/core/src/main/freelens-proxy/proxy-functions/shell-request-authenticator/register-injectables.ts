@@ -6,13 +6,25 @@
  * This replaces the webpack-based auto-registration system.
  */
 
+import clusterShellTokenListenerInjectable from "./cluster-shell-token-listener.injectable";
 import shellRequestAuthenticatorInjectable from "./shell-request-authenticator.injectable";
+import standaloneShellTokenListenerInjectable from "./standalone-shell-token-listener.injectable";
 
 import type { DiContainerForInjection } from "@ogre-tools/injectable";
 
 export function registerInjectables(di: DiContainerForInjection): void {
   try {
+    di.register(clusterShellTokenListenerInjectable);
+  } catch (e) {
+    /* Ignore duplicate registration */
+  }
+  try {
     di.register(shellRequestAuthenticatorInjectable);
+  } catch (e) {
+    /* Ignore duplicate registration */
+  }
+  try {
+    di.register(standaloneShellTokenListenerInjectable);
   } catch (e) {
     /* Ignore duplicate registration */
   }

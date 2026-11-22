@@ -17,8 +17,7 @@ const fileLoggerTransportInjectable = getInjectable({
       level: "debug",
       filename: "lens.log",
       /**
-       * SAFTEY: the `ipcMain` check above should mean that this is only
-       * called in the main process
+       * SAFETY: this transport is registered in the main process only
        */
       dirname: di.inject(directoryForLogsInjectable),
       maxsize: 1024 * 1024,

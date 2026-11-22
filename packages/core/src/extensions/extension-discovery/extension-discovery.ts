@@ -9,13 +9,13 @@ import { isErrnoException } from "@freelensapp/utilities";
 import { ipcRenderer } from "electron";
 import { observable, reaction, when } from "mobx";
 import * as verkit from "verkit";
-import { broadcastMessage, ipcMainHandle, ipcRendererOn } from "../../common/ipc";
 import { extensionDiscoveryStateChannel } from "../../common/ipc/extension-handling";
 import { toJS } from "../../common/utils";
 import { managedDirectoryOf } from "../../features/extensions/installer/common/managed-directory";
 import { manifestFilename } from "../../features/extensions/installer/common/manifest";
 import { parseVersionDirectoryName } from "../../features/extensions/installer/common/version-directory";
-import { requestInitialExtensionDiscovery } from "../../renderer/ipc";
+import { broadcastMessage, ipcMainHandle, ipcRendererOn } from "../ipc/common/legacy-ipc";
+import { requestInitialExtensionDiscovery } from "../ipc/renderer/requests";
 
 import type { Logger } from "@freelensapp/logger";
 import type { TypedEventEmitter } from "@freelensapp/utilities";

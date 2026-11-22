@@ -16,8 +16,9 @@ const enlistRequestChannelListenerInjectable = getInjectable({
   instantiate: (di): EnlistRequestChannelListener => {
     const ipcMain = di.inject(ipcMainInjectable);
 
-    return ({ channel, handler }) => {
-      const nativeHandleCallback = (_: IpcMainInvokeEvent, request: unknown) => handler(request);
+    return ({ channel, handler, withSender }) => {
+      const nativeHandleCallback = (event: IpcMainInvokeEvent, request: unknown) =>
+        withSender ? handler(request, { frameId: event.frameId, processId: event.processId }) : handler(request);
 
       ipcMain.handle(channel.id, nativeHandleCallback);
 

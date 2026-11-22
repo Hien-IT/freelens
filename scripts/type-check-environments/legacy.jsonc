@@ -39,7 +39,6 @@
     "packages/core/src/common/fs/write-buffer-sync.injectable.ts",
     "packages/core/src/common/fs/write-file.injectable.ts",
     "packages/core/src/common/initializable-state/create.ts",
-    "packages/core/src/common/ipc/ipc.ts",
     "packages/core/src/common/k8s-api/kube-object.store.ts",
     "packages/core/src/common/os/home-directory-path.injectable.ts",
     "packages/core/src/common/os/kube-directory-path.injectable.ts",

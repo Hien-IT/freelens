@@ -4,6 +4,8 @@
  * Licensed under MIT License. See LICENSE in root directory for more information.
  */
 
+import { getMessageChannel } from "@freelensapp/messaging";
+
 /**
  * This is used to activate a specific entity in the renderer main frame
  */
@@ -18,3 +20,9 @@ export const catalogItemsChannel = "catalog:items";
  * This can be sent from renderer to main to initialize a broadcast of ITEMS
  */
 export const catalogInitChannel = "catalog:init";
+
+// Typed channels of the legacy names above (specs/002-messaging-for-tauri, research R11).
+// The items are catalog entities, which arrive as plain objects of their data.
+export const catalogItemsMessageChannel = getMessageChannel<unknown[]>(catalogItemsChannel);
+export const catalogInitMessageChannel = getMessageChannel<void>(catalogInitChannel);
+export const catalogEntityRunMessageChannel = getMessageChannel<string>(catalogEntityRunListener);

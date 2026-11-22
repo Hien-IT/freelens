@@ -7,7 +7,6 @@
 import crypto from "node:crypto";
 import { promisify } from "node:util";
 import { getOrInsertMap } from "@freelensapp/utilities";
-import { ipcMainHandle } from "../../../../common/ipc";
 
 import type { ClusterId } from "../../../../common/cluster-types";
 
@@ -26,12 +25,8 @@ export type ShellRequestScope = ClusterId | typeof standaloneShellScope;
 export class ShellRequestAuthenticator {
   private tokens = new Map<ShellRequestScope, Map<string, Uint8Array>>();
 
-  init() {
-    ipcMainHandle("cluster:shell-api", (_event, clusterId: ClusterId, tabId: string) => this.mint(clusterId, tabId));
-    ipcMainHandle("app:standalone-shell-api", (_event, tabId: string) => this.mint(standaloneShellScope, tabId));
-  }
-
-  private async mint(scope: ShellRequestScope, tabId: string): Promise<Uint8Array> {
+  /** Mints the single use token a shell of \`scope\` presents; the shell token channels answer with it. */
+  async mint(scope: ShellRequestScope, tabId: string): Promise<Uint8Array> {
     const authToken = Uint8Array.from(await randomBytes(128));
     const forScope = getOrInsertMap(this.tokens, scope);
 

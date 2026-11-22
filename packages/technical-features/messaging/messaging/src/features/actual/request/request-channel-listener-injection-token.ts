@@ -2,6 +2,8 @@ import { getInjectable, getInjectionToken } from "@ogre-tools/injectable";
 
 import type { DiContainerForInjection } from "@ogre-tools/injectable";
 
+import type { ExtraData } from "../message/message-channel-listener-injection-token";
+
 export interface RequestChannel<Request, Response> {
   id: string;
   _requestSignature?: Request;
@@ -10,13 +12,15 @@ export interface RequestChannel<Request, Response> {
 
 export type RequestChannelHandler<Channel> =
   Channel extends RequestChannel<infer Request, infer Response>
-    ? (req: Request) => Promise<Response> | Response
+    ? (req: Request, sender?: ExtraData) => Promise<Response> | Response
     : never;
 
 export interface RequestChannelListener<Channel> {
   id: string;
   channel: Channel;
   handler: RequestChannelHandler<Channel>;
+  /** The handler also gets the sender of the request, where the implementation knows it. */
+  withSender?: boolean;
 }
 
 export const requestChannelListenerInjectionToken = getInjectionToken<
@@ -33,6 +37,7 @@ export interface GetRequestChannelListenerInjectableInfo<
   id: string;
   channel: Channel;
   getHandler: (di: DiContainerForInjection) => RequestChannelHandler<Channel>;
+  withSender?: boolean;
 }
 
 export const getRequestChannelListenerInjectable = <
@@ -50,6 +55,7 @@ export const getRequestChannelListenerInjectable = <
         id: `${info.channel.id}-request-listener-${info.id}`,
         channel: info.channel,
         handler: info.getHandler(di),
+        withSender: info.withSender,
       }) as RequestChannelListener<Channel>,
 
     injectionToken: requestChannelListenerInjectionToken,

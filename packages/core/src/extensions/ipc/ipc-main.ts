@@ -7,9 +7,9 @@
 import { loggerInjectionToken } from "@freelensapp/logger";
 import { ipcMain } from "electron";
 import { once } from "es-toolkit";
-import { ipcMainHandle } from "../../common/ipc";
 import { getEnvironmentSpecificDiForExtensionApi } from "../extension-api-di";
 import { Disposers } from "../lens-extension";
+import { ipcMainHandle } from "./common/legacy-ipc";
 import { IpcPrefix, IpcRegistrar } from "./ipc-registrar";
 
 import type { Logger } from "@freelensapp/logger";

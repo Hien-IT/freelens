@@ -88,6 +88,7 @@ One round of the `--messaging-check` run (research R9), per view.
 | --------------- | ------------------------------------------------- | ---------------------------------------------------------------------------------------------------- |
 | request         | `build-version`                                   | the answer is a non-empty string                                                                     |
 | message to core | `frame-communication-admin-channel`               | the core's count of this view's announcements has grown when the round's report arrives              |
-| message to view | `ipc:broadcast-main` carrying `renderer:navigate` | the core answers, and the view's listener receives `/messaging-check/<view>/<round>` once within 5 s |
+| message to view | `broadcast-to-views` carrying `renderer:navigate` | the core answers, and the view's listener receives `/messaging-check/<view>/<round>` once within 5 s |
 
-Twenty rounds per view; the run passes when all forty pass (SC-003).
+Twenty rounds per view, and a late round 21 after 130 seconds; the run passes
+when all forty-two pass (SC-003).

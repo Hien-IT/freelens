@@ -4,8 +4,9 @@
  */
 
 import assert from "node:assert";
+import { requestFromChannelInjectionToken } from "@freelensapp/messaging";
 import { getInjectable } from "@ogre-tools/injectable";
-import { ipcRenderer } from "electron";
+import { clusterShellTokenChannel } from "../../common/ipc/shell-token-channels";
 import hostedClusterIdInjectable from "../cluster-frame-context/hosted-cluster-id.injectable";
 
 import type { RequestShellToken } from "./terminal-api";
@@ -19,11 +20,12 @@ const requestClusterShellTokenInjectable = getInjectable({
 
   instantiate: (di): RequestShellToken => {
     const hostedClusterId = di.inject(hostedClusterIdInjectable);
+    const requestFromChannel = di.inject(requestFromChannelInjectionToken);
 
     return (tabId) => {
       assert(hostedClusterId, "Can only request a cluster shell token within a cluster frame");
 
-      return ipcRenderer.invoke("cluster:shell-api", hostedClusterId, tabId);
+      return requestFromChannel(clusterShellTokenChannel, [hostedClusterId, tabId]);
     };
   },
 });

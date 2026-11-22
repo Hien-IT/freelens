@@ -60,7 +60,7 @@ files change only as FR-019 allows; no new dependency.
 
 **Scale/Scope**: every channel the Electron build registers (R13). The core
 answers messaging's own two channels, `frame-communication-admin-channel` and
-the `ipc:broadcast-main` relay, plus `build-version` for the check (R7, R9);
+the `broadcast-to-views` relay, plus `build-version` for the check (R7, R9);
 every other channel waits for its area's spec.
 
 ## Constitution Check
@@ -137,7 +137,7 @@ freelens-tauri/
     │   │   ├── mod.rs         # View, channel types, Channels, Messaging (contracts/core-channels.md)
     │   │   ├── routes.rs      # /ipc/ routes (contracts/ipc-routes.md)
     │   │   ├── queues.rs      # queues and long polls (data-model.md)
-    │   │   ├── admin.rs       # frame-communication-admin-channel, the ipc:broadcast-main relay (R7)
+    │   │   ├── admin.rs       # frame-communication-admin-channel, the broadcast-to-views relay (R7)
     │   │   └── check.rs       # --messaging-check channels (R9)
     │   ├── version.rs         # build-version, answered with the package version (R9)
     │   ├── options.rs         # + --messaging-check

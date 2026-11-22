@@ -53,22 +53,25 @@ Expected ([contracts/check-log.md](./contracts/check-log.md)):
 `Messaging: main announced` and `Messaging: cluster <id> announced`,
 `build version 0.1.0` (the version of `tauri.conf.json`) for both views, 20
 `passed` lines for each of the two views, `done, 20 of 20 rounds passed` for
-both, no `failed` line and no `messaging-check-failed` mark:
+both, the cluster's `isolation: … was blocked`, and no failure. Switch to
+another application while the run goes on: 130 seconds after `done`, each
+view runs a late round, 21, which must pass as well (research R14). The run
+takes about two and a half minutes:
 
 ```bash
-grep -c 'round .* passed' "$TMPDIR/messaging-check.log"; grep -E 'failed|messaging-check-failed' "$TMPDIR/messaging-check.log"
+grep -c 'round .* passed' "$TMPDIR/messaging-check.log"; grep -E 'Messaging check: .*failed|messaging-check-failed|Refused an IPC' "$TMPDIR/messaging-check.log"
 ```
 
-Expected: `40`, and nothing from the second search. With the run still open,
-switch to another application for two minutes, come back, and check that a new
-round of the cluster frame still passes (research R14).
+Expected: `42`, and nothing from the second search. The spike's own line
+`A cluster request failed`, for the fixture's unreachable cluster, is
+expected.
 
 The answer times of SC-007 are the `answer of … bytes in … ms` lines of the
 same log. The Electron build's figures, with the Electron binary the build
 uses:
 
 ```bash
-pnpm --filter @freelensapp/freelens exec electron "$PWD/specs/002-messaging-for-tauri/measure-electron-ipc.cjs"
+pnpm --filter freelens exec electron "$PWD/specs/002-messaging-for-tauri/measure-electron-ipc.cjs"
 ```
 
 Record both in [contracts/channel-list.md](./contracts/channel-list.md#answer-times),

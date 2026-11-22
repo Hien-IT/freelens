@@ -7,12 +7,48 @@
  */
 
 import askUserForFilePathsInjectable from "./ask-user-for-file-paths.injectable";
+import broadcastMessageImplementationInjectable from "./broadcast-message-implementation.injectable";
+import broadcastToViewsListenerInjectable from "./broadcast-to-views-listener.injectable";
+import locationChangedListenerInjectable from "./location-changed-listener.injectable";
+import openAppMenuAsContextMenuListenerInjectable from "./open-app-menu-as-context-menu-listener.injectable";
+import popupApplicationMenuInjectable from "./popup-application-menu.injectable";
+import windowActionListenerInjectable from "./window-action-listener.injectable";
 
 import type { DiContainerForInjection } from "@ogre-tools/injectable";
 
 export function registerInjectables(di: DiContainerForInjection): void {
   try {
     di.register(askUserForFilePathsInjectable);
+  } catch (e) {
+    /* Ignore duplicate registration */
+  }
+  try {
+    di.register(broadcastMessageImplementationInjectable);
+  } catch (e) {
+    /* Ignore duplicate registration */
+  }
+  try {
+    di.register(broadcastToViewsListenerInjectable);
+  } catch (e) {
+    /* Ignore duplicate registration */
+  }
+  try {
+    di.register(locationChangedListenerInjectable);
+  } catch (e) {
+    /* Ignore duplicate registration */
+  }
+  try {
+    di.register(openAppMenuAsContextMenuListenerInjectable);
+  } catch (e) {
+    /* Ignore duplicate registration */
+  }
+  try {
+    di.register(popupApplicationMenuInjectable);
+  } catch (e) {
+    /* Ignore duplicate registration */
+  }
+  try {
+    di.register(windowActionListenerInjectable);
   } catch (e) {
     /* Ignore duplicate registration */
   }

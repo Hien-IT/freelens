@@ -5,8 +5,8 @@
  */
 
 import { createHash } from "node:crypto";
-import { broadcastMessage } from "../../common/ipc";
 import { Singleton } from "../../common/utils/singleton";
+import { broadcastMessage } from "./common/legacy-ipc";
 
 import type { LensExtension } from "../lens-extension";
 

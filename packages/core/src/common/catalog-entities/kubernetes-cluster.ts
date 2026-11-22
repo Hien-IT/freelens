@@ -4,13 +4,13 @@
  * Licensed under MIT License. See LICENSE in root directory for more information.
  */
 
+import broadcastMessageInjectable from "../../common/ipc/broadcast-message.injectable";
 import { getDiForExtensionApi } from "../../extensions/extension-api-di";
 import {
   requestClusterActivationInjectionToken,
   requestClusterDeactivationInjectionToken,
 } from "../../features/cluster/activation/common/request-token";
 import { CatalogCategory, CatalogEntity, categoryVersion } from "../catalog/catalog-entity";
-import { broadcastMessage } from "../ipc";
 import { IpcRendererNavigationEvents } from "../ipc/navigation-events";
 import KubeClusterCategoryIcon from "./icons/kubernetes.svg?raw";
 
@@ -118,7 +118,10 @@ export class KubernetesCluster<
         title: "Settings",
         icon: "settings",
         onClick: () =>
-          broadcastMessage(IpcRendererNavigationEvents.NAVIGATE_IN_APP, `/entity/${this.getId()}/settings`),
+          getDiForExtensionApi().inject(broadcastMessageInjectable)(
+            IpcRendererNavigationEvents.NAVIGATE_IN_APP,
+            `/entity/${this.getId()}/settings`,
+          ),
       });
     }
 
@@ -130,7 +133,10 @@ export class KubernetesCluster<
           icon: "link_off",
           onClick: () => {
             this.disconnect();
-            broadcastMessage(IpcRendererNavigationEvents.NAVIGATE_IN_APP, "/catalog");
+            getDiForExtensionApi().inject(broadcastMessageInjectable)(
+              IpcRendererNavigationEvents.NAVIGATE_IN_APP,
+              "/catalog",
+            );
           },
         });
         break;

@@ -11,7 +11,6 @@ import { isDefined, iter, noop } from "@freelensapp/utilities";
 import { ipcMain } from "electron";
 import { isEqual } from "es-toolkit";
 import { action, compareStructural, computed, observable, reaction, runInAction, toJS, when } from "mobx";
-import { broadcastMessage, ipcMainHandle, ipcRendererOn } from "../../common/ipc";
 import {
   extensionLoaderFromMainChannel,
   extensionLoaderLoadFailuresFromMainChannel,
@@ -26,12 +25,13 @@ import {
   extensionFileUrl,
   toFileSegments,
 } from "../../features/extensions/loader/common/scheme";
+import { broadcastMessage, ipcMainHandle, ipcRendererOn } from "../ipc/common/legacy-ipc";
 import {
   requestExtensionLoaderInitialState,
   requestExtensionLoaderMainLoadFailures,
   requestExtensionLoaderSetIsEnabled,
   requestExtensionLoaderTornDown,
-} from "../../renderer/ipc";
+} from "../ipc/renderer/requests";
 import { sanitizeExtensionName } from "../lens-extension";
 import { extensionLoadFailureMessageOf } from "./load-failure";
 

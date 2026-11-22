@@ -6,7 +6,6 @@
  * This replaces the webpack-based auto-registration system.
  */
 
-import { registerInjectables as registerChannelInjectables } from "./channel/register-injectables";
 import { registerInjectables as registerCreateStorageInjectables } from "./create-storage/register-injectables";
 import createStorageHelperInjectable from "./create-storage-helper.injectable";
 import { registerInjectables as registerResolveProxyInjectables } from "./resolve-proxy/register-injectables";
@@ -23,11 +22,6 @@ export function registerInjectables(di: DiContainerForInjection): void {
   }
   try {
     di.register(openSaveFileDialogInjectable);
-  } catch (e) {
-    /* Ignore duplicate registration */
-  }
-  try {
-    registerChannelInjectables(di);
   } catch (e) {
     /* Ignore duplicate registration */
   }

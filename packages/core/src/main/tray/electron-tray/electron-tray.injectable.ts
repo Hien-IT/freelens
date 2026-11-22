@@ -5,8 +5,10 @@
  */
 
 import { loggerInjectionToken } from "@freelensapp/logger";
+import { enlistMessageChannelListenerInjectionToken } from "@freelensapp/messaging";
 import { getInjectable } from "@ogre-tools/injectable";
-import { ipcMain, Menu, Tray } from "electron";
+import { Menu, Tray } from "electron";
+import { setTrayVisibleChannel } from "../../../common/ipc/tray";
 import applicationDescriptionInjectable from "../../../common/vars/application-description.injectable";
 import isWindowsInjectable from "../../../common/vars/is-windows.injectable";
 import showApplicationWindowInjectable from "../../start-main-application/lens-window/show-application-window.injectable";
@@ -62,9 +64,13 @@ const electronTrayInjectable = getInjectable({
       }
     };
 
-    ipcMain.on("tray:set-visible", (_, visible: boolean) => {
-      if (visible) start();
-      else stop();
+    di.inject(enlistMessageChannelListenerInjectionToken)({
+      id: "tray-set-visible",
+      channel: setTrayVisibleChannel,
+      handler: (visible) => {
+        if (visible) start();
+        else stop();
+      },
     });
 
     return {

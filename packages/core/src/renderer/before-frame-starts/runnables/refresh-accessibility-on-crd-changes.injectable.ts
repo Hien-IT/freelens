@@ -1,10 +1,10 @@
+import { requestFromChannelInjectionToken } from "@freelensapp/messaging";
 import { noop } from "@freelensapp/utilities";
 import { getInjectable } from "@ogre-tools/injectable";
 import { reaction } from "mobx";
-import { clusterRefreshAccessibilityChannel } from "../../../common/ipc/cluster";
+import { refreshClusterAccessibilityChannel } from "../../../common/ipc/cluster";
 import hostedClusterIdInjectable from "../../cluster-frame-context/hosted-cluster-id.injectable";
 import customResourceDefinitionStoreInjectable from "../../components/custom-resource-definitions/store.injectable";
-import ipcRendererInjectable from "../../utils/channel/ipc-renderer.injectable";
 import { beforeClusterFrameStartsSecondInjectionToken } from "../tokens";
 
 const refreshAccessibilityOnCrdChangesInjectable = getInjectable({
@@ -13,7 +13,7 @@ const refreshAccessibilityOnCrdChangesInjectable = getInjectable({
     run: () => {
       const crdStore = di.inject(customResourceDefinitionStoreInjectable);
       const hostedClusterId = di.inject(hostedClusterIdInjectable);
-      const ipcRenderer = di.inject(ipcRendererInjectable);
+      const requestFromChannel = di.inject(requestFromChannelInjectionToken);
 
       let debounceTimer: NodeJS.Timeout | undefined;
 
@@ -30,7 +30,7 @@ const refreshAccessibilityOnCrdChangesInjectable = getInjectable({
 
           clearTimeout(debounceTimer);
           debounceTimer = setTimeout(() => {
-            ipcRenderer.invoke(clusterRefreshAccessibilityChannel, hostedClusterId).catch(noop);
+            requestFromChannel(refreshClusterAccessibilityChannel, hostedClusterId).catch(noop);
           }, 400);
         },
       );

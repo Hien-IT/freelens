@@ -17,11 +17,13 @@ import initializeClusterManagerInjectable from "./initialize-manager.injectable"
 import loadProxyKubeconfigInjectable from "./load-proxy-kubeconfig.injectable";
 import clusterManagerInjectable from "./manager.injectable";
 import { registerInjectables as registerPrometheusHandlerInjectables } from "./prometheus-handler/register-injectables";
+import refreshAccessibilityListenerInjectable from "./refresh-accessibility-listener.injectable";
 import removeProxyKubeconfigInjectable from "./remove-proxy-kubeconfig.injectable";
 import requestApiResourcesInjectable from "./request-api-resources.injectable";
 import requestCoreApiVersionsInjectable from "./request-core-api-versions.injectable";
 import requestKubeApiResourcesForInjectable from "./request-kube-api-resources-for.injectable";
 import requestNonCoreApiVersionsInjectable from "./request-non-core-api-versions.injectable";
+import setFrameIdListenerInjectable from "./set-frame-id-listener.injectable";
 import startDisconnectingClustersRemovedFromCatalogInjectable from "./start-disconnecting-clusters-removed-from-catalog.injectable";
 import stopAllClusterConnectionsOnQuitInjectable from "./stop-cluster-connections-on-quit.injectable";
 import stopDisconnectingClustersRemovedFromCatalogInjectable from "./stop-disconnecting-clusters-removed-from-catalog.injectable";
@@ -90,6 +92,11 @@ export function registerInjectables(di: DiContainerForInjection): void {
     /* Ignore duplicate registration */
   }
   try {
+    di.register(refreshAccessibilityListenerInjectable);
+  } catch (e) {
+    /* Ignore duplicate registration */
+  }
+  try {
     di.register(removeProxyKubeconfigInjectable);
   } catch (e) {
     /* Ignore duplicate registration */
@@ -111,6 +118,11 @@ export function registerInjectables(di: DiContainerForInjection): void {
   }
   try {
     di.register(requestNonCoreApiVersionsInjectable);
+  } catch (e) {
+    /* Ignore duplicate registration */
+  }
+  try {
+    di.register(setFrameIdListenerInjectable);
   } catch (e) {
     /* Ignore duplicate registration */
   }

@@ -12,14 +12,17 @@ view always calls its own host, with a relative URL.
 | --------------------------------------------------------------------- | -------------------- |
 | the host is the main host or a cluster host of the catalog            | `404`                |
 | the method is `POST`                                                  | `405`                |
-| `Origin` is present and equals `freelens-app://<host of the request>` | `403`                |
+| `Origin`, when present, equals `freelens-app://<host of the request>` | `403`                |
 | `Content-Type` is `application/json`                                  | `415`                |
 | the body is at most 64 MiB                                            | `413`                |
 | the body is JSON of the shape the route expects                       | `400`                |
 
 The sender of the request is the view its host names (research R7): the main
 window, or the frame of the cluster whose id is in the host. Nothing in the
-body names the sender. No response carries CORS headers.
+body names the sender. WebKit sends no `Origin` when a page posts to its own
+host, so its absence is allowed; a page of another host cannot post JSON
+without a CORS preflight, and no response carries CORS headers, so no
+preflight succeeds.
 
 A **channel id** is the `id` of the TypeScript channel, carried in the body as
 `channel`, so that no path needs decoding. An **envelope** is a JSON object

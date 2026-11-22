@@ -11,10 +11,6 @@ import navigateToEntitySettingsInjectable from "../../common/front-end-routing/r
 import { getMillisecondsFromUnixEpoch } from "../../common/utils/date/get-current-date-time";
 import getClusterByIdInjectable from "../../features/cluster/storage/common/get-by-id.injectable";
 
-import type { IpcRendererEvent } from "electron";
-
-import type { ListNamespaceForbiddenArgs } from "../../common/ipc/cluster";
-
 const intervalBetweenNotifications = 1000 * 60; // 60s
 
 const listNamespacesForbiddenHandlerInjectable = getInjectable({
@@ -27,7 +23,7 @@ const listNamespacesForbiddenHandlerInjectable = getInjectable({
     const notificationLastDisplayedAt = new Map<string, number>();
     const showSuccessNotification = di.inject(showSuccessNotificationInjectable);
 
-    return (event: IpcRendererEvent, ...[clusterId]: ListNamespaceForbiddenArgs): void => {
+    return (clusterId: string): void => {
       const lastDisplayedAt = notificationLastDisplayedAt.get(clusterId);
       const now = getMillisecondsFromUnixEpoch();
 

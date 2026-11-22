@@ -13,7 +13,7 @@ import { onKeyboardShortcut } from "@freelensapp/utilities";
 import { withInjectables } from "@ogre-tools/injectable-react";
 import { observer } from "mobx-react";
 import React from "react";
-import { broadcastMessage } from "../../../common/ipc";
+import broadcastMessageInjectable from "../../../common/ipc/broadcast-message.injectable";
 import isMacInjectable from "../../../common/vars/is-mac.injectable";
 import hostedClusterIdInjectable from "../../cluster-frame-context/hosted-cluster-id.injectable";
 import legacyOnChannelListenInjectable from "../../ipc/legacy-channel-listen.injectable";
@@ -27,7 +27,8 @@ import commandOverlayInjectable from "./command-overlay.injectable";
 import type { IComputedValue } from "mobx";
 
 import type { ClusterId } from "../../../common/cluster-types";
-import type { ipcRendererOn } from "../../../common/ipc";
+import type { BroadcastMessage } from "../../../common/ipc/broadcast-message.injectable";
+import type { LegacyOnChannelListen } from "../../ipc/legacy-channel-listen.injectable";
 import type { AddWindowEventListener } from "../../window/event-listener.injectable";
 import type { CommandOverlay } from "./command-overlay.injectable";
 
@@ -37,7 +38,8 @@ interface Dependencies {
   clusterId: ClusterId | undefined;
   matchedClusterId: IComputedValue<ClusterId | undefined>;
   isMac: boolean;
-  legacyOnChannelListen: typeof ipcRendererOn;
+  legacyOnChannelListen: LegacyOnChannelListen;
+  broadcastMessage: BroadcastMessage;
 }
 
 @observer
@@ -45,7 +47,7 @@ class NonInjectedCommandContainer extends React.Component<Dependencies> {
   private readonly disposers: (() => void)[] = [];
 
   componentDidMount() {
-    const { clusterId, addWindowEventListener, commandOverlay, matchedClusterId, isMac } = this.props;
+    const { clusterId, addWindowEventListener, commandOverlay, matchedClusterId, isMac, broadcastMessage } = this.props;
 
     const action = clusterId
       ? () => commandOverlay.open(<CommandDialog />)
@@ -53,7 +55,7 @@ class NonInjectedCommandContainer extends React.Component<Dependencies> {
           const matchedId = matchedClusterId.get();
 
           if (matchedId) {
-            broadcastMessage(`command-palette:${matchedClusterId}:open`);
+            void broadcastMessage(`command-palette:${matchedClusterId}:open`);
           } else {
             commandOverlay.open(<CommandDialog />);
           }
@@ -98,5 +100,6 @@ export const CommandContainer = withInjectables<Dependencies>(NonInjectedCommand
     matchedClusterId: di.inject(matchedClusterIdInjectable),
     isMac: di.inject(isMacInjectable),
     legacyOnChannelListen: di.inject(legacyOnChannelListenInjectable),
+    broadcastMessage: di.inject(broadcastMessageInjectable),
   }),
 });

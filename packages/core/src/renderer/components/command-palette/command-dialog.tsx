@@ -8,8 +8,9 @@ import { iter } from "@freelensapp/utilities";
 import { withInjectables } from "@ogre-tools/injectable-react";
 import { observer } from "mobx-react";
 import { useState } from "react";
-import { broadcastMessage } from "../../../common/ipc";
+import broadcastMessageInjectable from "../../../common/ipc/broadcast-message.injectable";
 import { IpcRendererNavigationEvents } from "../../../common/ipc/navigation-events";
+import { getDiForExtensionApi } from "../../../extensions/extension-api-di";
 import activeEntityInjectable from "../../api/catalog/entity/active.injectable";
 import navigateInjectable from "../../navigation/navigate.injectable";
 import { Select } from "../select";
@@ -53,7 +54,7 @@ const NonInjectedCommandDialog = observer(({ commands, activeEntity, closeComman
           const { forceRootFrame = false } = opts;
 
           if (forceRootFrame) {
-            broadcastMessage(IpcRendererNavigationEvents.NAVIGATE_IN_APP, url);
+            getDiForExtensionApi().inject(broadcastMessageInjectable)(IpcRendererNavigationEvents.NAVIGATE_IN_APP, url);
           } else {
             navigate(url);
           }

@@ -10,6 +10,7 @@ import { registerInjectables as registerExtensionDiscoveryInjectables } from "./
 import { registerInjectables as registerExtensionInstallationStateStoreInjectables } from "./extension-installation-state-store/register-injectables";
 import { registerInjectables as registerExtensionLoaderInjectables } from "./extension-loader/register-injectables";
 import extensionsInjectable from "./extensions.injectable";
+import { registerInjectables as registerIpcInjectables } from "./ipc/register-injectables";
 import mainExtensionsInjectable from "./main-extensions.injectable";
 import rendererExtensionsInjectable from "./renderer-extensions.injectable";
 
@@ -43,6 +44,11 @@ export function registerInjectables(di: DiContainerForInjection): void {
   }
   try {
     registerExtensionLoaderInjectables(di);
+  } catch (e) {
+    /* Ignore duplicate registration */
+  }
+  try {
+    registerIpcInjectables(di);
   } catch (e) {
     /* Ignore duplicate registration */
   }

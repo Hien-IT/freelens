@@ -5,7 +5,6 @@
  */
 
 import { BrowserWindow, webContents } from "electron";
-import { broadcastMessage } from "../../common/ipc";
 import { WindowAction } from "../../common/ipc/window";
 
 export function handleWindowAction(action: WindowAction) {
@@ -48,7 +47,8 @@ export function handleWindowAction(action: WindowAction) {
   }
 }
 
-export function onLocationChange(): void {
+/** Whether any window can go back or forward in its history. */
+export function getHistoryState(): { canGoBack: boolean; canGoForward: boolean } {
   const getAllWebContents = webContents.getAllWebContents();
 
   const canGoBack = getAllWebContents.some((webContent) => {
@@ -67,6 +67,5 @@ export function onLocationChange(): void {
     return false;
   });
 
-  broadcastMessage("history:can-go-back", canGoBack);
-  broadcastMessage("history:can-go-forward", canGoForward);
+  return { canGoBack, canGoForward };
 }

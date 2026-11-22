@@ -3,8 +3,9 @@
  * Licensed under MIT License. See LICENSE in root directory for more information.
  */
 
+import { requestFromChannelInjectionToken } from "@freelensapp/messaging";
 import { getInjectable } from "@ogre-tools/injectable";
-import { ipcRenderer } from "electron";
+import { standaloneShellTokenChannel } from "../../common/ipc/shell-token-channels";
 
 import type { RequestShellToken } from "./terminal-api";
 
@@ -15,7 +16,11 @@ import type { RequestShellToken } from "./terminal-api";
 const requestStandaloneShellTokenInjectable = getInjectable({
   id: "request-standalone-shell-token",
 
-  instantiate: (): RequestShellToken => (tabId) => ipcRenderer.invoke("app:standalone-shell-api", tabId),
+  instantiate: (di): RequestShellToken => {
+    const requestFromChannel = di.inject(requestFromChannelInjectionToken);
+
+    return (tabId) => requestFromChannel(standaloneShellTokenChannel, tabId);
+  },
 });
 
 export default requestStandaloneShellTokenInjectable;

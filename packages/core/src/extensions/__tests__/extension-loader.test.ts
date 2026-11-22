@@ -10,8 +10,8 @@ import directoryForUserDataInjectable from "../../common/app-paths/directory-for
 import enabledExtensionsStateInjectable from "../../features/extensions/enabled/common/state.injectable";
 import { getDiForUnitTesting } from "../../renderer/getDiForUnitTesting";
 import currentlyInClusterFrameInjectable from "../../renderer/routes/currently-in-cluster-frame.injectable";
-import ipcRendererInjectable from "../../renderer/utils/channel/ipc-renderer.injectable";
 import extensionLoaderInjectable from "../extension-loader/extension-loader.injectable";
+import ipcRendererInjectable from "../ipc/ipc-renderer.injectable";
 
 import type { IpcRenderer } from "electron";
 import type { ObservableMap } from "mobx";

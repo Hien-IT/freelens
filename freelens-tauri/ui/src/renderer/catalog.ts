@@ -6,6 +6,9 @@
 // The catalog page of the main window. Its data comes from the core on
 // `/api/clusters` (specs/001-tauri-shell-spike/contracts/scheme-routes.md).
 
+// Only a --messaging-check run loads the check and its dependencies.
+const messagingCheck = new URLSearchParams(location.search).has("messaging-check");
+
 interface CatalogResponse {
   source: string | null;
   message: string | null;
@@ -50,7 +53,8 @@ function openCluster(cluster: Cluster): void {
 
   const frame = document.createElement("iframe");
   frame.title = cluster.name;
-  frame.src = `freelens-app://${cluster.id}.renderer.freelens.app/`;
+  // The frame runs the messaging check when the main window does.
+  frame.src = `freelens-app://${cluster.id}.renderer.freelens.app/${messagingCheck ? "?messaging-check" : ""}`;
   frame.width = "100%";
   frame.height = "480";
 
@@ -100,6 +104,13 @@ async function showCatalog(): Promise<void> {
   const openOnLoad = catalog.clusters.find((cluster) => cluster.id === catalog.openOnLoad);
   if (openOnLoad) {
     openCluster(openOnLoad);
+  }
+
+  if (messagingCheck) {
+    void import("./messaging-check").then(
+      ({ runMessagingCheck }) => runMessagingCheck(),
+      () => fetch("/api/mark?name=messaging-check-failed"),
+    );
   }
 }
 

@@ -9,6 +9,7 @@ export {
   messageChannelListenerInjectionToken,
 } from "./message/message-channel-listener-injection-token";
 export { sendMessageToChannelInjectionToken } from "./message/message-to-channel-injection-token";
+export { sendMessageToWindowInjectionToken } from "./message/send-message-to-window-injection-token";
 export { enlistRequestChannelListenerInjectionToken } from "./request/enlist-request-channel-listener-injection-token";
 export { getRequestChannel } from "./request/get-request-channel";
 export {
@@ -26,6 +27,7 @@ export type {
   MessageChannelListener,
 } from "./message/message-channel-listener-injection-token";
 export type { SendMessageToChannel } from "./message/message-to-channel-injection-token";
+export type { SendMessageToWindow, WindowTarget } from "./message/send-message-to-window-injection-token";
 export type { EnlistRequestChannelListener } from "./request/enlist-request-channel-listener-injection-token";
 export type {
   GetRequestChannelListenerInjectableInfo,

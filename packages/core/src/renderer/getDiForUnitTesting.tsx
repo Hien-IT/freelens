@@ -19,6 +19,7 @@ import { chunk, noop } from "es-toolkit";
 import { runInAction } from "mobx";
 import dependencyInjectionContainerInjectable from "../common/dependency-injection/dependency-injection-container.injectable";
 import { setDiForExtensionApi } from "../extensions/extension-api-di";
+import relayLegacyBroadcastsInjectable from "../extensions/ipc/relay-legacy-broadcasts.injectable";
 import { getOverrideFsWithFakes } from "../test-utils/override-fs-with-fakes";
 import hostedClusterIdInjectable from "./cluster-frame-context/hosted-cluster-id.injectable";
 import terminalSpawningPoolInjectable from "./components/dock/terminal/terminal-spawning-pool.injectable";
@@ -91,7 +92,8 @@ export const getDiForUnitTesting = () => {
     di.override(globalOverride.injectable, globalOverride.overridingInstantiate);
   }
 
-  [startTopbarStateSyncInjectable].forEach((injectable) => {
+  // The relay is registered in both processes, as the extension tree is.
+  [startTopbarStateSyncInjectable, relayLegacyBroadcastsInjectable].forEach((injectable) => {
     di.override(injectable, () => ({
       id: injectable.id,
       run: () => {},

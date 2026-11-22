@@ -13,9 +13,10 @@ import {
   KubernetesCluster,
   LensKubernetesClusterStatus,
 } from "../../common/catalog-entities/kubernetes-cluster";
-import { ipcMainOn } from "../../common/ipc";
+import { networkOfflineChannel, networkOnlineChannel } from "../../common/ipc/cluster";
 
 import type { Logger } from "@freelensapp/logger";
+import type { EnlistMessageChannelListener } from "@freelensapp/messaging";
 
 import type { IComputedValue, IObservableValue, ObservableSet } from "mobx";
 
@@ -43,6 +44,7 @@ interface Dependencies {
   getClusterConnection: (cluster: Cluster) => ClusterConnection;
   getClusterById: GetClusterById;
   addCluster: AddCluster;
+  enlistMessageChannelListener: EnlistMessageChannelListener;
 }
 
 export class ClusterManager {
@@ -91,8 +93,16 @@ export class ClusterManager {
       }
     });
 
-    ipcMainOn("network:offline", this.onNetworkOffline);
-    ipcMainOn("network:online", this.onNetworkOnline);
+    this.dependencies.enlistMessageChannelListener({
+      id: "cluster-manager-network-offline",
+      channel: networkOfflineChannel,
+      handler: this.onNetworkOffline,
+    });
+    this.dependencies.enlistMessageChannelListener({
+      id: "cluster-manager-network-online",
+      channel: networkOnlineChannel,
+      handler: this.onNetworkOnline,
+    });
   });
 
   @action

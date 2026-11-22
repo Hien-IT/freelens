@@ -6,7 +6,6 @@
 
 import { compileRoutePath, matchPath } from "@freelensapp/routing";
 import { isDefined, iter } from "@freelensapp/utilities";
-import { ipcRenderer } from "electron";
 import { when } from "mobx";
 import { RoutingError, RoutingErrorType } from "./error";
 
@@ -70,6 +69,9 @@ export interface LensProtocolRouterDependencies {
 }
 
 export abstract class LensProtocolRouter {
+  /** The process the router runs in, for its log lines. */
+  protected abstract readonly processName: "main" | "renderer";
+
   // Map between path schemas and the handlers
   protected internalRoutes = new Map<string, RouteHandler>();
 
@@ -211,7 +213,7 @@ export abstract class LensProtocolRouter {
 
     if (!extension) {
       this.dependencies.logger.info(
-        `${LensProtocolRouter.LoggingPrefix}: Extension ${name} matched, but does not have a class for ${ipcRenderer ? "renderer" : "main"}`,
+        `${LensProtocolRouter.LoggingPrefix}: Extension ${name} matched, but does not have a class for ${this.processName}`,
       );
 
       return name;

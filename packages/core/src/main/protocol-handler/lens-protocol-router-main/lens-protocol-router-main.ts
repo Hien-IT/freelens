@@ -40,6 +40,8 @@ export interface LensProtocolRouterMainDependencies extends LensProtocolRouterDe
 }
 
 export class LensProtocolRouterMain extends proto.LensProtocolRouter {
+  protected readonly processName = "main";
+
   private readonly missingExtensionHandlers: FallbackHandler[] = [];
 
   // TODO: This is used to solve out-of-place temporal dependency. Remove, and solve otherwise.

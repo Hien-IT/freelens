@@ -8,6 +8,8 @@
   "include": [
     "freelens/src/renderer/**/*",
     "freelens-tauri/ui/src/renderer/**/*",
+    "packages/technical-features/messaging/messaging-for-tauri/index.ts",
+    "packages/technical-features/messaging/messaging-for-tauri/src/**/*",
     "freelens/src/common/**/*",
     "freelens/src/freelens-extension-api.ts",
     "packages/core/src/**/renderer/**/*",

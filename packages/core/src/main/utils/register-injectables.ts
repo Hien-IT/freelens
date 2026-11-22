@@ -6,7 +6,6 @@
  * This replaces the webpack-based auto-registration system.
  */
 
-import { registerInjectables as registerChannelInjectables } from "./channel/register-injectables";
 import commandLineArgumentsInjectable from "./command-line-arguments.injectable";
 import getPortFromStreamInjectable from "./get-port-from-stream.injectable";
 import { registerInjectables as registerResolveSystemProxyInjectables } from "./resolve-system-proxy/register-injectables";
@@ -22,11 +21,6 @@ export function registerInjectables(di: DiContainerForInjection): void {
   }
   try {
     di.register(getPortFromStreamInjectable);
-  } catch (e) {
-    /* Ignore duplicate registration */
-  }
-  try {
-    registerChannelInjectables(di);
   } catch (e) {
     /* Ignore duplicate registration */
   }

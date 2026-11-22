@@ -4,6 +4,8 @@
  * Licensed under MIT License. See LICENSE in root directory for more information.
  */
 
+import { getMessageChannel, getRequestChannel } from "@freelensapp/messaging";
+
 export const windowActionHandleChannel = "window:window-action";
 export const windowOpenAppMenuAsContextMenuChannel = "window:open-app-context-menu";
 export const windowLocationChangedChannel = "window:location-changed";
@@ -38,3 +40,11 @@ export enum WindowAction {
    */
   CLOSE = "close",
 }
+
+// Typed channels of the legacy names above (specs/002-messaging-for-tauri, research R11).
+export const windowActionChannel = getRequestChannel<WindowAction, void>(windowActionHandleChannel);
+export const openAppMenuAsContextMenuChannel = getMessageChannel<void>(windowOpenAppMenuAsContextMenuChannel);
+// The location is sent but not read by main.
+export const locationChangedChannel = getMessageChannel<unknown>(windowLocationChangedChannel);
+export const historyCanGoBackChannel = getMessageChannel<boolean>("history:can-go-back");
+export const historyCanGoForwardChannel = getMessageChannel<boolean>("history:can-go-forward");

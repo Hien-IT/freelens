@@ -11,8 +11,9 @@ import { observable } from "mobx";
 import { observer } from "mobx-react";
 import React, { useState } from "react";
 import visitEntityContextMenuInjectable from "../../../common/catalog/visit-entity-context-menu.injectable";
-import { broadcastMessage } from "../../../common/ipc";
+import broadcastMessageInjectable from "../../../common/ipc/broadcast-message.injectable";
 import { IpcRendererNavigationEvents } from "../../../common/ipc/navigation-events";
+import { getDiForExtensionApi } from "../../../extensions/extension-api-di";
 import activeHotbarInjectable from "../../../features/hotbar/storage/common/toggling.injectable";
 import normalizeCatalogEntityContextMenuInjectable from "../../catalog/normalize-menu-item.injectable";
 import navigateInjectable from "../../navigation/navigate.injectable";
@@ -67,7 +68,7 @@ const NonInjectedSidebarCluster = observer(
         menuItems,
         navigate: (url, forceMainFrame = true) => {
           if (forceMainFrame) {
-            broadcastMessage(IpcRendererNavigationEvents.NAVIGATE_IN_APP, url);
+            getDiForExtensionApi().inject(broadcastMessageInjectable)(IpcRendererNavigationEvents.NAVIGATE_IN_APP, url);
           } else {
             navigate(url);
           }

@@ -4,8 +4,13 @@
  * Licensed under MIT License. See LICENSE in root directory for more information.
  */
 
+import { getMessageChannel } from "@freelensapp/messaging";
+
 export const extensionDiscoveryStateChannel = "extension-discovery:state";
 export const bundledExtensionsLoaded = "extension-loader:bundled-extensions-loaded";
+
+// The typed channel of the legacy name above (specs/002-messaging-for-tauri, research R11).
+export const bundledExtensionsLoadedChannel = getMessageChannel<void>(bundledExtensionsLoaded);
 export const extensionLoaderFromMainChannel = "extension-loader:main:state";
 
 /**

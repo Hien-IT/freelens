@@ -7,8 +7,9 @@
 import { withInjectables } from "@ogre-tools/injectable-react";
 import { observer } from "mobx-react";
 import { isKubernetesCluster, KubernetesCluster } from "../../../common/catalog-entities";
-import { broadcastMessage } from "../../../common/ipc";
+import broadcastMessageInjectable from "../../../common/ipc/broadcast-message.injectable";
 import { catalogEntityRunListener } from "../../../common/ipc/catalog";
+import { getDiForExtensionApi } from "../../../extensions/extension-api-di";
 import catalogEnitiesInjectable from "../../api/catalog/entity/entities.injectable";
 import commandOverlayInjectable from "../command-palette/command-overlay.injectable";
 import { Select } from "../select";
@@ -38,7 +39,7 @@ const NonInjectedClustersSearchCommand = observer(({ closeCommandOverlay, entiti
     menuPortalTarget={null}
     onChange={(option) => {
       if (option) {
-        broadcastMessage(catalogEntityRunListener, option.value.getId());
+        getDiForExtensionApi().inject(broadcastMessageInjectable)(catalogEntityRunListener, option.value.getId());
         closeCommandOverlay();
       }
     }}

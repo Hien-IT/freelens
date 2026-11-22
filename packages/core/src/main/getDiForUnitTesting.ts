@@ -18,6 +18,7 @@ import { vi } from "vitest";
 import dependencyInjectionContainerInjectable from "../common/dependency-injection/dependency-injection-container.injectable";
 import broadcastMessageInjectable from "../common/ipc/broadcast-message.injectable";
 import { setDiForExtensionApi } from "../extensions/extension-api-di";
+import relayLegacyBroadcastsInjectable from "../extensions/ipc/relay-legacy-broadcasts.injectable";
 import handleExtensionSchemeInjectable from "../features/extensions/loader/main/handle-extension-scheme.injectable";
 import registerExtensionSchemeAsPrivilegedInjectable from "../features/extensions/loader/main/register-scheme-as-privileged.injectable";
 import setupSyncingOfWeblinksInjectable from "../features/weblinks/main/setup-syncing-of-weblinks.injectable";
@@ -27,7 +28,6 @@ import initializeClusterManagerInjectable from "./cluster/initialize-manager.inj
 import setupApplicationNameInjectable from "./electron-app/runnables/setup-application-name.injectable";
 import setupDeepLinkingInjectable from "./electron-app/runnables/setup-deep-linking.injectable";
 import setupDeviceShutdownInjectable from "./electron-app/runnables/setup-device-shutdown.injectable";
-import setupIpcMainHandlersInjectable from "./electron-app/runnables/setup-ipc-main-handlers/setup-ipc-main-handlers.injectable";
 import setupMainWindowVisibilityAfterActivationInjectable from "./electron-app/runnables/setup-main-window-visibility-after-activation.injectable";
 import waitUntilBundledExtensionsAreLoadedInjectable from "./start-main-application/lens-window/application-window/wait-until-bundled-extensions-are-loaded.injectable";
 import clearHttpCacheInjectable from "./start-main-application/runnables/clear-http-cache.injectable";
@@ -127,7 +127,7 @@ const overrideRunnablesHavingSideEffects = (di: DiContainer) => {
     initializeClusterManagerInjectable,
     handleExtensionSchemeInjectable,
     registerExtensionSchemeAsPrivilegedInjectable,
-    setupIpcMainHandlersInjectable,
+    relayLegacyBroadcastsInjectable,
     setupFreelensProxyInjectable,
     setupSessionProxyBypassInjectable,
     setupSyncingOfWeblinksInjectable,

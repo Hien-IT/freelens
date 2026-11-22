@@ -4,8 +4,8 @@
  * Licensed under MIT License. See LICENSE in root directory for more information.
  */
 
+import { enlistMessageChannelListenerInjectionToken, sendMessageToChannelInjectionToken } from "@freelensapp/messaging";
 import { action, computed, observable } from "mobx";
-import { ipcRendererOn } from "../../../../common/ipc";
 
 import type {
   CatalogCategory,
@@ -19,10 +19,14 @@ import type {
 } from "../../../../common/catalog";
 import "../../../../common/catalog-entities";
 import { iter } from "@freelensapp/utilities";
-import { ipcRenderer } from "electron";
 import { once } from "es-toolkit";
 import { CatalogRunEvent } from "../../../../common/catalog/catalog-run-event";
-import { catalogEntityRunListener, catalogInitChannel, catalogItemsChannel } from "../../../../common/ipc/catalog";
+import {
+  catalogEntityRunMessageChannel,
+  catalogInitMessageChannel,
+  catalogItemsMessageChannel,
+} from "../../../../common/ipc/catalog";
+import { getDiForExtensionApi } from "../../../../extensions/extension-api-di";
 
 import type { Logger } from "@freelensapp/logger";
 import type { Disposer } from "@freelensapp/utilities";
@@ -91,20 +95,32 @@ export class CatalogEntityRegistry {
   }
 
   init() {
-    ipcRendererOn(catalogItemsChannel, (event, items: (CatalogEntityData & CatalogEntityKindData)[]) => {
-      this.updateItems(items);
+    // Reached as the legacy helpers reached the IPC objects.
+    const di = getDiForExtensionApi();
+    const enlistMessageChannelListener = di.inject(enlistMessageChannelListenerInjectionToken);
+
+    enlistMessageChannelListener({
+      id: "catalog-items",
+      channel: catalogItemsMessageChannel,
+      handler: (items) => {
+        this.updateItems(items as (CatalogEntityData & CatalogEntityKindData)[]);
+      },
     });
 
     // Make sure that we get items ASAP and not the next time one of them changes
-    ipcRenderer.send(catalogInitChannel);
+    di.inject(sendMessageToChannelInjectionToken)(catalogInitMessageChannel);
 
     if (process.isMainFrame) {
-      ipcRendererOn(catalogEntityRunListener, (event, id: string) => {
-        const entity = this.getById(id);
+      enlistMessageChannelListener({
+        id: "catalog-entity-run",
+        channel: catalogEntityRunMessageChannel,
+        handler: (id) => {
+          const entity = this.getById(id);
 
-        if (entity) {
-          this.onRun(entity);
-        }
+          if (entity) {
+            this.onRun(entity);
+          }
+        },
       });
     }
   }

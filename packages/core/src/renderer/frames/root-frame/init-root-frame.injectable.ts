@@ -4,14 +4,14 @@
  * Licensed under MIT License. See LICENSE in root directory for more information.
  */
 
+import { sendMessageToChannelInjectionToken } from "@freelensapp/messaging";
 import { getInjectable } from "@ogre-tools/injectable";
-import { broadcastMessage } from "../../../common/ipc";
-import { bundledExtensionsLoaded } from "../../../common/ipc/extension-handling";
+import { networkOfflineChannel, networkOnlineChannel } from "../../../common/ipc/cluster";
+import { bundledExtensionsLoadedChannel } from "../../../common/ipc/extension-handling";
 import catalogEntityRegistryInjectable from "../../api/catalog/entity/registry.injectable";
 import registerIpcListenersInjectable from "../../ipc/register-ipc-listeners.injectable";
 import bindProtocolAddRouteHandlersInjectable from "../../protocol-handler/bind-protocol-add-route-handlers/bind-protocol-add-route-handlers.injectable";
 import lensProtocolRouterRendererInjectable from "../../protocol-handler/lens-protocol-router-renderer/lens-protocol-router-renderer.injectable";
-import ipcRendererInjectable from "../../utils/channel/ipc-renderer.injectable";
 import loadExtensionsInjectable from "../load-extensions.injectable";
 
 const initRootFrameInjectable = getInjectable({
@@ -19,7 +19,7 @@ const initRootFrameInjectable = getInjectable({
   instantiate: (di) => {
     const loadExtensions = di.inject(loadExtensionsInjectable);
     const registerIpcListeners = di.inject(registerIpcListenersInjectable);
-    const ipcRenderer = di.inject(ipcRendererInjectable);
+    const sendMessageToChannel = di.inject(sendMessageToChannelInjectionToken);
     const bindProtocolAddRouteHandlers = di.inject(bindProtocolAddRouteHandlersInjectable);
     const lensProtocolRouterRenderer = di.inject(lensProtocolRouterRendererInjectable);
     const catalogEntityRegistry = di.inject(catalogEntityRegistryInjectable);
@@ -30,16 +30,17 @@ const initRootFrameInjectable = getInjectable({
       try {
         await loadExtensions();
       } finally {
-        ipcRenderer.send(bundledExtensionsLoaded);
+        sendMessageToChannel(bundledExtensionsLoadedChannel);
       }
 
       lensProtocolRouterRenderer.init();
 
       bindProtocolAddRouteHandlers();
 
-      window.addEventListener("offline", () => broadcastMessage("network:offline"));
+      // Main is the only listener of these, so they go to main directly.
+      window.addEventListener("offline", () => sendMessageToChannel(networkOfflineChannel));
 
-      window.addEventListener("online", () => broadcastMessage("network:online"));
+      window.addEventListener("online", () => sendMessageToChannel(networkOnlineChannel));
 
       registerIpcListeners();
     };
