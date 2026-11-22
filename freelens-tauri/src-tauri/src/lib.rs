@@ -4,6 +4,7 @@
  */
 
 pub mod catalog;
+pub mod clusters;
 pub mod options;
 pub mod scheme;
 
@@ -24,8 +25,11 @@ pub fn run() {
         }
     };
     let home = std::env::var_os("HOME").map(PathBuf::from);
+    let catalog = catalog::Catalog::load(&options.kubeconfig, home.as_deref());
+    let clusters = clusters::KubeClusters::new(catalog.kubeconfig().cloned());
     let state = Arc::new(scheme::State {
-        catalog: catalog::Catalog::load(&options.kubeconfig, home.as_deref()),
+        catalog,
+        clusters: Box::new(clusters),
         log: Box::new(|line| println!("{line}")),
     });
     let loaded = AtomicBool::new(false);

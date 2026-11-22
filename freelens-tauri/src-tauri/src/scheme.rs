@@ -9,7 +9,8 @@
 use http::{Method, Request, Response, StatusCode, header};
 use serde_json::json;
 
-use crate::catalog::Catalog;
+use crate::catalog::{Catalog, CatalogEntry};
+use crate::clusters::{ApiOutcome, ClusterApi};
 
 pub const SCHEME: &str = "freelens-app";
 pub const MAIN_HOST: &str = "renderer.freelens.app";
@@ -26,13 +27,15 @@ pub struct Asset {
 
 pub struct State {
     pub catalog: Catalog,
+    /// Sends the `/api-kube` requests of the cluster frames.
+    pub clusters: Box<dyn ClusterApi>,
     /// Prints a log line of `contracts/log-lines.md`.
     pub log: Box<dyn Fn(&str) + Send + Sync>,
 }
 
-enum Host {
+enum Host<'a> {
     Main,
-    Cluster,
+    Cluster(&'a CatalogEntry),
     Unknown,
 }
 
@@ -69,7 +72,16 @@ pub async fn handle(
 
     match (&host, path) {
         (Host::Main, "/") => page(assets, "index.html", MAIN_CSP),
-        (Host::Cluster, "/") => page(assets, "cluster.html", CLUSTER_CSP),
+        (Host::Cluster(_), "/") => page(assets, "cluster.html", CLUSTER_CSP),
+        (Host::Cluster(entry), path) if path.starts_with("/api-kube/") => {
+            kube(
+                entry,
+                &path["/api-kube".len()..],
+                request.uri().query(),
+                state,
+            )
+            .await
+        }
         (_, "/api/mark") => mark(request.uri().query(), state),
         (Host::Main, "/api/clusters") => clusters(&state.catalog),
         (_, path) if path.starts_with("/assets/") && !path.contains("..") => {
@@ -82,14 +94,56 @@ pub async fn handle(
     }
 }
 
-fn host_of(host: &str, catalog: &Catalog) -> Host {
+fn host_of<'a>(host: &str, catalog: &'a Catalog) -> Host<'a> {
     if host == MAIN_HOST {
         return Host::Main;
     }
     host.strip_suffix(MAIN_HOST)
         .and_then(|prefix| prefix.strip_suffix('.'))
         .and_then(|id| catalog.entry(id))
-        .map_or(Host::Unknown, |_| Host::Cluster)
+        .map_or(Host::Unknown, Host::Cluster)
+}
+
+/// `GET /api-kube/<api path>`, sent to the cluster by the core, which adds the
+/// credentials; the view's own headers are not forwarded.
+async fn kube(
+    entry: &CatalogEntry,
+    api_path: &str,
+    query: Option<&str>,
+    state: &State,
+) -> Response<Vec<u8>> {
+    let api = api_path.starts_with("/api/") || api_path.starts_with("/apis/");
+    if !api || api_path.contains("..") {
+        return empty(StatusCode::NOT_FOUND);
+    }
+    // The scheme answers in one piece, so it cannot carry a watch (research R4).
+    let watch = query
+        .unwrap_or_default()
+        .split('&')
+        .any(|pair| pair.split('=').next() == Some("watch"));
+    if watch {
+        return empty(StatusCode::BAD_REQUEST);
+    }
+    let path_and_query = match query {
+        Some(query) => format!("{api_path}?{query}"),
+        None => api_path.to_string(),
+    };
+    match state.clusters.get(entry, &path_and_query).await {
+        ApiOutcome::Response { status, body } => with_body(
+            StatusCode::from_u16(status).unwrap_or(StatusCode::BAD_GATEWAY),
+            "application/json",
+            body,
+        ),
+        ApiOutcome::Unreachable => {
+            let body =
+                json!({ "error": "unreachable", "message": "The cluster cannot be reached." });
+            with_body(
+                StatusCode::BAD_GATEWAY,
+                "application/json",
+                body.to_string().into_bytes(),
+            )
+        }
+    }
 }
 
 fn page(
