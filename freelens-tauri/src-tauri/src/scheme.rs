@@ -29,6 +29,8 @@ pub struct State {
     pub catalog: Catalog,
     /// Sends the `/api-kube` requests of the cluster frames.
     pub clusters: Box<dyn ClusterApi>,
+    /// The context of `--open-cluster`, opened once the catalog is shown.
+    pub open_cluster: Option<String>,
     /// Prints a log line of `contracts/log-lines.md`.
     pub log: Box<dyn Fn(&str) + Send + Sync>,
 }
@@ -83,7 +85,7 @@ pub async fn handle(
             .await
         }
         (_, "/api/mark") => mark(request.uri().query(), state),
-        (Host::Main, "/api/clusters") => clusters(&state.catalog),
+        (Host::Main, "/api/clusters") => clusters(&state.catalog, state.open_cluster.as_deref()),
         (_, path) if path.starts_with("/assets/") && !path.contains("..") => {
             match assets(&path[1..]) {
                 Some(asset) => with_body(StatusCode::OK, &asset.mime, asset.bytes),
@@ -162,7 +164,10 @@ fn page(
     response
 }
 
-fn clusters(catalog: &Catalog) -> Response<Vec<u8>> {
+fn clusters(catalog: &Catalog, open_cluster: Option<&str>) -> Response<Vec<u8>> {
+    let open_on_load = open_cluster
+        .and_then(|name| catalog.entries.iter().find(|entry| entry.name == name))
+        .map(|entry| entry.id.as_str());
     let body = json!({
         "source": catalog.source.path.as_ref().map(|path| path.display().to_string()),
         "message": catalog.message(),
@@ -171,7 +176,7 @@ fn clusters(catalog: &Catalog) -> Response<Vec<u8>> {
             .iter()
             .map(|entry| json!({ "id": entry.id, "name": entry.name }))
             .collect::<Vec<_>>(),
-        "openOnLoad": null,
+        "openOnLoad": open_on_load,
     });
     with_body(
         StatusCode::OK,

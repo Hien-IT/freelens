@@ -55,6 +55,8 @@ function openCluster(cluster: Cluster): void {
   frame.height = "480";
 
   section.append(heading, close, frame);
+  // Marks when the frame is created, for the cluster-open figures (FR-011).
+  void fetch("/api/mark?name=cluster-opened");
   frames.append(section);
 }
 
@@ -94,6 +96,11 @@ async function showCatalog(): Promise<void> {
   }
 
   await fetch("/api/mark?name=catalog-shown");
+
+  const openOnLoad = catalog.clusters.find((cluster) => cluster.id === catalog.openOnLoad);
+  if (openOnLoad) {
+    openCluster(openOnLoad);
+  }
 }
 
 showCatalog().catch((error: unknown) => {

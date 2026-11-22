@@ -13,6 +13,9 @@ build=spike run=1 loaded=1 startup_s=<s> rss_mb=<MB> procs=<n> kube_refs=0
 build=spike run=1 scenario=cluster namespaces_shown_s=<s> rss_mb=<MB> procs=<n>
 ```
 
+- `namespaces_shown_s` is the time from `Mark "cluster-opened"` to
+  `Mark "namespaces-shown"`, to the millisecond, taken by `mark-interval.py`,
+  which reads the log as it is written.
 - `rss_mb` sums the RSS of the main process and of every process whose
   responsible pid is the main process (research R7), in the unit of
   `specs/measure-baseline.sh`: the KiB of `ps` divided by 1024.

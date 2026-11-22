@@ -30,6 +30,7 @@ pub fn run() {
     let state = Arc::new(scheme::State {
         catalog,
         clusters: Box::new(clusters),
+        open_cluster: options.open_cluster,
         log: Box::new(|line| println!("{line}")),
     });
     let loaded = AtomicBool::new(false);

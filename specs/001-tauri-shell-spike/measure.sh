@@ -10,13 +10,18 @@
 # responsible process; started from a shell, the shell's application would be
 # responsible for it and for its WebKit helpers (research R7).
 #
-# usage: measure.sh <spike|electron> <app bundle or dmg> <runs> <idle seconds>
+# Mode spike-cluster launches the experimental build with the given kubeconfig
+# and --open-cluster=kind-freelens-profile, times from Mark "cluster-opened" to
+# Mark "namespaces-shown", and takes the RSS the idle seconds after that.
+#
+# usage: measure.sh <spike|electron|spike-cluster> <app bundle or dmg> <runs> <idle seconds> [kubeconfig]
 set -u
-MODE=$1 SOURCE=$2 RUNS=$3 IDLE=$4
+MODE=$1 SOURCE=$2 RUNS=$3 IDLE=$4 KUBECONFIG_FILE=${5-}
 HERE=$(cd "$(dirname "$0")" && pwd)
 
 case $MODE in
   spike) EXE=freelens-spike LOADED='Window "main" loaded' ;;
+  spike-cluster) EXE=freelens-spike LOADED='Mark "namespaces-shown"' ;;
   electron) EXE=Freelens LOADED='"first-application-window" loaded' ;;
   *)
     echo "unknown mode: $MODE" >&2
@@ -28,6 +33,10 @@ W=$(mktemp -d "${TMPDIR%/}/freelens-measure.XXXXXX")
 echo "workdir=$W"
 # A fresh copy per session, as the baseline measures a freshly unzipped bundle.
 # From a dmg, the copy is what installing the app by dragging it would give.
+if [[ $MODE == spike-cluster && ! -f $KUBECONFIG_FILE ]]; then
+  echo "spike-cluster needs the kubeconfig of the reference cluster" >&2
+  exit 2
+fi
 if [[ $SOURCE == *.dmg ]]; then
   echo "dmg_bytes=$(stat -f %z "$SOURCE")"
   echo "dmg_format=$(hdiutil imageinfo "$SOURCE" 2>/dev/null | sed -n 's/^Format Description: //p')"
@@ -54,16 +63,24 @@ for run in $(seq 1 "$RUNS"); do
   t0=$(now)
   if [[ $MODE == spike ]]; then
     open -n -F --stdout "$D/stdout.log" --stderr "$D/stderr.log" "$BUNDLE" --args --kubeconfig=none
+  elif [[ $MODE == spike-cluster ]]; then
+    open -n -F --stdout "$D/stdout.log" --stderr "$D/stderr.log" "$BUNDLE" \
+      --args --kubeconfig="$KUBECONFIG_FILE" --open-cluster=kind-freelens-profile
   else
     mkdir -p "$D/Freelens"
     printf '{"preferences":{"syncKubeconfigEntries":[]}}\n' >"$D/Freelens/lens-user-store.json"
     open -n -F --env "FREELENS_INTEGRATION_TESTING_DIR=$D" --stdout "$D/stdout.log" --stderr "$D/stderr.log" \
       "$BUNDLE" --args --user-data-dir="$D/userdata"
   fi
-  for _ in $(seq 1 1200); do
-    grep -qF -- "$LOADED" "$D/stdout.log" "$D/stderr.log" && break
-    sleep 0.05
-  done
+  if [[ $MODE == spike-cluster ]]; then
+    # Times the two marks to the millisecond; a grep loop is too coarse for them.
+    opened_to_shown=$(python3 -I "$HERE/mark-interval.py" "$D/stdout.log" cluster-opened namespaces-shown)
+  else
+    for _ in $(seq 1 1200); do
+      grep -qF -- "$LOADED" "$D/stdout.log" "$D/stderr.log" && break
+      sleep 0.05
+    done
+  fi
   t1=$(now)
   loaded=$(cat "$D/stdout.log" "$D/stderr.log" | grep -cF -- "$LOADED")
   pid=$(main_pid)
@@ -74,8 +91,13 @@ for run in $(seq 1 "$RUNS"); do
   rss=$(sed -n 's/^rss_mb=//p' "$D/rss.txt")
   procs=$(grep -c '^proc=' "$D/rss.txt")
   kube_refs=$(cat "$D/stdout.log" "$D/stderr.log" | grep -c '/\.kube')
-  printf 'build=%s run=%s loaded=%s startup_s=%.2f rss_mb=%s procs=%s kube_refs=%s\n' \
-    "$MODE" "$run" "$loaded" "$(echo "$t1 - $t0" | bc)" "$rss" "$procs" "$kube_refs"
+  if [[ $MODE == spike-cluster ]]; then
+    printf 'build=spike run=%s scenario=cluster namespaces_shown_s=%s rss_mb=%s procs=%s\n' \
+      "$run" "$opened_to_shown" "$rss" "$procs"
+  else
+    printf 'build=%s run=%s loaded=%s startup_s=%.2f rss_mb=%s procs=%s kube_refs=%s\n' \
+      "$MODE" "$run" "$loaded" "$(echo "$t1 - $t0" | bc)" "$rss" "$procs" "$kube_refs"
+  fi
 
   kill "$pid"
   sleep 3

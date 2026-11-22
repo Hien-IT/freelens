@@ -23,6 +23,9 @@ pub enum KubeconfigChoice {
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct LaunchOptions {
     pub kubeconfig: KubeconfigChoice,
+    /// `--open-cluster=<context name>`: opened once the catalog is shown, for
+    /// measurement runs.
+    pub open_cluster: Option<String>,
 }
 
 #[derive(Debug, PartialEq, Eq)]
@@ -46,18 +49,26 @@ where
     I: IntoIterator<Item = String>,
 {
     let mut kubeconfig = KubeconfigChoice::Default;
+    let mut open_cluster = None;
 
     for arg in args {
         match arg.split_once('=') {
             Some(("--kubeconfig", "")) => return Err(OptionsError::MissingValue(arg)),
             Some(("--kubeconfig", "none")) => kubeconfig = KubeconfigChoice::None,
             Some(("--kubeconfig", path)) => kubeconfig = KubeconfigChoice::File(cwd.join(path)),
-            None if arg == "--kubeconfig" => return Err(OptionsError::MissingValue(arg)),
+            Some(("--open-cluster", "")) => return Err(OptionsError::MissingValue(arg)),
+            Some(("--open-cluster", name)) => open_cluster = Some(name.to_string()),
+            None if arg == "--kubeconfig" || arg == "--open-cluster" => {
+                return Err(OptionsError::MissingValue(arg));
+            }
             _ => return Err(OptionsError::Unknown(arg)),
         }
     }
 
-    Ok(LaunchOptions { kubeconfig })
+    Ok(LaunchOptions {
+        kubeconfig,
+        open_cluster,
+    })
 }
 
 /// The file `Default` stands for.
@@ -127,6 +138,19 @@ mod tests {
             parse_args(&["--kube=x"]),
             Err(OptionsError::Unknown("--kube=x".into()))
         );
+    }
+
+    #[test]
+    fn open_cluster_names_a_context() {
+        let options = parse_args(&["--kubeconfig=none", "--open-cluster=kind-x"]).unwrap();
+        assert_eq!(options.open_cluster.as_deref(), Some("kind-x"));
+        assert_eq!(parse_args(&[]).unwrap().open_cluster, None);
+        for arg in ["--open-cluster", "--open-cluster="] {
+            assert_eq!(
+                parse_args(&[arg]),
+                Err(OptionsError::MissingValue(arg.into()))
+            );
+        }
     }
 
     #[test]

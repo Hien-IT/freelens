@@ -16,7 +16,8 @@ Số đo để spec `001-tauri-shell-spike` so sánh. Bản Tauri phải đượ
 | RAM sau 60 s đứng yên, trung vị (MB RSS) | 788 (782 / 788 / 790)     |             |           |
 | Số tiến trình lúc đứng yên               | 4                         |             |           |
 
-MB ở đây là 10^6 byte.
+MB của kích thước là 10^6 byte. RSS là KiB của `ps` chia 1024, như
+`specs/measure-baseline.sh` tính, nên 788 thực ra là MiB.
 
 `Freelens.app` trên macOS arm64 gồm những phần dưới đây. Cột "Bản Tauri" là
 dự đoán, chưa đo.
@@ -144,3 +145,105 @@ node specs/analyze-profile.mjs <thư mục>/main.cpuprofile <thư mục>/marks.j
 `NO_PROFILE=1` chạy không có profiler. Mỗi lần chạy ghi đè `main.cpuprofile`,
 `marks.json` và `stdout.log` trong `<thư mục>`, nên đổi tên chúng trước lần
 sau.
+
+## Bản thử nghiệm Tauri (spec 001)
+
+Số đo và kết luận của `specs/001-tauri-shell-spike`. Đo ngày 2026-11-22 trên
+cùng máy với phần Kết quả, theo
+`specs/001-tauri-shell-spike/contracts/measurement-report.md`.
+
+### Kết quả
+
+| Chỉ số                                         | Bản thử nghiệm                | Bản hiện tại, đo lại          | Baseline | Cổng   |
+| ---------------------------------------------- | ----------------------------- | ----------------------------- | -------- | ------ |
+| Bản cài `.dmg` (MB)                            | 58.0                          |                               | 211.8    | ≤ 85   |
+| Khởi động, trung vị 3 lần (s)                  | 0.39 (1.65 / 0.33 / 0.39)     | 3.37 (5.57 / 3.34 / 3.37)     | 2.37     | ≤ 2.37 |
+| RAM sau 60 s đứng yên, trung vị (MB RSS)       | 183 (177 / 183 / 183)         | 793 (792 / 793 / 794)         | 788      | ≤ 394  |
+| Số tiến trình lúc đứng yên                     | 6                             | 5                             | 4        |        |
+| Đến khi danh sách namespace hiện, trung vị (s) | 0.008 (0.008 / 0.006 / 0.016) | 0.569 (0.569 / 0.968 / 0.525) |          |        |
+| RSS 60 s sau khi mở cluster, trung vị (MB)     | 151 (141 / 151 / 151)         | 849 (934 / 716 / 849)         |          |        |
+
+- **Bản cài:** dmg nén zlib (UDZO), như bản hiện tại. Nó đóng gói kubectl và
+  helm, đã kiểm tra với `freelens/binaries.lock.json`, cùng bundle renderer
+  không có source map (60,9 MB chưa nén), để kích thước gần với bản port đầy
+  đủ. Nó không có freelens-k8s-proxy: core tự gọi API server và giữ
+  credential.
+- **Ước lượng phần UI đầy đủ:** heap JavaScript của root frame bản hiện tại
+  sau 60 s đứng yên là 33 MB (cả ba lần), đọc qua CDP sau khi chạy GC. Theo
+  SC-008, RAM lúc đứng yên cộng ước lượng này là 183 + 33 = 216 MB, dưới
+  394 MB. JavaScriptCore và V8 không dùng cùng lượng bộ nhớ cho cùng một đoạn
+  code, nên đây là ước lượng, chưa phải số đo.
+- **Đối chứng cách đo:** đo lại bản hiện tại bằng cách gán tiến trình theo
+  responsible pid cho đúng 4 loại tiến trình của baseline, cộng một dịch vụ hệ
+  thống (`SetStoreUpdateService`, 8 MB); RSS 793 so với 788 của baseline.
+  Khởi động qua `open` chậm hơn chạy thẳng binary (3,37 s so với 2,37 s), nên
+  0,39 s của bản thử nghiệm là con số thận trọng.
+- **Tiến trình của bản thử nghiệm:** tiến trình chính, ba helper WebKit (GPU,
+  WebContent, Networking), `SetStoreUpdateService` và `com.apple.audio.SandboxHelper`.
+  Frame của cluster không thêm tiến trình WebContent nào.
+- **Thời gian mở cluster:** bản thử nghiệm tính từ lúc tạo frame đến khi danh
+  sách có trong trang, theo dòng log; bản hiện tại tính từ lúc bấm cluster đến
+  khi hàng `kube-system` hiện, gồm cả kết nối và chuyển sang trang Namespaces,
+  theo Playwright. Hai số chỉ so được ở độ lớn. Bản hiện tại tính cả
+  freelens-k8s-proxy vào RSS.
+- RSS của bản thử nghiệm khi mở cluster (151 MB) thấp hơn lúc đứng yên không
+  có cluster (183 MB); nguyên nhân chưa được kiểm chứng.
+
+### Hành vi, so với bản hiện tại
+
+| Kiểm tra                             | Bản thử nghiệm                        | Bản hiện tại                        |
+| ------------------------------------ | ------------------------------------- | ----------------------------------- |
+| File kubeconfig không tồn tại        | catalog trống, thông báo nêu tên file | catalog trống, không thấy thông báo |
+| File kubeconfig hỏng                 | catalog trống, thông báo nêu tên file | catalog trống, không thấy thông báo |
+| Danh sách namespace                  | khớp `kubectl`, 3/3 lần               | khớp `kubectl`                      |
+| Tạo namespace khi đang mở            | không đổi cho tới khi mở lại          | hiện sau 1,1 s                      |
+| Cluster không truy cập được          | báo không truy cập được               | báo lỗi kết nối                     |
+| Thiếu quyền liệt kê namespace        | báo thiếu quyền                       | không thấy thông báo trong 15 s     |
+| Frame đọc cửa sổ chính, cluster khác | bị chặn                               |                                     |
+| Credential trong response tới view   | không có                              |                                     |
+
+Với bản hiện tại, script chỉ tìm thông báo trong vùng thông báo và chữ của
+trang. Danh sách không tự cập nhật là theo thiết kế của spike: watch cần kênh
+truyền liên tục của spec 002.
+
+### Kết luận
+
+**Đi tiếp (go).** Bản thử nghiệm đạt cả ba cổng (SC-001 đến SC-003), tổng của
+SC-008 là 216 MB, dưới 394 MB, và frame của cluster trên custom scheme nạp được
+và bị cô lập trên WKWebView (SC-005).
+
+Rủi ro mang sang các spec sau:
+
+- UI của spike rất nhỏ; renderer đầy đủ chỉ chạy được trong WKWebView sau spec
+  003, nên RAM thật của bản port còn phải đo lại khi đó.
+- Watch của Kubernetes chưa được thử: custom scheme trả response một lần, nên
+  spec 002 phải có kênh truyền liên tục.
+- Chưa chạy `pnpm test:integration` của bản Electron trên nhánh này (task T035
+  của spec 001).
+
+### Đo lại
+
+Build bản cài, rồi đo, từ thư mục gốc của repo:
+
+```bash
+pnpm build && pnpm --filter @freelensapp/freelens-tauri tauri:build
+```
+
+```bash
+specs/001-tauri-shell-spike/measure.sh spike "$PWD/freelens-tauri/src-tauri/target/release/bundle/dmg/Freelens Spike_0.1.0_aarch64.dmg" 3 60
+```
+
+```bash
+specs/001-tauri-shell-spike/measure.sh electron "$PWD/freelens/dist/mac-arm64/Freelens.app" 3 60
+```
+
+Số đo khi mở cluster cần cluster kind của mục 0.4 trong
+`specs/tauri-port-runbook.md`:
+
+```bash
+specs/001-tauri-shell-spike/measure.sh spike-cluster "$PWD/freelens-tauri/src-tauri/target/release/bundle/dmg/Freelens Spike_0.1.0_aarch64.dmg" 3 60 "${TMPDIR%/}/kind-freelens-profile.yaml"
+```
+
+```bash
+SCENARIO=namespaces node specs/profile-main.mjs <thư mục> "${TMPDIR%/}/kind-freelens-profile.yaml" "$PWD/freelens/dist/mac-arm64/Freelens.app" 60
+```

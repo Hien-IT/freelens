@@ -58,6 +58,10 @@ fn fixture() -> Fixture {
 }
 
 fn fixture_with(outcome: ApiOutcome) -> Fixture {
+    fixture_opening(outcome, None)
+}
+
+fn fixture_opening(outcome: ApiOutcome, open_cluster: Option<&str>) -> Fixture {
     let path: PathBuf =
         Path::new(env!("CARGO_MANIFEST_DIR")).join("tests/fixtures/three-contexts.yaml");
     let lines = Arc::new(Mutex::new(Vec::new()));
@@ -69,6 +73,7 @@ fn fixture_with(outcome: ApiOutcome) -> Fixture {
             outcome,
             calls: Arc::clone(&calls),
         }),
+        open_cluster: open_cluster.map(str::to_string),
         log: Box::new(move |line| sink.lock().unwrap().push(line.to_string())),
     };
     Fixture {
@@ -213,6 +218,19 @@ async fn the_catalog_is_served_on_the_main_host_only() {
 
     let response = get(&f, &format!("{}/api/clusters", cluster_host(&f, 0))).await;
     assert_eq!(response.status(), StatusCode::NOT_FOUND);
+}
+
+#[tokio::test]
+async fn open_on_load_names_the_cluster_of_open_cluster() {
+    let f = fixture_opening(namespaces(), Some("context-b"));
+    let json: serde_json::Value =
+        serde_json::from_slice(get(&f, &format!("{MAIN}/api/clusters")).await.body()).unwrap();
+    assert_eq!(json["openOnLoad"], f.state.catalog.entries[1].id.as_str());
+
+    let f = fixture_opening(namespaces(), Some("no-such-context"));
+    let json: serde_json::Value =
+        serde_json::from_slice(get(&f, &format!("{MAIN}/api/clusters")).await.body()).unwrap();
+    assert_eq!(json["openOnLoad"], serde_json::Value::Null);
 }
 
 #[tokio::test]

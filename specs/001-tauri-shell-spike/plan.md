@@ -93,7 +93,9 @@ specs/001-tauri-shell-spike/
 │   └── measurement-report.md
 ├── checklists/
 │   └── requirements.md
-├── measure.sh           # measurement procedure (FR-011), added by the tasks
+├── measure.sh           # measurement procedure (FR-011)
+├── responsible-rss.py   # RSS of an app and of the processes it is responsible for
+├── mark-interval.py     # time between two marks of the log
 └── tasks.md             # /speckit-tasks
 ```
 
@@ -103,6 +105,7 @@ specs/001-tauri-shell-spike/
 freelens-tauri/
 ├── package.json             # private @freelensapp/freelens-tauri; scripts tauri:ui, tauri:dev, tauri:build
 ├── vite.config.ts           # builds ui/ (two pages) into ui/dist
+├── scripts/stage-payload.sh # stages kubectl, helm and the renderer payload for the bundle
 ├── .gitignore               # src-tauri/target, staged bundle payload
 ├── ui/
 │   ├── index.html           # main window: catalog

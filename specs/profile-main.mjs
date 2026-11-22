@@ -7,8 +7,13 @@
 // usage (from the repo root): node specs/profile-main.mjs <workdir> <kubeconfig> <Freelens.app> [seconds]
 // Writes main.cpuprofile, marks.json and stdout.log into <workdir>. NO_PROFILE=1 runs without the profiler.
 // The kubeconfig must have the context kind-freelens-profile (specs/tauri-port-runbook.md, 0.4).
-import { execSync, spawn } from "node:child_process";
-import { mkdirSync, rmSync, writeFileSync } from "node:fs";
+//
+// SCENARIO=namespaces measures the cluster-open figures of specs/001-tauri-shell-spike instead,
+// without the profiler: the JavaScript heap of the root frame after <seconds> idle, then the time
+// from clicking the cluster to the Namespaces rows, and the RSS of every process of the app
+// <seconds> later. It writes marks.json, stdout.log and stderr.log.
+import { execFileSync, execSync, spawn } from "node:child_process";
+import { mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { createRequire } from "node:module";
 import path from "node:path";
 
@@ -20,6 +25,7 @@ const SECONDS = Number(secondsArg ?? 60);
 const D = path.join(W, "run");
 const APP = path.join(BUNDLE, "Contents/MacOS/Freelens");
 const CONTEXT = "kind-freelens-profile";
+const SCENARIO = process.env.SCENARIO ?? "lists";
 
 // A fresh data dir per run: sidebar and namespace state persist in it.
 rmSync(D, { recursive: true, force: true });
@@ -38,12 +44,38 @@ const mark = (name) => {
 };
 
 let stdout = "";
-const child = spawn(APP, [`--user-data-dir=${D}/userdata`, "--inspect=5858", "--remote-debugging-port=9223"], {
-  env: { ...process.env, FREELENS_INTEGRATION_TESTING_DIR: D, KUBECONFIG },
-  stdio: ["ignore", "pipe", "pipe"],
-});
-child.stdout.on("data", (c) => (stdout += c));
-child.stderr.on("data", (c) => (stdout += c));
+let child;
+if (SCENARIO === "namespaces") {
+  // Started through LaunchServices, so that the app is its own responsible process and
+  // responsible-rss.py finds all of its processes (specs/001-tauri-shell-spike/research.md, R7).
+  for (const file of ["stdout.log", "stderr.log"]) writeFileSync(path.join(W, file), "");
+  execFileSync("open", [
+    "-n",
+    "-F",
+    "--env",
+    `FREELENS_INTEGRATION_TESTING_DIR=${D}`,
+    "--env",
+    `KUBECONFIG=${KUBECONFIG}`,
+    "--stdout",
+    path.join(W, "stdout.log"),
+    "--stderr",
+    path.join(W, "stderr.log"),
+    BUNDLE,
+    "--args",
+    `--user-data-dir=${D}/userdata`,
+    "--remote-debugging-port=9223",
+  ]);
+} else {
+  child = spawn(APP, [`--user-data-dir=${D}/userdata`, "--inspect=5858", "--remote-debugging-port=9223"], {
+    env: { ...process.env, FREELENS_INTEGRATION_TESTING_DIR: D, KUBECONFIG },
+    stdio: ["ignore", "pipe", "pipe"],
+  });
+  child.stdout.on("data", (c) => (stdout += c));
+  child.stderr.on("data", (c) => (stdout += c));
+}
+const output = () =>
+  child ? stdout : ["stdout.log", "stderr.log"].map((file) => readFileSync(path.join(W, file), "utf8")).join("");
+const mainPid = () => child?.pid ?? Number(execSync(`pgrep -f -- "${APP}" || true`).toString().split("\n")[0]);
 
 async function until(fn, timeoutMs, what) {
   const t = Date.now();
@@ -89,29 +121,9 @@ const rssOf = () => {
   };
 };
 
-let page, frame;
-try {
-  await until(async () => stdout.includes('"first-application-window" loaded'), 60_000, "window loaded");
-
-  // Main process inspector.
-  const targets = await until(async () => (await fetch("http://127.0.0.1:5858/json/list")).json(), 10_000, "inspector");
-  const ws = new WebSocket(targets[0].webSocketDebuggerUrl);
-  await new Promise((r, j) => ((ws.onopen = r), (ws.onerror = j)));
-  let id = 0;
-  const pending = new Map();
-  ws.onmessage = (e) => {
-    const m = JSON.parse(e.data);
-    if (m.id && pending.has(m.id)) pending.get(m.id)(m), pending.delete(m.id);
-  };
-  const send = (method, params = {}) =>
-    new Promise((r) => {
-      pending.set(++id, r);
-      ws.send(JSON.stringify({ id, method, params }));
-    });
-
-  // Renderer, to drive the UI.
+const renderer = async () => {
   const browser = await until(() => chromium.connectOverCDP("http://127.0.0.1:9223"), 15_000, "renderer CDP");
-  page = await until(
+  const found = await until(
     async () =>
       browser
         .contexts()
@@ -120,54 +132,125 @@ try {
     15_000,
     "renderer page",
   );
+  return { browser, found };
+};
 
-  const PROFILE = !process.env.NO_PROFILE;
-  if (PROFILE) await send("Profiler.enable"), await send("Profiler.start");
-  const cpu0 = cpuSnapshot();
+async function namespacesScenario() {
+  const cdp = await page.context().newCDPSession(page);
+  await sleep(SECONDS * 1000);
+  await cdp.send("HeapProfiler.collectGarbage");
+  const { usedSize } = await cdp.send("Runtime.getHeapUsage");
+  const heapIdleMb = Math.round(usedSize / 1024 / 1024);
+
   profileStart = performance.now();
-  mark("profile start");
-
   await page.click("[data-testid=welcome-menu-container] li a");
   await page.click(`div.TableCell >> text='${CONTEXT}'`, { timeout: 30_000 });
   mark("cluster clicked");
   const frameEl = await page.waitForSelector("iframe[id^=cluster-frame-]", { timeout: 60_000 });
   frame = await frameEl.contentFrame();
   await frame.waitForSelector("[data-testid=cluster-sidebar]", { timeout: 120_000 });
-  mark("cluster connected (sidebar shown)");
+  await frame.dispatchEvent('[data-testid="link-for-sidebar-item-namespaces"]', "click");
+  await frame.waitForSelector('.TableRow >> text="kube-system"', { timeout: 60_000 });
+  mark("namespaces rows shown");
 
-  await openSidebarItem(frame, "config", "config-maps");
-  mark("config maps clicked");
-  await frame.click("[data-testid=namespace-select-filter]", { timeout: 30_000 });
-  await frame.click('.NamespaceSelectFilterMenu >> text="All Namespaces"', { timeout: 30_000 });
-  await frame.press("[data-testid=namespace-select-filter] input", "Escape").catch(() => {});
-  await frame.waitForSelector('[data-testid=namespace-select-filter] >> text="All namespaces"', { timeout: 30_000 });
-  mark("all namespaces selected");
-  await frame.waitForSelector(".TableRow >> text=/^cm-/", { timeout: 30_000 });
-  mark("config maps rows shown");
-  const cmHeader = await frame
-    .locator("body")
-    .innerText()
-    .then((t) => (t.match(/\d+ items?/) ?? [""])[0]);
-  console.log(`config maps header: ${cmHeader}`);
+  await sleep(SECONDS * 1000);
+  const rss = execFileSync("python3", [
+    "-I",
+    path.resolve("specs/001-tauri-shell-spike/responsible-rss.py"),
+    String(mainPid()),
+  ]).toString();
+  console.log(rss.trim());
+  const rssMb = Number(rss.match(/^rss_mb=(\d+)/m)?.[1]);
+  const procs = rss.split("\n").filter((line) => line.startsWith("proc="));
+  writeFileSync(
+    path.join(W, "marks.json"),
+    JSON.stringify({ scenario: SCENARIO, marks, heapIdleMb, rssMb, procs }, null, 2),
+  );
+  console.log(`heap idle MB: ${heapIdleMb}, rss MB: ${rssMb}`);
+}
 
-  await openSidebarItem(frame, "workloads", "pods");
-  mark("pods clicked");
-  await frame.waitForSelector(".TableRow >> text=/kube-apiserver|coredns|etcd/", { timeout: 60_000 });
-  mark("pods rows shown");
+let page, frame;
+try {
+  await until(async () => output().includes('"first-application-window" loaded'), 60_000, "window loaded");
 
-  const rest = SECONDS * 1000 - (performance.now() - profileStart);
-  if (rest > 0) await sleep(rest);
-  const rss = rssOf();
-  const cpu1 = cpuSnapshot();
-  const cpu = Object.fromEntries(Object.entries(cpu1).map(([k, v]) => [k, +(v - (cpu0[k] ?? 0)).toFixed(2)]));
-  console.log(`cpu s during profile: ${JSON.stringify(cpu)}`);
-  const result = PROFILE ? (await send("Profiler.stop")).result : undefined;
-  mark("profile stop");
-  if (PROFILE) writeFileSync(path.join(W, "main.cpuprofile"), JSON.stringify(result.profile));
-  writeFileSync(path.join(W, "marks.json"), JSON.stringify({ marks, rss, cpu, cmHeader }, null, 2));
-  console.log(`rss: ${JSON.stringify(rss)}`);
-  ws.close();
-  await browser.close().catch(() => {});
+  if (SCENARIO === "namespaces") {
+    const { browser, found } = await renderer();
+    page = found;
+    await namespacesScenario();
+    await browser.close().catch(() => {});
+  } else {
+    // Main process inspector.
+    const targets = await until(
+      async () => (await fetch("http://127.0.0.1:5858/json/list")).json(),
+      10_000,
+      "inspector",
+    );
+    const ws = new WebSocket(targets[0].webSocketDebuggerUrl);
+    await new Promise((r, j) => ((ws.onopen = r), (ws.onerror = j)));
+    let id = 0;
+    const pending = new Map();
+    ws.onmessage = (e) => {
+      const m = JSON.parse(e.data);
+      if (m.id && pending.has(m.id)) pending.get(m.id)(m), pending.delete(m.id);
+    };
+    const send = (method, params = {}) =>
+      new Promise((r) => {
+        pending.set(++id, r);
+        ws.send(JSON.stringify({ id, method, params }));
+      });
+
+    // Renderer, to drive the UI.
+    const { browser, found } = await renderer();
+    page = found;
+
+    const PROFILE = !process.env.NO_PROFILE;
+    if (PROFILE) await send("Profiler.enable"), await send("Profiler.start");
+    const cpu0 = cpuSnapshot();
+    profileStart = performance.now();
+    mark("profile start");
+
+    await page.click("[data-testid=welcome-menu-container] li a");
+    await page.click(`div.TableCell >> text='${CONTEXT}'`, { timeout: 30_000 });
+    mark("cluster clicked");
+    const frameEl = await page.waitForSelector("iframe[id^=cluster-frame-]", { timeout: 60_000 });
+    frame = await frameEl.contentFrame();
+    await frame.waitForSelector("[data-testid=cluster-sidebar]", { timeout: 120_000 });
+    mark("cluster connected (sidebar shown)");
+
+    await openSidebarItem(frame, "config", "config-maps");
+    mark("config maps clicked");
+    await frame.click("[data-testid=namespace-select-filter]", { timeout: 30_000 });
+    await frame.click('.NamespaceSelectFilterMenu >> text="All Namespaces"', { timeout: 30_000 });
+    await frame.press("[data-testid=namespace-select-filter] input", "Escape").catch(() => {});
+    await frame.waitForSelector('[data-testid=namespace-select-filter] >> text="All namespaces"', { timeout: 30_000 });
+    mark("all namespaces selected");
+    await frame.waitForSelector(".TableRow >> text=/^cm-/", { timeout: 30_000 });
+    mark("config maps rows shown");
+    const cmHeader = await frame
+      .locator("body")
+      .innerText()
+      .then((t) => (t.match(/\d+ items?/) ?? [""])[0]);
+    console.log(`config maps header: ${cmHeader}`);
+
+    await openSidebarItem(frame, "workloads", "pods");
+    mark("pods clicked");
+    await frame.waitForSelector(".TableRow >> text=/kube-apiserver|coredns|etcd/", { timeout: 60_000 });
+    mark("pods rows shown");
+
+    const rest = SECONDS * 1000 - (performance.now() - profileStart);
+    if (rest > 0) await sleep(rest);
+    const rss = rssOf();
+    const cpu1 = cpuSnapshot();
+    const cpu = Object.fromEntries(Object.entries(cpu1).map(([k, v]) => [k, +(v - (cpu0[k] ?? 0)).toFixed(2)]));
+    console.log(`cpu s during profile: ${JSON.stringify(cpu)}`);
+    const result = PROFILE ? (await send("Profiler.stop")).result : undefined;
+    mark("profile stop");
+    if (PROFILE) writeFileSync(path.join(W, "main.cpuprofile"), JSON.stringify(result.profile));
+    writeFileSync(path.join(W, "marks.json"), JSON.stringify({ marks, rss, cpu, cmHeader }, null, 2));
+    console.log(`rss: ${JSON.stringify(rss)}`);
+    ws.close();
+    await browser.close().catch(() => {});
+  }
 } catch (error) {
   if (page) await page.screenshot({ path: path.join(W, "failure.png") }).catch(() => {});
   if (frame)
@@ -181,8 +264,13 @@ try {
   if (frame) writeFileSync(path.join(W, "failure-frame.html"), await frame.content().catch((e) => String(e)));
   throw error;
 } finally {
-  writeFileSync(path.join(W, "stdout.log"), stdout);
-  child.kill("SIGTERM");
+  if (child) {
+    writeFileSync(path.join(W, "stdout.log"), stdout);
+    child.kill("SIGTERM");
+  } else {
+    const pid = mainPid();
+    if (pid) process.kill(pid, "SIGTERM");
+  }
   await sleep(3000);
   const left = execSync(`pgrep -f -- "${D}/" || true`).toString().trim();
   if (left)
