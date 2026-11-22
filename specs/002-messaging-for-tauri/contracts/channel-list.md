@@ -1,0 +1,228 @@
+# Contract: Channels of the Electron Build
+
+Every channel the Electron build registers between its views and main, with
+the core area that will answer it in the Tauri build (FR-016 to FR-018). The
+owners are the specs of R9 of `specs/001-tauri-shell-spike/research.md`. Each
+`main-*` spec selects its rows by the **Owner** column; a spec that adds,
+renames or moves a channel updates its row.
+
+- **Kind**: `req`, one answer; `msg`, one-way.
+- **Dir**: `v→m` view to main, `m→v` main to every view, `relay` a view
+  broadcasting through `ipc:broadcast-main`.
+- **Electron**: the file that answers or listens, relative to
+  `packages/core/src/`; `messaging/…` is under
+  `packages/technical-features/messaging/`. Rows marked _legacy_ are moved onto
+  typed channels by User Story 2 (research R11), keeping the name.
+- **Values**: request → answer, or the message. `non-JSON` marks a value that
+  research R4 rejects; the owner changes the type in both builds before the
+  core answers it.
+
+## messaging (002)
+
+| Channel                             | Kind | Dir | Electron                                                                                              | Values                                          | Note                                                                    |
+| ----------------------------------- | ---- | --- | ----------------------------------------------------------------------------------------------------- | ----------------------------------------------- | ----------------------------------------------------------------------- |
+| `frame-communication-admin-channel` | msg  | v→m | `messaging/messaging-for-main/src/send-message-to-channel/allow-communication-listener.injectable.ts` | none; main reads the sender                     | answered by the core in 002 (research R7); used by the check            |
+| `ipc:broadcast-main`                | req  | v→m | `main/electron-app/runnables/setup-ipc-main-handlers/setup-ipc-main-handlers.ts` (_legacy_)           | `{ channel, message }` → none; `message` is any | the relay; answered by the core in 002 (research R7); used by the check |
+
+## renderer-without-node (003) and main-foundation
+
+The store channels let the renderer read the stores that main writes; 003
+depends on them, and main-foundation (`persistent-storage`, `app-paths`)
+answers them.
+
+| Channel                           | Kind | Dir      | Electron                                                                    | Values                                      | Owner           | Note                                                                                                                                                               |
+| --------------------------------- | ---- | -------- | --------------------------------------------------------------------------- | ------------------------------------------- | --------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `app-paths`                       | req  | v→m      | `main/app-paths/app-paths-request-channel-listener.injectable.ts`           | none → `Record<PathName, string>`           | main-foundation |                                                                                                                                                                    |
+| `store-sync-main:<conf path>`     | msg  | v→m      | `features/persistent-storage/common/create.injectable.ts`                   | the store's `toJSON()` model                | main-foundation | `<conf path>` is `<userData>/<configName>.json` for `lens-cluster-store`, `lens-user-store`, `freelens-favorites-store`, `lens-hotbar-store`, `lens-weblink-store` |
+| `store-sync-renderer:<conf path>` | msg  | m→v      | the same                                                                    | the same                                    | main-foundation | the same stores                                                                                                                                                    |
+| `build-version`                   | req  | v→m      | `features/vars/build-version/main/request-channel.injectable.ts`            | none → `string`                             | main-foundation | answered by the core in 002 with the package version; used by the check                                                                                            |
+| `download-json-channel`           | req  | v→m      | `main/fetch/download-json-channel-listener-copy.injectable.ts`              | `{ url, opts }` → `Result<unknown, string>` | main-foundation | used by the public Helm repository list and by extension install                                                                                                   |
+| `sync-box-channel`                | msg  | v→m, m→v | `common/utils/sync-box/channel-listener.injectable.ts`                      | `{ id, value: any }`                        | main-foundation | registered, but no sync box exists, so nothing travels                                                                                                             |
+| `sync-box-initial-value-channel`  | req  | v→m      | `main/utils/sync-box/sync-box-initial-value-channel-listener.injectable.ts` | none → `{ id, value: any }[]`               | main-foundation | answers `[]` today                                                                                                                                                 |
+| `hotbar:too-many-items`           | msg  | relay    | `renderer/ipc/register-ipc-listeners.injectable.ts` (_legacy_)              | none                                        | main-foundation | sent by `features/hotbar/storage/common/hotbar.ts`; whether it runs in main, a view or both is unverified. From a view the core only relays it                     |
+
+## main-catalog
+
+| Channel              | Kind | Dir   | Electron                                                                             | Values                                                                     | Note                                                               |
+| -------------------- | ---- | ----- | ------------------------------------------------------------------------------------ | -------------------------------------------------------------------------- | ------------------------------------------------------------------ |
+| `catalog:init`       | msg  | v→m   | `main/catalog-sync-to-renderer/catalog-sync-to-renderer.injectable.ts` (_legacy_)    | none                                                                       |                                                                    |
+| `catalog:items`      | msg  | m→v   | `renderer/api/catalog/entity/registry.ts` (_legacy_)                                 | `CatalogEntity[]`, read as `(CatalogEntityData & CatalogEntityKindData)[]` | class instances, which arrive as plain objects in both builds (R4) |
+| `catalog-entity:run` | msg  | relay | `renderer/api/catalog/entity/registry.ts`, root frame (_legacy_)                     | entity id `string`                                                         | the core only relays it                                            |
+| `get-all-clusters`   | req  | v→m   | `features/cluster/enumeration/main/get-all-clusters-channel-listener.injectable.ts`  | none → `ClusterInfo[]`                                                     | no sender found in the sources                                     |
+| `get-cluster-by-id`  | req  | v→m   | `features/cluster/enumeration/main/get-cluster-by-id-channel-listener.injectable.ts` | `ClusterId` → `ClusterInfo \| undefined`                                   | no sender found in the sources                                     |
+
+## main-cluster-connection
+
+| Channel                                 | Kind | Dir | Electron                                                                               | Values                                                 | Note                                                   |
+| --------------------------------------- | ---- | --- | -------------------------------------------------------------------------------------- | ------------------------------------------------------ | ------------------------------------------------------ |
+| `activate-cluster`                      | req  | v→m | `features/cluster/activation/main/activate-listener.injectable.ts`                     | `{ clusterId, force? }` → none                         |                                                        |
+| `deactivate-cluster`                    | req  | v→m | `features/cluster/activation/main/deactivate-listener.injectable.ts`                   | `ClusterId` → none                                     |                                                        |
+| `set-cluster-as-deleting`               | req  | v→m | `features/cluster/delete-dialog/main/set-as-deleteing-channel-listener.injectable.ts`  | `ClusterId` → none                                     |                                                        |
+| `clear-cluster-as-deleting`             | req  | v→m | `features/cluster/delete-dialog/main/clear-as-deleting-channel-listener.injectable.ts` | `ClusterId` → none                                     |                                                        |
+| `delete-cluster`                        | req  | v→m | `features/cluster/delete-dialog/main/delete-channel-listener.injectable.ts`            | `ClusterId` → none                                     |                                                        |
+| `execute-on-cluster`                    | req  | v→m | `features/cluster/execute/main/execute-channel-listener.injectable.ts`                 | `ExecuteOnClusterRequest` → `ExecuteOnClusterResponse` | bodies are Kubernetes JSON                             |
+| `cluster-state-sync`                    | msg  | m→v | `features/cluster/state-sync/renderer/listener.injectable.ts`                          | `{ clusterId, state }`                                 |                                                        |
+| `initial-cluster-state-sync`            | req  | v→m | `features/cluster/state-sync/main/handle-initial.injectable.ts`                        | none → `{ clusterId, state }[]`                        |                                                        |
+| `cluster-visibility`                    | msg  | v→m | `main/cluster/visibility-handler.injectable.ts`                                        | `ClusterId \| null`                                    |                                                        |
+| `cluster:refresh-accessibility`         | req  | v→m | `setup-ipc-main-handlers.ts` (_legacy_)                                                | `ClusterId` → `true`                                   |                                                        |
+| `cluster:list-namespace-forbidden`      | msg  | m→v | `renderer/ipc/register-ipc-listeners.injectable.ts` (_legacy_)                         | `ClusterId`                                            |                                                        |
+| `cluster:<clusterId>:connection-update` | msg  | m→v | `renderer/components/cluster-manager/cluster-status.tsx` (_legacy_)                    | `KubeAuthUpdate { message, level }`                    | one name per cluster                                   |
+| `network:offline`, `network:online`     | msg  | v→m | `main/cluster/manager.ts` (_legacy_)                                                   | none                                                   | broadcast by the root frame today; sent to main by R11 |
+
+## main-kube-tools
+
+| Channel              | Kind | Dir | Electron                                        | Values                                                           |
+| -------------------- | ---- | --- | ----------------------------------------------- | ---------------------------------------------------------------- |
+| `kubectl-apply-all`  | req  | v→m | `main/kubectl/apply-all-handler.injectable.ts`  | `{ clusterId, resources, extraArgs }` → `Result<string, string>` |
+| `kubectl-delete-all` | req  | v→m | `main/kubectl/delete-all-handler.injectable.ts` | the same                                                         |
+
+## main-shell-env
+
+| Channel                     | Kind | Dir | Electron                                                                          | Values                        |
+| --------------------------- | ---- | --- | --------------------------------------------------------------------------------- | ----------------------------- |
+| `shell-sync-failed-channel` | msg  | m→v | `features/shell-sync/renderer/failure-listener.injectable.ts`                     | `string`                      |
+| `look-up-terminal-shell`    | req  | v→m | `features/terminal-shell-lookup/main/handle-look-up-terminal-shell.injectable.ts` | `string` → `{ shell, path? }` |
+
+## terminal-pty (005)
+
+| Channel                    | Kind | Dir | Electron                                                                                                    | Values                              | Note                                |
+| -------------------------- | ---- | --- | ----------------------------------------------------------------------------------------------------------- | ----------------------------------- | ----------------------------------- |
+| `cluster:shell-api`        | req  | v→m | `main/freelens-proxy/proxy-functions/shell-request-authenticator/shell-request-authenticator.ts` (_legacy_) | `[clusterId, tabId]` → `Uint8Array` | `non-JSON`; sent by a cluster frame |
+| `app:standalone-shell-api` | req  | v→m | the same (_legacy_)                                                                                         | `tabId` → `Uint8Array`              | `non-JSON`                          |
+
+The terminal's own data runs over a WebSocket, not over channels, and is not
+listed.
+
+## main-helm
+
+| Channel                             | Kind | Dir | Electron                                                                                                          | Values                                                                | Note                        |
+| ----------------------------------- | ---- | --- | ----------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------- | --------------------------- |
+| `get-helm-release`                  | req  | v→m | `features/helm-releases/main/handle-get-helm-release.injectable.ts`                                               | `GetHelmReleaseArgs` → `Result<HelmReleaseDataWithResources, string>` |                             |
+| `list-helm-releases`                | req  | v→m | `features/helm-releases/main/handle-list-helm-releases.injectable.ts`                                             | `ListHelmReleasesArgs` → `Result<ListedHelmRelease[], string>`        |                             |
+| `add-helm-repository-channel`       | req  | v→m | `main/helm/repositories/add-helm-repository/add-helm-repository-channel-listener.injectable.ts`                   | `HelmRepo` → `Result<void, string>`                                   | `HelmRepo` holds a password |
+| `remove-helm-repository-channel`    | req  | v→m | `main/helm/repositories/remove-helm-repository/remove-helm-repository-channel-listener.injectable.ts`             | `HelmRepo` → `Result<void, string>`                                   |                             |
+| `get-helm-active-list-repositories` | req  | v→m | `main/helm/repositories/get-active-helm-repositories/get-active-helm-repositories-channel-listener.injectable.ts` | none → `Result<HelmRepo[], string>`                                   |                             |
+| `helm-repositories-changed`         | msg  | m→v | `renderer/components/helm-charts/helm-charts/helm-repositories-changed-listener.injectable.ts`                    | none                                                                  |                             |
+
+## main-pod-files-and-certificates
+
+| Channel                     | Kind | Dir | Electron                                                                           | Values                                                           |
+| --------------------------- | ---- | --- | ---------------------------------------------------------------------------------- | ---------------------------------------------------------------- |
+| `pod-files`                 | req  | v→m | `features/pod-files/main/pod-files-channel-listener.injectable.ts`                 | `PodFilesRequest` → `PodFilesResponse`; binary content as base64 |
+| `parse-secret-certificates` | req  | v→m | `features/secret-certificates/main/handle-parse-secret-certificates.injectable.ts` | `SecretCertificateBlocks[]` → `SecretKeyCertificates[]`          |
+
+## main-traffic-map
+
+| Channel       | Kind | Dir | Electron                                                               | Values                                        |
+| ------------- | ---- | --- | ---------------------------------------------------------------------- | --------------------------------------------- |
+| `traffic-map` | req  | v→m | `features/traffic-map/main/traffic-map-channel-listener.injectable.ts` | `TrafficRequest` → `TrafficResponse<unknown>` |
+
+No channel belongs to main-metrics or main-port-forward: both go through the
+local proxy's routes, not through channels.
+
+## cluster-frames (004)
+
+| Channel                              | Kind | Dir | Electron                                                                               | Values                             | Note                                                                                                                                                                                 |
+| ------------------------------------ | ---- | --- | -------------------------------------------------------------------------------------- | ---------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `cluster:set-frame-id`               | req  | v→m | `setup-ipc-main-handlers.ts` (_legacy_)                                                | `ClusterId` → none                 | needs the sender (research R11); in the Tauri build the host already names the frame                                                                                                 |
+| `current-visible-cluster`            | msg  | v→m | `main/start-main-application/lens-window/current-cluster-frame/listener.injectable.ts` | `ClusterId`                        |                                                                                                                                                                                      |
+| `request-freelens-proxy-certificate` | req  | v→m | `main/freelens-proxy/freelens-proxy-certificate-request-handler.injectable.ts`         | none → `{ private, public, cert }` | the private key of the local proxy crosses to the view; the Tauri build has no local TLS proxy (R4 of spec 001), so 004 decides whether the core answers it or the views stop asking |
+
+## desktop-integration (006)
+
+| Channel                                         | Kind | Dir        | Electron                                                                                               | Values                                                 | Note                                                                                                                                                              |
+| ----------------------------------------------- | ---- | ---------- | ------------------------------------------------------------------------------------------------------ | ------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `license-content`                               | req  | v→m        | `features/licenses/main/license-content-request-channel-listener.injectable.ts`                        | none → `string`                                        |                                                                                                                                                                   |
+| `open-path-picking-dialog`                      | req  | v→m        | `features/path-picking-dialog/main/handle-pick-paths.injectable.ts`                                    | Electron's `OpenDialogOptions` → `PathPickingResponse` | the request type is Electron's; 006 gives it a type of its own                                                                                                    |
+| `initial-imported-themes`                       | req  | v→m        | `features/theme/files/main/handle-initial.injectable.ts`                                               | none → `ImportedThemesState`                           |                                                                                                                                                                   |
+| `imported-themes-update`                        | msg  | m→v        | `features/theme/files/renderer/update-listener.injectable.ts`                                          | `ImportedThemesState`                                  |                                                                                                                                                                   |
+| `import-theme`                                  | req  | v→m        | `features/theme/files/main/handle-import.injectable.ts`                                                | `ImportThemeRequest` → `ImportThemeResponse`           |                                                                                                                                                                   |
+| `export-theme`                                  | req  | v→m        | `features/theme/files/main/handle-export.injectable.ts`                                                | `string` → `ExportThemeResponse`                       |                                                                                                                                                                   |
+| `remove-theme`                                  | req  | v→m        | `features/theme/files/main/handle-remove.injectable.ts`                                                | `string` → `RemoveThemeResponse`                       |                                                                                                                                                                   |
+| `initial-system-theme-type`                     | req  | v→m        | `features/theme/system-type/main/handle-initial.injectable.ts`                                         | none → `"dark" \| "light"`                             |                                                                                                                                                                   |
+| `system-theme-type-update`                      | msg  | m→v        | `features/theme/system-type/renderer/update-listener.injectable.ts`                                    | `"dark" \| "light"`                                    |                                                                                                                                                                   |
+| `ipc-file-logger-channel`                       | msg  | v→m        | `features/population-of-logs-to-a-file/main/ipc-logging-listener.injectable.ts`                        | `{ fileId, entry }`                                    |                                                                                                                                                                   |
+| `close-ipc-file-logger-channel`                 | msg  | v→m        | `features/population-of-logs-to-a-file/main/close-ipc-logging-listener.injectable.ts`                  | `string`                                               |                                                                                                                                                                   |
+| `root-frame-rendered`                           | msg  | v→m        | `main/start-main-application/runnables/root-frame-has-rendered/channel-listener.injectable.ts`         | none                                                   |                                                                                                                                                                   |
+| `reload-page-channel`                           | msg  | m→v        | `features/navigation/reload-page/renderer/register-listener.injectable.ts`                             | none                                                   | sent to one cluster frame today; R11 makes it carry the cluster id                                                                                                |
+| `renderer:navigate`                             | msg  | m→v, relay | `renderer/navigation/navigation-channel-listener.injectable.ts`, root frame                            | URL `string`                                           | sent to the main frame today; used by the check                                                                                                                   |
+| `renderer:navigate-in-cluster`                  | msg  | m→v        | `renderer/navigation/navigation-channel-listener.injectable.ts`, cluster frame                         | URL `string`                                           | sent to one cluster frame today; R11 makes it carry the cluster id                                                                                                |
+| `window:window-action`                          | req  | v→m        | `setup-ipc-main-handlers.ts` (_legacy_)                                                                | `WindowAction` → none                                  |                                                                                                                                                                   |
+| `window:open-app-context-menu`                  | msg  | v→m        | `setup-ipc-main-handlers.ts` (_legacy_)                                                                | none                                                   | needs the sender's window (research R11)                                                                                                                          |
+| `window:location-changed`                       | msg  | v→m        | `setup-ipc-main-handlers.ts` (_legacy_)                                                                | `Partial<Location>`, ignored                           |                                                                                                                                                                   |
+| `history:can-go-back`, `history:can-go-forward` | msg  | m→v        | `renderer/components/layout/top-bar/start-state-sync.injectable.ts` (_legacy_)                         | `boolean`                                              |                                                                                                                                                                   |
+| `command-palette:open`                          | msg  | m→v        | `renderer/components/command-palette/command-container.tsx` (_legacy_)                                 | none                                                   |                                                                                                                                                                   |
+| `command-palette:<clusterId>:open`              | msg  | relay      | `renderer/components/command-palette/command-container.tsx`, cluster frame (_legacy_)                  | none                                                   | the root frame builds the name from a computed value rather than the id, so it may never match; the move keeps the behaviour and leaves the fix to its own change |
+| `protocol-handler:internal`                     | msg  | m→v        | `renderer/protocol-handler/lens-protocol-router-renderer/lens-protocol-router-renderer.tsx` (_legacy_) | `[rawUrl, RouteAttempt]`                               |                                                                                                                                                                   |
+| `protocol-handler:invalid`                      | msg  | m→v        | the same (_legacy_)                                                                                    | `[error, rawUrl]`                                      |                                                                                                                                                                   |
+| `tray:set-visible`                              | msg  | v→m        | `main/tray/electron-tray/electron-tray.injectable.ts` (_legacy_)                                       | `boolean`                                              |                                                                                                                                                                   |
+| `get-latest-version-channel`                    | req  | v→m        | `main/versions/get-latest-version-channel-listener.injectable.ts`                                      | none → `string \| undefined`                           | feeds the new-version notification, not auto-update                                                                                                               |
+
+## Not ported
+
+The Tauri build has neither the extension system nor its stores (Principle VII
+of the constitution).
+
+| Channel                                                                                                                               | Kind     | Dir  | Electron                                                                                                                       | Reason                                                                                            |
+| ------------------------------------------------------------------------------------------------------------------------------------- | -------- | ---- | ------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------- |
+| `extensions@<sha256 of extension id>:<channel>`                                                                                       | req, msg | both | `extensions/ipc/ipc-main.ts`, `ipc-renderer.ts`, `ipc-registrar.ts`                                                            | the extension API's IPC (exempt, FR-014)                                                          |
+| `extension-discovery:state`                                                                                                           | req, msg | both | `extensions/extension-discovery/extension-discovery.ts`                                                                        | extension system (exempt)                                                                         |
+| `extension-loader:main:state`                                                                                                         | req, msg | both | `extensions/extension-loader/extension-loader.ts`                                                                              | extension system (exempt)                                                                         |
+| `extension-loader:main:load-failures`                                                                                                 | req, msg | both | the same                                                                                                                       | extension system (exempt)                                                                         |
+| `extension-loader:set-is-enabled`, `extension-loader:torn-down`                                                                       | req      | v→m  | the same                                                                                                                       | extension system (exempt)                                                                         |
+| `extension-loader:reload-development`                                                                                                 | msg      | m→v  | the same                                                                                                                       | extension system (exempt)                                                                         |
+| `extension-loader:bundled-extensions-loaded`                                                                                          | msg      | v→m  | `main/start-main-application/lens-window/application-window/wait-until-bundled-extensions-are-loaded.injectable.ts` (_legacy_) | extensions; it gates the Electron window at startup, and the Tauri window has nothing to wait for |
+| `protocol-handler:extension`                                                                                                          | msg      | m→v  | `renderer/protocol-handler/lens-protocol-router-renderer/lens-protocol-router-renderer.tsx` (_legacy_)                         | routes a link to an extension                                                                     |
+| `navigate-for-extension`                                                                                                              | msg      | m→v  | `features/extensions/navigate/renderer/listener.injectable.ts`                                                                 | extensions                                                                                        |
+| `extension-credentials`                                                                                                               | req      | v→m  | `features/extension-credentials/main/handle-extension-credentials-request.injectable.ts`                                       | extensions                                                                                        |
+| `enabled-extensions-persistent-storage-version`                                                                                       | req      | v→m  | `features/extensions/enabled/main/storage-version-handler.injectable.ts`                                                       | extensions                                                                                        |
+| `download-binary-channel`                                                                                                             | req      | v→m  | `main/fetch/download-binary-channel-listener.injectable.ts`                                                                    | used only by extension install; `non-JSON` (`Uint8Array`)                                         |
+| `resolve-system-proxy-channel`                                                                                                        | req      | v→m  | `main/utils/resolve-system-proxy/resolve-system-proxy-channel-responder.injectable.ts`                                         | used only by the extension API's `proxy`                                                          |
+| `store-sync-*:<conf path>` of `installed-extensions`, `lens-extensions`, `lens-filesystem-provisioner-store` and the extension stores | msg      | both | `features/persistent-storage/common/create.injectable.ts`                                                                      | extension stores                                                                                  |
+
+## Removed by this feature
+
+| Channel                                                   | Why                                                                                            |
+| --------------------------------------------------------- | ---------------------------------------------------------------------------------------------- |
+| `cluster:states`                                          | its handler has no caller: `requestInitialClusterStates` is never used (research R11)          |
+| `request-license-content` and its `license-content` reply | the injectable that listens is never injected; the typed `license-content` serves the licenses |
+
+Defined in the sources but registered by nothing, so not channels of the
+build: `computed-channel-administration-channel` (the feature is not
+registered), `cluster:visibility`, `invalid-kubeconfig` and `renderer:loaded`.
+
+## Channels of the check
+
+The `--messaging-check` run of research R9 uses `build-version`,
+`frame-communication-admin-channel`, `ipc:broadcast-main` and
+`renderer:navigate` from the rows above, and two check-only channels that the
+Electron build does not have: `messaging-check:report` (msg, v→m) and
+`messaging-check:echo` (req, v→m, `{ bytes }` → a string of that length).
+
+## Answer times
+
+SC-007, medians of three runs, filled in by the implementation; no threshold.
+
+| Answer size | Electron build | Tauri build, main window | Tauri build, cluster frame |
+| ----------- | -------------- | ------------------------ | -------------------------- |
+| about 1 KB  |                |                          |                            |
+| about 1 MB  |                |                          |                            |
+| about 10 MB |                |                          |                            |
+
+## How the list was made
+
+Run from the repository root, over non-test sources. `grep` here is ugrep,
+where `getRequestChannel\(` misses generic calls, hence `[(<]`; in zsh, quote
+the `--include` globs.
+
+```sh
+F='node_modules|/dist/|/dist-types/|\.test\.tsx?[:-]|__tests__|test-utils|__mocks__'
+grep -rnE -A2 'get(Request|Message)Channel[(<]' packages freelens/src --include='*.ts' --include='*.tsx' | grep -vE "$F"
+grep -rnE '(message|request)ChannelListenerInjectionToken|get(Request|Message)ChannelListenerInjectable\(' packages freelens/src --include='*.ts' --include='*.tsx' | grep -vE "$F"
+grep -rnE 'ipcMainHandle\(|ipcMainOn\(|ipcRendererOn\(|broadcastMessage\(|broadcastMessageInjectable|requestMain\(|emitToMain\(' packages freelens/src --include='*.ts' --include='*.tsx' | grep -vE "$F"
+grep -rnE 'ipcMain\.(on|handle|once)\(|ipcRenderer\.(send|invoke|on|once)\(|\.sendToFrame\(|webContents\.send\(|sender\.send\(|[wW]indow\??\.send\(' packages freelens/src --include='*.ts' --include='*.tsx' | grep -vE "$F"
+grep -rnE 'configName:' packages/core/src --include='*.ts' | grep -vE "$F"
+```
+
+SC-002 holds when every channel these searches find has a row above, under an
+owner or in "Not ported", "Removed" or the unregistered list.
