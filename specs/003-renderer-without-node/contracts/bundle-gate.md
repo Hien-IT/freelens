@@ -39,7 +39,7 @@ shrinks.
 Type-only imports are erased before resolution and do not count [inferred: no
 shim appears for `type-narrowing.ts`, whose builtin imports are type-only].
 
-## Phase 2: no Node (research R12, step 11)
+## Phase 2: no Node (research R12, step 6)
 
 - The `rendererBundle` list is empty and is removed from `legacy.jsonc`, with
   the comment that describes it.

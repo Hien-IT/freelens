@@ -22,7 +22,7 @@ answers, the extension store values, `RawTemplates`) are in
 | Channel                             | Kind | Dir | Request → answer                                              | Electron                            | Owner           |
 | ----------------------------------- | ---- | --- | ------------------------------------------------------------- | ----------------------------------- | --------------- |
 | `machine-values`                    | req  | v→m | none → `MachineValues`                                        | `features/machine-values/main/`     | main-foundation |
-| `persistent-storage-initial-values` | req  | v→m | none → `{ path, model }[]`                                    | `features/persistent-storage/main/` | main-foundation |
+| `persistent-storage-initial-values` | req  | v→m | none → `{ configName, path, model }[]`                        | `features/persistent-storage/main/` | main-foundation |
 | `lens-local-storage:read`           | req  | v→m | `{ clusterId? }` → JSON object, `{}` when the file is missing | `features/local-storage/main/`      | main-foundation |
 | `lens-local-storage:write`          | req  | v→m | `{ clusterId?, state }` → none                                | the same                            | main-foundation |
 

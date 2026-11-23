@@ -30,10 +30,11 @@ Rules:
 
 Element of the answer of `persistent-storage-initial-values` (R5).
 
-| Field   | Type        | Meaning                                                                                                                     |
-| ------- | ----------- | --------------------------------------------------------------------------------------------------------------------------- |
-| `path`  | `string`    | main's `config.path`; the renderer uses it as the store's id and in `store-sync-main:<path>` / `store-sync-renderer:<path>` |
-| `model` | JSON object | the store's current contents in main's memory                                                                               |
+| Field        | Type        | Meaning                                                                                                                     |
+| ------------ | ----------- | --------------------------------------------------------------------------------------------------------------------------- |
+| `configName` | `string`    | the store's `configName`, the key a renderer store finds its entry by                                                       |
+| `path`       | `string`    | main's `config.path`; the renderer uses it as the store's id and in `store-sync-main:<path>` / `store-sync-renderer:<path>` |
+| `model`      | JSON object | the store's current contents in main's memory                                                                               |
 
 Rules:
 

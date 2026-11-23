@@ -329,8 +329,8 @@ tests and the manual check of the paths the moved values served.
   and the Biome exemption are both empty, and `pnpm type:check` passes.
 - **SC-002**: In the Electron build, from the window and from a cluster frame,
   each attempt to reach Node (its module loader, `process`, `Buffer`), or any
-  module of Electron other than the IPC object the bridge hands the page, finds
-  nothing.
+  part of Electron other than the IPC object and the file-path function the
+  bridge hands the page, finds nothing.
 - **SC-003**: The unit tests pass, with test files edited only as FR-019
   allows, and the integration tests pass with Node integration off.
 - **SC-004**: The manual check of the application, on the branch and on `main`

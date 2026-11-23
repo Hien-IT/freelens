@@ -17,7 +17,7 @@ contract is replaced by the relay of R3's fallback.
 | `preload`                    | none                                       | the built preload                                           |
 
 The preload is added while Node integration is still on (research R12, step 3).
-The settings change last (step 11).
+The settings change last (step 7).
 
 ## The preload
 

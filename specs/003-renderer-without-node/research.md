@@ -454,12 +454,27 @@ and `features/population-of-logs-to-a-file/renderer/ipc-transport.ts`, extend
 `winston-transport`, whose `readable-stream` base needs `buffer`, `events` and
 `process.nextTick` even in its browser build.
 
-**Decision**: the renderer registers a Node-free implementation of the logger's
-injection token. It formats entries as today and writes them to the console
-transport and to the IPC transport, which sends on the existing
-`ipc-file-logger-channel`. Main keeps `winston`. The prefixed logger and every
-caller are unchanged. Unit tests compare the renderer's output lines with
-today's for each level and for an error with a stack.
+Today one `loggerFeature`, registered by both `freelens/src/main/index.ts` and
+`freelens/src/renderer/index.ts`, registers every injectable of the package;
+`loggerInjectable` injects `winstonLoggerInjectable` directly, and the
+transport token is typed by `winston-transport`.
+
+**Decision**: `packages/logger` splits by process.
+
+- `src/common/` holds the logger tokens, the prefixed logger and the `Logger`
+  type.
+- `src/main/` holds the winston logger, a transport token typed
+  `TransportStream`, and `loggerFeatureForMain`.
+- `src/renderer/` holds the Node-free logger, a transport token typed by a
+  local interface, and `loggerFeatureForRenderer`. It formats entries as today
+  and writes them to the console transport and to the IPC transport, which
+  sends on the existing `ipc-file-logger-channel`.
+- The package's `exports` give `.` (common), `./main` and `./renderer`. Each
+  `freelens/src/*/index.ts` registers its own feature, and renderer code imports
+  only `.` and `./renderer`, so `winston` never enters the renderer graph.
+- The prefixed logger and every caller of the logger tokens are unchanged.
+  Unit tests compare the renderer's output lines with today's for each level
+  and for an error with a stack.
 
 **Alternatives considered**: add `events` and `buffer` polyfills, honour the
 `util: false` browser map and stub `os` for winston's handlers. That is several
