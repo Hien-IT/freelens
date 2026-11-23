@@ -49,6 +49,8 @@ In this specification:
 - Q: What happens to an extension whose renderer code still uses Node once Node integration is off? → A: Node goes off for extensions in this feature too. Such an extension fails alone, its failure is logged with its name as other failures to load an extension are logged today, and no notification is added; the application and the other extensions keep working.
 - Q: Does this feature also turn on context isolation in the window and the cluster frames? → A: No. Only Node integration goes off; context isolation stays off, and turning it on is a separate change.
 - Q: How much slower than `main` may startup be after the change, for the window and for opening a cluster frame? → A: At most 10%, median of three runs, measured on the same machine.
+- Q: Electron loads a preload script into the frames only while Node integration in subframes is on; with both settings off, the cluster frames have no channel to main. Which way do they reach it? → A: Node integration goes off and the sandbox stays on; the setting for subframes stays on only so that the preload loads into every frame, and no frame can reach Node, which a spike proves before the rest of the work. If the spike fails, the cluster frames relay through the window instead.
+- Q: How does FR-007 apply to the extension API calls that take a folder from the extension, the upload folder of `FilePicker` and the folder of `createResourceStack`? → A: The main side accepts only a folder inside the install or data directory of an installed extension, which it computes itself; any other folder fails with an error.
 
 ## User Scenarios & Testing _(mandatory)_
 
@@ -132,8 +134,8 @@ exemption, and the type check passes.
 
 ### User Story 3 - The application runs with Node integration off (Priority: P3)
 
-A maintainer starts the Electron build with Node integration off in the window
-and in its frames. The window loads, clusters open in their frames, and every
+A maintainer starts the Electron build with Node integration off. The window
+loads, clusters open in their frames, and every
 feature works as before, including the terminal, logs, Helm, editing and
 creating resources, preferences and extensions; nothing in a view can reach
 Node.
@@ -150,9 +152,9 @@ tests and the manual check of the paths the moved values served.
 
 1. **Given** Node integration is off, **When** the application starts, **Then**
    the window loads and shows the same first screen as before.
-2. **Given** Node integration is off in the frames, **When** the user opens a
-   cluster, **Then** its frame loads, talks to the main side over the channels,
-   and shows the cluster as before.
+2. **Given** Node integration is off, **When** the user opens a cluster,
+   **Then** its frame loads without Node, talks to the main side over the
+   channels, and shows the cluster as before.
 3. **Given** Node integration is off, **When** code in the window or in a
    cluster frame tries to reach Node, **Then** it finds nothing.
 4. **Given** an installed extension whose renderer code uses Node, **When** the
@@ -222,8 +224,12 @@ tests and the manual check of the paths the moved values served.
   accept a program or a command line to run, and MUST NOT read or write the
   contents of a file at a path sent by a view, except a path the user chose in
   that view, in a file dialog, by dropping a file, or by typing it into a
-  setting that exists for that path. These rules hold for every view alike;
-  the feature does not restrict which view may use which channel.
+  setting that exists for that path. A folder that an extension passes to the
+  extension API, the upload folder of `FilePicker` or the folder of
+  `createResourceStack`, MUST be accepted only inside the install or data
+  directory of an installed extension, which the main side computes; any other
+  folder MUST fail with an error. These rules hold for every view alike; the
+  feature does not restrict which view may use which channel.
 
 #### Computations without Node
 
@@ -242,9 +248,10 @@ tests and the manual check of the paths the moved values served.
 - **FR-011**: A common file that the main side also uses MUST keep its
   behaviour in the main side, which keeps Node.
 - **FR-012**: The Electron build MUST create its window with Node integration
-  off, for the window and for its frames, once the renderer legacy list is
-  empty. A view MUST NOT be able to reach Node. Context isolation stays off;
-  this feature does not change it.
+  off and the sandbox on, once the renderer legacy list is empty. A view MUST
+  NOT be able to reach Node. The setting for subframes MAY stay on only so that
+  the preload loads into every frame, and only while no frame can reach Node
+  (SC-002). Context isolation stays off; this feature does not change it.
 - **FR-013**: The channels MUST keep working from the window and from every
   cluster frame with Node integration off, and the views MUST reach the main
   side only over them.
@@ -254,7 +261,9 @@ tests and the manual check of the paths the moved values served.
 - **FR-014**: The extension API of the Electron build MUST NOT change: what the
   `Common`, `Main` and `Renderer` namespaces reach keeps its types, whether it
   is synchronous or asynchronous, its results and its failures (Principle III
-  of the constitution, C14 of `docs/extensions/api.md`).
+  of the constitution, C14 of `docs/extensions/api.md`). The one exception is
+  the folder rule of FR-007: a folder outside the extension's directories now
+  fails.
 - **FR-015**: Renderer code of an extension MUST get no Node, as C4 of
   `docs/extensions/api.md` states, from the same change that turns Node
   integration off for the core. An extension whose renderer code depends on
@@ -269,7 +278,9 @@ tests and the manual check of the paths the moved values served.
 
 - **FR-017**: Every request channel the feature adds MUST be added to the
   channel list, with the columns the list requires and a core area of R9 of
-  `specs/001-tauri-shell-spike/research.md` as its owner.
+  `specs/001-tauri-shell-spike/research.md` as its owner. A channel that serves
+  only the extension system, which the Tauri build does not have, goes to the
+  list's section of channels that are not ported, with that reason.
 - **FR-018**: A channel the feature adds MUST carry only values that the
   channels of both builds carry unchanged (FR-008 of
   `specs/002-messaging-for-tauri/spec.md`); no entry it adds to the channel
@@ -325,7 +336,8 @@ tests and the manual check of the paths the moved values served.
   its frame being shown, median of three runs, is no more than 10% above
   `main`'s.
 - **SC-006**: A review of every channel the feature adds finds each in the
-  channel list with a core area of R9 as owner, none marked `non-JSON`, and
+  channel list with a core area of R9 as owner, or among the channels not
+  ported for serving only the extension system, none marked `non-JSON`, and
   none that runs a program from the view's input or reads or writes a file the
   user did not choose (FR-007).
 - **SC-007**: For paths of Windows, Linux and macOS, the computations of the
