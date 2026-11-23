@@ -50,7 +50,8 @@ In this specification:
 - Q: Does this feature also turn on context isolation in the window and the cluster frames? → A: No. Only Node integration goes off; context isolation stays off, and turning it on is a separate change.
 - Q: How much slower than `main` may startup be after the change, for the window and for opening a cluster frame? → A: At most 10%, median of three runs, measured on the same machine.
 - Q: Electron loads a preload script into the frames only while Node integration in subframes is on; with both settings off, the cluster frames have no channel to main. Which way do they reach it? → A: Node integration goes off and the sandbox stays on; the setting for subframes stays on only so that the preload loads into every frame, and no frame can reach Node, which a spike proves before the rest of the work. If the spike fails, the cluster frames relay through the window instead.
-- Q: How does FR-007 apply to the extension API calls that take a folder from the extension, the upload folder of `FilePicker` and the folder of `createResourceStack`? → A: The main side accepts only a folder inside the install or data directory of an installed extension, which it computes itself; any other folder fails with an error.
+- Q: How does FR-007 apply to the extension API calls that take a folder from the extension, the upload folder of `FilePicker`, the folder of `createResourceStack` and the `cwd` of an `ExtensionStore`? → A: They are exempt: the main side reads or writes the folder the extension names, as today. Failing for another folder would be a breaking change to the extension API, which Principle III allows only in a major release.
+- Q: The main side cannot tell whether a path a view sends came from the user. What does FR-007 promise then? → A: It bounds what each channel does, not who calls it. With context isolation off, any script in a page can call any channel, as it can use Node today; restricting the callers needs context isolation, which is out of scope.
 
 ## User Scenarios & Testing _(mandatory)_
 
@@ -191,8 +192,9 @@ tests and the manual check of the paths the moved values served.
 - An extension's renderer code calls `require` or reads `process`: it fails as
   C4 of `docs/extensions/api.md` allows, alone, and its failure names it.
 - Content shown in a cluster frame comes from the cluster and is not trusted:
-  the channels this feature adds give it no way to run a program, or to read or
-  write a file the user did not choose.
+  no channel this feature adds runs a command line it sends, and each channel
+  does one task. A script in the page can still call every channel, as it can
+  use Node today (FR-007).
 
 ## Requirements _(mandatory)_
 
@@ -219,17 +221,20 @@ tests and the manual check of the paths the moved values served.
 - **FR-006**: A change a view asks the main side to save MUST NOT be lost in
   a case where it was not lost before, including when the view closes or the
   application quits right after the change.
-- **FR-007**: Each request channel the feature adds MUST do one task of the
+- **FR-007**: Each channel the feature adds MUST do one task of the
   renderer, not offer the file system or processes in general. It MUST NOT
   accept a program or a command line to run, and MUST NOT read or write the
   contents of a file at a path sent by a view, except a path the user chose in
   that view, in a file dialog, by dropping a file, or by typing it into a
-  setting that exists for that path. A folder that an extension passes to the
-  extension API, the upload folder of `FilePicker` or the folder of
-  `createResourceStack`, MUST be accepted only inside the install or data
-  directory of an installed extension, which the main side computes; any other
-  folder MUST fail with an error. These rules hold for every view alike; the
-  feature does not restrict which view may use which channel.
+  setting that exists for that path. The extension API calls that take a folder
+  from the extension, the upload folder of `FilePicker`, the folder of
+  `createResourceStack` and the `cwd` of an `ExtensionStore`, are exempt: the
+  main side reads or writes the folder the extension names, as today
+  (FR-014). These rules hold for every view alike; the feature does not
+  restrict which view may use which channel. They bound what each channel
+  does, not who calls it: the main side cannot tell whether a path came from
+  the user, and with context isolation off any script in a page can call any
+  channel, as it can use Node today.
 
 #### Computations without Node
 
@@ -244,7 +249,8 @@ tests and the manual check of the paths the moved values served.
 - **FR-010**: Every file MUST leave the renderer legacy list, including the
   files of the extension system. A file that is in the Biome exemption MUST
   leave it together with the renderer legacy list. A file MUST NOT be added to
-  either list. The `main` list of `legacy.jsonc` is not part of this feature.
+  either list. The `main` list of `legacy.jsonc` is not part of this feature,
+  except that a file moved out of `common/` also leaves the `main` list.
 - **FR-011**: A common file that the main side also uses MUST keep its
   behaviour in the main side, which keeps Node.
 - **FR-012**: The Electron build MUST create its window with Node integration
@@ -254,16 +260,16 @@ tests and the manual check of the paths the moved values served.
   (SC-002). Context isolation stays off; this feature does not change it.
 - **FR-013**: The channels MUST keep working from the window and from every
   cluster frame with Node integration off, and the views MUST reach the main
-  side only over them.
+  side only over them, except the extension system's own IPC under
+  `packages/core/src/extensions/`, which spec 002 exempts, and which the Tauri
+  build does not have.
 
 #### Extensions
 
 - **FR-014**: The extension API of the Electron build MUST NOT change: what the
   `Common`, `Main` and `Renderer` namespaces reach keeps its types, whether it
   is synchronous or asynchronous, its results and its failures (Principle III
-  of the constitution, C14 of `docs/extensions/api.md`). The one exception is
-  the folder rule of FR-007: a folder outside the extension's directories now
-  fails.
+  of the constitution, C14 of `docs/extensions/api.md`).
 - **FR-015**: Renderer code of an extension MUST get no Node, as C4 of
   `docs/extensions/api.md` states, from the same change that turns Node
   integration off for the core. An extension whose renderer code depends on
@@ -276,7 +282,7 @@ tests and the manual check of the paths the moved values served.
 
 #### The Tauri build
 
-- **FR-017**: Every request channel the feature adds MUST be added to the
+- **FR-017**: Every channel the feature adds MUST be added to the
   channel list, with the columns the list requires and a core area of R9 of
   `specs/001-tauri-shell-spike/research.md` as its owner. A channel that serves
   only the extension system, which the Tauri build does not have, goes to the
@@ -291,10 +297,13 @@ tests and the manual check of the paths the moved values served.
 - **FR-019**: The existing unit tests MUST pass. A test file MAY be edited only
   where the code it tests, or a module it replaces with a fake, moves off Node
   or to the main side; such an edit MUST NOT remove a test, and each test MUST
-  still assert what it asserted. Every other test file MUST stay unchanged.
-- **FR-020**: Each request channel the feature adds MUST be covered by unit
-  tests on both sides: the view's request against a stand-in for the main side,
-  and the main side's answer, including its failure.
+  still assert what it asserted. Every other test file MUST stay unchanged. A
+  test of code this feature deletes is deleted with it, and a test of code
+  that moves to the main side moves with it; the task that does it names each
+  such test.
+- **FR-020**: Each channel the feature adds MUST be covered by unit tests on
+  both sides: the view's side against a stand-in for the main side, and the
+  main side's answer or listener, including its failure.
 - **FR-021**: The Electron build MUST keep building, and MUST pass its unit and
   integration tests with Node integration off (Principle VII of the
   constitution).
@@ -319,14 +328,16 @@ tests and the manual check of the paths the moved values served.
 - **SC-001**: The renderer list of `scripts/type-check-environments/legacy.jsonc`
   and the Biome exemption are both empty, and `pnpm type:check` passes.
 - **SC-002**: In the Electron build, from the window and from a cluster frame,
-  each attempt to reach Node (its module loader, `process`, `Buffer`, a module
-  of Electron) finds nothing.
+  each attempt to reach Node (its module loader, `process`, `Buffer`), or any
+  module of Electron other than the IPC object the bridge hands the page, finds
+  nothing.
 - **SC-003**: The unit tests pass, with test files edited only as FR-019
   allows, and the integration tests pass with Node integration off.
 - **SC-004**: The manual check of the application, on the branch and on `main`
   as a control, shows the same result for every part that used a moved value
   or action: the first screen of the window and of a cluster frame,
-  preferences, hotbars, adding a cluster from a kubeconfig file, resource
+  preferences, hotbars, adding a cluster from pasted kubeconfig text and from a
+  synced kubeconfig file, resource
   templates, the terminal, logs, Helm install and edit, and installing an
   extension.
 - **SC-005**: The time from the start of the application to its window being
@@ -337,9 +348,9 @@ tests and the manual check of the paths the moved values served.
   `main`'s.
 - **SC-006**: A review of every channel the feature adds finds each in the
   channel list with a core area of R9 as owner, or among the channels not
-  ported for serving only the extension system, none marked `non-JSON`, and
-  none that runs a program from the view's input or reads or writes a file the
-  user did not choose (FR-007).
+  ported for serving only the extension system, none marked `non-JSON`, none
+  that takes a program or a command line, and each one that reads or writes
+  file contents taking only a path of a kind FR-007 lists.
 - **SC-007**: For paths of Windows, Linux and macOS, the computations of the
   views give the main side's result in unit tests, with no case that differs.
 
@@ -368,3 +379,7 @@ tests and the manual check of the paths the moved values served.
   tests (SC-007).
 - Values fixed when the application is built, such as development or
   production mode, stay fixed by the build and need no channel.
+- A request to the main side ends with an answer or an error, which is what
+  FR-005 asks by "no wait without end". Electron rejects a request that no
+  listener answers, and every listener this feature adds answers or throws; no
+  timeout is added.

@@ -54,11 +54,14 @@ interface FreelensViewBridge {
    - `messaging-for-renderer`'s `ipc-renderer.injectable.ts` returns
      `window.freelensViewBridge.ipcRenderer`, and throws an error naming the
      bridge when it is missing;
-   - the extension system's renderer IPC (`packages/core/src/extensions/ipc/`)
-     takes the same object;
+   - the extension system's IPC under `packages/core/src/extensions/`, which
+     spec 002 and FR-013 exempt, takes the same object: its renderer IPC in
+     `extensions/ipc/`, and the `sendSync` of `extension-store:read` in
+     `extensions/stores/`;
    - `install-on-drop.injectable.ts` calls `getPathForFile`.
 
-   No other code reads it.
+   No other code reads it. The type of `window.freelensViewBridge` is declared
+   once, in `packages/core/src/renderer/view-bridge.d.ts`.
 4. **Main does not change**: requests still arrive with `event.senderFrame`, and
    frames still register on `frame-communication-admin-channel` and receive
    `sendToFrame`.

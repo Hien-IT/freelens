@@ -280,12 +280,20 @@ Phụ thuộc: không có, làm song song với 001 được. Hiện cửa sổ 
 /speckit-plan Go file by file through the renderer legacy list; each Node use becomes a request channel answered in main (AGENTS.md, "Values computed in main"). Remove each file from the legacy list and from the noNodejsModules exemption in biome.jsonc together. Turning off nodeIntegration and nodeIntegrationInSubFrames is the last task. Do not change Extension API v2, which the Electron build still has.
 ```
 
+Khi lập plan, spec 003 quyết định giữ `nodeIntegrationInSubFrames` bật,
+khác với prompt trên. Electron chỉ nạp preload vào iframe khi cờ này bật, và
+preload là đường duy nhất để cluster frame tới main. Trang vẫn không có Node vì
+sandbox bật (Clarifications của spec 003, FR-012). Một spike chứng minh điều đó
+trước mọi việc khác.
+
 ```text
 /speckit-implement one legacy file per task group, smallest first
 ```
 
 **Cổng:** danh sách renderer trong `legacy.jsonc` rỗng; `pnpm type:check` pass;
-app chạy với `nodeIntegration: false`.
+bundle renderer không còn import module Node hay `electron` nào; app chạy với
+`nodeIntegration: false` và sandbox bật, và trong cửa sổ lẫn cluster frame,
+`require`, `process` và `Buffer` đều không tồn tại.
 
 ### 004 `cluster-frames`: frame riêng cho từng cluster
 

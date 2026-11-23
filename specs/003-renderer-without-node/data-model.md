@@ -38,25 +38,47 @@ Element of the answer of `persistent-storage-initial-values` (R5).
 Rules:
 
 - Main answers only with stores it has loaded.
-- The renderer registers its `store-sync-renderer` listeners before it asks.
+- The renderer registers its `store-sync-renderer:<path>` listeners as soon as
+  the answer arrives (research R5).
 - A renderer store whose path is missing from the answer fails to load, with an
   error naming the store.
 
-## Extension store snapshot entry
+## Extension store read
 
-Element of the answer of `extension-store-initial-values` (R5).
+Request and answer of `extension-store:read`, the synchronous IPC of the
+extension system (R5).
 
-| Field        | Type        | Meaning                                                       |
-| ------------ | ----------- | ------------------------------------------------------------- |
-| `configName` | `string`    | the store's file name without `.json`                         |
-| `path`       | `string`    | the file, computed by main in the extension's store directory |
-| `model`      | JSON object | main's loaded model of that store, else the parsed file       |
+| Field           | Type                  | Meaning                                                                        |
+| --------------- | --------------------- | ------------------------------------------------------------------------------ |
+| `extensionId`   | `ExtensionId`         | the extension whose store directory main reads                                 |
+| `configName`    | `string`              | the store's file name without its extension                                    |
+| `fileExtension` | `string \| undefined` | `conf`'s `fileExtension`; `json` when undefined                                |
+| `encryptionKey` | `string \| undefined` | `conf`'s `encryptionKey`, when the store has one                               |
+| `cwd`           | `string \| undefined` | the `cwd` the extension gave the store, read as given (FR-007)                 |
+| `path`          | `string`              | answer: the file, computed by main as `conf` computes it in the store's folder |
+| `contents`      | `string \| null`      | answer: the file's text, decrypted when keyed; `null` when there is no file    |
 
 Rules:
 
-- Main reads only the extension's own store directory.
-- A file that is encrypted, or does not parse, is left out, and its store fails
-  to load in the renderer, alone (FR-015).
+- The store's folder is `cwd` when the extension gave one, else
+  `<userData>/extension-store/<storeName>/` of that extension, which main
+  computes.
+- A `configName` or `fileExtension` with a path separator or `..` is refused.
+- A file that does not decrypt fails as `conf` fails on the same file, with an
+  error naming the store; the store fails to load, alone (FR-015).
+
+## Extension store write
+
+Request of `extension-store:write` (R5).
+
+| Field           | Type                  | Meaning                                                                                                        |
+| --------------- | --------------------- | -------------------------------------------------------------------------------------------------------------- |
+| `extensionId`   | `ExtensionId`         | as in Extension store read                                                                                     |
+| `configName`    | `string`              | as in Extension store read                                                                                     |
+| `fileExtension` | `string \| undefined` | as in Extension store read                                                                                     |
+| `encryptionKey` | `string \| undefined` | as in Extension store read; main encrypts `contents` with it                                                   |
+| `cwd`           | `string \| undefined` | as in Extension store read                                                                                     |
+| `contents`      | `string`              | the serialized store, as the store's `serialize` made it; main encrypts it when keyed and writes it atomically |
 
 ## Local storage request
 
@@ -75,13 +97,22 @@ that is not a registered cluster is refused.
 What `extension-install:stage-from-path` and `stage-from-url` answer
 ([contracts/channels.md](./contracts/channels.md)).
 
-| Field       | Type                       | Meaning                                              |
-| ----------- | -------------------------- | ---------------------------------------------------- |
-| `kind`      | `"directory" \| "package"` | a development folder or a tarball                    |
-| `stagingId` | `string`                   | opaque, main's; present for `"package"`              |
-| `fileName`  | `string`                   | the package's file name, for the confirm dialog      |
-| `manifest`  | `{ name, version, … }`     | the validated `package.json` fields the dialogs show |
-| `verified`  | `boolean`                  | whether a checksum matched                           |
+A union on `kind`:
+
+```ts
+// The shape only.
+type StagedExtension =
+  | { kind: "directory"; manifest: Manifest }
+  | { kind: "package"; stagingId: string; fileName: string; manifest: Manifest; verified: boolean };
+```
+
+| Field       | Type                                                      | Meaning                                                                                                                                 |
+| ----------- | --------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
+| `kind`      | `"directory" \| "package"`                                | a development folder, which goes on with `extension-install:register-directory`, or a tarball, which goes on with `commit` or `discard` |
+| `stagingId` | `string`, `"package"` only                                | opaque, main's                                                                                                                          |
+| `fileName`  | `string`, `"package"` only                                | the package's file name, for the confirm dialog                                                                                         |
+| `manifest`  | `{ name: string; version: string; description?: string }` | the validated `package.json` fields the dialogs show                                                                                    |
+| `verified`  | `boolean`, `"package"` only                               | whether a checksum matched                                                                                                              |
 
 State, in main:
 
@@ -119,8 +150,14 @@ Answer of `parse-kubeconfig-text`.
 ## Resource templates
 
 `RawTemplates` of `renderer/components/dock/create-resource/create-resource-templates.injectable.ts`,
-unchanged: `[groupTitle, { label, value }[]]`, with the file contents as
-strings. Sent whole on request and on each change.
+unchanged: `{ label, options: { label, value }[] }[]`. Sent whole on request
+and on each change.
+
+| Field             | Type     | Meaning                                                                                |
+| ----------------- | -------- | -------------------------------------------------------------------------------------- |
+| `label`           | `string` | the group: the template's folder relative to `~/.freelens/templates`, or `"ungrouped"` |
+| `options[].label` | `string` | the template's file name without its extension                                         |
+| `options[].value` | `string` | the file's contents                                                                    |
 
 ## View bridge
 

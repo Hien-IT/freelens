@@ -164,8 +164,8 @@ to a frame, the sender of a request), and it reopens this section.
 
 ## R4. Values of the machine at startup
 
-About seventeen renderer files and three public getters
-(`Common.App.isWindows`, `isMac`, `isLinux`, plus `isSnap` and `isFlatpak`) read
+About seventeen renderer files and five public getters
+(`Common.App.isWindows`, `isMac`, `isLinux`, `isSnap` and `isFlatpak`) read
 the platform and the environment synchronously, at injection time. The app
 paths already come from main: `setup-app-paths`, a
 `beforeApplicationIsLoadingInjectionToken` runnable, awaits the `app-paths`
@@ -245,16 +245,34 @@ migration.
   so a path the renderer joined itself could differ). `loadAndStartSyncing`
   stays synchronous. Saving does not change: the reaction sends to
   `store-sync-main:<path>`.
-- **The `store-sync-renderer` listener is registered before the snapshot is
-  requested**, so a change broadcast in between is not lost. A change that
-  arrives later than the snapshot it reflects is applied after it, as today.
-- **Extension stores**: `ExtensionStore.loadExtension` is synchronous and
-  public. Before the extension's renderer entry point runs, the loader requests
-  `extension-store-initial-values` (extension id → `{ configName, path, model }[]`).
-  Main reads the JSON files in the extension's store directory, a path it
-  computes itself, and prefers the model of a store it has loaded. Migrations
-  declared by an extension run on the in-memory `Conf`-shaped object, and the
-  result is sent to main like any change.
+- **Each `store-sync-renderer:<path>` listener is registered as soon as the
+  snapshot answers**, since the paths come from that answer. A change main
+  broadcasts between its answer and the registration is missed, in the same
+  window as today's, between the renderer reading the file and registering the
+  listener, so FR-006 holds. Every later change arrives whole, as today.
+- **Extension stores keep every `conf` option**, synchronously, because
+  `ExtensionStore.loadExtension` is synchronous and public, and its params
+  expose `conf`'s options: `encryptionKey`, `serialize`/`deserialize`,
+  `fileExtension`, `schema`, migrations on a `Conf<T>`, and the rest (FR-014).
+  - **Reading**: `loadExtension` asks main over `extension-store:read`, the
+    one synchronous channel of this feature. It is the extension system's own
+    Electron IPC (`sendSync` through the bridge's `ipcRenderer`), which spec 002
+    exempts and the Tauri build does not have. Main reads the file in the
+    store's folder, the `cwd` the extension gave or else the extension's store
+    directory, which main computes, as `conf` names it from the `configName`
+    and the `fileExtension`. It decrypts the file with the store's
+    `encryptionKey` as `conf` does, and returns the text. The `cwd` is read as
+    given, as today (FR-007).
+  - **Loading**: the renderer runs `conf`'s load logic on that text in a
+    `Conf`-compatible class, the in-memory object of the built-in stores grown
+    to `conf`'s surface: `deserialize`, `defaults`, the `ajv` schema,
+    dot-notation access, migrations by `conf`'s algorithm and `projectVersion`,
+    and change events.
+  - **Writing**: when that logic changes the stored data, where `conf` writes
+    the file back on load today, the renderer serializes it and sends it on
+    `extension-store:write`. Main encrypts it if the store has a key and writes
+    it atomically. This holds for a store that only the renderer loads, too.
+  - **Saving later** keeps the existing `store-sync-main` path, as today.
 - **`process.nextTick`** becomes `queueMicrotask`.
 - **The backup of a corrupt file** (`read-file-buffer-sync`,
   `write-buffer-sync`) is main's, since main loads every store first.
@@ -265,13 +283,13 @@ migration.
 
 **Risks**:
 
-- **An extension store with an `encryptionKey`** cannot be decrypted
-  synchronously without Node. If main has not loaded that store, it fails to
-  load, alone, and the failure is logged with the extension's name (FR-015).
-  Whether any extension in use sets one is not known [unverified].
-- **A store that an extension loads only in the renderer** has no listener in
-  main, so its changes are not written; that is today's behaviour [inferred],
-  and FR-006 asks no more than today.
+- **The `Conf`-compatible class can drift from `conf`.** Unit tests, which can
+  load `conf`, run each scenario through `conf` itself and through the class,
+  and compare the store and the text written: defaults, a schema failure,
+  migrations across versions, dot notation, encryption, and custom
+  `serialize`/`deserialize`. A bump of `conf` runs them again.
+- **Synchronous IPC blocks the renderer** while main reads one small file, once
+  per extension store at load. It is limited to the extension system.
 - **Saves are sent without waiting for an answer**, as today. A change made just
   before quitting depends on Electron delivering queued messages, as it does
   now; the quickstart checks it (FR-006).
@@ -282,6 +300,12 @@ migration.
   `loadAndStartSyncing` would become asynchronous.
 - Sync boxes: they exist, but no sync box is defined, and the stores already
   sync through their own channels.
+- For extension stores, a snapshot fetched before the entry point runs, with
+  encrypted stores failing unless main had loaded them: it changes how a public
+  API fails, which FR-014 does not allow, and the user chose to keep the
+  behaviour instead.
+- Bundling `conf` itself in the renderer: it imports `node:fs`, `node:crypto`
+  and `node:path` at module top.
 
 ## R6. Actions on the machine become one-task channels
 
@@ -315,11 +339,18 @@ system. The full list, with values, checks and owners, is
   `shell.openExternal` stays in main's implementation of the same token.
 - **Waiting for a port to be free** after a port-forward stops is a channel, so
   `tcp-port-used` leaves the renderer.
-- **The two extension API calls that take a folder** follow the folder rule of
-  FR-007 (clarification, Session 2026-11-23). `FilePicker`'s upload writes the
-  picked files, and `createResourceStack` reads the folder it applies. Main
-  accepts the folder only inside the install or data directory of an installed
-  extension. Names with a path separator are refused.
+- **The extension API calls that take a folder** are exempt from FR-007's
+  rule on paths (clarification, Session 2026-11-23): `FilePicker`'s upload
+  writes the picked files into the folder the extension names, and
+  `createResourceStack` reads the folder it applies, as today. Failing for some
+  folders would be a breaking change, which Principle III allows only in a
+  major release. A file name with a path separator or `..` is still refused,
+  as it cannot be a picked file's name. In main, `Main.K8sApi.createResourceStack`
+  reads the folder directly, with no channel.
+- **Who calls a channel** is beyond these rules: main cannot tell whether a
+  path came from the user, and with context isolation off any script in a page
+  can call any channel, as it can use Node today (clarification, Session
+  2026-11-23).
 
 **Rationale**: FR-007 asks that no channel offer the file system in general.
 The task shape also keeps each channel testable on both sides (FR-020) and lets
@@ -439,18 +470,18 @@ new dependencies to keep a library that does three things in the renderer.
 Checked against C1 to C15 of `docs/extensions/api.md`, C3, C4, C5, C6 and C14
 in particular:
 
-| Surface                                                                         | Today                                   | After                                                                         |
-| ------------------------------------------------------------------------------- | --------------------------------------- | ----------------------------------------------------------------------------- |
-| `Common.App.isWindows` / `isMac` / `isLinux` / `isSnap` / `isFlatpak`           | sync, from `process`                    | sync, from `machine-values` state (R4)                                        |
-| `Common.Store.ExtensionStore` (`loadExtension`, `cwd`, migrations on `Conf<T>`) | sync, `conf` reads the file             | sync, from the snapshot (R5); migrations on an in-memory `Conf`-shaped object |
-| `LensExtension.getExtensionFileFolder()`                                        | async, fs in the renderer               | async, a channel (R6); same result                                            |
-| `K8sApi.createResourceStack` (`kubectlApplyFolder`, `kubectlDeleteFolder`)      | async, reads the folder in the renderer | async, a channel; a folder outside the extension's directories fails (FR-007) |
-| `Renderer.Component.FilePicker` with `uploadDir`                                | writes in the renderer                  | a channel, with the same folder rule                                          |
-| `Renderer.Component.InputValidators.isPath`                                     | async, `fs-extra` in the renderer       | async, the `path-exists` channel; same message                                |
-| `KubeApi`, `KubeObjectStore`, `ExtensionStore` assertion failures               | `AssertionError`, `ERR_ASSERTION`       | same name and code (R8)                                                       |
-| `Renderer.Ipc` channel prefix                                                   | sync SHA-256 in the constructor         | precomputed, same value (R8)                                                  |
-| `Renderer.Component.ReactiveDuration`                                           | `reactive-now` in common                | the same component; the module moves under `renderer/`                        |
-| `require` in extension renderer code                                            | reachable, warned                       | absent (C4 already allows it)                                                 |
+| Surface                                                                         | Today                                   | After                                                                                                                         |
+| ------------------------------------------------------------------------------- | --------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
+| `Common.App.isWindows` / `isMac` / `isLinux` / `isSnap` / `isFlatpak`           | sync, from `process`                    | sync, from `machine-values` state (R4)                                                                                        |
+| `Common.Store.ExtensionStore` (`loadExtension`, `cwd`, migrations on `Conf<T>`) | sync, `conf` reads the file             | sync, `extension-store:read` and a `Conf`-compatible class tested against `conf`; every option kept, encryption included (R5) |
+| `LensExtension.getExtensionFileFolder()`                                        | async, fs in the renderer               | async, a channel (R6); same result                                                                                            |
+| `K8sApi.createResourceStack` (`kubectlApplyFolder`, `kubectlDeleteFolder`)      | async, reads the folder in the renderer | async, a channel reading the same folder; in main, read directly                                                              |
+| `Renderer.Component.FilePicker` with `uploadDir`                                | writes in the renderer                  | a channel writing to the same folder                                                                                          |
+| `Renderer.Component.InputValidators.isPath`                                     | async, `fs-extra` in the renderer       | async, the `path-exists` channel; same message                                                                                |
+| `KubeApi`, `KubeObjectStore`, `ExtensionStore` assertion failures               | `AssertionError`, `ERR_ASSERTION`       | same name and code (R8)                                                                                                       |
+| `Renderer.Ipc` channel prefix                                                   | sync SHA-256 in the constructor         | precomputed, same value (R8)                                                                                                  |
+| `Renderer.Component.ReactiveDuration`                                           | `reactive-now` in common                | the same component; the module moves under `renderer/`                                                                        |
+| `require` in extension renderer code                                            | reachable, warned                       | absent (C4 already allows it)                                                                                                 |
 
 **Decision**:
 
@@ -458,9 +489,9 @@ in particular:
 - The documents change where they describe what changes:
   - the paragraph of C4 on `globalThis.require`, which becomes "absent";
   - "Node and Electron in the renderer" in `migrating-from-v1.md`, which says
-    they are still reachable;
-  - the folder rule, in the contract that covers `FilePicker` and
-    `createResourceStack` (C5 and the rename table of the migration guide).
+    they are still reachable.
+- No failure changes, so no breaking change needs a major release
+  (Principle III).
 - The section names that the `freelens` plugin skills cite stay unchanged.
 
 ## R11. Electron's own renderer modules
@@ -485,17 +516,21 @@ asks:
    the current bundle.
 3. **The preload and the bridge**, with Node integration still on, so that the
    IPC path is proven while everything else still works.
-4. **The S files**, starting with `assert` (most of the list), then the other
-   pure computations.
-5. **`machine-values`, the frame role and the build-time values** (R4).
-6. **The logger** (R9).
-7. **Persistent storage and local storage** (R5).
-8. **The channels of R6**, one feature at a time: templates, settings, links,
-   port-forward, kubeconfig.
-9. **Extension install, uninstall, file folder and stores.**
-10. **The M and D moves** of common injectables that main alone uses.
-11. **Last**: the gate stops shimming, the `rendererBundle` list goes, and the
-    window gets `nodeIntegration: false` with the sandbox.
+4. **The computations (User Story 2)**:
+   - `assert` first, which covers most of the list;
+   - Node's types, the frame role and the build-time values (R4);
+   - the logger (R9) and the path port (R7);
+   - the files only main uses.
+5. **The values and actions of the machine (User Story 1)**:
+   - `machine-values` (R4);
+   - the channels of R6, one feature at a time: links, settings,
+     port-forward, templates;
+   - persistent storage and local storage (R5);
+   - kubeconfig;
+   - the extension system;
+   - the last `fs` injectables move to main.
+6. **The gate stops shimming** and the `rendererBundle` list goes.
+7. **Last**: the window gets `nodeIntegration: false` with the sandbox.
 
 Each file leaves the renderer legacy list and the Biome exemption in the same
 change (FR-010); `scripts/type-check-environments.mjs` fails until it does.
@@ -557,7 +592,8 @@ The figures go in the pull request, not in a document.
    the plan stops at task 1 to revise R3.
 2. **A Node global in npm code**, which the gate does not see, survives. The
    integration tests and the SC-002 test catch it at runtime.
-3. **The extension-store migrations and `encryptionKey` stores** (R5).
+3. **The `Conf`-compatible class of the extension stores** drifts from `conf`;
+   the comparison tests of R5 catch it.
 4. **Drop install depends on `webUtils`** in a sandboxed preload; the spike
    checks it.
 5. **Startup round trips**: `machine-values`, `app-paths` and the store snapshot
