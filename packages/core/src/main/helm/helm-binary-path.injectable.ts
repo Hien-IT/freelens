@@ -5,7 +5,7 @@
  */
 
 import { getInjectable } from "@ogre-tools/injectable";
-import bundledBinaryPathInjectable from "../../common/utils/bundled-binary-path.injectable";
+import bundledBinaryPathInjectable from "../../common/utils/main/bundled-binary-path.injectable";
 import userPreferencesStateInjectable from "../../features/user-preferences/common/state.injectable";
 
 /**

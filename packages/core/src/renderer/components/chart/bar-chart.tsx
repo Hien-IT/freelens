@@ -4,8 +4,7 @@
  * Licensed under MIT License. See LICENSE in root directory for more information.
  */
 
-import assert from "node:assert";
-import { bytesToUnits, cssNames, isObject } from "@freelensapp/utilities";
+import { assert, bytesToUnits, cssNames, isObject } from "@freelensapp/utilities";
 import { withInjectables } from "@ogre-tools/injectable-react";
 import Color from "color";
 import { merge } from "es-toolkit/compat";

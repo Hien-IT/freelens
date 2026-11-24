@@ -8,6 +8,8 @@
 
 import requestClearClusterAsDeletingInjectable from "./request-clear-as-deleting.injectable";
 import requestDeleteClusterInjectable from "./request-delete.injectable";
+import requestClusterKubeconfigContextsInjectable from "./request-kubeconfig-contexts.injectable";
+import requestRemoveClusterContextInjectable from "./request-remove-context.injectable";
 import requestSetClusterAsDeletingInjectable from "./request-set-as-deleting.injectable";
 
 import type { DiContainerForInjection } from "@ogre-tools/injectable";
@@ -19,7 +21,17 @@ export function registerInjectables(di: DiContainerForInjection): void {
     /* Ignore duplicate registration */
   }
   try {
+    di.register(requestClusterKubeconfigContextsInjectable);
+  } catch (e) {
+    /* Ignore duplicate registration */
+  }
+  try {
     di.register(requestDeleteClusterInjectable);
+  } catch (e) {
+    /* Ignore duplicate registration */
+  }
+  try {
+    di.register(requestRemoveClusterContextInjectable);
   } catch (e) {
     /* Ignore duplicate registration */
   }

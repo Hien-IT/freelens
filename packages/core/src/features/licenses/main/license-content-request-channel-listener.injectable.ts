@@ -4,7 +4,7 @@
  */
 
 import { getRequestChannelListenerInjectable } from "@freelensapp/messaging";
-import readFileInjectable from "../../../common/fs/read-file.injectable";
+import readFileInjectable from "../../../common/fs/main/read-file.injectable";
 import joinPathsInjectable from "../../../common/path/join-paths.injectable";
 import staticFilesDirectoryInjectable from "../../../common/vars/static-files-directory.injectable";
 import { licenseContentChannel } from "../common/license-content-channel";

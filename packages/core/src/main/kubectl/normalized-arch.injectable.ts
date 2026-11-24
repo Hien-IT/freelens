@@ -5,7 +5,7 @@
  */
 
 import { getInjectable } from "@ogre-tools/injectable";
-import processArchInjectable from "../../common/vars/process-arch.injectable";
+import processArchInjectable from "../../common/vars/main/process-arch.injectable";
 
 const kubectlDownloadingNormalizedArchInjectable = getInjectable({
   id: "kubectl-downloading-normalized-arch",

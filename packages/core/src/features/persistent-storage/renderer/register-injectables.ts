@@ -6,13 +6,21 @@
  * This replaces the webpack-based auto-registration system.
  */
 
+import backupCorruptStorageFileInjectable from "./backup-corrupt-file.injectable";
 import shouldBaseStoreDisableSyncInIpcListenerInjectable from "./disable-sync-in-ipc-listener.injectable";
+import persistentStorageInitialValuesInjectable from "./initial-values.injectable";
 import baseStoreIpcChannelPrefixInjectable from "./ipc-channel-prefix.injectable";
 import persistStateToConfigInjectable from "./persist-state-to-config.injectable";
+import setupPersistentStorageInitialValuesInjectable from "./setup-initial-values.injectable";
 
 import type { DiContainerForInjection } from "@ogre-tools/injectable";
 
 export function registerInjectables(di: DiContainerForInjection): void {
+  try {
+    di.register(backupCorruptStorageFileInjectable);
+  } catch (e) {
+    /* Ignore duplicate registration */
+  }
   try {
     di.register(baseStoreIpcChannelPrefixInjectable);
   } catch (e) {
@@ -20,6 +28,16 @@ export function registerInjectables(di: DiContainerForInjection): void {
   }
   try {
     di.register(persistStateToConfigInjectable);
+  } catch (e) {
+    /* Ignore duplicate registration */
+  }
+  try {
+    di.register(persistentStorageInitialValuesInjectable);
+  } catch (e) {
+    /* Ignore duplicate registration */
+  }
+  try {
+    di.register(setupPersistentStorageInitialValuesInjectable);
   } catch (e) {
     /* Ignore duplicate registration */
   }

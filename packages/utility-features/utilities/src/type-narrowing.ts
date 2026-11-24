@@ -111,7 +111,8 @@ export function isString(val: unknown): val is string {
  * checks if val is of type Buffer
  * @param val the value to be checked
  */ export function isBuffer(val: unknown): val is Buffer {
-  return val instanceof Buffer;
+  // a browser page has no Buffer, and nothing there is one
+  return typeof Buffer !== "undefined" && val instanceof Buffer;
 }
 
 /**

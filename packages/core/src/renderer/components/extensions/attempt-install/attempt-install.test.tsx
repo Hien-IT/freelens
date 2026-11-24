@@ -109,7 +109,7 @@ describe("attemptInstall of an extension which is already installed", () => {
     id: extensionId,
     fileName: "example-extension-2.0.0-2.tgz",
     data: tarball,
-    tempFile: "/some-temp-dir/example-extension-2.0.0-2.tgz",
+    stagingId: "some-staging-id",
     manifest: { name: extensionId, version: "2.0.0-2", engines: { freelens: "^2.0.0" } },
     checksum: { kind: "sha256", value: digestOf(tarball) },
   };

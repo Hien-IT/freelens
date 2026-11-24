@@ -9,11 +9,11 @@
 // @freelensapp/messaging (specs/002-messaging-for-tauri, research R11).
 
 import { loggerInjectionToken } from "@freelensapp/logger";
-import { ipcMain, webContents } from "electron";
 import clusterFramesInjectable from "../../../common/cluster-frames.injectable";
 import { toJS } from "../../../common/utils/toJS";
 import { getDiForExtensionApi } from "../../extension-api-di";
 import ipcMainInjectionToken from "./ipc-main-injection-token";
+import { webContentsInjectionToken } from "./web-contents-injection-token";
 
 import type { Disposer } from "@freelensapp/utilities";
 
@@ -29,11 +29,14 @@ export function ipcMainHandle(channel: string, listener: (event: Electron.IpcMai
 
 /** Calls main's own listeners of the channel and sends it to every view and cluster frame. */
 export async function broadcastFromMain(channel: string, ...args: any[]): Promise<void> {
+  const di = getDiForExtensionApi();
+  const webContents = di.inject(webContentsInjectionToken);
+
   if (!webContents) {
     return;
   }
 
-  const di = getDiForExtensionApi();
+  const ipcMain = di.inject(ipcMainInjectionToken);
   const logger = di.inject(loggerInjectionToken);
   const clusterFrames = di.inject(clusterFramesInjectable);
 

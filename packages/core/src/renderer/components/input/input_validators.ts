@@ -5,7 +5,8 @@
  */
 
 import { namedCaptures } from "@freelensapp/utilities";
-import fse from "fs-extra";
+import { getEnvironmentSpecificDiForExtensionApi } from "../../../extensions/extension-api-di";
+import requestPathExistsInjectable from "../../../features/validate-directory/renderer/path-exists.injectable";
 
 import type { StrictReactNode } from "@freelensapp/utilities";
 
@@ -206,7 +207,10 @@ export const isPath = asyncInputValidator({
   debounce: 100,
   condition: ({ type }) => type === "text",
   validate: async (value) => {
-    if (!(await fse.pathExists(value))) {
+    // main checks the path, as the renderer cannot; reached as the legacy helpers reach the DI
+    const pathExists = getEnvironmentSpecificDiForExtensionApi("renderer").inject(requestPathExistsInjectable);
+
+    if (!(await pathExists(value))) {
       throw new Error(`"${value}" is not a valid file path`);
     }
   },

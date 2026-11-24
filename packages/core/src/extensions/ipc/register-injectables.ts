@@ -6,25 +6,13 @@
  * This replaces the webpack-based auto-registration system.
  */
 
-import ipcMainInjectable from "./ipc-main.injectable";
 import ipcRendererInjectable from "./ipc-renderer.injectable";
-import relayLegacyBroadcastsInjectable from "./relay-legacy-broadcasts.injectable";
 
 import type { DiContainerForInjection } from "@ogre-tools/injectable";
 
 export function registerInjectables(di: DiContainerForInjection): void {
   try {
-    di.register(ipcMainInjectable);
-  } catch (e) {
-    /* Ignore duplicate registration */
-  }
-  try {
     di.register(ipcRendererInjectable);
-  } catch (e) {
-    /* Ignore duplicate registration */
-  }
-  try {
-    di.register(relayLegacyBroadcastsInjectable);
   } catch (e) {
     /* Ignore duplicate registration */
   }

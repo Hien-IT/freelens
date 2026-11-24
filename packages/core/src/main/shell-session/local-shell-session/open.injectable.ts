@@ -7,7 +7,7 @@
 import { loggerInjectionToken } from "@freelensapp/logger";
 import { getInjectable } from "@ogre-tools/injectable";
 import emitAppEventInjectable from "../../../common/app-event-bus/emit-event.injectable";
-import statInjectable from "../../../common/fs/stat.injectable";
+import statInjectable from "../../../common/fs/main/stat.injectable";
 import getBasenameOfPathInjectable from "../../../common/path/get-basename.injectable";
 import joinPathsInjectable from "../../../common/path/join-paths.injectable";
 import appNameInjectable from "../../../common/vars/app-name.injectable";

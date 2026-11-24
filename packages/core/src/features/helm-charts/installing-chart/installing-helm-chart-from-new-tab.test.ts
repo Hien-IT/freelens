@@ -8,8 +8,8 @@ import { asyncFn, flushPromises } from "@freelensapp/test-utils";
 import { act, fireEvent } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import directoryForLensLocalStorageInjectable from "../../../common/directory-for-lens-local-storage/directory-for-lens-local-storage.injectable";
-import readJsonFileInjectable from "../../../common/fs/read-json-file.injectable";
-import writeJsonFileInjectable from "../../../common/fs/write-json-file.injectable";
+import readJsonFileInjectable from "../../../common/fs/main/read-json-file.injectable";
+import writeJsonFileInjectable from "../../../common/fs/main/write-json-file.injectable";
 import { HelmChart } from "../../../common/k8s-api/endpoints/helm-charts.api";
 import requestHelmChartsInjectable from "../../../common/k8s-api/endpoints/helm-charts.api/request-charts.injectable";
 import requestHelmChartReadmeInjectable from "../../../common/k8s-api/endpoints/helm-charts.api/request-readme.injectable";
@@ -60,7 +60,6 @@ describe("installing helm chart from new tab", () => {
     requestCreateHelmReleaseMock = asyncFn();
 
     builder.beforeWindowStart(({ windowDi }) => {
-      windowDi.override(directoryForLensLocalStorageInjectable, () => "/some-directory-for-lens-local-storage");
       windowDi.override(requestDetailedHelmReleaseInjectable, () => requestDetailedHelmReleaseMock);
       windowDi.override(requestHelmChartsInjectable, () => requestHelmChartsMock);
       windowDi.override(requestHelmChartVersionsInjectable, () => requestHelmChartVersionsMock);
@@ -77,6 +76,8 @@ describe("installing helm chart from new tab", () => {
     });
 
     builder.beforeApplicationStart(({ mainDi }) => {
+      // main reads and writes the local storage
+      mainDi.override(directoryForLensLocalStorageInjectable, () => "/some-directory-for-lens-local-storage");
       listClusterHelmReleasesMock = asyncFn();
       mainDi.override(listClusterHelmReleasesInjectable, () => listClusterHelmReleasesMock);
     });

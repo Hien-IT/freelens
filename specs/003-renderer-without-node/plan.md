@@ -80,7 +80,8 @@ preload entry in `freelens/`.
 
 **Performance Goals**: SC-005. The window's startup and the opening of a cluster
 frame are at most 10% slower than `main`, median of three runs on the same
-machine. The startup requests (`app-paths`, `machine-values`, the store
+machine; for the cluster frame, the build measured against `main` is one with
+the sandbox off, as the sandbox's own cost is accepted (FR-012). The startup requests (`app-paths`, `machine-values`, the store
 snapshot) go in parallel (R4, R5); the read of the window's local storage
 follows them, as `initialize-state` does today.
 

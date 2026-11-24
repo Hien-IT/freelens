@@ -1516,10 +1516,11 @@ the latter in `Common`, which renderer code reads too.
 ## Node and Electron in the renderer
 
 **Renderer code gets no Node and no Electron in v2**, `require()` included
-([C4](./api.md#c4-module-format-and-loading)). They are still
-reachable, because the renderer is not context-isolated yet, but nothing
-guarantees them and they may disappear in any release. Everything that used to
-lean on them in the renderer has a replacement already:
+([C4](./api.md#c4-module-format-and-loading)). The renderer runs without them:
+`require`, `process`, `Buffer` and the other globals of Node are not defined
+there, and an extension whose renderer code uses one fails to load, alone, with
+a `ReferenceError` logged under its name. Everything that used to lean on them
+in the renderer has a replacement:
 
 - the renderer entry point is ESM, loaded by URL, not `require()`d from disk;
 - the host APIs and the shared libraries come from

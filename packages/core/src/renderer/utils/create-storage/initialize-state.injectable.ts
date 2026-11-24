@@ -6,13 +6,15 @@
 
 import { beforeApplicationIsLoadingInjectionToken } from "@freelensapp/application";
 import { loggerInjectionToken } from "@freelensapp/logger";
+import { requestFromChannelInjectionToken } from "@freelensapp/messaging";
 import { getInjectable } from "@ogre-tools/injectable";
 import { compareStructural, reaction, runInAction, toJS } from "mobx";
-import directoryForLensLocalStorageInjectable from "../../../common/directory-for-lens-local-storage/directory-for-lens-local-storage.injectable";
-import readJsonFileInjectable from "../../../common/fs/read-json-file.injectable";
-import writeJsonFileInjectable from "../../../common/fs/write-json-file.injectable";
-import joinPathsInjectable from "../../../common/path/join-paths.injectable";
 import AwaitLock from "../../../common/utils/await-lock";
+import {
+  lensLocalStorageReadChannel,
+  lensLocalStorageWriteChannel,
+} from "../../../features/local-storage/common/channels";
+import setupMachineValuesInjectable from "../../../features/machine-values/renderer/setup.injectable";
 import setupAppPathsInjectable from "../../app-paths/setup-app-paths.injectable";
 import hostedClusterIdInjectable from "../../cluster-frame-context/hosted-cluster-id.injectable";
 import { storageHelperLogPrefix } from "../storage-helper";
@@ -23,30 +25,27 @@ const initializeStateInjectable = getInjectable({
   id: "initialize-lens-local-storage-state",
   instantiate: (di) => ({
     run: async () => {
-      const joinPaths = di.inject(joinPathsInjectable);
-      const directoryForLensLocalStorage = di.inject(directoryForLensLocalStorageInjectable);
       const hostedClusterId = di.inject(hostedClusterIdInjectable);
       const lensLocalStorageState = di.inject(lensLocalStorageStateInjectable);
-      const readJsonFile = di.inject(readJsonFileInjectable);
-      const writeJsonFile = di.inject(writeJsonFileInjectable);
+      const requestFromChannel = di.inject(requestFromChannelInjectionToken);
       const logger = di.inject(loggerInjectionToken);
       const storageSaveDelay = di.inject(storageSaveDelayInjectable);
       const lock = new AwaitLock();
 
-      const filePath = joinPaths(directoryForLensLocalStorage, `${hostedClusterId || "app"}.json`);
+      // main reads and writes the file of this frame
+      const clusterId = hostedClusterId || undefined;
+      const storageName = `the local storage of ${hostedClusterId || "app"}`;
 
       try {
-        const localFile = await readJsonFile(filePath);
+        const localFile = await requestFromChannel(lensLocalStorageReadChannel, { clusterId });
 
-        if (typeof localFile === "object") {
-          runInAction(() => {
-            Object.assign(lensLocalStorageState, localFile);
-          });
-        }
+        runInAction(() => {
+          Object.assign(lensLocalStorageState, localFile);
+        });
       } catch {
         // do nothing
       } finally {
-        logger.info(`${storageHelperLogPrefix} loading finished for ${filePath}`);
+        logger.info(`${storageHelperLogPrefix} loading finished for ${storageName}`);
       }
 
       reaction(() => toJS(lensLocalStorageState), saveFile, {
@@ -57,18 +56,19 @@ const initializeStateInjectable = getInjectable({
       async function saveFile(state: Record<string, unknown>) {
         try {
           await lock.acquireAsync();
-          logger.info(`${storageHelperLogPrefix} saving ${filePath}`);
-          await writeJsonFile(filePath, state);
+          logger.info(`${storageHelperLogPrefix} saving ${storageName}`);
+          await requestFromChannel(lensLocalStorageWriteChannel, { clusterId, state });
         } catch (error) {
           logger.error(`${storageHelperLogPrefix} saving failed: ${error}`, {
-            jsonFilePath: filePath,
+            storage: storageName,
           });
         } finally {
           lock.release();
         }
       }
     },
-    runAfter: setupAppPathsInjectable,
+    // the path injectables read the platform
+    runAfter: [setupAppPathsInjectable, setupMachineValuesInjectable],
   }),
   injectionToken: beforeApplicationIsLoadingInjectionToken,
 });

@@ -4,11 +4,8 @@
  * Licensed under MIT License. See LICENSE in root directory for more information.
  */
 
-import assert from "node:assert";
-import { pathToFileURL } from "node:url";
 import { EventEmitter } from "@freelensapp/event-emitter";
-import { isDefined, iter, noop } from "@freelensapp/utilities";
-import { ipcMain } from "electron";
+import { assert, isDefined, iter, noop } from "@freelensapp/utilities";
 import { isEqual } from "es-toolkit";
 import { action, compareStructural, computed, observable, reaction, runInAction, toJS, when } from "mobx";
 import {
@@ -100,6 +97,7 @@ interface Dependencies {
   joinPaths: JoinPaths;
   getBasenameOfPath: GetBasenameOfPath;
   fetch: Fetch;
+  fileUrlOfPath: (path: string) => URL;
 }
 
 interface ExtensionBeingActivated {
@@ -206,6 +204,11 @@ export class ExtensionLoader {
 
   constructor(protected readonly dependencies: Dependencies) {}
 
+  /** The loader of the main process, which owns the state every frame follows. */
+  private get isMain() {
+    return this.dependencies.extensionEntryPointName === "main";
+  }
+
   readonly userExtensions = computed(() => new Map(this.extensions.toJSON()));
 
   /**
@@ -297,7 +300,7 @@ export class ExtensionLoader {
   );
 
   async init() {
-    if (ipcMain) {
+    if (this.isMain) {
       await this.initMain();
     } else {
       await this.initRenderer();
@@ -410,7 +413,7 @@ export class ExtensionLoader {
    * frame tears down from the same broadcast, in parallel.
    */
   async whenTornDown(lensExtensionId: LensExtensionId): Promise<void> {
-    if (ipcMain) {
+    if (this.isMain) {
       return this.whenTornDownHere(lensExtensionId);
     }
 
@@ -440,7 +443,7 @@ export class ExtensionLoader {
     // unverified one, which stays disabled until the user enables it, too.
     // A build which replaces this one is not affected: discovery read its
     // state before removing this one, and adding it writes that state again.
-    if (ipcMain && extension) {
+    if (this.isMain && extension) {
       this.dependencies.updateExtensionsState([[lensExtensionId, { enabled: false, name: extension.manifest.name }]]);
     }
   }
@@ -473,7 +476,7 @@ export class ExtensionLoader {
    * main has applied the change. See `extensionLoaderSetIsEnabledChannel`.
    */
   async setIsEnabled(lensExtensionId: LensExtensionId, isEnabled: boolean): Promise<void> {
-    if (!ipcMain) {
+    if (!this.isMain) {
       return requestExtensionLoaderSetIsEnabled(lensExtensionId, isEnabled);
     }
 
@@ -1004,7 +1007,7 @@ export class ExtensionLoader {
    * the next reload on it.
    */
   private fileUrlOf(extension: InstalledExtension, entryPointPath: string): string {
-    const url = pathToFileURL(this.dependencies.joinPaths(extension.absolutePath, entryPointPath));
+    const url = this.dependencies.fileUrlOfPath(this.dependencies.joinPaths(extension.absolutePath, entryPointPath));
 
     if (!extension.isManaged) {
       url.searchParams.set("v", this.developmentLoadTokenOf(extension.id));

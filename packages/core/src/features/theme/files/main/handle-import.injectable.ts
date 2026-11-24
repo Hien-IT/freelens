@@ -4,12 +4,12 @@
  */
 
 import { getRequestChannelListenerInjectable } from "@freelensapp/messaging";
-import fsInjectable from "../../../../common/fs/fs.injectable";
-import pathExistsInjectable from "../../../../common/fs/path-exists.injectable";
-import readFileInjectable from "../../../../common/fs/read-file.injectable";
-import removePathInjectable from "../../../../common/fs/remove.injectable";
-import statInjectable from "../../../../common/fs/stat.injectable";
-import writeFileInjectable from "../../../../common/fs/write-file.injectable";
+import fsInjectable from "../../../../common/fs/main/fs.injectable";
+import pathExistsInjectable from "../../../../common/fs/main/path-exists.injectable";
+import readFileInjectable from "../../../../common/fs/main/read-file.injectable";
+import removePathInjectable from "../../../../common/fs/main/remove.injectable";
+import statInjectable from "../../../../common/fs/main/stat.injectable";
+import writeFileInjectable from "../../../../common/fs/main/write-file.injectable";
 import randomUUIDInjectable from "../../../../main/crypto/random-uuid.injectable";
 import electronDialogInjectable from "../../../../main/electron-app/features/electron-dialog.injectable";
 import downloadBinaryInjectable, { getDownloadTooLargeError } from "../../../../main/fetch/download-binary.injectable";

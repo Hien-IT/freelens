@@ -4,7 +4,7 @@
  * Licensed under MIT License. See LICENSE in root directory for more information.
  */
 
-import assert from "node:assert";
+import { assert } from "@freelensapp/utilities";
 import { getInjectable } from "@ogre-tools/injectable";
 import hostedClusterInjectable from "../../../renderer/cluster-frame-context/hosted-cluster.injectable";
 import createStorageInjectable from "../../../renderer/utils/create-storage/create-storage.injectable";

@@ -8,8 +8,7 @@
 // API docs: https://mui.com/material-ui/api/slider/
 import "./slider.scss";
 
-import assert from "node:assert";
-import { cssNames } from "@freelensapp/utilities";
+import { assert, cssNames } from "@freelensapp/utilities";
 import MaterialSlider from "@mui/material/Slider";
 import { Component } from "react";
 

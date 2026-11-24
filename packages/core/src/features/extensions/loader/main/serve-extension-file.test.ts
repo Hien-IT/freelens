@@ -5,8 +5,8 @@
 
 import { beforeEach, describe, expect, it } from "vitest";
 import directoryForUserDataInjectable from "../../../../common/app-paths/directory-for-user-data/directory-for-user-data.injectable";
-import readFileBufferInjectable from "../../../../common/fs/read-file-buffer.injectable";
-import realPathInjectable from "../../../../common/fs/realpath.injectable";
+import readFileBufferInjectable from "../../../../common/fs/main/read-file-buffer.injectable";
+import realPathInjectable from "../../../../common/fs/main/realpath.injectable";
 import { getDiForUnitTesting } from "../../../../main/getDiForUnitTesting";
 import installedExtensionsStateInjectable from "../../installer/common/installed-extensions-state.injectable";
 import serveExtensionFileInjectable from "./serve-extension-file.injectable";

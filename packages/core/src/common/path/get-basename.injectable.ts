@@ -4,14 +4,14 @@
  * Licensed under MIT License. See LICENSE in root directory for more information.
  */
 
-import path from "node:path";
 import { getInjectable } from "@ogre-tools/injectable";
+import { pathModuleInjectionToken } from "./path-module-injection-token";
 
 export type GetBasenameOfPath = (path: string) => string;
 
 const getBasenameOfPathInjectable = getInjectable({
   id: "get-basename-of-path",
-  instantiate: (): GetBasenameOfPath => path.basename,
+  instantiate: (di): GetBasenameOfPath => di.inject(pathModuleInjectionToken).basename,
   causesSideEffects: true,
 });
 

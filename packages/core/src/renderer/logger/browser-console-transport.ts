@@ -3,19 +3,9 @@
  * Licensed under MIT License. See LICENSE in root directory for more information.
  */
 
-import { setImmediate } from "node:timers";
-import TransportStream from "winston-transport";
+import { LoggerTransport, SPLAT } from "@freelensapp/logger/renderer";
 
-import type { LogEntry } from "winston";
-
-/**
- * The symbol under which winston keeps the arguments that followed the message.
- *
- * This is the same symbol as `triple-beam`'s `SPLAT`, spelled out so that the
- * renderer does not have to import a CommonJS package for one well-known
- * symbol.
- */
-const SPLAT = Symbol.for("splat");
+import type { LogEntry } from "@freelensapp/logger/renderer";
 
 /**
  * Fields that winston puts on every entry, and which the printed message
@@ -48,7 +38,7 @@ const consoleMethodFor = (level: string): "debug" | "error" | "info" | "warn" =>
  * data exists in the multiple-argument case.
  */
 const metadataOf = (entry: LogEntry): unknown[] => {
-  const splat = (entry as unknown as Record<symbol, unknown>)[SPLAT];
+  const splat = entry[SPLAT];
 
   if (Array.isArray(splat) && splat.length > 0) {
     return splat;
@@ -68,13 +58,11 @@ const metadataOf = (entry: LogEntry): unknown[] => {
  * renderer bundle -- and dropped the metadata of any entry logged with more
  * than one argument.
  */
-export class BrowserConsoleTransport extends TransportStream {
+export class BrowserConsoleTransport extends LoggerTransport {
   name = "browser-console-transport";
 
   log(entry: LogEntry, next: () => void) {
-    setImmediate(() => {
-      this.emit("logged", entry);
-    });
+    this.emitLogged(entry);
 
     console[consoleMethodFor(entry.level)](entry.message, ...metadataOf(entry));
 

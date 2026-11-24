@@ -6,7 +6,7 @@
 import EventEmitter from "node:events";
 import { ObservableMap } from "mobx";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import createReadFileStreamInjectable from "../../../common/fs/create-read-file-stream.injectable";
+import createReadFileStreamInjectable from "../../../common/fs/main/create-read-file-stream.injectable";
 import { getDiForUnitTesting } from "../../getDiForUnitTesting";
 import computeKubeconfigDiffInjectable from "./compute-diff.injectable";
 import diffChangedKubeconfigInjectable from "./diff-changed-kubeconfig.injectable";

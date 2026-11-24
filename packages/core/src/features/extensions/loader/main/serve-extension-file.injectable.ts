@@ -5,11 +5,11 @@
 
 import { loggerInjectionToken } from "@freelensapp/logger";
 import { getInjectable } from "@ogre-tools/injectable";
-import readFileBufferInjectable from "../../../../common/fs/read-file-buffer.injectable";
-import realPathInjectable from "../../../../common/fs/realpath.injectable";
+import readFileBufferInjectable from "../../../../common/fs/main/read-file-buffer.injectable";
+import realPathInjectable from "../../../../common/fs/main/realpath.injectable";
 import getBasenameOfPathInjectable from "../../../../common/path/get-basename.injectable";
-import isLogicalChildPathInjectable from "../../../../common/path/is-logical-child-path.injectable";
 import joinPathsInjectable from "../../../../common/path/join-paths.injectable";
+import isLogicalChildPathInjectable from "../../../../common/path/main/is-logical-child-path.injectable";
 import { sanitizeExtensionName } from "../../../../extensions/lens-extension";
 import installedExtensionsStateInjectable from "../../installer/common/installed-extensions-state.injectable";
 import { parseVersionDirectoryName } from "../../installer/common/version-directory";

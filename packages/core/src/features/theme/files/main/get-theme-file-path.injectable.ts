@@ -4,9 +4,9 @@
  */
 
 import { getInjectable } from "@ogre-tools/injectable";
-import getAbsolutePathInjectable from "../../../../common/path/get-absolute-path.injectable";
 import getBasenameOfPathInjectable from "../../../../common/path/get-basename.injectable";
 import getDirnameOfPathInjectable from "../../../../common/path/get-dirname.injectable";
+import getAbsolutePathInjectable from "../../../../common/path/main/get-absolute-path.injectable";
 import themesDirectoryInjectable from "./themes-directory.injectable";
 
 /**

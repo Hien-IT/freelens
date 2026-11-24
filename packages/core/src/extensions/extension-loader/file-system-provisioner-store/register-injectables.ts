@@ -7,9 +7,7 @@
  */
 
 import directoryForExtensionDataInjectable from "./directory-for-extension-data.injectable";
-import ensureHashedDirectoryForExtensionInjectable from "./ensure-hashed-directory-for-extension.injectable";
 import fileSystemProvisionerStoreInjectable from "./file-system-provisioner-store.injectable";
-import getHashInjectable from "./get-hash.injectable";
 import { registeredExtensionsInjectable } from "./registered-extensions.injectable";
 
 import type { DiContainerForInjection } from "@ogre-tools/injectable";
@@ -21,17 +19,7 @@ export function registerInjectables(di: DiContainerForInjection): void {
     /* Ignore duplicate registration */
   }
   try {
-    di.register(ensureHashedDirectoryForExtensionInjectable);
-  } catch (e) {
-    /* Ignore duplicate registration */
-  }
-  try {
     di.register(fileSystemProvisionerStoreInjectable);
-  } catch (e) {
-    /* Ignore duplicate registration */
-  }
-  try {
-    di.register(getHashInjectable);
   } catch (e) {
     /* Ignore duplicate registration */
   }

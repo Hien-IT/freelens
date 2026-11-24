@@ -7,7 +7,7 @@
 import { onLoadOfApplicationInjectionToken } from "@freelensapp/application";
 import { loggerInjectionToken } from "@freelensapp/logger";
 import { getInjectable } from "@ogre-tools/injectable";
-import extensionDiscoveryInjectable from "../../../extensions/extension-discovery/extension-discovery.injectable";
+import extensionDiscoveryInjectable from "../../../extensions/extension-discovery/main/extension-discovery.injectable";
 import extensionLoaderInjectable from "../../../extensions/extension-loader/extension-loader.injectable";
 import setupShellInjectable from "../../../features/shell-sync/main/setup-shell.injectable";
 import showErrorPopupInjectable from "../../electron-app/features/show-error-popup.injectable";

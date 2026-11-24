@@ -5,20 +5,23 @@
  */
 
 import { loggerInjectionToken } from "@freelensapp/logger";
+import { requestFromChannelInjectionToken } from "@freelensapp/messaging";
 import { showErrorNotificationInjectable } from "@freelensapp/notifications";
 import { disposer } from "@freelensapp/utilities";
 import { getInjectable } from "@ogre-tools/injectable";
-import { shell } from "electron";
 import { ExtensionInstallationState } from "../../../../extensions/extension-installation-state-store/extension-installation-state-store";
 import extensionInstallationStateStoreInjectable from "../../../../extensions/extension-installation-state-store/extension-installation-state-store.injectable";
 import extensionLoaderInjectable from "../../../../extensions/extension-loader/extension-loader.injectable";
 import { verifyInstallChecksum } from "../../../../features/extensions/installer/common/checksums";
+import {
+  discardExtensionPackageChannel,
+  openExtensionFolderChannel,
+} from "../../../../features/extensions/installer/common/install-channels";
 import confirmInjectable from "../../confirm-dialog/confirm.injectable";
 import { getMessageFromError } from "../get-message-from-error/get-message-from-error";
 import createTempFilesAndValidateInjectable from "./create-temp-files-and-validate.injectable";
 import { disabledForReinstallNote, installFailureSubject } from "./disabled-for-reinstall";
-import getExtensionDestFolderInjectable from "./get-extension-dest-folder.injectable";
-import unpackExtensionInjectable, { discardTarball } from "./unpack-extension.injectable";
+import unpackExtensionInjectable from "./unpack-extension.injectable";
 
 import type { Logger } from "@freelensapp/logger";
 import type { ShowNotification } from "@freelensapp/notifications";
@@ -30,7 +33,6 @@ import type { InstallChecksum } from "../../../../features/extensions/installer/
 import type { InstalledExtensionSource } from "../../../../features/extensions/installer/common/installed-extensions";
 import type { Confirm } from "../../confirm-dialog/confirm.injectable";
 import type { CreateTempFilesAndValidate } from "./create-temp-files-and-validate.injectable";
-import type { GetExtensionDestFolder } from "./get-extension-dest-folder.injectable";
 import type { UnpackExtension } from "./unpack-extension.injectable";
 
 export interface InstallRequest {
@@ -56,7 +58,8 @@ interface Dependencies {
   extensionLoader: ExtensionLoader;
   unpackExtension: UnpackExtension;
   createTempFilesAndValidate: CreateTempFilesAndValidate;
-  getExtensionDestFolder: GetExtensionDestFolder;
+  discardStaged: (stagingId: string) => Promise<void>;
+  openExtensionFolder: (name: string) => Promise<void>;
   installStateStore: ExtensionInstallationStateStore;
   confirm: Confirm;
   showErrorNotification: ShowNotification;
@@ -103,7 +106,8 @@ const attemptInstall =
     extensionLoader,
     unpackExtension,
     createTempFilesAndValidate,
-    getExtensionDestFolder,
+    discardStaged,
+    openExtensionFolder,
     installStateStore,
     confirm,
     showErrorNotification,
@@ -146,7 +150,7 @@ const attemptInstall =
     // itself, removes its tarball here.
     const abandon = () => {
       dispose();
-      void discardTarball(validatedRequest.tempFile);
+      void discardStaged(validatedRequest.stagingId);
     };
 
     const { name, version, description } = validatedRequest.manifest;
@@ -175,7 +179,6 @@ const attemptInstall =
     }
 
     const { version: oldVersion } = installedExtension.manifest;
-    const extensionFolder = getExtensionDestFolder(name);
     const isEnabled = installedExtension.isEnabled;
     // "Reinstall" says the same build is installed again: the same version,
     // and a package in place of a package. A package in place of a directory
@@ -215,7 +218,7 @@ const attemptInstall =
             {"Description: "}
             <em>{description}</em>
           </p>
-          <div className="remove-folder-warning" onClick={() => shell.openPath(extensionFolder)}>
+          <div className="remove-folder-warning" onClick={() => void openExtensionFolder(name)}>
             <b>Warning:</b>
             {!isEnabled
               ? ` ${name}@${oldVersion} will be replaced by this installation.`
@@ -289,7 +292,10 @@ const attemptInstallInjectable = getInjectable({
       extensionLoader: di.inject(extensionLoaderInjectable),
       unpackExtension: di.inject(unpackExtensionInjectable),
       createTempFilesAndValidate: di.inject(createTempFilesAndValidateInjectable),
-      getExtensionDestFolder: di.inject(getExtensionDestFolderInjectable),
+      // main removes the staged tarball and opens the folder of the extension
+      discardStaged: (stagingId) =>
+        di.inject(requestFromChannelInjectionToken)(discardExtensionPackageChannel, { stagingId }),
+      openExtensionFolder: (name) => di.inject(requestFromChannelInjectionToken)(openExtensionFolderChannel, { name }),
       installStateStore: di.inject(extensionInstallationStateStoreInjectable),
       confirm: di.inject(confirmInjectable),
       showErrorNotification: di.inject(showErrorNotificationInjectable),

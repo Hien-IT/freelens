@@ -10,7 +10,7 @@ import {
 } from "@freelensapp/core/main";
 import { registerFeature } from "@freelensapp/feature-core";
 import { kubeApiSpecificsFeature } from "@freelensapp/kube-api-specifics";
-import { loggerFeature } from "@freelensapp/logger";
+import { loggerFeatureForMain } from "@freelensapp/logger/main";
 import { messagingFeatureForMain } from "@freelensapp/messaging-for-main";
 import { prometheusFeature } from "@freelensapp/prometheus";
 import { randomFeature } from "@freelensapp/random";
@@ -35,7 +35,7 @@ runInAction(() => {
 
   registerFeature(
     di,
-    loggerFeature,
+    loggerFeatureForMain,
     prometheusFeature,
     applicationFeature,
     applicationFeatureForElectronMain,

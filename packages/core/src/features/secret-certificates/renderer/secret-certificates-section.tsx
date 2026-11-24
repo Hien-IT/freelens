@@ -7,9 +7,9 @@ import "./secret-certificates.scss";
 
 import { cssNames, formatDuration } from "@freelensapp/utilities";
 import { observer } from "mobx-react";
-import { reactiveNow } from "../../../common/utils/reactive-now/reactive-now";
 import { DrawerItem, DrawerTitle } from "../../../renderer/components/drawer";
 import { LocaleDate } from "../../../renderer/components/locale-date";
+import { reactiveNow } from "../../../renderer/utils/reactive-now/reactive-now";
 
 import type { CertificateInfo, SecretKeyCertificates } from "../common/channels";
 

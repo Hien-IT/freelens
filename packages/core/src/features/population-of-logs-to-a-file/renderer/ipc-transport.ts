@@ -4,35 +4,31 @@
  * Licensed under MIT License. See LICENSE in root directory for more information.
  */
 
-import { setImmediate } from "node:timers";
-import TransportStream from "winston-transport";
+import { LoggerTransport } from "@freelensapp/logger/renderer";
 
-import type { LogEntry } from "winston";
-import type { TransportStreamOptions } from "winston-transport";
+import type { LogEntry, LoggerTransportOptions } from "@freelensapp/logger/renderer";
 
-interface IpcLogTransportOptions extends TransportStreamOptions {
+interface IpcLogTransportOptions extends LoggerTransportOptions {
   sendIpcLogMessage: (entry: LogEntry) => void;
   closeIpcLogging: () => void;
 }
 
-class IpcLogTransport extends TransportStream {
+class IpcLogTransport extends LoggerTransport {
   sendIpcLogMessage: (entry: LogEntry) => void;
   closeIpcLogging: () => void;
   name = "ipc-renderer-transport";
 
   constructor(options: IpcLogTransportOptions) {
-    const { sendIpcLogMessage, closeIpcLogging, ...winstonOptions } = options;
+    const { sendIpcLogMessage, closeIpcLogging, ...transportOptions } = options;
 
-    super(winstonOptions);
+    super(transportOptions);
 
     this.sendIpcLogMessage = sendIpcLogMessage;
     this.closeIpcLogging = closeIpcLogging;
   }
 
   log(logEntry: LogEntry, next: () => void) {
-    setImmediate(() => {
-      this.emit("logged", logEntry);
-    });
+    this.emitLogged(logEntry);
     this.sendIpcLogMessage(logEntry);
     next();
   }

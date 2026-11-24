@@ -9,11 +9,12 @@ import { loggerInjectionToken } from "@freelensapp/logger";
 import { sendMessageToWindowInjectionToken } from "@freelensapp/messaging";
 import { getInjectable } from "@ogre-tools/injectable";
 import { BrowserWindow } from "electron";
-import pathExistsSyncInjectable from "../../../../common/fs/path-exists-sync.injectable";
-import getAbsolutePathInjectable from "../../../../common/path/get-absolute-path.injectable";
+import pathExistsSyncInjectable from "../../../../common/fs/main/path-exists-sync.injectable";
+import getAbsolutePathInjectable from "../../../../common/path/main/get-absolute-path.injectable";
 import openLinkInBrowserInjectable from "../../../../common/utils/open-link-in-browser.injectable";
 import isLinuxInjectable from "../../../../common/vars/is-linux.injectable";
-import lensResourcesDirInjectable from "../../../../common/vars/lens-resources-dir.injectable";
+import lensResourcesDirInjectable from "../../../../common/vars/main/lens-resources-dir.injectable";
+import staticFilesDirectoryInjectable from "../../../../common/vars/static-files-directory.injectable";
 import manageZoomOfWebContentsInjectable from "../../../../features/zoom/main/manage-zoom-of-web-contents.injectable";
 import applicationWindowStateInjectable from "./application-window-state.injectable";
 import { logFailedLoad } from "./log-failed-load";
@@ -67,6 +68,8 @@ const createElectronWindowInjectable = getInjectable({
     const sessionCertificateVerifier = di.inject(sessionCertificateVerifierInjectable);
     const setFreelensProxyTokenCookie = di.inject(setFreelensProxyTokenCookieInjectable);
     const manageZoomOfWebContents = di.inject(manageZoomOfWebContentsInjectable);
+    // Built by the preload section of freelens/electron.vite.config.ts.
+    const preload = getAbsolutePath(di.inject(staticFilesDirectoryInjectable), "build", "preload.cjs");
 
     return (configuration) => {
       const applicationWindowState = di.inject(applicationWindowStateInjectable, {
@@ -92,9 +95,15 @@ const createElectronWindowInjectable = getInjectable({
         titleBarStyle: configuration.titleBarStyle,
         backgroundColor: "#1e2124",
         webPreferences: {
-          nodeIntegration: true,
+          // The views have no Node; they reach main over the view bridge.
+          nodeIntegration: false,
+          sandbox: true,
+          // Also loads the preload into every frame, the cluster frames included.
           nodeIntegrationInSubFrames: true,
           contextIsolation: false,
+          // Puts the view bridge on `window`: the views' way to main once they
+          // have no Node.
+          preload,
         },
       });
 

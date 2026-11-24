@@ -6,7 +6,7 @@
 
 import { registerFeature } from "@freelensapp/feature-core";
 import { kubeApiSpecificsFeature } from "@freelensapp/kube-api-specifics";
-import { loggerFeature } from "@freelensapp/logger";
+import { loggerFeatureForMain } from "@freelensapp/logger/main";
 import { messagingFeature, testUtils as messagingTestUtils } from "@freelensapp/messaging";
 import { notificationsFeature } from "@freelensapp/notifications";
 import { randomFeature } from "@freelensapp/random";
@@ -18,7 +18,7 @@ import { vi } from "vitest";
 import dependencyInjectionContainerInjectable from "../common/dependency-injection/dependency-injection-container.injectable";
 import broadcastMessageInjectable from "../common/ipc/broadcast-message.injectable";
 import { setDiForExtensionApi } from "../extensions/extension-api-di";
-import relayLegacyBroadcastsInjectable from "../extensions/ipc/relay-legacy-broadcasts.injectable";
+import relayLegacyBroadcastsInjectable from "../extensions/ipc/main/relay-legacy-broadcasts.injectable";
 import handleExtensionSchemeInjectable from "../features/extensions/loader/main/handle-extension-scheme.injectable";
 import registerExtensionSchemeAsPrivilegedInjectable from "../features/extensions/loader/main/register-scheme-as-privileged.injectable";
 import setupSyncingOfWeblinksInjectable from "../features/weblinks/main/setup-syncing-of-weblinks.injectable";
@@ -46,6 +46,7 @@ import type { DiContainer } from "@ogre-tools/injectable";
 const injectableModules = import.meta.glob<object>(
   [
     "../common/**/*.injectable.{ts,tsx}",
+    "!../common/**/renderer/**",
     "../extensions/**/*.injectable.{ts,tsx}",
     "./**/*.injectable.{ts,tsx}",
     "../test-env/**/*.injectable.{ts,tsx}",
@@ -58,6 +59,7 @@ const injectableModules = import.meta.glob<object>(
 const globalOverrideModules = import.meta.glob<{ default: GlobalOverride<unknown, unknown, unknown> }>(
   [
     "../common/**/*.global-override-for-injectable.{ts,tsx}",
+    "!../common/**/renderer/**",
     "../extensions/**/*.global-override-for-injectable.{ts,tsx}",
     "./**/*.global-override-for-injectable.{ts,tsx}",
     "../test-env/**/*.global-override-for-injectable.{ts,tsx}",
@@ -79,7 +81,7 @@ export function getDiForUnitTesting() {
       di,
       messagingFeature,
       messagingTestUtils.messagingFeatureForUnitTesting,
-      loggerFeature,
+      loggerFeatureForMain,
       randomFeature,
       kubeApiSpecificsFeature,
       notificationsFeature,

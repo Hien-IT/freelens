@@ -9,11 +9,7 @@ import { getInjectable } from "@ogre-tools/injectable";
 import attemptInstallsInjectable from "./attempt-installs.injectable";
 
 // Electron extends the browser File interface with a path property
-interface FileWithPath extends File {
-  path: string;
-}
-
-export type InstallOnDrop = (files: FileWithPath[]) => Promise<void>;
+export type InstallOnDrop = (files: File[]) => Promise<void>;
 
 const installOnDropInjectable = getInjectable({
   id: "install-on-drop",
@@ -25,7 +21,11 @@ const installOnDropInjectable = getInjectable({
     return (files) => {
       logger.info("Install from D&D");
 
-      return attemptInstalls(files.map(({ path }) => path));
+      // the path of a dropped file, which only the preload can give
+      const getPathForFile = (globalThis as { freelensViewBridge?: { getPathForFile(file: File): string } })
+        .freelensViewBridge?.getPathForFile;
+
+      return attemptInstalls(getPathForFile ? files.map((file) => getPathForFile(file)) : []);
     };
   },
 });

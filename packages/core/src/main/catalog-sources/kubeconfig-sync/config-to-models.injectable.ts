@@ -5,7 +5,7 @@
  */
 
 import { getInjectable } from "@ogre-tools/injectable";
-import { splitConfig } from "../../../common/kube-helpers";
+import { splitConfig } from "../../../common/kube-helpers/main/kube-helpers";
 import kubeconfigSyncLoggerInjectable from "./logger.injectable";
 
 import type { KubeConfig } from "@kubernetes/client-node";

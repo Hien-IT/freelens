@@ -9,7 +9,7 @@ import { reactRootInjectionToken } from "@freelensapp/react-application";
 import { getInjectable } from "@ogre-tools/injectable";
 import closeRendererLogFileInjectable from "../../../features/population-of-logs-to-a-file/renderer/close-renderer-log-file.injectable";
 import hostedClusterInjectable from "../../cluster-frame-context/hosted-cluster.injectable";
-import frameTokenInjectable from "../../frames/cluster-frame/init-cluster-frame/frame-token/frame-token.injectable";
+import frameLogIdInjectable from "../../frames/frame-log-id.injectable";
 import currentlyInClusterFrameInjectable from "../../routes/currently-in-cluster-frame.injectable";
 import { beforeFrameStartsSecondInjectionToken } from "../tokens";
 
@@ -24,9 +24,9 @@ const listenUnloadInjectable = getInjectable({
       window.addEventListener("beforeunload", () => {
         if (isClusterFrame) {
           const hostedCluster = di.inject(hostedClusterInjectable);
-          const frameToken = di.inject(frameTokenInjectable);
+          const frameLogId = di.inject(frameLogIdInjectable);
 
-          logger.info(`[CLUSTER-FRAME] Unload dashboard, clusterId=${hostedCluster?.id}, frameToken=${frameToken}`);
+          logger.info(`[CLUSTER-FRAME] Unload dashboard, clusterId=${hostedCluster?.id}, frameLogId=${frameLogId}`);
         } else {
           logger.info("[ROOT-FRAME]: Unload app");
         }

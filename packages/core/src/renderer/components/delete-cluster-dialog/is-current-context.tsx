@@ -4,10 +4,9 @@
  * Licensed under MIT License. See LICENSE in root directory for more information.
  */
 
-import type { KubeConfig } from "@kubernetes/client-node";
-
 import type { Cluster } from "../../../common/cluster/cluster";
+import type { DeleteClusterDialogKubeconfig } from "./state.injectable";
 
-export function isCurrentContext(config: KubeConfig, cluster: Cluster) {
+export function isCurrentContext(config: DeleteClusterDialogKubeconfig, cluster: Cluster) {
   return config.currentContext == cluster.contextName.get();
 }

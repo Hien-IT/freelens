@@ -4,7 +4,7 @@
  * Licensed under MIT License. See LICENSE in root directory for more information.
  */
 
-import { winstonLoggerInjectable } from "@freelensapp/logger";
+import { rendererLoggerInjectable } from "@freelensapp/logger/renderer";
 import { sendMessageToChannelInjectionToken } from "@freelensapp/messaging";
 import { getInjectable } from "@ogre-tools/injectable";
 import { closeIpcFileLoggerChannel } from "../common/ipc-file-logger-channel";
@@ -14,14 +14,14 @@ import rendererLogFileIdInjectable from "./renderer-log-file-id.injectable";
 const closeRendererLogFileInjectable = getInjectable({
   id: "close-renderer-log-file",
   instantiate: (di) => {
-    const winstonLogger = di.inject(winstonLoggerInjectable);
+    const rendererLogger = di.inject(rendererLoggerInjectable);
     const ipcLogTransport = di.inject(ipcLogTransportInjectable);
     const messageToChannel = di.inject(sendMessageToChannelInjectionToken);
     const fileId = di.inject(rendererLogFileIdInjectable);
 
     return () => {
       messageToChannel(closeIpcFileLoggerChannel, fileId);
-      winstonLogger.remove(ipcLogTransport);
+      rendererLogger.remove(ipcLogTransport);
     };
   },
 });

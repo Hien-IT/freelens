@@ -4,8 +4,8 @@
  * Licensed under MIT License. See LICENSE in root directory for more information.
  */
 
-import assert from "node:assert";
 import { requestFromChannelInjectionToken } from "@freelensapp/messaging";
+import { assert } from "@freelensapp/utilities";
 import { getInjectable } from "@ogre-tools/injectable";
 import { runInAction } from "mobx";
 import { syncBoxInitialValueChannel } from "../../../common/utils/sync-box/channels";

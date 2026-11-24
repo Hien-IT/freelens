@@ -4,8 +4,9 @@
  * Licensed under MIT License. See LICENSE in root directory for more information.
  */
 
+import { requestFromChannelInjectionToken } from "@freelensapp/messaging";
 import { getInjectable } from "@ogre-tools/injectable";
-import statInjectable from "../../../common/fs/stat.injectable";
+import { extensionPathKindChannel } from "../../../features/extensions/installer/common/install-channels";
 import installFromDirectoryInjectable from "./attempt-install/install-from-directory.injectable";
 import installFromFileInjectable from "./attempt-install/install-from-file.injectable";
 
@@ -22,14 +23,15 @@ const attemptInstallsInjectable = getInjectable({
   instantiate: (di): AttemptInstalls => {
     const installFromFile = di.inject(installFromFileInjectable);
     const installFromDirectory = di.inject(installFromDirectoryInjectable);
-    const stat = di.inject(statInjectable);
+    const requestFromChannel = di.inject(requestFromChannelInjectionToken);
 
     return async (paths) => {
       await Promise.allSettled(
         paths.map(async (filePath) => {
-          const stats = await stat(filePath).catch(() => undefined);
+          // main reads what is at the path
+          const kind = await requestFromChannel(extensionPathKindChannel, { path: filePath }).catch(() => "missing");
 
-          return stats?.isDirectory() ? installFromDirectory(filePath) : installFromFile(filePath);
+          return kind === "directory" ? installFromDirectory(filePath) : installFromFile(filePath);
         }),
       );
     };

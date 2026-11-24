@@ -10,7 +10,7 @@ import { getInjectable } from "@ogre-tools/injectable";
 import { action } from "mobx";
 import directoryForKubeConfigsInjectable from "../../../common/app-paths/directory-for-kube-configs/directory-for-kube-configs.injectable";
 import { Cluster } from "../../../common/cluster/cluster";
-import { loadConfigFromString } from "../../../common/kube-helpers";
+import { loadConfigFromString } from "../../../common/kube-helpers/main/kube-helpers";
 import getClusterByIdInjectable from "../../../features/cluster/storage/common/get-by-id.injectable";
 import clustersThatAreBeingDeletedInjectable from "../../cluster/are-being-deleted.injectable";
 import clusterConnectionInjectable from "../../cluster/cluster-connection.injectable";

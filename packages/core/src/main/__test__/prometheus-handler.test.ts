@@ -10,7 +10,7 @@ import { runInAction } from "mobx";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import directoryForUserDataInjectable from "../../common/app-paths/directory-for-user-data/directory-for-user-data.injectable";
 import { Cluster } from "../../common/cluster/cluster";
-import writeJsonFileInjectable from "../../common/fs/write-json-file.injectable";
+import writeJsonFileInjectable from "../../common/fs/main/write-json-file.injectable";
 import prometheusHandlerInjectable from "../cluster/prometheus-handler/prometheus-handler.injectable";
 import createFreelensK8sProxyInjectable from "../freelens-k8s-proxy/create-freelens-k8s-proxy.injectable";
 import freelensProxyPortInjectable from "../freelens-proxy/freelens-proxy-port.injectable";

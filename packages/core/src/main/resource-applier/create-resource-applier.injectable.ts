@@ -7,9 +7,9 @@
 import { loggerInjectionToken } from "@freelensapp/logger";
 import { getInjectable, lifecycleEnum } from "@ogre-tools/injectable";
 import emitAppEventInjectable from "../../common/app-event-bus/emit-event.injectable";
-import execFileInjectable from "../../common/fs/exec-file.injectable";
-import removePathInjectable from "../../common/fs/remove.injectable";
-import writeFileInjectable from "../../common/fs/write-file.injectable";
+import execFileInjectable from "../../common/fs/main/exec-file.injectable";
+import removePathInjectable from "../../common/fs/main/remove.injectable";
+import writeFileInjectable from "../../common/fs/main/write-file.injectable";
 import joinPathsInjectable from "../../common/path/join-paths.injectable";
 import withFreelensProxyCredentialEnvInjectable from "../freelens-proxy/with-freelens-proxy-credential-env.injectable";
 import kubeconfigManagerInjectable from "../kubeconfig-manager/kubeconfig-manager.injectable";

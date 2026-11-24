@@ -8,7 +8,7 @@ import { act } from "@testing-library/react";
 import { beforeEach, describe, expect, it } from "vitest";
 import { KubernetesCluster, WebLink } from "../../common/catalog-entities";
 import navigateToEntitySettingsInjectable from "../../common/front-end-routing/routes/entity-settings/navigate-to-entity-settings.injectable";
-import writeJsonFileInjectable from "../../common/fs/write-json-file.injectable";
+import writeJsonFileInjectable from "../../common/fs/main/write-json-file.injectable";
 import catalogEntityRegistryInjectable from "../../renderer/api/catalog/entity/registry.injectable";
 import {
   type ApplicationBuilder,

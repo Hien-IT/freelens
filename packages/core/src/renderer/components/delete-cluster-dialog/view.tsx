@@ -8,11 +8,11 @@ import { Button } from "@freelensapp/button";
 import { Icon } from "@freelensapp/icon";
 import { showErrorNotificationInjectable } from "@freelensapp/notifications";
 import { withInjectables } from "@ogre-tools/injectable-react";
-import { runInAction } from "mobx";
 import { observer } from "mobx-react";
 import React from "react";
 import requestClearClusterAsDeletingInjectable from "../../../features/cluster/delete-dialog/renderer/request-clear-as-deleting.injectable";
 import requestDeleteClusterInjectable from "../../../features/cluster/delete-dialog/renderer/request-delete.injectable";
+import requestRemoveClusterContextInjectable from "../../../features/cluster/delete-dialog/renderer/request-remove-context.injectable";
 import requestSetClusterAsDeletingInjectable from "../../../features/cluster/delete-dialog/renderer/request-set-as-deleting.injectable";
 import removeEntityFromAllHotbarsInjectable from "../../../features/hotbar/storage/common/remove-entity-from-all.injectable";
 import { Checkbox } from "../checkbox";
@@ -20,7 +20,6 @@ import { Dialog } from "../dialog";
 import { Select } from "../select";
 import { isCurrentContext } from "./is-current-context";
 import isInLocalKubeconfigInjectable from "./is-in-local-kubeconfig.injectable";
-import saveKubeconfigInjectable from "./save-kubeconfig.injectable";
 import deleteClusterDialogStateInjectable from "./state.injectable";
 import styles from "./view.module.scss";
 
@@ -30,10 +29,10 @@ import type { IObservableValue } from "mobx";
 
 import type { RequestClearClusterAsDeleting } from "../../../features/cluster/delete-dialog/renderer/request-clear-as-deleting.injectable";
 import type { RequestDeleteCluster } from "../../../features/cluster/delete-dialog/renderer/request-delete.injectable";
+import type { RequestRemoveClusterContext } from "../../../features/cluster/delete-dialog/renderer/request-remove-context.injectable";
 import type { RequestSetClusterAsDeleting } from "../../../features/cluster/delete-dialog/renderer/request-set-as-deleting.injectable";
 import type { RemoveEntityFromAllHotbars } from "../../../features/hotbar/storage/common/remove-entity-from-all.injectable";
 import type { IsInLocalKubeconfig } from "./is-in-local-kubeconfig.injectable";
-import type { SaveKubeconfig } from "./save-kubeconfig.injectable";
 import type { DeleteClusterDialogState } from "./state.injectable";
 
 interface Dependencies {
@@ -42,7 +41,7 @@ interface Dependencies {
   requestDeleteCluster: RequestDeleteCluster;
   requestClearClusterAsDeleting: RequestClearClusterAsDeleting;
   showErrorNotification: ShowNotification;
-  saveKubeconfig: SaveKubeconfig;
+  requestRemoveClusterContext: RequestRemoveClusterContext;
   isInLocalKubeconfig: IsInLocalKubeconfig;
   removeEntityFromAllHotbars: RemoveEntityFromAllHotbars;
 }
@@ -50,22 +49,16 @@ interface Dependencies {
 @observer
 class NonInjectedDeleteClusterDialog extends React.Component<Dependencies> {
   async onDelete(state: DeleteClusterDialogState) {
-    const { cluster, config, newCurrentContext, showContextSwitch } = state;
+    const { cluster, newCurrentContext, showContextSwitch } = state;
 
     await this.props.requestSetClusterAsDeleting(cluster.id);
 
-    runInAction(() => {
-      this.props.state.set({
-        ...state,
-        config: Object.assign(config, {
-          contexts: config.contexts.filter((item) => item.name !== state.cluster.contextName.get()),
-          currentContext: newCurrentContext && showContextSwitch ? newCurrentContext : config.currentContext,
-        }),
-      });
-    });
-
     try {
-      await this.props.saveKubeconfig(config, cluster.kubeConfigPath.get());
+      // main removes the context from the file, under its lock
+      await this.props.requestRemoveClusterContext(
+        cluster.id,
+        newCurrentContext && showContextSwitch ? newCurrentContext : undefined,
+      );
       this.props.removeEntityFromAllHotbars(cluster.id);
       await this.props.requestDeleteCluster(cluster.id);
     } catch (error) {
@@ -257,7 +250,7 @@ export const DeleteClusterDialog = withInjectables<Dependencies>(NonInjectedDele
     requestSetClusterAsDeleting: di.inject(requestSetClusterAsDeletingInjectable),
     requestClearClusterAsDeleting: di.inject(requestClearClusterAsDeletingInjectable),
     requestDeleteCluster: di.inject(requestDeleteClusterInjectable),
-    saveKubeconfig: di.inject(saveKubeconfigInjectable),
+    requestRemoveClusterContext: di.inject(requestRemoveClusterContextInjectable),
     showErrorNotification: di.inject(showErrorNotificationInjectable),
     isInLocalKubeconfig: di.inject(isInLocalKubeconfigInjectable),
     removeEntityFromAllHotbars: di.inject(removeEntityFromAllHotbarsInjectable),

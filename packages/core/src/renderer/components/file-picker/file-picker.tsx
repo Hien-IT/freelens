@@ -6,15 +6,15 @@
 
 import "./file-picker.scss";
 
-import path from "node:path";
 import { Icon } from "@freelensapp/icon";
 import { Spinner } from "@freelensapp/spinner";
 import { sum } from "es-toolkit";
 import { orderBy } from "es-toolkit/compat";
-import fse from "fs-extra";
 import { observable } from "mobx";
 import { observer } from "mobx-react";
 import React from "react";
+import { getEnvironmentSpecificDiForExtensionApi } from "../../../extensions/extension-api-di";
+import writePickedFilesInjectable from "../../../features/extensions/file-picker/renderer/write-picked-files.injectable";
 
 import type { StrictReactNode } from "@freelensapp/utilities";
 
@@ -178,17 +178,10 @@ class DefaultedFilePicker extends React.Component<FilePickerProps & typeof defau
 
         this.status = FileInputStatus.PROCESSING;
 
-        const paths: string[] = [];
-        const promises = totalSizeLimitedFiles.map(async (file) => {
-          const destinationPath = path.join(uploadDir, file.name);
+        // main writes the files; reached as the legacy helpers reach the DI
+        const writePickedFiles = getEnvironmentSpecificDiForExtensionApi("renderer").inject(writePickedFilesInjectable);
+        const paths = await writePickedFiles(uploadDir, totalSizeLimitedFiles);
 
-          paths.push(destinationPath);
-
-          const buffer = await file.arrayBuffer();
-          return fse.writeFile(destinationPath, Buffer.from(buffer));
-        });
-
-        await Promise.all(promises);
         this.props.handler(paths);
         this.status = FileInputStatus.CLEAR;
       } else {

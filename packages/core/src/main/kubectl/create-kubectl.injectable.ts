@@ -7,8 +7,8 @@
 import { loggerInjectionToken } from "@freelensapp/logger";
 import { getInjectable } from "@ogre-tools/injectable";
 import directoryForKubectlBinariesInjectable from "../../common/app-paths/directory-for-kubectl-binaries/directory-for-kubectl-binaries.injectable";
-import execFileInjectable from "../../common/fs/exec-file.injectable";
-import unlinkInjectable from "../../common/fs/unlink.injectable";
+import execFileInjectable from "../../common/fs/main/exec-file.injectable";
+import unlinkInjectable from "../../common/fs/main/unlink.injectable";
 import getBasenameOfPathInjectable from "../../common/path/get-basename.injectable";
 import getDirnameOfPathInjectable from "../../common/path/get-dirname.injectable";
 import joinPathsInjectable from "../../common/path/join-paths.injectable";

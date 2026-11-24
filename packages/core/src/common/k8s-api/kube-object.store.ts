@@ -4,10 +4,9 @@
  * Licensed under MIT License. See LICENSE in root directory for more information.
  */
 
-import assert from "node:assert";
 import { parseKubeApi } from "@freelensapp/kube-api";
 import { KubeStatus } from "@freelensapp/kube-object";
-import { isAbortError, noop, object, rejectPromiseBy, waitUntilDefined } from "@freelensapp/utilities";
+import { assert, isAbortError, noop, object, rejectPromiseBy, waitUntilDefined } from "@freelensapp/utilities";
 import autoBind from "auto-bind";
 import { action, computed, observable, reaction } from "mobx";
 import { ItemStore } from "../item.store";
@@ -610,7 +609,7 @@ export class KubeObjectStore<
       return;
     }
 
-    let timedRetry: NodeJS.Timeout;
+    let timedRetry: ReturnType<typeof setTimeout>;
     const signal = abortController.signal;
 
     const startNewWatch = () => {

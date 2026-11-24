@@ -4,9 +4,8 @@
  * Licensed under MIT License. See LICENSE in root directory for more information.
  */
 
-import assert from "node:assert";
 import { prefixedLoggerInjectable } from "@freelensapp/logger";
-import { iter } from "@freelensapp/utilities";
+import { assert, iter } from "@freelensapp/utilities";
 import { getInjectable } from "@ogre-tools/injectable";
 import { asyncComputed } from "../../../common/utils/async-computed";
 import requestListHelmReleasesInjectable from "../../../features/helm-releases/renderer/request-list-helm-releases.injectable";

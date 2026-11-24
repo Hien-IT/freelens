@@ -20,8 +20,8 @@ import {
 
 import type { Logger } from "@freelensapp/logger";
 
-import type { ExecFile, ExecFileError } from "../../common/fs/exec-file.injectable";
-import type { Unlink } from "../../common/fs/unlink.injectable";
+import type { ExecFile, ExecFileError } from "../../common/fs/main/exec-file.injectable";
+import type { Unlink } from "../../common/fs/main/unlink.injectable";
 import type { GetBasenameOfPath } from "../../common/path/get-basename.injectable";
 import type { GetDirnameOfPath } from "../../common/path/get-dirname.injectable";
 import type { JoinPaths } from "../../common/path/join-paths.injectable";

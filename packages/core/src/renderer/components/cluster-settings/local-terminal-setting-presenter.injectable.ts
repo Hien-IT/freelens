@@ -6,7 +6,7 @@
 
 import { getInjectable, lifecycleEnum } from "@ogre-tools/injectable";
 import { observable } from "mobx";
-import loadKubeconfigInjectable from "../../../common/cluster/load-kubeconfig.injectable";
+import requestClusterKubeconfigContextsInjectable from "../../../features/cluster/delete-dialog/renderer/request-kubeconfig-contexts.injectable";
 
 import type { Cluster } from "../../../common/cluster/cluster";
 
@@ -25,13 +25,13 @@ export interface LocalTerminalSettingPresenter {
 const localTerminalSettingPresenterInjectable = getInjectable({
   id: "local-terminal-setting-presenter",
   instantiate: async (di, cluster: Cluster): Promise<LocalTerminalSettingPresenter> => {
-    const loadKubeconfig = di.inject(loadKubeconfigInjectable, cluster);
-
-    const kubeconfig = await loadKubeconfig();
+    const { defaultNamespace: namespaceOfContext } = await di.inject(requestClusterKubeconfigContextsInjectable)(
+      cluster.id,
+    );
 
     const directory = observable.box(cluster.preferences.terminalCWD || "");
     const defaultNamespace = observable.box(cluster.preferences.defaultNamespace || "");
-    const placeholderDefaultNamespace = kubeconfig.getContextObject(cluster.contextName.get())?.namespace || "default";
+    const placeholderDefaultNamespace = namespaceOfContext || "default";
 
     return {
       directory: {

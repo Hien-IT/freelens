@@ -5,56 +5,37 @@
  */
 
 import { Button } from "@freelensapp/button";
+import { requestFromChannelInjectionToken } from "@freelensapp/messaging";
 import { showErrorNotificationInjectable, showSuccessNotificationInjectable } from "@freelensapp/notifications";
 import { isDefined, iter } from "@freelensapp/utilities";
 import { withInjectables } from "@ogre-tools/injectable-react";
 import { debounce } from "es-toolkit/compat";
-import fse from "fs-extra";
 import { action, computed, observable } from "mobx";
 import { observer } from "mobx-react";
 import React from "react";
-import * as uuid from "uuid";
 import emitAppEventInjectable from "../../../common/app-event-bus/emit-event.injectable";
-import getCustomKubeConfigFilePathInjectable from "../../../common/app-paths/get-custom-kube-config-directory/get-custom-kube-config-directory.injectable";
 import navigateToCatalogInjectable from "../../../common/front-end-routing/routes/catalog/navigate-to-catalog.injectable";
-import { loadConfigFromString, splitConfig } from "../../../common/kube-helpers";
-import getDirnameOfPathInjectable from "../../../common/path/get-dirname.injectable";
+import { addKubeconfigTextChannel, parseKubeconfigTextChannel } from "../../../features/add-cluster/common/channels";
 import { SettingLayout } from "../layout/setting-layout";
 import { MonacoEditor } from "../monaco-editor";
 import styles from "./add-cluster.module.scss";
 
+import type { RequestFromChannel } from "@freelensapp/messaging";
 import type { ShowNotification } from "@freelensapp/notifications";
-
-import type { KubeConfig } from "@kubernetes/client-node";
 
 import type { EmitAppEvent } from "../../../common/app-event-bus/emit-event.injectable";
 import type { NavigateToCatalog } from "../../../common/front-end-routing/routes/catalog/navigate-to-catalog.injectable";
-import type { GetDirnameOfPath } from "../../../common/path/get-dirname.injectable";
 
 interface Option {
-  config: KubeConfig;
   error?: string;
 }
 
 interface Dependencies {
-  getCustomKubeConfigDirectory: (directoryName: string) => string;
+  requestFromChannel: RequestFromChannel;
   navigateToCatalog: NavigateToCatalog;
-  getDirnameOfPath: GetDirnameOfPath;
   emitAppEvent: EmitAppEvent;
   showSuccessNotification: ShowNotification;
   showErrorNotification: ShowNotification;
-}
-
-function getContexts(config: KubeConfig): Map<string, Option> {
-  return new Map(
-    splitConfig(config).map(({ config, validationResult }) => [
-      config.currentContext,
-      {
-        config,
-        error: validationResult.error?.toString(),
-      },
-    ]),
-  );
 }
 
 @observer
@@ -63,6 +44,8 @@ class NonInjectedAddCluster extends React.Component<Dependencies> {
   @observable accessor customConfig = "";
   @observable accessor isWaiting = false;
   @observable accessor errors: string[] = [];
+  // only the answer to the latest text is shown, whatever order the answers come back in
+  private latestCheck = 0;
 
   constructor(props: Dependencies) {
     super(props);
@@ -76,32 +59,34 @@ class NonInjectedAddCluster extends React.Component<Dependencies> {
     return [...this.errors, ...iter.map(this.kubeContexts.values(), ({ error }) => error)].filter(isDefined);
   }
 
-  readonly refreshContexts = debounce(
-    action(() => {
-      const { config, error } = loadConfigFromString(this.customConfig.trim() || "{}");
+  // main parses the text, which may hold credentials, and answers only names and errors
+  readonly refreshContexts = debounce(async () => {
+    const thisCheck = ++this.latestCheck;
+    const { contexts, error } = await this.props.requestFromChannel(parseKubeconfigTextChannel, this.customConfig);
 
-      this.kubeContexts.replace(getContexts(config));
+    if (thisCheck !== this.latestCheck) {
+      return;
+    }
+
+    action(() => {
+      this.kubeContexts.replace(contexts.map(({ name, error }) => [name, { error }]));
 
       if (error) {
-        this.errors.push(error.toString());
+        this.errors.push(error);
       }
 
-      if (config.contexts.length === 0) {
+      if (contexts.length === 0) {
         this.errors.push('No contexts defined, either missing the "contexts" field, or it is empty.');
       }
-    }),
-    500,
-  );
+    })();
+  }, 500);
 
   addClusters = action(async () => {
     this.isWaiting = true;
     this.props.emitAppEvent({ name: "cluster-add", action: "click" });
 
     try {
-      const absPath = this.props.getCustomKubeConfigDirectory(uuid.v4());
-
-      await fse.ensureDir(this.props.getDirnameOfPath(absPath));
-      await fse.writeFile(absPath, this.customConfig.trim(), { encoding: "utf-8", mode: 0o600 });
+      await this.props.requestFromChannel(addKubeconfigTextChannel, this.customConfig);
 
       this.props.showSuccessNotification(`Successfully added ${this.kubeContexts.size} new cluster(s)`);
 
@@ -169,9 +154,8 @@ class NonInjectedAddCluster extends React.Component<Dependencies> {
 
 export const AddCluster = withInjectables<Dependencies>(NonInjectedAddCluster, {
   getProps: (di) => ({
-    getCustomKubeConfigDirectory: di.inject(getCustomKubeConfigFilePathInjectable),
+    requestFromChannel: di.inject(requestFromChannelInjectionToken),
     navigateToCatalog: di.inject(navigateToCatalogInjectable),
-    getDirnameOfPath: di.inject(getDirnameOfPathInjectable),
     emitAppEvent: di.inject(emitAppEventInjectable),
     showSuccessNotification: di.inject(showSuccessNotificationInjectable),
     showErrorNotification: di.inject(showErrorNotificationInjectable),

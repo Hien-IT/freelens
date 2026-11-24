@@ -4,12 +4,12 @@
  * Licensed under MIT License. See LICENSE in root directory for more information.
  */
 
-import path from "node:path";
 import { getInjectable } from "@ogre-tools/injectable";
+import { pathModuleInjectionToken } from "./path-module-injection-token";
 
 const fileSystemSeparatorInjectable = getInjectable({
   id: "file-system-separator",
-  instantiate: () => path.sep,
+  instantiate: (di) => di.inject(pathModuleInjectionToken).sep,
   causesSideEffects: true,
 });
 

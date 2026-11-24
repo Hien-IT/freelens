@@ -6,6 +6,7 @@
 import fs, { mkdtemp, readdir, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
+import { pathToFileURL } from "node:url";
 import { observable } from "mobx";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { createFakeSafeStorage } from "../../features/extension-credentials/main/__tests__/fake-safe-storage";
@@ -91,6 +92,7 @@ describe("Common.Credentials", () => {
       extensionInstances: observable.map<LensExtensionId, LensExtensionInstance>(),
       logger: { debug: vi.fn(), error: vi.fn(), info: vi.fn(), silly: vi.fn(), warn: vi.fn() } as unknown as Logger,
       extensionEntryPointName: "main",
+      fileUrlOfPath: pathToFileURL,
       updateExtensionsState: vi.fn(),
       getExtension: () => ({ register: vi.fn(), deregister: vi.fn() }) as never,
       getRandomId: () => "a-token",

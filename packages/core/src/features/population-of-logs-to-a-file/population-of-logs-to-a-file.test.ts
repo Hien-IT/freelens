@@ -4,7 +4,7 @@
  * Licensed under MIT License. See LICENSE in root directory for more information.
  */
 
-import { winstonLoggerInjectable } from "@freelensapp/logger";
+import { rendererLoggerInjectable } from "@freelensapp/logger/renderer";
 import { noop } from "@freelensapp/utilities";
 import { runInAction } from "mobx";
 import { MESSAGE } from "triple-beam";
@@ -50,9 +50,9 @@ describe("Population of logs to a file", () => {
     });
 
     builder.beforeWindowStart(({ windowDi }) => {
-      windowDi.unoverride(winstonLoggerInjectable);
+      windowDi.unoverride(rendererLoggerInjectable);
 
-      // Now that we have the actual winston logger in use, let's not be noisy and deregister console transport
+      // Now that we have the actual logger in use, let's not be noisy and deregister console transport
       runInAction(() => {
         windowDi.deregister(browserLoggerTransportInjectable);
       });
@@ -66,9 +66,9 @@ describe("Population of logs to a file", () => {
 
     await builder.render();
     windowDi = builder.applicationWindow.only.di;
-    const winstonLogger = windowDi.inject(winstonLoggerInjectable);
+    const rendererLogger = windowDi.inject(rendererLoggerInjectable);
 
-    logWarningInRenderer = winstonLogger.warn;
+    logWarningInRenderer = rendererLogger.warn;
   }
 
   describe("given in root frame", () => {

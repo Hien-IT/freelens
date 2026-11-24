@@ -27,6 +27,7 @@ import {
   catalogItemsMessageChannel,
 } from "../../../../common/ipc/catalog";
 import { getDiForExtensionApi } from "../../../../extensions/extension-api-di";
+import currentlyInClusterFrameInjectable from "../../../routes/currently-in-cluster-frame.injectable";
 
 import type { Logger } from "@freelensapp/logger";
 import type { Disposer } from "@freelensapp/utilities";
@@ -110,7 +111,7 @@ export class CatalogEntityRegistry {
     // Make sure that we get items ASAP and not the next time one of them changes
     di.inject(sendMessageToChannelInjectionToken)(catalogInitMessageChannel);
 
-    if (process.isMainFrame) {
+    if (!di.inject(currentlyInClusterFrameInjectable)) {
       enlistMessageChannelListener({
         id: "catalog-entity-run",
         channel: catalogEntityRunMessageChannel,

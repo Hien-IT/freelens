@@ -9,7 +9,7 @@ import { asyncFn } from "@freelensapp/test-utils";
 import { act } from "@testing-library/react";
 import { beforeEach, describe, expect, it } from "vitest";
 import directoryForLensLocalStorageInjectable from "../../../common/directory-for-lens-local-storage/directory-for-lens-local-storage.injectable";
-import writeJsonFileInjectable from "../../../common/fs/write-json-file.injectable";
+import writeJsonFileInjectable from "../../../common/fs/main/write-json-file.injectable";
 import { TabKind } from "../../../renderer/components/dock/dock/store";
 import requestKubeResourceInjectable from "../../../renderer/components/dock/edit-resource/edit-resource-model/request-kube-resource.injectable";
 import { getApplicationBuilder } from "../../../renderer/components/test-utils/get-application-builder";
@@ -33,9 +33,12 @@ describe("cluster/namespaces - edit namespaces from previously opened tab", () =
     requestKubeResourceMock = asyncFn();
 
     builder.beforeWindowStart(({ windowDi }) => {
-      windowDi.override(directoryForLensLocalStorageInjectable, () => "/some-directory-for-lens-local-storage");
-
       windowDi.override(requestKubeResourceInjectable, () => requestKubeResourceMock);
+    });
+
+    // main reads and writes the local storage
+    builder.beforeApplicationStart(({ mainDi }) => {
+      mainDi.override(directoryForLensLocalStorageInjectable, () => "/some-directory-for-lens-local-storage");
     });
 
     builder.afterWindowStart(() => {

@@ -6,9 +6,9 @@
 
 import { runInAction } from "mobx";
 import { beforeEach, describe, expect, it } from "vitest";
-import fsInjectable from "../../common/fs/fs.injectable";
-import getHashInjectable from "../../extensions/extension-loader/file-system-provisioner-store/get-hash.injectable";
+import fsInjectable from "../../common/fs/main/fs.injectable";
 import { getApplicationBuilder } from "../../renderer/components/test-utils/get-application-builder";
+import getHashInjectable from "../extension-loader/file-system-provisioner-store/main/get-hash.injectable";
 
 import type { ApplicationBuilder } from "../../renderer/components/test-utils/get-application-builder";
 import type { FakeExtensionOptions } from "../../renderer/components/test-utils/get-extension-fake";

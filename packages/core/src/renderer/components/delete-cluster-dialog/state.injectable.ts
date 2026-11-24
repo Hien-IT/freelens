@@ -7,12 +7,16 @@
 import { getInjectable } from "@ogre-tools/injectable";
 import { observable } from "mobx";
 
-import type { KubeConfig } from "@kubernetes/client-node";
-
 import type { Cluster } from "../../../common/cluster/cluster";
 
+/** What the dialog shows of a kubeconfig, which main reads: the names of its contexts and the current one. */
+export interface DeleteClusterDialogKubeconfig {
+  readonly contexts: readonly { readonly name: string }[];
+  readonly currentContext?: string;
+}
+
 export interface DeleteClusterDialogState {
-  config: KubeConfig;
+  config: DeleteClusterDialogKubeconfig;
   cluster: Cluster;
   showContextSwitch: boolean;
   newCurrentContext: string;

@@ -26,6 +26,7 @@
     "@freelensapp/feature-core": "workspace:^",
     "@freelensapp/kube-api": "workspace:^",
     "@freelensapp/logger": "workspace:^",
+    "@freelensapp/utilities": "workspace:^",
     "@ogre-tools/injectable": "catalog:"
   },
   "devDependencies": {

@@ -4,9 +4,7 @@
  * Licensed under MIT License. See LICENSE in root directory for more information.
  */
 
-// Encode/decode utf-8 base64 string
-import { Buffer } from "node:buffer";
-
+// Encode/decode utf-8 base64 string, with what a browser page and Node both have
 const base64Regex = /^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=|[A-Za-z0-9+/]{2,3})?$/;
 
 function assertBase64(data: string): string {
@@ -26,7 +24,10 @@ function assertBase64(data: string): string {
  *   callers rely on to detect non-base64 input
  */
 function decode(data: string): string {
-  return new TextDecoder("utf-8", { fatal: true }).decode(Buffer.from(assertBase64(data), "base64"));
+  const binary = atob(assertBase64(data));
+  const bytes = Uint8Array.from(binary, (char) => char.charCodeAt(0));
+
+  return new TextDecoder("utf-8", { fatal: true }).decode(bytes);
 }
 
 /**
@@ -35,7 +36,15 @@ function decode(data: string): string {
  * @returns A base64 encoded version
  */
 function encode(data: string): string {
-  return Buffer.from(data, "utf-8").toString("base64");
+  const bytes = new TextEncoder().encode(data);
+  let binary = "";
+
+  // in chunks, because String.fromCharCode takes its arguments on the stack
+  for (let i = 0; i < bytes.length; i += 0x8000) {
+    binary += String.fromCharCode(...bytes.subarray(i, i + 0x8000));
+  }
+
+  return btoa(binary);
 }
 
 export const base64 = {

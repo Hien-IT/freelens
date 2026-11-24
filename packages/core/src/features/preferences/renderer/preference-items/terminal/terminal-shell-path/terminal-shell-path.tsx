@@ -8,7 +8,6 @@ import { cssNames } from "@freelensapp/utilities";
 import { withInjectables } from "@ogre-tools/injectable-react";
 import { observer } from "mobx-react";
 import { useEffect, useRef, useState } from "react";
-import defaultShellInjectable from "../../../../../../common/vars/default-shell.injectable";
 import { Input } from "../../../../../../renderer/components/input";
 import { SubTitle } from "../../../../../../renderer/components/layout/sub-title";
 import requestTerminalShellLookupInjectable from "../../../../../terminal-shell-lookup/renderer/request-terminal-shell-lookup.injectable";
@@ -21,16 +20,14 @@ import type { UserPreferencesState } from "../../../../../user-preferences/commo
 
 interface Dependencies {
   state: UserPreferencesState;
-  defaultShell: string;
   requestTerminalShellLookup: RequestTerminalShellLookup;
 }
 
-const NonInjectedTerminalShellPath = observer(({ state, defaultShell, requestTerminalShellLookup }: Dependencies) => {
+const NonInjectedTerminalShellPath = observer(({ state, requestTerminalShellLookup }: Dependencies) => {
   const [lookup, setLookup] = useState<TerminalShellLookup>();
-  // When the setting is empty, terminals start the login shell, else the default shell of main, and the renderer cannot
-  // compute it: it does not have the SHELL of main. The default shell of the renderer stands in for it until main
-  // answers.
-  const [placeholder, setPlaceholder] = useState(defaultShell);
+  // When the setting is empty, terminals start the login shell, else the default shell of main, which only main can
+  // compute: the placeholder stays empty until main answers.
+  const [placeholder, setPlaceholder] = useState("");
   // Only the answer to the latest lookup is shown, whatever order the answers come back in
   const latestLookup = useRef(0);
 
@@ -94,7 +91,6 @@ const NonInjectedTerminalShellPath = observer(({ state, defaultShell, requestTer
 export const TerminalShellPath = withInjectables<Dependencies>(NonInjectedTerminalShellPath, {
   getProps: (di) => ({
     state: di.inject(userPreferencesStateInjectable),
-    defaultShell: di.inject(defaultShellInjectable),
     requestTerminalShellLookup: di.inject(requestTerminalShellLookupInjectable),
   }),
 });

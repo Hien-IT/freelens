@@ -4,7 +4,6 @@
  * Licensed under MIT License. See LICENSE in root directory for more information.
  */
 
-import { stringify } from "node:querystring";
 import { EventEmitter } from "@freelensapp/event-emitter";
 import { isObject, isString, json } from "@freelensapp/utilities";
 import { merge } from "es-toolkit/compat";
@@ -94,6 +93,43 @@ export function stringifyQuery(query: QueryParams): string {
   );
 
   return stringify(defined as QueryParams);
+}
+
+/** One value as `stringify` of `node:querystring` writes it. */
+const stringifyPrimitive = (value: unknown): string => {
+  switch (typeof value) {
+    case "string":
+      return value;
+    case "number":
+      return Number.isFinite(value) ? `${value}` : "";
+    case "bigint":
+      return `${value}`;
+    case "boolean":
+      return value ? "true" : "false";
+    default:
+      return "";
+  }
+};
+
+/**
+ * `stringify` of `node:querystring`, without Node: `key=value` pairs joined
+ * with `&`, an array written as one pair per element and an empty array left
+ * out, both sides escaped as `encodeURIComponent` does, which leaves the same
+ * characters unescaped as `querystring.escape`. `URLSearchParams` differs: it
+ * writes a space as `+`, escapes `!'()~`, and writes `NaN` out.
+ */
+export function stringify(query: QueryParams): string {
+  const pairs: string[] = [];
+
+  for (const [key, value] of Object.entries(query)) {
+    const prefix = `${encodeURIComponent(stringifyPrimitive(key))}=`;
+
+    for (const item of Array.isArray(value) ? value : [value]) {
+      pairs.push(prefix + encodeURIComponent(stringifyPrimitive(item)));
+    }
+  }
+
+  return pairs.join("&");
 }
 
 export type ParamsAndQuery<Params, Query> =

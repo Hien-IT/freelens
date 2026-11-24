@@ -9,7 +9,6 @@
 import deleteClusterDialogClusterFrameChildComponentInjectable from "./delete-cluster-dialog-cluster-frame-child-component.injectable";
 import isInLocalKubeconfigInjectable from "./is-in-local-kubeconfig.injectable";
 import openDeleteClusterDialogInjectable from "./open.injectable";
-import saveKubeconfigInjectable from "./save-kubeconfig.injectable";
 import deleteClusterDialogStateInjectable from "./state.injectable";
 
 import type { DiContainerForInjection } from "@ogre-tools/injectable";
@@ -32,11 +31,6 @@ export function registerInjectables(di: DiContainerForInjection): void {
   }
   try {
     di.register(openDeleteClusterDialogInjectable);
-  } catch (e) {
-    /* Ignore duplicate registration */
-  }
-  try {
-    di.register(saveKubeconfigInjectable);
   } catch (e) {
     /* Ignore duplicate registration */
   }

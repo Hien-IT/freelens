@@ -5,10 +5,11 @@
  */
 
 import { getInjectable } from "@ogre-tools/injectable";
+import { machineValuesInjectionToken } from "../../features/machine-values/common/token";
 
 const isDebuggingInjectable = getInjectable({
   id: "is-debugging",
-  instantiate: () => ["true", "1", "yes", "y", "on"].includes((process.env.DEBUG ?? "").toLowerCase()),
+  instantiate: (di) => di.inject(machineValuesInjectionToken).isDebugging,
   causesSideEffects: true,
 });
 

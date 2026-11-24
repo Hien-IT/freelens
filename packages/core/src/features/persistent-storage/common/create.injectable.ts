@@ -4,7 +4,6 @@
  * Licensed under MIT License. See LICENSE in root directory for more information.
  */
 
-import { nextTick } from "node:process";
 import { loggerInjectionToken } from "@freelensapp/logger";
 import { enlistMessageChannelListenerInjectionToken, sendMessageToChannelInjectionToken } from "@freelensapp/messaging";
 import { disposer, isPromiseLike } from "@freelensapp/utilities";
@@ -12,13 +11,12 @@ import { getInjectable } from "@ogre-tools/injectable";
 import { isEqual, kebabCase } from "es-toolkit";
 import { reaction } from "mobx";
 import directoryForUserDataInjectable from "../../../common/app-paths/directory-for-user-data/directory-for-user-data.injectable";
-import readFileBufferSyncInjectable from "../../../common/fs/read-file-buffer-sync.injectable";
-import writeBufferSyncInjectable from "../../../common/fs/write-buffer-sync.injectable";
 import getConfigurationFileModelInjectable from "../../../common/get-configuration-file-model/get-configuration-file-model.injectable";
 import getBasenameOfPathInjectable from "../../../common/path/get-basename.injectable";
-import joinPathsInjectable from "../../../common/path/join-paths.injectable";
+import { backupCorruptStorageFileInjectionToken } from "./backup-corrupt-file";
 import { persistentStorageIpcChannelPrefixesInjectionToken } from "./channel-prefix";
 import { shouldPersistentStorageDisableSyncInIpcListenerInjectionToken } from "./disable-sync";
+import persistentStorageRegistryInjectable from "./registry.injectable";
 import { persistStateToConfigInjectionToken } from "./save-to-file";
 
 import type { MessageChannel } from "@freelensapp/messaging";
@@ -98,9 +96,8 @@ const createPersistentStorageInjectable = getInjectable({
     const enlistMessageChannelListener = di.inject(enlistMessageChannelListenerInjectionToken);
     const shouldDisableSyncInListener = di.inject(shouldPersistentStorageDisableSyncInIpcListenerInjectionToken);
     const sendMessageToChannel = di.inject(sendMessageToChannelInjectionToken);
-    const readFileBufferSync = di.inject(readFileBufferSyncInjectable);
-    const writeBufferSync = di.inject(writeBufferSyncInjectable);
-    const joinPaths = di.inject(joinPathsInjectable);
+    const backupCorruptStorageFile = di.inject(backupCorruptStorageFileInjectionToken);
+    const registry = di.inject(persistentStorageRegistryInjectable);
 
     return <T extends object>(rawParams: PersistentStorageParams<T>) => {
       const { fromStore, toJSON, syncOptions, migrations, defaults, cwd = directoryForUserData, ...params } = rawParams;
@@ -138,15 +135,13 @@ const createPersistentStorageInjectable = getInjectable({
             throw error;
           }
 
-          const filePath = joinPaths(cwd, `${params.configName}.${params.fileExtension ?? "json"}`);
-          const backupPath = joinPaths(cwd, `${params.configName}.corrupt-${Date.now()}.json`);
-
-          // A file that cannot be copied aside is not cleared either
-          writeBufferSync(backupPath, readFileBufferSync(filePath));
-          logger.error(
-            `[${displayName}]: ${filePath} is not valid JSON, copied it to ${backupPath} and reset it`,
+          backupCorruptStorageFile({
+            cwd,
+            configName: params.configName,
+            fileExtension: params.fileExtension,
+            displayName,
             error,
-          );
+          });
           config = getConfigurationFileModel({ ...configOptions, clearInvalidConfig: true }) as Config<T>;
         }
 
@@ -159,6 +154,7 @@ const createPersistentStorageInjectable = getInjectable({
         }
 
         logger.info(`[${displayName}]: LOADED from ${config.path}`);
+        registry.set(config.path, { configName: params.configName, toJSON });
 
         const syncDisposers = disposer();
         let isStopped = false;
@@ -197,7 +193,7 @@ const createPersistentStorageInjectable = getInjectable({
                 }
 
                 if (shouldDisableSyncInListener) {
-                  nextTick(() => {
+                  queueMicrotask(() => {
                     if (!isStopped) {
                       enableSync();
                     }

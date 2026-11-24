@@ -11,9 +11,9 @@ import type { Logger } from "@freelensapp/logger";
 
 import type { Mock } from "vitest";
 
-import type { ExecFile } from "../../common/fs/exec-file.injectable";
-import type { RemovePath } from "../../common/fs/remove.injectable";
-import type { WriteFile } from "../../common/fs/write-file.injectable";
+import type { ExecFile } from "../../common/fs/main/exec-file.injectable";
+import type { RemovePath } from "../../common/fs/main/remove.injectable";
+import type { WriteFile } from "../../common/fs/main/write-file.injectable";
 import type { KubeconfigManager } from "../kubeconfig-manager/kubeconfig-manager";
 import type { Kubectl } from "../kubectl/kubectl";
 

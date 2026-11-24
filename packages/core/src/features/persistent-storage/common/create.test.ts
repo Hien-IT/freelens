@@ -6,8 +6,8 @@
 import { loggerInjectionToken } from "@freelensapp/logger";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import directoryForUserDataInjectable from "../../../common/app-paths/directory-for-user-data/directory-for-user-data.injectable";
-import readFileBufferSyncInjectable from "../../../common/fs/read-file-buffer-sync.injectable";
-import writeBufferSyncInjectable from "../../../common/fs/write-buffer-sync.injectable";
+import readFileBufferSyncInjectable from "../../../common/fs/main/read-file-buffer-sync.injectable";
+import writeBufferSyncInjectable from "../../../common/fs/main/write-buffer-sync.injectable";
 import getConfigurationFileModelInjectable from "../../../common/get-configuration-file-model/get-configuration-file-model.injectable";
 import { getDiForUnitTesting } from "../../../main/getDiForUnitTesting";
 import createPersistentStorageInjectable from "./create.injectable";

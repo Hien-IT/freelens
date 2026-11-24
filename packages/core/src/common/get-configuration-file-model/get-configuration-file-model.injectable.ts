@@ -5,16 +5,16 @@
  */
 
 import { getInjectable } from "@ogre-tools/injectable";
-import Config from "conf";
+import { configurationFileModelImplementationInjectionToken } from "./implementation-token";
 
+import type Config from "conf";
 import type { Options as ConfOptions } from "conf";
 
 export type GetConfigurationFileModel = <T extends Record<string, unknown>>(content: ConfOptions<T>) => Config<T>;
 
 const getConfigurationFileModelInjectable = getInjectable({
   id: "get-configuration-file-model",
-  instantiate: (): GetConfigurationFileModel => (content) => new Config(content),
-  causesSideEffects: true,
+  instantiate: (di): GetConfigurationFileModel => di.inject(configurationFileModelImplementationInjectionToken),
 });
 
 export default getConfigurationFileModelInjectable;

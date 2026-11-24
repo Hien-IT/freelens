@@ -7,7 +7,7 @@
 import { inspect } from "node:util";
 import { KubeConfig } from "@kubernetes/client-node";
 import { beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
-import { loadConfigFromString, loadValidatedConfig, validateKubeConfig } from "../kube-helpers";
+import { loadConfigFromString, loadValidatedConfig, validateKubeConfig } from "../kube-helpers/main/kube-helpers";
 
 const kubeconfig = `
 apiVersion: v1

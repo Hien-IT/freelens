@@ -4,9 +4,8 @@
  * Licensed under MIT License. See LICENSE in root directory for more information.
  */
 
-import assert from "node:assert";
 import { showCheckedErrorNotificationInjectable, showSuccessNotificationInjectable } from "@freelensapp/notifications";
-import { waitUntilDefined } from "@freelensapp/utilities";
+import { assert, waitUntilDefined } from "@freelensapp/utilities";
 import { getInjectable, lifecycleEnum } from "@ogre-tools/injectable";
 import { groupBy } from "es-toolkit";
 import { action, computed, observable, runInAction } from "mobx";

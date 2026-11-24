@@ -7,7 +7,7 @@
 import { afterApplicationIsLoadedInjectionToken } from "@freelensapp/application";
 import { getInjectable } from "@ogre-tools/injectable";
 import directoryForKubeConfigsInjectable from "../../../../common/app-paths/directory-for-kube-configs/directory-for-kube-configs.injectable";
-import ensureDirInjectable from "../../../../common/fs/ensure-dir.injectable";
+import ensureDirInjectable from "../../../../common/fs/main/ensure-dir.injectable";
 import kubeconfigSyncManagerInjectable from "../../../catalog-sources/kubeconfig-sync/manager.injectable";
 import addKubeconfigSyncAsEntitySourceInjectable from "./add-source.injectable";
 

@@ -4,15 +4,18 @@
  * Licensed under MIT License. See LICENSE in root directory for more information.
  */
 
-import { loggerTransportInjectionToken } from "@freelensapp/logger";
+import { loggerTransportInjectionToken } from "@freelensapp/logger/main";
 import { getInjectable } from "@ogre-tools/injectable";
 import { format, transports } from "winston";
 import { ConsoleFormat } from "./console-format";
 import logLevelInjectable from "./level.injectable";
 
+import type TransportStream from "winston-transport";
+
 const consoleLoggerTransportInjectable = getInjectable({
   id: "console-logger-transport",
-  instantiate: (di) =>
+  // typed by name, as the declaration of the extension API has to write the type
+  instantiate: (di): TransportStream =>
     new transports.Console({
       handleExceptions: false,
       level: di.inject(logLevelInjectable),

@@ -8,7 +8,8 @@ import { getInjectable } from "@ogre-tools/injectable";
 
 const currentlyInClusterFrameInjectable = getInjectable({
   id: "currently-in-cluster-frame",
-  instantiate: () => !process.isMainFrame,
+  // a cluster frame is an iframe of the root frame
+  instantiate: () => window.top !== window,
   causesSideEffects: true,
 });
 

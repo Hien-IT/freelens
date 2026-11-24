@@ -4,10 +4,10 @@
  * Licensed under MIT License. See LICENSE in root directory for more information.
  */
 
-import assert from "node:assert";
 import { apiKubeInjectionToken } from "@freelensapp/kube-api";
 import { storesAndApisCanBeCreatedInjectionToken } from "@freelensapp/kube-api-specifics";
 import { showErrorNotificationInjectable } from "@freelensapp/notifications";
+import { assert } from "@freelensapp/utilities";
 import { getInjectable } from "@ogre-tools/injectable";
 import { apiBaseServerAddressInjectionToken } from "../../common/k8s-api/api-base-configs";
 import createKubeJsonApiInjectable from "../../common/k8s-api/create-kube-json-api.injectable";

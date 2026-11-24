@@ -3,6 +3,7 @@
  * Licensed under MIT License. See LICENSE in root directory for more information.
  */
 
+import { Buffer } from "node:buffer";
 import { describe, expect, it } from "vitest";
 import { base64 } from "./base64";
 
@@ -39,5 +40,34 @@ describe("base64", () => {
 
   it("decodes valid unpadded base64", () => {
     expect(base64.decode("Zg")).toBe("f");
+  });
+});
+
+describe("base64 compared with Buffer", () => {
+  const texts = {
+    ascii: "The quick brown fox jumps over the lazy dog",
+    unicode: "héllo wörld ✓ 日本 😀",
+    "a long text": "ab✓".repeat(50_000),
+  };
+
+  it.each(Object.entries(texts))("encodes %s as Buffer does", (_name, text) => {
+    expect(base64.encode(text)).toBe(Buffer.from(text, "utf-8").toString("base64"));
+  });
+
+  it.each(Object.entries(texts))("decodes %s as Buffer does", (_name, text) => {
+    const encoded = Buffer.from(text, "utf-8").toString("base64");
+
+    expect(base64.decode(encoded)).toBe(Buffer.from(encoded, "base64").toString("utf-8"));
+  });
+
+  it("refuses bytes that are not utf-8, which Buffer would replace", () => {
+    const binary = Buffer.from([0xff, 0xfe, 0x00, 0x80]).toString("base64");
+
+    expect(() => base64.decode(binary)).toThrow();
+  });
+
+  it("refuses invalid input", () => {
+    expect(() => base64.decode("a")).toThrow();
+    expect(() => base64.decode("ab cd")).toThrow();
   });
 });

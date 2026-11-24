@@ -7,9 +7,13 @@
 import { getInjectable } from "@ogre-tools/injectable";
 import openPathPickingDialogInjectable from "../../../../../../path-picking-dialog/renderer/pick-paths.injectable";
 
-import type { FileFilter } from "electron";
-
 import type { PathPickOpts } from "../../../../../../../renderer/components/path-picker";
+
+/** The shape of a file filter of the path picking dialog. */
+interface FileFilter {
+  name: string;
+  extensions: string[];
+}
 
 export interface RequestFilePathOptions extends Pick<PathPickOpts, "onCancel" | "onPick"> {
   filter: FileFilter;

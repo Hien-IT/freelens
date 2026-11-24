@@ -5,14 +5,14 @@
  */
 
 import { getInjectable } from "@ogre-tools/injectable";
-import pathExistsInjectable from "../../../../common/fs/path-exists.injectable";
+import requestPathExistsInjectable from "../../../../features/validate-directory/renderer/path-exists.injectable";
 import { asyncInputValidator } from "../input_validators";
 
 const isPathInjectable = getInjectable({
   id: "is-path",
 
   instantiate: (di) => {
-    const pathExists = di.inject(pathExistsInjectable);
+    const pathExists = di.inject(requestPathExistsInjectable);
 
     return asyncInputValidator({
       debounce: 100,

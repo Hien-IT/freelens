@@ -9,7 +9,7 @@ import { loggerInjectionToken } from "@freelensapp/logger";
 import { getInjectable, lifecycleEnum } from "@ogre-tools/injectable";
 import { observable, when } from "mobx";
 import getDirnameOfPathInjectable from "../../common/path/get-dirname.injectable";
-import randomBytesInjectable from "../../common/utils/random-bytes.injectable";
+import randomBytesInjectable from "../../common/utils/main/random-bytes.injectable";
 import clusterApiUrlInjectable from "../../features/cluster/connections/main/api-url.injectable";
 import spawnInjectable from "../child-process/spawn.injectable";
 import broadcastConnectionUpdateInjectable from "../cluster/broadcast-connection-update.injectable";

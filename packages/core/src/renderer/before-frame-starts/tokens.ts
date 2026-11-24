@@ -13,12 +13,12 @@ export const beforeFrameStartsFirstInjectionToken = getInjectionToken<Runnable>(
   id: "before-frame-starts-first",
 });
 
-// NOTE: these are only run when process.isMainFrame === true
+// NOTE: these are only run in the root frame
 export const beforeMainFrameStartsFirstInjectionToken = getInjectionToken<Runnable>({
   id: "before-main-frame-starts-first",
 });
 
-// NOTE: these are only run when process.isMainFrame === false
+// NOTE: these are only run in a cluster frame
 export const beforeClusterFrameStartsFirstInjectionToken = getInjectionToken<Runnable>({
   id: "before-cluster-frame-starts-first",
 });
@@ -27,12 +27,12 @@ export const beforeFrameStartsSecondInjectionToken = getInjectionToken<Runnable>
   id: "before-frame-starts-second",
 });
 
-// NOTE: these are only run when process.isMainFrame === true
+// NOTE: these are only run in the root frame
 export const beforeMainFrameStartsSecondInjectionToken = getInjectionToken<Runnable>({
   id: "before-main-frame-starts-second",
 });
 
-// NOTE: these are only run when process.isMainFrame === false
+// NOTE: these are only run in a cluster frame
 export const beforeClusterFrameStartsSecondInjectionToken = getInjectionToken<Runnable>({
   id: "before-cluster-frame-starts-second",
 });

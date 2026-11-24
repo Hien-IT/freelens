@@ -4,14 +4,14 @@
  * Licensed under MIT License. See LICENSE in root directory for more information.
  */
 
-import path from "node:path";
 import { getInjectable } from "@ogre-tools/injectable";
+import { pathModuleInjectionToken } from "./path-module-injection-token";
 
 export type JoinPaths = (...args: string[]) => string;
 
 const joinPathsInjectable = getInjectable({
   id: "join-paths",
-  instantiate: (): JoinPaths => path.join,
+  instantiate: (di): JoinPaths => di.inject(pathModuleInjectionToken).join,
 
   // This causes side effect e.g. Windows uses different separator than e.g. linux
   causesSideEffects: true,

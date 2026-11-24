@@ -273,12 +273,27 @@ also holds every file its files import, including the other environment's
 files and other packages, and their errors there say nothing about the
 environment rule; the combined program checks those files in full.
 
-Files that failed the check when it was introduced are on the legacy lists in
-`scripts/type-check-environments/legacy.jsonc`: main or common files that need
-DOM, and renderer or common files that need Node, which the node-integrated
-renderer still allows. Their errors are tolerated. **The lists may only
-shrink:** never add a file to make a new error pass. When a listed file stops
-failing, the check fails until it is removed from its list.
+Main or common files that failed the check when it was introduced are on the
+`main` legacy list in `scripts/type-check-environments/legacy.jsonc`: they need
+DOM. Their errors are tolerated. **The list may only shrink:** never add a file
+to make a new error pass. When a listed file stops failing, the check fails
+until it is removed from the list. The `renderer` list is empty and stays so:
+the renderer runs without Node, in the window and in the cluster frames, so a
+renderer or common file that needs Node would fail at runtime, and the check
+refuses any entry on that list. Move the code that needs Node to main and reach
+it over a request channel (see "Values computed in main").
+
+The type check sees neither the npm packages nor the workspace packages outside
+`freelens/src` and `packages/core/src`, so the renderer build has a gate of its
+own, in `freelens/build-plugins/renderer-bundle-gate.ts`, run by the
+`rendererNodeGatePlugin` of `freelens/electron.vite.config.ts`. Any import of a
+Node builtin or of `electron` in the renderer graph, its workers included, or
+of the `__vite-browser-external` stub Vite puts in place of a builtin, fails
+`pnpm build`. For each one, the gate walks up the importers to the first module
+outside `node_modules`: the file that brings the Node use in, itself or through
+a package it imports, which the error names with the importer chain. The dev
+server fails on such an import as well, except inside the dependencies it
+pre-bundles, which only the build sees.
 
 `scripts/type-check-environments/expected-failures/` proves that the programs
 still reject what they should: every line there that must fail carries
@@ -321,11 +336,9 @@ does not catch **Node globals** such as `Buffer`, `process`, `__dirname` or
 `NodeJS.*` types, and it does not look at the files that carry no context in
 their path; only `pnpm type:check` catches those.
 
-The files that import a Node builtin today are exempted in a second override,
-which turns the rule off for them. Every one of them is also on the renderer
-legacy list, and `scripts/type-check-environments.mjs` fails when an exempted
-file is not, so the exemptions can only shrink with that list: remove a file
-from both when you move its Node import out.
+No file is exempted from the rule. `scripts/type-check-environments.mjs` fails
+on an override that turns it off for a file that is not on the renderer legacy
+list, which is empty.
 
 Every path in the `includes` of a `biome.jsonc` override starts with `**/`,
 negated ones included (`!**/packages/core/src/...`). Trunk Check, which is what

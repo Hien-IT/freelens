@@ -8,6 +8,7 @@
 
 import { registerInjectables as registerClusterFrameInjectables } from "./cluster-frame/register-injectables";
 import frameApplicationRootInjectable from "./frame-application-root.injectable";
+import frameLogIdInjectable from "./frame-log-id.injectable";
 import loadExtensionsInjectable from "./load-extensions.injectable";
 import { registerInjectables as registerRootFrameInjectables } from "./root-frame/register-injectables";
 import themeProviderReactApplicationHocInjectable from "./theme-provider-react-application-hoc.injectable";
@@ -17,6 +18,11 @@ import type { DiContainerForInjection } from "@ogre-tools/injectable";
 export function registerInjectables(di: DiContainerForInjection): void {
   try {
     di.register(frameApplicationRootInjectable);
+  } catch (e) {
+    /* Ignore duplicate registration */
+  }
+  try {
+    di.register(frameLogIdInjectable);
   } catch (e) {
     /* Ignore duplicate registration */
   }

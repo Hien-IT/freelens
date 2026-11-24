@@ -13,5 +13,5 @@
     "rootDir": "../..",
     "outDir": "dist-types"
   },
-  "include": ["src/**/*", "../core/types/*.d.ts"]
+  "include": ["src/**/*", "../core/types/*.d.ts", "../core/src/renderer/import-meta-env.d.ts"]
 }

@@ -7,16 +7,17 @@
 import { reactApplicationChildrenInjectionToken } from "@freelensapp/react-application";
 import { getInjectable } from "@ogre-tools/injectable";
 import { computed } from "mobx";
+import currentlyInClusterFrameInjectable from "../routes/currently-in-cluster-frame.injectable";
 import { ClusterFrame } from "./cluster-frame/cluster-frame";
 import { RootFrame } from "./root-frame/root-frame";
 
 const frameApplicationRootInjectable = getInjectable({
   id: "frame-application-root",
 
-  instantiate: () => {
+  instantiate: (di) => {
     // Both frames were bundled by webpack too; the conditional require() only
     // deferred evaluation, which ESM output cannot express synchronously.
-    const Frame = process.isMainFrame ? RootFrame : ClusterFrame;
+    const Frame = di.inject(currentlyInClusterFrameInjectable) ? ClusterFrame : RootFrame;
 
     return {
       id: "frame-application-root",

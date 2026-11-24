@@ -5,10 +5,11 @@
  */
 
 import { getInjectable } from "@ogre-tools/injectable";
+import { machineValuesInjectionToken } from "../../features/machine-values/common/token";
 
 const isSnapPackageInjectable = getInjectable({
   id: "is-snap",
-  instantiate: () => Boolean(process.env.SNAP),
+  instantiate: (di) => di.inject(machineValuesInjectionToken).isSnap,
   causesSideEffects: true,
 });
 

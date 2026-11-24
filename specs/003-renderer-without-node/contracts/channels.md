@@ -55,32 +55,38 @@ answers, the extension store values, `RawTemplates`) are in
 
 ## Extension system (Not ported: the Tauri build has no extension system)
 
-| Channel                                | Kind | Dir | Request → answer                                                                           | Electron                                   |
-| -------------------------------------- | ---- | --- | ------------------------------------------------------------------------------------------ | ------------------------------------------ |
-| `extension-install:stage-from-path`    | req  | v→m | `{ path }`, a package or folder path → staged extension                                    | `features/extensions/installer/main/`      |
-| `extension-install:stage-from-url`     | req  | v→m | `{ url, checksum?, source }` → staged extension                                            | the same                                   |
-| `extension-install:commit`             | req  | v→m | `{ stagingId }` → `{ id, version, verified }`                                              | the same                                   |
-| `extension-install:discard`            | req  | v→m | `{ stagingId }` → none                                                                     | the same                                   |
-| `extension-install:register-directory` | req  | v→m | `{ path }`, a folder path → none                                                           | the same                                   |
-| `extension-install:open-folder`        | req  | v→m | `{ name }` → none                                                                          | the same                                   |
-| `extension:uninstall`                  | req  | v→m | `ExtensionId` → none                                                                       | the same                                   |
-| `extension-file-folder`                | req  | v→m | `ExtensionId` → `string`                                                                   | `features/extensions/file-folder/main/`    |
-| `extension-files:write-picked`         | req  | v→m | `{ uploadDir, files: { name, base64 }[] }` → `string[]`, the paths written                 | `features/extensions/file-picker/main/`    |
-| `extension-resource-stack:read-folder` | req  | v→m | `{ folderPath }` → `{ name, contents }[]`                                                  | `features/extensions/resource-stack/main/` |
-| `extension-store:read`                 | sync | v→m | `{ extensionId, configName, fileExtension?, encryptionKey?, cwd? }` → `{ path, contents }` | `extensions/stores/main/`                  |
-| `extension-store:write`                | req  | v→m | `{ extensionId, configName, fileExtension?, encryptionKey?, cwd?, contents }` → none       | the same                                   |
+| Channel                                | Kind | Dir | Request → answer                                                                                                         | Electron                                   |
+| -------------------------------------- | ---- | --- | ------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------ |
+| `extension-install:path-kind`          | req  | v→m | `{ path }`, a path the user gave → `"file" \| "directory" \| "missing"`                                                  | `features/extensions/installer/main/`      |
+| `extension-install:read-path`          | req  | v→m | `{ path }`, a package or folder the user chose → `{ kind: "file", base64, sidecar? } \| { kind: "directory", manifest }` | the same                                   |
+| `extension-install:stage`              | req  | v→m | `{ fileName, base64 }` → `{ stagingId, manifest }`                                                                       | the same                                   |
+| `extension-install:commit`             | req  | v→m | `{ stagingId, source?, verified }` → `{ id, version }`                                                                   | the same                                   |
+| `extension-install:discard`            | req  | v→m | `{ stagingId }` → none                                                                                                   | the same                                   |
+| `extension-install:register-directory` | req  | v→m | `{ path }`, a folder the user chose → `{ id }`                                                                           | the same                                   |
+| `extension-install:open-folder`        | req  | v→m | `{ name }` → none                                                                                                        | the same                                   |
+| `extension:uninstall`                  | req  | v→m | `ExtensionId` → none                                                                                                     | the same                                   |
+| `extension-file-folder`                | req  | v→m | `ExtensionId` → `string`                                                                                                 | `features/extensions/file-folder/main/`    |
+| `extension-files:write-picked`         | req  | v→m | `{ uploadDir, files: { name, base64 }[] }` → `string[]`, the paths written                                               | `features/extensions/file-picker/main/`    |
+| `extension-resource-stack:read-folder` | req  | v→m | `{ folderPath }` → `{ name, contents }[]`                                                                                | `features/extensions/resource-stack/main/` |
+| `extension-store:read`                 | sync | v→m | `{ extensionId, configName, fileExtension?, encryptionKey?, encryptionAlgorithm?, cwd? }` → `{ path, contents? }`        | `features/extensions/stores/main/`         |
+| `extension-store:write`                | req  | v→m | `{ extensionId, configName, fileExtension?, encryptionKey?, encryptionAlgorithm?, cwd?, contents }` → none               | the same                                   |
+
+The downloads of URL and registry installs bring the bytes into the renderer,
+which keeps the install flow, with its confirmations and checksum check; main
+takes the steps that need Node. A staged tarball is known to the renderer only
+by its `stagingId`.
 
 `extension-store:read` is the one synchronous channel.
 `ExtensionStore.loadExtension` is synchronous and public, so it uses the
 extension system's own Electron IPC (`ipcRenderer.sendSync` through the bridge,
-`event.returnValue` in main). It lives under `packages/core/src/extensions/`,
-whose IPC spec 002 and FR-013 exempt (research R5).
+`event.returnValue` in main). Both sides live in `features/extensions/stores/`;
+spec 002 and FR-013 exempt the extension system's IPC (research R5).
 
 ## Rules for every channel
 
 1. **One task.** No channel takes a program or a command line, and none reads
    or writes the contents of a file at a path a view sends, except:
-   - a path the user chose in that view (`stage-from-path`,
+   - a path the user chose in that view (`path-kind`, `read-path`,
      `register-directory`, `validate-directory`, `path-exists`,
      `discover-kubeconfig-sync-kind`);
    - a folder an extension passes to the extension API, read or written as

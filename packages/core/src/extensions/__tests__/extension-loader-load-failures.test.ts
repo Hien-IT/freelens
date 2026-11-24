@@ -3,6 +3,7 @@
  * Licensed under MIT License. See LICENSE in root directory for more information.
  */
 
+import { pathToFileURL } from "node:url";
 import { observable } from "mobx";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { ExtensionLoader } from "../extension-loader/extension-loader";
@@ -93,6 +94,7 @@ describe.each(["main", "renderer"] as const)("recording why an extension failed 
       extensionInstances: observable.map<LensExtensionId, LensExtensionInstance>(),
       logger: { debug: vi.fn(), error: vi.fn(), info: vi.fn(), silly: vi.fn(), warn: vi.fn() } as unknown as Logger,
       extensionEntryPointName: entryPointName,
+      fileUrlOfPath: pathToFileURL,
       updateExtensionsState: vi.fn(),
       getExtension: () => ({ register: vi.fn(), deregister: vi.fn() }) as never,
       getRandomId: () => "a-token",

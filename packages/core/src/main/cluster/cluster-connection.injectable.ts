@@ -10,12 +10,12 @@ import { ApiException, type KubeConfig } from "@kubernetes/client-node";
 import { getInjectable, lifecycleEnum } from "@ogre-tools/injectable";
 import { limitAsync } from "es-toolkit";
 import { compareStructural, reaction, runInAction } from "mobx";
-import createAuthorizationApiInjectable from "../../common/cluster/create-authorization-api.injectable";
 import createCanIInjectable from "../../common/cluster/create-can-i.injectable";
-import createCoreApiInjectable from "../../common/cluster/create-core-api.injectable";
 import createRequestNamespaceListPermissionsInjectable from "../../common/cluster/create-request-namespace-list-permissions.injectable";
 import createListNamespacesInjectable from "../../common/cluster/list-namespaces.injectable";
-import loadKubeconfigInjectable from "../../common/cluster/load-kubeconfig.injectable";
+import createAuthorizationApiInjectable from "../../common/cluster/main/create-authorization-api.injectable";
+import createCoreApiInjectable from "../../common/cluster/main/create-core-api.injectable";
+import loadKubeconfigInjectable from "../../common/cluster/main/load-kubeconfig.injectable";
 import { ClusterMetadataKey, ClusterStatus } from "../../common/cluster-types";
 import broadcastMessageInjectable from "../../common/ipc/broadcast-message.injectable";
 import { clusterListNamespaceForbiddenChannel } from "../../common/ipc/cluster";
@@ -33,15 +33,15 @@ import requestApiResourcesInjectable from "./request-api-resources.injectable";
 import type { Logger } from "@freelensapp/logger";
 
 import type { Cluster } from "../../common/cluster/cluster";
-import type { CreateAuthorizationApi } from "../../common/cluster/create-authorization-api.injectable";
 import type { CreateCanI } from "../../common/cluster/create-can-i.injectable";
-import type { CreateCoreApi } from "../../common/cluster/create-core-api.injectable";
 import type {
   CreateRequestNamespaceListPermissions,
   RequestNamespaceListPermissions,
 } from "../../common/cluster/create-request-namespace-list-permissions.injectable";
 import type { CreateListNamespaces } from "../../common/cluster/list-namespaces.injectable";
-import type { LoadKubeconfig } from "../../common/cluster/load-kubeconfig.injectable";
+import type { CreateAuthorizationApi } from "../../common/cluster/main/create-authorization-api.injectable";
+import type { CreateCoreApi } from "../../common/cluster/main/create-core-api.injectable";
+import type { LoadKubeconfig } from "../../common/cluster/main/load-kubeconfig.injectable";
 import type { BroadcastMessage } from "../../common/ipc/broadcast-message.injectable";
 import type { KubeApiResource } from "../../common/rbac";
 import type { DetectClusterMetadata } from "../cluster-detectors/detect-cluster-metadata.injectable";

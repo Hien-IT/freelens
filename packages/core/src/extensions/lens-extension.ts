@@ -9,14 +9,14 @@ import { action, computed, observable } from "mobx";
 
 import type { ProtocolHandlerRegistration } from "../common/protocol-handler/registration";
 import type { Logger } from "./common-api";
-import type { EnsureHashedDirectoryForExtension } from "./extension-loader/file-system-provisioner-store/ensure-hashed-directory-for-extension.injectable";
 import type { InstalledExtension, LensExtensionId, LensExtensionManifest } from "./installed-extension";
 
 export const Disposers = Symbol("disposers");
 
 export interface LensExtensionDependencies {
   readonly logger: Logger;
-  ensureHashedDirectoryForExtension: EnsureHashedDirectoryForExtension;
+  /** Main creates the folder; the renderer asks main for it. */
+  ensureHashedDirectoryForExtension: (extensionName: string) => Promise<string>;
 }
 
 export class LensExtension {

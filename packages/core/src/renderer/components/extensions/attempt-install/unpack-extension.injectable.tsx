@@ -4,26 +4,19 @@
  * Licensed under MIT License. See LICENSE in root directory for more information.
  */
 
-import path from "node:path";
 import { loggerInjectionToken } from "@freelensapp/logger";
+import { requestFromChannelInjectionToken } from "@freelensapp/messaging";
 import {
   showErrorNotificationInjectable,
   showInfoNotificationInjectable,
   showSuccessNotificationInjectable,
 } from "@freelensapp/notifications";
-import { noop } from "@freelensapp/utilities";
 import { getInjectable } from "@ogre-tools/injectable";
-import fse from "fs-extra";
 import { when } from "mobx";
-import extractTarInjectable from "../../../../common/fs/extract-tar.injectable";
 import extensionInstallationStateStoreInjectable from "../../../../extensions/extension-installation-state-store/extension-installation-state-store.injectable";
 import extensionLoaderInjectable from "../../../../extensions/extension-loader/extension-loader.injectable";
-import { extensionDisplayName, sanitizeExtensionName } from "../../../../extensions/lens-extension";
-import activateInstalledBuildInjectable from "../../../../features/extensions/installer/common/activate-installed-build.injectable";
-import { computeTarballDigest, shortenDigest } from "../../../../features/extensions/installer/common/checksums";
-import extensionsRootInjectable from "../../../../features/extensions/installer/common/extensions-root.injectable";
-import { managedDirectoryOf } from "../../../../features/extensions/installer/common/managed-directory";
-import { versionDirectoryName } from "../../../../features/extensions/installer/common/version-directory";
+import { extensionDisplayName } from "../../../../extensions/lens-extension";
+import { commitExtensionPackageChannel } from "../../../../features/extensions/installer/common/install-channels";
 import { getMessageFromError } from "../get-message-from-error/get-message-from-error";
 import { disabledForReinstallNote, installFailureSubject } from "./disabled-for-reinstall";
 
@@ -92,25 +85,12 @@ export type UnpackExtension = (
  * had no checksum, stays disabled until the user enables it: nothing vouches
  * for its code, so it does not run without their say.
  */
-/**
- * Removes the tarball of an install and the directory of its own that
- * `createTempFilesAndValidate` put it in. `rmdir` removes the directory only
- * once it is empty, so a directory shared with anything else stays.
- */
-export const discardTarball = (tempFile: string) =>
-  fse
-    .unlink(tempFile)
-    .then(() => fse.rmdir(path.dirname(tempFile)))
-    .catch(noop);
-
 const unpackExtensionInjectable = getInjectable({
   id: "unpack-extension",
   instantiate: (di): UnpackExtension => {
     const extensionLoader = di.inject(extensionLoaderInjectable);
-    const extensionsRoot = di.inject(extensionsRootInjectable);
-    const activateInstalledBuild = di.inject(activateInstalledBuildInjectable);
     const extensionInstallationStateStore = di.inject(extensionInstallationStateStoreInjectable);
-    const extractTar = di.inject(extractTarInjectable);
+    const requestFromChannel = di.inject(requestFromChannelInjectionToken);
     const logger = di.inject(loggerInjectionToken);
     const showInfoNotification = di.inject(showInfoNotificationInjectable);
     const showSuccessNotification = di.inject(showSuccessNotificationInjectable);
@@ -138,8 +118,7 @@ const unpackExtensionInjectable = getInjectable({
       const {
         id,
         fileName,
-        tempFile,
-        data,
+        stagingId,
         source,
         checksum,
         manifest: { name, version },
@@ -153,53 +132,13 @@ const unpackExtensionInjectable = getInjectable({
       // were written out or read into: by here the only thing left to say about
       // it is whether there was one.
       const verified = Boolean(checksum);
-      // The identity of this build: over the archive bytes, not over the
-      // extracted tree, whose hash depends on extraction order and filesystem.
-      const digest = computeTarballDigest(data);
-      const buildFolder = path.join(extensionsRoot, sanitizeExtensionName(name), versionDirectoryName(version, digest));
-      const unpackingTempFolder = path.join(path.dirname(tempFile), `${path.basename(tempFile)}-unpacked`);
 
-      logger.info(`Unpacking extension ${displayName}`, { fileName, tempFile, buildFolder });
+      logger.info(`Unpacking extension ${displayName}`, { fileName });
 
       try {
-        // The name and the version are validated with the manifest, but the
-        // path built from them is what gets written to: it has to be a build
-        // directory of its own, two levels below the extensions root.
-        const managedDirectory = managedDirectoryOf(extensionsRoot, buildFolder);
-
-        if (!managedDirectory || path.dirname(buildFolder) !== managedDirectory) {
-          throw new Error(`the install path ${buildFolder} is outside of the extensions directory`);
-        }
-
-        // extract to temp folder first
-        await fse.remove(unpackingTempFolder).catch(noop);
-        await fse.ensureDir(unpackingTempFolder);
-        await extractTar(tempFile, { cwd: unpackingTempFolder });
-
-        // move contents to the build folder
-        const unpackedFiles = await fse.readdir(unpackingTempFolder);
-        let unpackedRootFolder = unpackingTempFolder;
-
-        if (unpackedFiles.length === 1) {
-          // check if %extension.tgz was packed with single top folder,
-          // e.g. "npm pack %ext_name" downloads file with "package" root folder within tarball
-          unpackedRootFolder = path.join(unpackingTempFolder, unpackedFiles[0]);
-        }
-
-        // Reinstalling the identical tarball lands on the same path, so the
-        // previous content of it goes rather than being merged with.
-        await fse.remove(buildFolder).catch(noop);
-        await fse.ensureDir(path.dirname(buildFolder));
-        await fse.move(unpackedRootFolder, buildFolder, { overwrite: true });
-
-        await activateInstalledBuild({
-          name,
-          path: buildFolder,
-          version,
-          digest: shortenDigest(digest),
-          source,
-          verified,
-        });
+        // main extracts the staged tarball into a build directory of its own,
+        // records it, and removes the tarball
+        await requestFromChannel(commitExtensionPackageChannel, { stagingId, source, verified });
 
         // wait for the loader has actually install it
         await when(() => extensionLoader.userExtensions.get().has(id), { timeout: 10000 })
@@ -241,12 +180,6 @@ const unpackExtensionInjectable = getInjectable({
       } finally {
         // Remove install state once finished
         extensionInstallationStateStore.clearInstalling(id);
-
-        // Clean up, along with the directory of this install's own which
-        // `createTempFilesAndValidate` put the tarball in. `rmdir` removes it
-        // only once it is empty, so a directory shared with anything else stays.
-        await fse.remove(unpackingTempFolder).catch(noop);
-        await discardTarball(tempFile);
       }
     };
   },

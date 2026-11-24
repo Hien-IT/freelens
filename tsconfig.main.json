@@ -15,7 +15,6 @@
     "packages/core/src/features/**/register-injectables.ts",
     "packages/core/src/register-injectables-main.ts",
     "packages/core/src/extensions/api-globals/main-singletons.ts",
-    "packages/core/src/extensions/ipc/ipc-main.ts",
     "packages/core/src/extensions/lens-main-extension.ts",
     "packages/core/src/extensions/api-globals/global-name-for-module-id.ts",
     "packages/core/src/extensions/api-globals/global-shape.ts",

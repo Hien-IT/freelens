@@ -4,7 +4,7 @@
  * Licensed under MIT License. See LICENSE in root directory for more information.
  */
 
-export { IpcMain as Ipc } from "../ipc/ipc-main";
+export { IpcMain as Ipc } from "../ipc/main/ipc-main";
 export { LensMainExtension as LensExtension } from "../lens-main-extension";
 export * as Catalog from "./catalog";
 export * as K8s from "./k8s";

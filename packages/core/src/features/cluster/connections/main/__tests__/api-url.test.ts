@@ -5,8 +5,8 @@
 
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { Cluster } from "../../../../../common/cluster/cluster";
-import statInjectable from "../../../../../common/fs/stat.injectable";
-import readKubeconfigFileInjectable from "../../../../../common/kube-helpers/read-kubeconfig-file.injectable";
+import statInjectable from "../../../../../common/fs/main/stat.injectable";
+import readKubeconfigFileInjectable from "../../../../../common/kube-helpers/main/read-kubeconfig-file.injectable";
 import { getDiForUnitTesting } from "../../../../../main/getDiForUnitTesting";
 import clusterApiUrlInjectable from "../api-url.injectable";
 import type { Stats } from "node:fs";

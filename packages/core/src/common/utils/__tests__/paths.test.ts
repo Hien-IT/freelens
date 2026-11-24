@@ -7,13 +7,13 @@
 import path from "node:path";
 import { beforeEach, describe, expect, it } from "vitest";
 import { getDiForUnitTesting } from "../../../main/getDiForUnitTesting";
-import getAbsolutePathInjectable from "../../path/get-absolute-path.injectable";
 import getDirnameOfPathInjectable from "../../path/get-dirname.injectable";
-import isLogicalChildPathInjectable from "../../path/is-logical-child-path.injectable";
+import getAbsolutePathInjectable from "../../path/main/get-absolute-path.injectable";
+import isLogicalChildPathInjectable from "../../path/main/is-logical-child-path.injectable";
 
 import type { DiContainer } from "@ogre-tools/injectable";
 
-import type { IsLogicalChildPath } from "../../path/is-logical-child-path.injectable";
+import type { IsLogicalChildPath } from "../../path/main/is-logical-child-path.injectable";
 
 describe("isLogicalChildPath", () => {
   let di: DiContainer;

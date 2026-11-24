@@ -4,7 +4,6 @@
  * Licensed under MIT License. See LICENSE in root directory for more information.
  */
 
-import url from "node:url";
 import { isEqual, once } from "es-toolkit";
 import { observable } from "mobx";
 import { TerminalChannels, type TerminalMessage, type TerminalStatusLevel } from "../../common/terminal/channels";
@@ -31,6 +30,9 @@ enum TerminalColor {
  * whatever is written next replaces it entirely.
  */
 export const eraseTerminalLine = "\u001b[2K\r";
+
+/** The token is a few bytes, so it fits the arguments of one call. */
+const toBase64 = (bytes: Uint8Array) => btoa(String.fromCharCode(...bytes));
 
 export interface TerminalApiQuery extends Record<string, string | undefined> {
   id: string;
@@ -95,18 +97,15 @@ export class TerminalApi extends WebSocketApi<TerminalEvents> {
       throw new TypeError("ShellApi token is not a Uint8Array");
     }
 
-    const { hostname, protocol, port } = location;
-    const socketUrl = url.format({
-      protocol: protocol.includes("https") ? "wss" : "ws",
-      hostname,
-      port,
-      pathname: "/api",
-      query: {
-        ...this.query,
-        shellToken: Buffer.from(authTokenArray).toString("base64"),
-      },
-      slashes: true,
-    });
+    const socketUrl = new URL("/api", location.href);
+
+    socketUrl.protocol = location.protocol.includes("https") ? "wss:" : "ws:";
+
+    for (const [key, value] of Object.entries({ ...this.query, shellToken: toBase64(authTokenArray) })) {
+      if (value !== undefined) {
+        socketUrl.searchParams.set(key, value);
+      }
+    }
 
     // A session that the main process resumes, as after a reload, sends its
     // last output again right after "connected"
@@ -121,7 +120,7 @@ export class TerminalApi extends WebSocketApi<TerminalEvents> {
     this.prependListener("data", onReady);
     this.prependListener("connected", onReady);
 
-    super.connect(socketUrl);
+    super.connect(socketUrl.href);
   }
 
   sendMessage(message: TerminalMessage) {

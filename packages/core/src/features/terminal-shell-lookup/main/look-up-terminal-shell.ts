@@ -5,8 +5,8 @@
 
 import { findUnixShellFile, findWindowsShellFile } from "../../../main/shell-session/find-shell";
 
-import type { AccessPath } from "../../../common/fs/access-path.injectable";
-import type { Stat } from "../../../common/fs/stat.injectable";
+import type { AccessPath } from "../../../common/fs/main/access-path.injectable";
+import type { Stat } from "../../../common/fs/main/stat.injectable";
 import type { TerminalShellLookup } from "../common/channels";
 
 export interface LookUpTerminalShellDependencies {

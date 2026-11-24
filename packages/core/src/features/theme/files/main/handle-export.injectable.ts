@@ -4,7 +4,7 @@
  */
 
 import { getRequestChannelListenerInjectable } from "@freelensapp/messaging";
-import writeFileInjectable from "../../../../common/fs/write-file.injectable";
+import writeFileInjectable from "../../../../common/fs/main/write-file.injectable";
 import electronDialogInjectable from "../../../../main/electron-app/features/electron-dialog.injectable";
 import { findBuiltInTheme } from "../common/builtin-theme";
 import { exportThemeChannel } from "../common/channels";

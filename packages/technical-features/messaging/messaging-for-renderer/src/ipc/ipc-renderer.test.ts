@@ -1,12 +1,14 @@
 import { registerFeature } from "@freelensapp/feature-core";
 import { createContainer, DiContainer } from "@ogre-tools/injectable";
-import { ipcRenderer } from "electron";
-import { beforeEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { messagingFeatureForRenderer } from "../feature";
 import ipcRendererInjectable from "./ipc-renderer.injectable";
 
+import type { IpcRenderer } from "electron";
+
 describe("ipc-renderer", () => {
   let di: DiContainer;
+  const ipcRenderer = { invoke: () => {}, send: () => {}, on: () => {} } as unknown as IpcRenderer;
 
   beforeEach(() => {
     di = createContainer("irrelevant");
@@ -14,6 +16,11 @@ describe("ipc-renderer", () => {
     di.permitSideEffects();
 
     registerFeature(di, messagingFeatureForRenderer);
+    window.freelensViewBridge = { ipcRenderer, getPathForFile: () => "" };
+  });
+
+  afterEach(() => {
+    delete window.freelensViewBridge;
   });
 
   it("is not undefined", () => {
@@ -26,5 +33,11 @@ describe("ipc-renderer", () => {
     const actual = di.inject(ipcRendererInjectable);
 
     expect(actual).toBe(ipcRenderer);
+  });
+
+  it("throws, naming the bridge, when the preload did not run", () => {
+    delete window.freelensViewBridge;
+
+    expect(() => di.inject(ipcRendererInjectable)).toThrow("window.freelensViewBridge is missing");
   });
 });

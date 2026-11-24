@@ -11,7 +11,7 @@ import { cssNames } from "@freelensapp/utilities";
 import { withInjectables } from "@ogre-tools/injectable-react";
 import { observer } from "mobx-react";
 import { useState } from "react";
-import extensionDiscoveryInjectable from "../../../extensions/extension-discovery/extension-discovery.injectable";
+import extensionDiscoveryInjectable from "../../../extensions/extension-discovery/renderer/extension-discovery.injectable";
 import extensionInstallationStateStoreInjectable from "../../../extensions/extension-installation-state-store/extension-installation-state-store.injectable";
 import extensionLoaderInjectable from "../../../extensions/extension-loader/extension-loader.injectable";
 import { describeExtensionLoadStage } from "../../../extensions/extension-loader/load-failure";
@@ -29,7 +29,7 @@ import type { ShowNotification } from "@freelensapp/notifications";
 
 import type { IComputedValue } from "mobx";
 
-import type { ExtensionDiscovery } from "../../../extensions/extension-discovery/extension-discovery";
+import type { ExtensionDiscoveryFollower as ExtensionDiscovery } from "../../../extensions/extension-discovery/renderer/extension-discovery";
 import type { ExtensionInstallationStateStore } from "../../../extensions/extension-installation-state-store/extension-installation-state-store";
 import type { ExtensionLoadFailureInProcess } from "../../../extensions/extension-loader/load-failure";
 import type { InstalledExtension, LensExtensionId } from "../../../extensions/installed-extension";

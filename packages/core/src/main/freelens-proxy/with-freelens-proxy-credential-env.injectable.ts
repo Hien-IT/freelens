@@ -4,8 +4,8 @@
  */
 
 import { getInjectable } from "@ogre-tools/injectable";
-import baseBundledBinariesDirectoryInjectable from "../../common/vars/base-bundled-binaries-dir.injectable";
 import isWindowsInjectable from "../../common/vars/is-windows.injectable";
+import baseBundledBinariesDirectoryInjectable from "../../common/vars/main/base-bundled-binaries-dir.injectable";
 import { surroundPath } from "../kube-tools/kube-tools";
 import { freelensProxyTokenEnvVar } from "./freelens-proxy-token";
 import freelensProxyTokenInjectable from "./freelens-proxy-token.injectable";

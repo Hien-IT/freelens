@@ -5,12 +5,13 @@
  */
 
 import { getInjectable } from "@ogre-tools/injectable";
+import { machineValuesInjectionToken } from "../../features/machine-values/common/token";
 
 export const allPlatforms = ["win32", "darwin", "linux"] as const;
 
 const platformInjectable = getInjectable({
   id: "platform",
-  instantiate: () => process.platform as (typeof allPlatforms)[number],
+  instantiate: (di) => di.inject(machineValuesInjectionToken).platform,
   causesSideEffects: true,
 });
 

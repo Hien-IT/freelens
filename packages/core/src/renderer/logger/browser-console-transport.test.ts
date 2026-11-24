@@ -3,15 +3,17 @@
  * Licensed under MIT License. See LICENSE in root directory for more information.
  */
 
+import { createRendererLogger } from "@freelensapp/logger/renderer";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { createLogger, format } from "winston";
 import { BrowserConsoleTransport } from "./browser-console-transport";
 
+import type { RendererLogger } from "@freelensapp/logger/renderer";
+
 import type { MockInstance } from "vitest";
-import type { Logger } from "winston";
 
 describe("BrowserConsoleTransport", () => {
-  let logger: Logger;
+  let logger: RendererLogger;
+  let transport: BrowserConsoleTransport;
   let consoleMethods: Record<"debug" | "error" | "info" | "warn", MockInstance>;
 
   beforeEach(() => {
@@ -22,13 +24,10 @@ describe("BrowserConsoleTransport", () => {
       warn: vi.spyOn(console, "warn").mockImplementation(() => {}),
     };
 
-    // The same format the application's winston logger is created with, so
-    // that the entries reaching the transport are shaped the same way
-    logger = createLogger({
-      level: "silly",
-      format: format.combine(format.splat(), format.simple(), format.timestamp({ format: "DD/MM/YYYY HH:mm:ss" })),
-      transports: [new BrowserConsoleTransport()],
-    });
+    // The logger of the renderer, which shapes its entries as the main
+    // process's winston logger does
+    transport = new BrowserConsoleTransport({ level: "silly" });
+    logger = createRendererLogger([transport]);
   });
 
   afterEach(() => {
@@ -83,7 +82,9 @@ describe("BrowserConsoleTransport", () => {
     ["verbose", "debug"],
     ["silly", "debug"],
   ] as const)("maps the %s level onto console.%s", (level, method) => {
-    logger.log(level, "a message");
+    // the renderer's logger has no generic log(level) and no verbose level,
+    // so the entry goes to the transport as a logger would write it
+    transport.log({ level, message: "a message" }, () => {});
 
     expect(consoleMethods[method]).toHaveBeenCalledWith("a message");
   });

@@ -4,15 +4,12 @@
  * Licensed under MIT License. See LICENSE in root directory for more information.
  */
 
-import path from "node:path";
 import { getInjectable } from "@ogre-tools/injectable";
-import userInfoInjectable from "../vars/user-info.injectable";
+import { machineValuesInjectionToken } from "../../features/machine-values/common/token";
 
 const kubeDirectoryPathInjectable = getInjectable({
   id: "kube-directory-path",
-  instantiate: (di) => {
-    return path.join(di.inject(userInfoInjectable).homedir, ".kube");
-  },
+  instantiate: (di) => di.inject(machineValuesInjectionToken).kubeDirectory,
 });
 
 export default kubeDirectoryPathInjectable;

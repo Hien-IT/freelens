@@ -4,8 +4,7 @@
  * Licensed under MIT License. See LICENSE in root directory for more information.
  */
 
-import assert from "node:assert";
-import { isDefined } from "@freelensapp/utilities";
+import { assert, isDefined } from "@freelensapp/utilities";
 import { computed } from "mobx";
 import {
   clampMaxCombinedLogsPods,

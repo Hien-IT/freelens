@@ -4,24 +4,30 @@
  * Licensed under MIT License. See LICENSE in root directory for more information.
  */
 
-import { shell } from "electron";
+import { withInjectables } from "@ogre-tools/injectable-react";
 import { observer } from "mobx-react";
 import React from "react";
+import revealClusterKubeconfigInjectable from "../../../features/cluster/reveal-kubeconfig/renderer/reveal-cluster-kubeconfig.injectable";
 import { Notice } from "../extensions/notice";
 import { SubTitle } from "../layout/sub-title";
 
 import type { Cluster } from "../../../common/cluster/cluster";
+import type { RevealClusterKubeconfig } from "../../../features/cluster/reveal-kubeconfig/renderer/reveal-cluster-kubeconfig.injectable";
 
 export interface ClusterKubeconfigProps {
   cluster: Cluster;
 }
 
-@observer
-export class ClusterKubeconfig extends React.Component<ClusterKubeconfigProps> {
-  openKubeconfig = () => {
-    const { cluster } = this.props;
+interface Dependencies {
+  revealClusterKubeconfig: RevealClusterKubeconfig;
+}
 
-    shell.showItemInFolder(cluster.kubeConfigPath.get());
+@observer
+class NonInjectedClusterKubeconfig extends React.Component<ClusterKubeconfigProps & Dependencies> {
+  openKubeconfig = () => {
+    const { cluster, revealClusterKubeconfig } = this.props;
+
+    void revealClusterKubeconfig(cluster.id);
   };
 
   render() {
@@ -37,3 +43,10 @@ export class ClusterKubeconfig extends React.Component<ClusterKubeconfigProps> {
     );
   }
 }
+
+export const ClusterKubeconfig = withInjectables<Dependencies, ClusterKubeconfigProps>(NonInjectedClusterKubeconfig, {
+  getProps: (di, props) => ({
+    ...props,
+    revealClusterKubeconfig: di.inject(revealClusterKubeconfigInjectable),
+  }),
+});

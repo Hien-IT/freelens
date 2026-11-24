@@ -4,7 +4,7 @@
  * Licensed under MIT License. See LICENSE in root directory for more information.
  */
 
-import assert from "node:assert";
+import { assert } from "@freelensapp/utilities";
 import { isEqual, isPlainObject } from "es-toolkit";
 import { isDraft, produce } from "immer";
 // Helper for working with storages (e.g. window.localStorage, NodeJS/file-system, etc.)

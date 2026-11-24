@@ -7,7 +7,7 @@
 import { loggerInjectionToken } from "@freelensapp/logger";
 import { getInjectable } from "@ogre-tools/injectable";
 import catalogCategoryRegistryInjectable from "../../../common/catalog/category-registry.injectable";
-import loadKubeconfigInjectable from "../../../common/cluster/load-kubeconfig.injectable";
+import requestClusterKubeconfigContextsInjectable from "../../../features/cluster/delete-dialog/renderer/request-kubeconfig-contexts.injectable";
 import getClusterByIdInjectable from "../../../features/cluster/storage/common/get-by-id.injectable";
 import openDeleteClusterDialogInjectable from "../../components/delete-cluster-dialog/open.injectable";
 import { beforeFrameStartsSecondInjectionToken } from "../tokens";
@@ -38,14 +38,15 @@ const setupKubernetesClusterContextMenuOpenInjectable = getInjectable({
                   });
                 }
 
-                const loadKubeconfig = di.inject(loadKubeconfigInjectable, cluster);
+                // main reads the kubeconfig, and answers only the names of its contexts
+                try {
+                  const { contexts, currentContext } = await di.inject(requestClusterKubeconfigContextsInjectable)(
+                    cluster.id,
+                  );
 
-                const result = await loadKubeconfig(true);
-
-                if (result.error) {
-                  logger.error("[KUBERNETES-CLUSTER]: failed to parse kubeconfig file", result.error);
-                } else {
-                  openDeleteClusterDialog(result.config, cluster);
+                  openDeleteClusterDialog({ contexts: contexts.map((name) => ({ name })), currentContext }, cluster);
+                } catch (error) {
+                  logger.error("[KUBERNETES-CLUSTER]: failed to parse kubeconfig file", error);
                 }
               },
             });

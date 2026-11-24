@@ -4,13 +4,15 @@
  */
 
 import { loggerInjectionToken } from "@freelensapp/logger";
+import { requestFromChannelInjectionToken } from "@freelensapp/messaging";
+import { showErrorNotificationInjectable } from "@freelensapp/notifications";
 import { getInjectable } from "@ogre-tools/injectable";
-import pathExistsInjectable from "../../../../common/fs/path-exists.injectable";
-import readFileInjectable from "../../../../common/fs/read-file.injectable";
 import getBasenameOfPathInjectable from "../../../../common/path/get-basename.injectable";
 import { parseChecksumSidecar } from "../../../../features/extensions/installer/common/checksums";
-import readFileNotifyInjectable from "../read-file-notify/read-file-notify.injectable";
+import { readExtensionPathChannel } from "../../../../features/extensions/installer/common/install-channels";
+import { getMessageFromError } from "../get-message-from-error/get-message-from-error";
 import attemptInstallInjectable from "./attempt-install.injectable";
+import { fromBase64 } from "./to-base64";
 
 import type { InstallChecksum } from "../../../../features/extensions/installer/common/checksums";
 
@@ -18,60 +20,60 @@ export type InstallFromFile = (filePath: string) => Promise<void>;
 
 const sidecarSuffix = ".sha256";
 
-/**
- * Install a tarball already on the filesystem, from the install field, the file
- * dialog or a drop.
- *
- * As with a URL install the checksum comes from an optional `.tgz.sha256`
- * sidecar beside the tarball, and its absence installs the extension disabled
- * rather than refusing it. That is the common case for an author installing
- * their own build, who enables it by hand, or registers the directory instead.
- */
 const installFromFileInjectable = getInjectable({
   id: "install-from-file",
-
   instantiate: (di): InstallFromFile => {
     const attemptInstall = di.inject(attemptInstallInjectable);
-    const readFileNotify = di.inject(readFileNotifyInjectable);
-    const readFile = di.inject(readFileInjectable);
-    const pathExists = di.inject(pathExistsInjectable);
+    const requestFromChannel = di.inject(requestFromChannelInjectionToken);
+    const showErrorNotification = di.inject(showErrorNotificationInjectable);
     const getBasenameOfPath = di.inject(getBasenameOfPathInjectable);
     const logger = di.inject(loggerInjectionToken);
 
-    const readChecksum = async (filePath: string): Promise<InstallChecksum | undefined> => {
-      const sidecarPath = `${filePath}${sidecarSuffix}`;
-
-      try {
-        if (!(await pathExists(sidecarPath))) {
-          return undefined;
-        }
-
-        const value = parseChecksumSidecar(await readFile(sidecarPath), getBasenameOfPath(filePath));
-
-        if (!value) {
-          logger.info(`[EXTENSION-INSTALL]: the checksum at ${sidecarPath} says nothing about ${filePath}`);
-        }
-
-        return value ? { kind: "sha256", value } : undefined;
-      } catch (error) {
-        logger.info(`[EXTENSION-INSTALL]: cannot read the checksum at ${sidecarPath}: ${error}`);
-
+    /**
+     * The digest of the \`.sha256\` sidecar beside the package, which main read
+     * with it. A sidecar that is not there, or says nothing about this file, is
+     * no checksum, so the extension installs disabled.
+     */
+    const checksumOf = (filePath: string, sidecar: string | undefined): InstallChecksum | undefined => {
+      if (sidecar === undefined) {
         return undefined;
       }
+
+      const value = parseChecksumSidecar(sidecar, getBasenameOfPath(filePath));
+
+      if (!value) {
+        logger.info(`[EXTENSION-INSTALL]: the checksum at ${filePath}${sidecarSuffix} says nothing about ${filePath}`);
+      }
+
+      return value ? { kind: "sha256", value } : undefined;
     };
 
     return async (filePath) => {
-      const data = await readFileNotify(filePath);
+      let contents;
 
-      if (!data) {
+      try {
+        // main reads the package the user chose, and its sidecar
+        contents = await requestFromChannel(readExtensionPathChannel, { path: filePath });
+      } catch (error) {
+        const message = getMessageFromError(error);
+
+        logger.info(`[EXTENSION-INSTALL]: preloading ${filePath} has failed: ${message}`, { error });
+        showErrorNotification(`Error while reading "${filePath}": ${message}`);
+
+        return;
+      }
+
+      if (contents.kind !== "file") {
+        showErrorNotification(`Error while reading "${filePath}": it is a directory`);
+
         return;
       }
 
       return attemptInstall({
         fileName: getBasenameOfPath(filePath),
-        data,
+        data: fromBase64(contents.base64),
         source: { kind: "file", path: filePath },
-        checksum: await readChecksum(filePath),
+        checksum: checksumOf(filePath, contents.sidecar),
       });
     };
   },

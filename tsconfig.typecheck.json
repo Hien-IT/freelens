@@ -58,6 +58,7 @@
     "packages/**/*.tsx",
     "packages/core/types/*.d.ts",
     "freelens/src/**/*",
+    "freelens/build-plugins/**/*.ts",
     "freelens-tauri/ui/src/**/*",
     "freelens/integration/**/*.ts",
     "freelens/vitest.integration.config.ts"

@@ -4,15 +4,14 @@
  * Licensed under MIT License. See LICENSE in root directory for more information.
  */
 
-import { loggerTransportInjectionToken } from "@freelensapp/logger";
+import { loggerTransportInjectionToken, MESSAGE } from "@freelensapp/logger/renderer";
 import { sendMessageToChannelInjectionToken } from "@freelensapp/messaging";
 import { getInjectable } from "@ogre-tools/injectable";
-import { MESSAGE } from "triple-beam";
 import { closeIpcFileLoggerChannel, ipcFileLoggerChannel } from "../common/ipc-file-logger-channel";
 import IpcLogTransport from "./ipc-transport";
 import rendererLogFileIdInjectable from "./renderer-log-file-id.injectable";
 
-import type winston from "winston";
+import type { LogEntry } from "@freelensapp/logger/renderer";
 
 import type { IpcFileLogObject } from "../common/ipc-file-logger-channel";
 
@@ -21,7 +20,7 @@ import type { IpcFileLogObject } from "../common/ipc-file-logger-channel";
  *
  * For that to get through IPC, use the internalMessage property instead
  */
-function serializeLogForIpc(fileId: string, entry: winston.LogEntry): IpcFileLogObject {
+function serializeLogForIpc(fileId: string, entry: LogEntry): IpcFileLogObject {
   return {
     fileId,
     entry: {

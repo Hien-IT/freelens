@@ -91,12 +91,15 @@
     "@hapi/subtext": "catalog:",
     "@kubernetes/client-node": "catalog:",
     "@mui/material": "catalog:",
+    "@noble/hashes": "catalog:",
     "@ogre-tools/injectable": "catalog:",
     "@ogre-tools/injectable-extension-for-mobx": "catalog:",
     "@ogre-tools/injectable-react": "catalog:",
     "@xterm/addon-fit": "catalog:",
     "@xterm/addon-web-links": "catalog:",
     "@xterm/xterm": "catalog:",
+    "ajv": "catalog:",
+    "ajv-formats": "catalog:",
     "ansi_up": "catalog:",
     "auto-bind": "catalog:",
     "chalk": "catalog:",
@@ -139,7 +142,6 @@
     "uuid": "catalog:",
     "verkit": "catalog:",
     "winston": "catalog:",
-    "winston-transport": "catalog:",
     "ws": "catalog:",
     "zod": "catalog:"
   },
@@ -165,7 +167,6 @@
     "@types/tcp-port-used": "catalog:",
     "@types/triple-beam": "catalog:",
     "@types/ws": "catalog:",
-    "ajv": "catalog:",
     "electron": "catalog:",
     "jsdom": "catalog:",
     "logform": "catalog:",
@@ -178,7 +179,8 @@
     "typescript": "catalog:",
     "vitest": "catalog:",
     "vitest-canvas-mock": "catalog:",
-    "vitest-mock-extended": "catalog:"
+    "vitest-mock-extended": "catalog:",
+    "winston-transport": "catalog:"
   },
   "engines": {
     "node": "^24.0.0"

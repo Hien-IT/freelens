@@ -6,13 +6,98 @@
  * This replaces the webpack-based auto-registration system.
  */
 
+import activateInstalledBuildInjectable from "./activate-installed-build.injectable";
+import commitExtensionPackageListenerInjectable from "./commit-listener.injectable";
+import discardStagedExtensionPackagesOnQuitInjectable from "./discard-staged-on-quit.injectable";
+import getExtensionDestFolderInjectable from "./get-extension-dest-folder.injectable";
 import loadInstalledExtensionsStorageInjectable from "./load-storage.injectable";
+import openExtensionFolderListenerInjectable from "./open-folder-listener.injectable";
+import openPathInjectable from "./open-path.injectable";
+import { extensionPathKindListenerInjectable, readExtensionPathListenerInjectable } from "./path-listeners.injectable";
+import registerExtensionDirectoryListenerInjectable from "./register-directory-listener.injectable";
+import stagedExtensionPackagesInjectable from "./staged-packages.injectable";
+import {
+  discardExtensionPackageListenerInjectable,
+  stageExtensionPackageListenerInjectable,
+} from "./staging-listeners.injectable";
+import sweepOrphanedExtensionBuildsInjectable from "./sweep-orphaned-builds.injectable";
+import uninstallExtensionListenerInjectable from "./uninstall-listener.injectable";
 
 import type { DiContainerForInjection } from "@ogre-tools/injectable";
 
 export function registerInjectables(di: DiContainerForInjection): void {
   try {
+    di.register(activateInstalledBuildInjectable);
+  } catch (e) {
+    /* Ignore duplicate registration */
+  }
+  try {
+    di.register(commitExtensionPackageListenerInjectable);
+  } catch (e) {
+    /* Ignore duplicate registration */
+  }
+  try {
+    di.register(discardExtensionPackageListenerInjectable);
+  } catch (e) {
+    /* Ignore duplicate registration */
+  }
+  try {
+    di.register(discardStagedExtensionPackagesOnQuitInjectable);
+  } catch (e) {
+    /* Ignore duplicate registration */
+  }
+  try {
+    di.register(extensionPathKindListenerInjectable);
+  } catch (e) {
+    /* Ignore duplicate registration */
+  }
+  try {
+    di.register(getExtensionDestFolderInjectable);
+  } catch (e) {
+    /* Ignore duplicate registration */
+  }
+  try {
     di.register(loadInstalledExtensionsStorageInjectable);
+  } catch (e) {
+    /* Ignore duplicate registration */
+  }
+  try {
+    di.register(openExtensionFolderListenerInjectable);
+  } catch (e) {
+    /* Ignore duplicate registration */
+  }
+  try {
+    di.register(openPathInjectable);
+  } catch (e) {
+    /* Ignore duplicate registration */
+  }
+  try {
+    di.register(readExtensionPathListenerInjectable);
+  } catch (e) {
+    /* Ignore duplicate registration */
+  }
+  try {
+    di.register(registerExtensionDirectoryListenerInjectable);
+  } catch (e) {
+    /* Ignore duplicate registration */
+  }
+  try {
+    di.register(stageExtensionPackageListenerInjectable);
+  } catch (e) {
+    /* Ignore duplicate registration */
+  }
+  try {
+    di.register(stagedExtensionPackagesInjectable);
+  } catch (e) {
+    /* Ignore duplicate registration */
+  }
+  try {
+    di.register(sweepOrphanedExtensionBuildsInjectable);
+  } catch (e) {
+    /* Ignore duplicate registration */
+  }
+  try {
+    di.register(uninstallExtensionListenerInjectable);
   } catch (e) {
     /* Ignore duplicate registration */
   }

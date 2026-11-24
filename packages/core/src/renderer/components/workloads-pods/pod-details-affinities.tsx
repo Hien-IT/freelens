@@ -6,7 +6,7 @@
 
 import * as yaml from "js-yaml";
 import React from "react";
-import { defaultYamlDumpOptions } from "../../../common/kube-helpers";
+import { defaultYamlDumpOptions } from "../../../common/kube-helpers/yaml-dump-options";
 import { DrawerItem, DrawerParamToggler } from "../drawer";
 import { MonacoEditor } from "../monaco-editor";
 

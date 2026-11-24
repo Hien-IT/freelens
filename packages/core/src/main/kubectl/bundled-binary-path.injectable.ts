@@ -5,7 +5,7 @@
  */
 
 import { getInjectable } from "@ogre-tools/injectable";
-import bundledBinaryPathInjectable from "../../common/utils/bundled-binary-path.injectable";
+import bundledBinaryPathInjectable from "../../common/utils/main/bundled-binary-path.injectable";
 
 const bundledKubectlBinaryPathInjectable = getInjectable({
   id: "bundled-kubectl-binary-path",

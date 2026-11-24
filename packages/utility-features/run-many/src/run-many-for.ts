@@ -4,8 +4,7 @@
  * Licensed under MIT License. See LICENSE in root directory for more information.
  */
 
-import EventEmitter from "node:events";
-import { getOrInsert } from "@freelensapp/utilities";
+import { getOrInsert, TypedEmitter } from "@freelensapp/utilities";
 import { convertToWithIdWith, verifyRunnablesAreDAG } from "./helpers";
 
 import type { TypedEventEmitter } from "@freelensapp/utilities";
@@ -23,8 +22,7 @@ type BarrierEvent = {
 
 class DynamicBarrier {
   private readonly finishedIds = new Map<string, Promise<void>>();
-  private readonly events: TypedEventEmitter<BarrierEvent> =
-    new EventEmitter() as unknown as TypedEventEmitter<BarrierEvent>;
+  private readonly events: TypedEventEmitter<BarrierEvent> = new TypedEmitter<BarrierEvent>();
 
   private initFinishingPromise(id: string): Promise<void> {
     return getOrInsert(

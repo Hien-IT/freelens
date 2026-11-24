@@ -7,7 +7,7 @@ import { showSuccessNotificationInjectable } from "@freelensapp/notifications";
 import { asyncFn } from "@freelensapp/test-utils";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import directoryForLensLocalStorageInjectable from "../../common/directory-for-lens-local-storage/directory-for-lens-local-storage.injectable";
-import execFileInjectable from "../../common/fs/exec-file.injectable";
+import execFileInjectable from "../../common/fs/main/exec-file.injectable";
 import { HelmChart } from "../../common/k8s-api/endpoints/helm-charts.api";
 import requestHelmChartsInjectable from "../../common/k8s-api/endpoints/helm-charts.api/request-charts.injectable";
 import helmBinaryPathInjectable from "../../main/helm/helm-binary-path.injectable";
@@ -19,7 +19,7 @@ import type { AsyncFnMock } from "@freelensapp/test-utils";
 
 import type { RenderResult } from "@testing-library/react";
 
-import type { ExecFile } from "../../common/fs/exec-file.injectable";
+import type { ExecFile } from "../../common/fs/main/exec-file.injectable";
 import type { HelmRepo } from "../../common/helm/helm-repo";
 import type { RequestHelmCharts } from "../../common/k8s-api/endpoints/helm-charts.api/request-charts.injectable";
 import type { ApplicationBuilder } from "../../renderer/components/test-utils/get-application-builder";

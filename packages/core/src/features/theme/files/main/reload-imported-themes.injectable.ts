@@ -6,9 +6,9 @@
 import { prefixedLoggerInjectable } from "@freelensapp/logger";
 import { getInjectable } from "@ogre-tools/injectable";
 import { runInAction } from "mobx";
-import ensureDirInjectable from "../../../../common/fs/ensure-dir.injectable";
-import readDirectoryInjectable from "../../../../common/fs/read-directory.injectable";
-import readFileInjectable from "../../../../common/fs/read-file.injectable";
+import ensureDirInjectable from "../../../../common/fs/main/ensure-dir.injectable";
+import readDirectoryInjectable from "../../../../common/fs/main/read-directory.injectable";
+import readFileInjectable from "../../../../common/fs/main/read-file.injectable";
 import joinPathsInjectable from "../../../../common/path/join-paths.injectable";
 import { isThemeFileName, readThemesDirectory } from "../common/read-themes-directory";
 import importedThemesStateInjectable from "./imported-themes-state.injectable";

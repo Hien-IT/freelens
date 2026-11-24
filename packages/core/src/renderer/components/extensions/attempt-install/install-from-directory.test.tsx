@@ -7,11 +7,14 @@ import { showErrorNotificationInjectable, showInfoNotificationInjectable } from 
 import { computed, observable, runInAction } from "mobx";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import directoryForUserDataInjectable from "../../../../common/app-paths/directory-for-user-data/directory-for-user-data.injectable";
-import readJsonFileInjectable from "../../../../common/fs/read-json-file.injectable";
+import ensureDirInjectable from "../../../../common/fs/main/ensure-dir.injectable";
+import readJsonFileInjectable from "../../../../common/fs/main/read-json-file.injectable";
 import extensionLoaderInjectable from "../../../../extensions/extension-loader/extension-loader.injectable";
-import activateInstalledBuildInjectable from "../../../../features/extensions/installer/common/activate-installed-build.injectable";
+import activateInstalledBuildInjectable from "../../../../features/extensions/installer/main/activate-installed-build.injectable";
+import { readExtensionPathListenerInjectable } from "../../../../features/extensions/installer/main/path-listeners.injectable";
+import registerExtensionDirectoryListenerInjectable from "../../../../features/extensions/installer/main/register-directory-listener.injectable";
+import { getMainAndRenderer } from "../../../../test-utils/channels-between-main-and-renderer";
 import { textOf } from "../../../../test-utils/text-of";
-import { getDiForUnitTesting } from "../../../getDiForUnitTesting";
 import confirmInjectable from "../../confirm-dialog/confirm.injectable";
 import installFromDirectoryInjectable from "./install-from-directory.injectable";
 
@@ -65,8 +68,9 @@ describe("installFromDirectory", () => {
   let events: string[];
   let finishTearingDown: () => void;
 
-  beforeEach(() => {
-    const di = getDiForUnitTesting();
+  beforeEach(async () => {
+    // main reads the directory and records it; the renderer asks and confirms
+    const { mainDi, rendererDi: di, listenInMain } = getMainAndRenderer();
 
     events = [];
     installed = observable.box<InstalledExtension | undefined>(undefined, { deep: false });
@@ -78,7 +82,8 @@ describe("installFromDirectory", () => {
     });
 
     di.override(directoryForUserDataInjectable, () => "/some-directory-for-user-data");
-    di.override(readJsonFileInjectable, () => async () => manifest);
+    mainDi.override(readJsonFileInjectable, () => async () => manifest);
+    await mainDi.inject(ensureDirInjectable)(directory);
     di.override(confirmInjectable, () => confirmMock);
     di.override(showInfoNotificationInjectable, () => showInfoNotificationMock);
     di.override(showErrorNotificationInjectable, () => showErrorNotificationMock);
@@ -87,7 +92,8 @@ describe("installFromDirectory", () => {
       events.push("activate");
       runInAction(() => installed.set(directoryInstall(false)));
     });
-    di.override(activateInstalledBuildInjectable, () => activateInstalledBuildMock);
+    mainDi.override(activateInstalledBuildInjectable, () => activateInstalledBuildMock);
+    listenInMain(readExtensionPathListenerInjectable, registerExtensionDirectoryListenerInjectable);
     di.override(
       extensionLoaderInjectable,
       () =>

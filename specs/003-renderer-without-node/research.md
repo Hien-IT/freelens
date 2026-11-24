@@ -597,7 +597,8 @@ as base64 strings, as `pod-files` does.
 - **The cluster frame**: a Playwright script in `$TMPDIR` that reuses
   `freelens/integration/helpers`. It clicks a connected kind cluster in the
   catalog and times until the first page of the frame is visible, three runs on
-  each build.
+  each build. A third build, this branch with the sandbox off, separates the
+  sandbox's own cost, which FR-012 requires and SC-005 accepts, from the rest.
 
 The figures go in the pull request, not in a document.
 

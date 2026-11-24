@@ -6,7 +6,7 @@
 
 import { CoreV1Api } from "@kubernetes/client-node";
 import * as yaml from "js-yaml";
-import { defaultYamlDumpOptions } from "../../../common/kube-helpers";
+import { defaultYamlDumpOptions } from "../../../common/kube-helpers/yaml-dump-options";
 import { apiPrefix } from "../../../common/vars";
 import clusterApiUrlInjectable from "../../../features/cluster/connections/main/api-url.injectable";
 import loadProxyKubeconfigInjectable from "../../cluster/load-proxy-kubeconfig.injectable";

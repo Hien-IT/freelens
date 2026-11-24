@@ -15,6 +15,7 @@ import { extensionEntryPointNameInjectionToken } from "./entry-point-name";
 import extensionInjectable from "./extension/extension.injectable";
 import extensionInstancesInjectable from "./extension-instances.injectable";
 import { ExtensionLoader } from "./extension-loader";
+import { fileUrlOfPathInjectionToken } from "./file-url-of-path";
 
 const extensionLoaderInjectable = getInjectable({
   id: "extension-loader",
@@ -30,6 +31,8 @@ const extensionLoaderInjectable = getInjectable({
       joinPaths: di.inject(joinPathsInjectable),
       getBasenameOfPath: di.inject(getBasenameOfPathInjectable),
       fetch: di.inject(fetchInjectable),
+      // only main has one, and only main asks
+      fileUrlOfPath: (path) => di.inject(fileUrlOfPathInjectionToken)(path),
     }),
 });
 

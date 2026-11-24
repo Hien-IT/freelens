@@ -8,7 +8,7 @@ import { animateFeature, requestAnimationFrameInjectable } from "@freelensapp/an
 import { clusterSidebarFeature } from "@freelensapp/cluster-sidebar";
 import { registerFeature } from "@freelensapp/feature-core";
 import { kubeApiSpecificsFeature } from "@freelensapp/kube-api-specifics";
-import { loggerFeature } from "@freelensapp/logger";
+import { loggerFeatureForRenderer } from "@freelensapp/logger/renderer";
 import { messagingFeature, testUtils as messagingTestUtils } from "@freelensapp/messaging";
 import { notificationsFeature } from "@freelensapp/notifications";
 import { randomFeature } from "@freelensapp/random";
@@ -19,7 +19,7 @@ import { chunk, noop } from "es-toolkit";
 import { runInAction } from "mobx";
 import dependencyInjectionContainerInjectable from "../common/dependency-injection/dependency-injection-container.injectable";
 import { setDiForExtensionApi } from "../extensions/extension-api-di";
-import relayLegacyBroadcastsInjectable from "../extensions/ipc/relay-legacy-broadcasts.injectable";
+import relayLegacyBroadcastsInjectable from "../extensions/ipc/main/relay-legacy-broadcasts.injectable";
 import { getOverrideFsWithFakes } from "../test-utils/override-fs-with-fakes";
 import hostedClusterIdInjectable from "./cluster-frame-context/hosted-cluster-id.injectable";
 import terminalSpawningPoolInjectable from "./components/dock/terminal/terminal-spawning-pool.injectable";
@@ -35,6 +35,7 @@ import type { GlobalOverride } from "@freelensapp/test-utils";
 const injectableModules = import.meta.glob<object>(
   [
     "../common/**/*.injectable.{ts,tsx}",
+    "!../common/**/main/**",
     "../extensions/**/*.injectable.{ts,tsx}",
     "./**/*.injectable.{ts,tsx}",
     "../test-env/**/*.injectable.{ts,tsx}",
@@ -44,9 +45,15 @@ const injectableModules = import.meta.glob<object>(
   { eager: true },
 );
 
+// The file system, which renderer tests set up through the fake of it that main
+// reads in a test application; the renderer itself has none. A glob of its own,
+// as the exclusion of main's directories above applies to every pattern of one.
+const fileSystemModules = import.meta.glob<object>("../common/fs/main/*.injectable.{ts,tsx}", { eager: true });
+
 const globalOverrideModules = import.meta.glob<{ default: GlobalOverride<unknown, unknown, unknown> }>(
   [
     "../common/**/*.global-override-for-injectable.{ts,tsx}",
+    "!../common/**/main/**",
     "../extensions/**/*.global-override-for-injectable.{ts,tsx}",
     "./**/*.global-override-for-injectable.{ts,tsx}",
     "../test-env/**/*.global-override-for-injectable.{ts,tsx}",
@@ -69,7 +76,7 @@ export const getDiForUnitTesting = () => {
       messagingFeature,
       messagingTestUtils.messagingFeatureForUnitTesting,
       routingFeature,
-      loggerFeature,
+      loggerFeatureForRenderer,
       animateFeature,
       clusterSidebarFeature,
       randomFeature,
@@ -79,7 +86,9 @@ export const getDiForUnitTesting = () => {
   });
 
   runInAction(() => {
-    const injectables = Object.values(injectableModules).flatMap(Object.values).filter(isInjectable);
+    const injectables = Object.values({ ...injectableModules, ...fileSystemModules })
+      .flatMap(Object.values)
+      .filter(isInjectable);
 
     for (const block of chunk(injectables, 100)) {
       di.register(...block);

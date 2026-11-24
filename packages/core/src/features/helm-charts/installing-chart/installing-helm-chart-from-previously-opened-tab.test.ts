@@ -7,7 +7,7 @@
 import { asyncFn } from "@freelensapp/test-utils";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import directoryForLensLocalStorageInjectable from "../../../common/directory-for-lens-local-storage/directory-for-lens-local-storage.injectable";
-import writeJsonFileInjectable from "../../../common/fs/write-json-file.injectable";
+import writeJsonFileInjectable from "../../../common/fs/main/write-json-file.injectable";
 import { HelmChart } from "../../../common/k8s-api/endpoints/helm-charts.api";
 import requestHelmChartValuesInjectable from "../../../common/k8s-api/endpoints/helm-charts.api/request-values.injectable";
 import requestHelmChartVersionsInjectable from "../../../common/k8s-api/endpoints/helm-charts.api/request-versions.injectable";
@@ -37,11 +37,15 @@ describe("installing helm chart from previously opened tab", () => {
     requestHelmChartVersionsMock = asyncFn();
     requestHelmChartValuesMock = asyncFn();
 
+    // main reads and writes the local storage
+    builder.beforeApplicationStart(({ mainDi }) => {
+      mainDi.override(directoryForLensLocalStorageInjectable, () => "/some-directory-for-lens-local-storage");
+    });
+
     builder.namespaces.add("default");
     builder.namespaces.add("some-other-namespace");
 
     builder.beforeWindowStart(({ windowDi }) => {
-      windowDi.override(directoryForLensLocalStorageInjectable, () => "/some-directory-for-lens-local-storage");
       windowDi.override(requestHelmChartVersionsInjectable, () => requestHelmChartVersionsMock);
       windowDi.override(requestHelmChartValuesInjectable, () => requestHelmChartValuesMock);
       windowDi.override(requestCreateHelmReleaseInjectable, () => vi.fn());

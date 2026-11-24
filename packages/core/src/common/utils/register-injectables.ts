@@ -7,10 +7,7 @@
  */
 
 import binaryNameInjectable from "./binary-name.injectable";
-import bundledBinaryPathInjectable from "./bundled-binary-path.injectable";
 import openLinkInBrowserInjectable from "./open-link-in-browser.injectable";
-import platformSpecificVersionInjectable from "./platform-specific-version.injectable";
-import randomBytesInjectable from "./random-bytes.injectable";
 import { registerInjectables as registerSyncBoxInjectables } from "./sync-box/register-injectables";
 import { registerInjectables as registerWithErrorLoggingInjectables } from "./with-error-logging/register-injectables";
 import { registerInjectables as registerWithOrphanPromiseInjectables } from "./with-orphan-promise/register-injectables";
@@ -24,22 +21,7 @@ export function registerInjectables(di: DiContainerForInjection): void {
     /* Ignore duplicate registration */
   }
   try {
-    di.register(bundledBinaryPathInjectable);
-  } catch (e) {
-    /* Ignore duplicate registration */
-  }
-  try {
     di.register(openLinkInBrowserInjectable);
-  } catch (e) {
-    /* Ignore duplicate registration */
-  }
-  try {
-    di.register(platformSpecificVersionInjectable);
-  } catch (e) {
-    /* Ignore duplicate registration */
-  }
-  try {
-    di.register(randomBytesInjectable);
   } catch (e) {
     /* Ignore duplicate registration */
   }

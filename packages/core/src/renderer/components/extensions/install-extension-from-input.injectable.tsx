@@ -5,9 +5,10 @@
  */
 
 import { loggerInjectionToken } from "@freelensapp/logger";
+import { requestFromChannelInjectionToken } from "@freelensapp/messaging";
 import { showErrorNotificationInjectable } from "@freelensapp/notifications";
 import { getInjectable } from "@ogre-tools/injectable";
-import statInjectable from "../../../common/fs/stat.injectable";
+import { extensionPathKindChannel } from "../../../features/extensions/installer/common/install-channels";
 import { InputValidators } from "../input";
 import installFromDirectoryInjectable from "./attempt-install/install-from-directory.injectable";
 import installFromFileInjectable from "./attempt-install/install-from-file.injectable";
@@ -48,7 +49,7 @@ const installExtensionFromInputInjectable = getInjectable({
     const installFromFile = di.inject(installFromFileInjectable);
     const installFromDirectory = di.inject(installFromDirectoryInjectable);
     const attemptInstallByInfo = di.inject(attemptInstallByInfoInjectable);
-    const stat = di.inject(statInjectable);
+    const requestFromChannel = di.inject(requestFromChannelInjectionToken);
     const showErrorNotification = di.inject(showErrorNotificationInjectable);
     const logger = di.inject(loggerInjectionToken);
 
@@ -58,10 +59,11 @@ const installExtensionFromInputInjectable = getInjectable({
           return await installFromUrl(input);
         }
 
-        const stats = await stat(input).catch(() => undefined);
+        // main reads what is at the path
+        const kind = await requestFromChannel(extensionPathKindChannel, { path: input }).catch(() => "missing");
 
-        if (stats) {
-          return await (stats.isDirectory() ? installFromDirectory(input) : installFromFile(input));
+        if (kind !== "missing") {
+          return await (kind === "directory" ? installFromDirectory(input) : installFromFile(input));
         }
 
         const extNameCaptures = InputValidators.extensionNameInstallCaptures(input);

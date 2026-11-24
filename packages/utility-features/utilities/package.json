@@ -29,7 +29,6 @@
     "es-toolkit": "catalog:",
     "mobx": "catalog:",
     "react": "catalog:",
-    "tar": "catalog:",
     "verkit": "catalog:"
   },
   "devDependencies": {

@@ -4,8 +4,7 @@
  * Licensed under MIT License. See LICENSE in root directory for more information.
  */
 
-import assert from "node:assert";
-import { getOrInsertSetFor, isDefined } from "@freelensapp/utilities";
+import { assert, getOrInsertSetFor, isDefined } from "@freelensapp/utilities";
 import * as uuid from "uuid";
 
 import type { DiContainerForInjection, InjectionInstanceWithMeta } from "@ogre-tools/injectable";

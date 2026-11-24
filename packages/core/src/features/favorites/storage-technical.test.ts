@@ -5,7 +5,7 @@
 
 import { beforeEach, describe, expect, it } from "vitest";
 import directoryForUserDataInjectable from "../../common/app-paths/directory-for-user-data/directory-for-user-data.injectable";
-import writeJsonSyncInjectable from "../../common/fs/write-json-sync.injectable";
+import writeJsonSyncInjectable from "../../common/fs/main/write-json-sync.injectable";
 import storeMigrationVersionInjectable from "../../common/vars/store-migration-version.injectable";
 import { getDiForUnitTesting } from "../../main/getDiForUnitTesting";
 import favoritesStateInjectable from "./common/state.injectable";
@@ -14,7 +14,7 @@ import favoritesPersistentStorageInjectable from "./common/storage.injectable";
 import type { DiContainer } from "@ogre-tools/injectable";
 import type { IObservableValue } from "mobx";
 
-import type { WriteJsonSync } from "../../common/fs/write-json-sync.injectable";
+import type { WriteJsonSync } from "../../common/fs/main/write-json-sync.injectable";
 import type { PersistentStorage } from "../persistent-storage/common/create.injectable";
 import type { FavoritesStorageState } from "./common/storage.injectable";
 

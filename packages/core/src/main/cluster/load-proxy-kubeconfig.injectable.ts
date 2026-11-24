@@ -5,7 +5,7 @@
  */
 
 import { getInjectable, lifecycleEnum } from "@ogre-tools/injectable";
-import loadConfigFromFileInjectable from "../../common/kube-helpers/load-config-from-file.injectable";
+import loadConfigFromFileInjectable from "../../common/kube-helpers/main/load-config-from-file.injectable";
 import freelensProxyTokenInjectable from "../freelens-proxy/freelens-proxy-token.injectable";
 import kubeconfigManagerInjectable from "../kubeconfig-manager/kubeconfig-manager.injectable";
 

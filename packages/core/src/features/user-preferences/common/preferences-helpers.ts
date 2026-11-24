@@ -95,7 +95,6 @@ export const getPreferenceDescriptor = <T, R = T>(desc: PreferenceDescription<T,
 export interface DownloadMirror {
   url: string;
   label: string;
-  platforms: Set<NodeJS.Platform>;
 }
 
 export const defaultPackageMirror = "default";
@@ -104,13 +103,11 @@ export const customPackageMirror = "custom";
 const defaultDownloadMirrorData: DownloadMirror = {
   url: "https://dl.k8s.io/release",
   label: "Default (Google)",
-  platforms: new Set(["darwin", "win32", "linux"]),
 };
 
 const customPackageMirrorData: DownloadMirror = {
   url: "",
   label: "Custom",
-  platforms: new Set(["darwin", "win32", "linux"]),
 };
 
 export const packageMirrors = new Map<string, DownloadMirror>([

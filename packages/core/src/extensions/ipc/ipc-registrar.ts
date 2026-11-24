@@ -4,7 +4,7 @@
  * Licensed under MIT License. See LICENSE in root directory for more information.
  */
 
-import { createHash } from "node:crypto";
+import { sha256Hex } from "@freelensapp/utilities";
 import { Singleton } from "../../common/utils/singleton";
 import { broadcastMessage } from "./common/legacy-ipc";
 
@@ -17,7 +17,7 @@ export abstract class IpcRegistrar extends Singleton {
 
   constructor(protected readonly extension: LensExtension) {
     super();
-    this[IpcPrefix] = createHash("sha256").update(extension.id).digest("hex");
+    this[IpcPrefix] = sha256Hex(extension.id);
   }
 
   /**

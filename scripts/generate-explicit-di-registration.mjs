@@ -300,6 +300,18 @@ async function generateRootRegistration(srcDir, type, generatedFiles) {
         } catch {
           // No register file in this dir
         }
+
+        // The shared aggregators of common/ and extensions/ leave out their
+        // process-specific subdirectories, as every shared aggregator does, so
+        // the root imports those directly, as it does under features/.
+        if (entry.name === "common" || entry.name === "extensions") {
+          const nested = await findProcessSpecificRegistrations(fullPath, type, entry.name);
+
+          for (const reg of nested.filter(({ path }) => path.includes(`/${type}/register-injectables`))) {
+            imports.push(`import { registerInjectables as ${reg.importName} } from "./${reg.path}";`);
+            calls.push(`  ${reg.importName}(di);`);
+          }
+        }
       }
     }
   }
@@ -772,41 +784,59 @@ async function processRegularPackage(packagePath) {
 
   console.log(`  Found ${injectableFiles.length} injectable files`);
 
-  const imports = [];
-  const registrations = [];
+  // A package split by process (src/common/, src/main/, src/renderer/) gets one
+  // registration per process directory, so that each process registers only
+  // its own; every other injectable registers with the package as one unit.
+  const groups = new Map();
 
   for (const file of injectableFiles) {
-    const fullPath = join(srcDir, file);
-    const exportInfos = await extractExportInfo(fullPath);
+    const [first] = normalizePath(file).split("/");
+    const group = ["common", "main", "renderer"].includes(first) ? first : "";
 
-    if (!exportInfos) continue;
-
-    const importPath = "./" + file.replace(/\.tsx?$/, "");
-
-    for (const exportInfo of exportInfos) {
-      if (exportInfo.isDefault) {
-        imports.push(`import ${exportInfo.name} from "${importPath}";`);
-      } else {
-        imports.push(`import { ${exportInfo.name} } from "${importPath}";`);
-      }
-      registrations.push(exportInfo.name);
-    }
+    groups.set(group, [...(groups.get(group) ?? []), file]);
   }
 
-  imports.sort();
-  registrations.sort();
+  const generatedFiles = [];
 
-  const registrationContent = generateRegistrationFile(imports, registrations);
-  const outputPath = join(srcDir, "register-injectables.ts");
+  for (const [group, files] of groups) {
+    const imports = [];
+    const registrations = [];
+    const groupDir = join(srcDir, group);
 
-  await writeFile(outputPath, registrationContent);
-  console.log(`  ✓ Generated ${outputPath}`);
+    for (const file of files) {
+      const fullPath = join(srcDir, file);
+      const exportInfos = await extractExportInfo(fullPath);
+
+      if (!exportInfos) continue;
+
+      const importPath = "./" + normalizePath(relative(groupDir, fullPath)).replace(/\.tsx?$/, "");
+
+      for (const exportInfo of exportInfos) {
+        if (exportInfo.isDefault) {
+          imports.push(`import ${exportInfo.name} from "${importPath}";`);
+        } else {
+          imports.push(`import { ${exportInfo.name} } from "${importPath}";`);
+        }
+        registrations.push(exportInfo.name);
+      }
+    }
+
+    imports.sort();
+    registrations.sort();
+
+    const registrationContent = generateRegistrationFile(imports, registrations);
+    const outputPath = join(groupDir, "register-injectables.ts");
+
+    await writeFile(outputPath, registrationContent);
+    console.log(`  ✓ Generated ${outputPath}`);
+    generatedFiles.push(outputPath);
+  }
 
   return {
     packageName,
     packagePath,
     injectableCount: injectableFiles.length,
-    generatedFiles: [outputPath],
+    generatedFiles,
   };
 }
 

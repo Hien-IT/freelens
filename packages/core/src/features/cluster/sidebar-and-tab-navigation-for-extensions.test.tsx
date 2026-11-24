@@ -11,9 +11,9 @@ import { computed, observable, runInAction } from "mobx";
 import { beforeEach, describe, expect, it } from "vitest";
 import directoryForLensLocalStorageInjectable from "../../common/directory-for-lens-local-storage/directory-for-lens-local-storage.injectable";
 import { navigateToRouteInjectionToken } from "../../common/front-end-routing/navigate-to-route-injection-token";
-import pathExistsInjectable from "../../common/fs/path-exists.injectable";
-import readJsonFileInjectable from "../../common/fs/read-json-file.injectable";
-import writeJsonFileInjectable from "../../common/fs/write-json-file.injectable";
+import pathExistsInjectable from "../../common/fs/main/path-exists.injectable";
+import readJsonFileInjectable from "../../common/fs/main/read-json-file.injectable";
+import writeJsonFileInjectable from "../../common/fs/main/write-json-file.injectable";
 import { getApplicationBuilder } from "../../renderer/components/test-utils/get-application-builder";
 import routesInjectable from "../../renderer/routes/routes.injectable";
 import storageSaveDelayInjectable from "../../renderer/utils/create-storage/storage-save-delay.injectable";
@@ -39,8 +39,11 @@ describe("cluster - sidebar and tab navigation for extensions", () => {
 
     applicationBuilder.beforeWindowStart(({ windowDi }) => {
       windowDi.override(storageSaveDelayInjectable, () => 250);
+    });
 
-      windowDi.override(directoryForLensLocalStorageInjectable, () => "/some-directory-for-lens-local-storage");
+    // main reads and writes the local storage
+    applicationBuilder.beforeApplicationStart(({ mainDi }) => {
+      mainDi.override(directoryForLensLocalStorageInjectable, () => "/some-directory-for-lens-local-storage");
     });
   });
 

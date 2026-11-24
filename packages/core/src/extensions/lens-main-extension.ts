@@ -9,7 +9,7 @@ import { isObservableArray } from "mobx";
 import catalogEntityRegistryInjectable from "../main/catalog/entity-registry.injectable";
 import navigateForExtensionInjectable from "../main/start-main-application/lens-window/navigate-for-extension.injectable";
 import { getEnvironmentSpecificDiForExtensionApi } from "./extension-api-di";
-import ensureHashedDirectoryForExtensionInjectable from "./extension-loader/file-system-provisioner-store/ensure-hashed-directory-for-extension.injectable";
+import ensureHashedDirectoryForExtensionInjectable from "./extension-loader/file-system-provisioner-store/main/ensure-hashed-directory-for-extension.injectable";
 import { LensExtension } from "./lens-extension";
 
 import type { IComputedValue, IObservableArray } from "mobx";

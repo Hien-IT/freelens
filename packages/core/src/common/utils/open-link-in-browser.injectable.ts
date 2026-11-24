@@ -5,24 +5,14 @@
  */
 
 import { getInjectable } from "@ogre-tools/injectable";
-import { shell } from "electron";
-
-const allowedProtocols = new Set(["http:", "https:"]);
+import { openLinkInBrowserImplementationInjectionToken } from "../../features/open-link-in-browser/common/token";
 
 export type OpenLinkInBrowser = (url: string) => Promise<void>;
 
+/** Main opens the link, and only an `http:` or `https:` one; the renderer asks main. */
 const openLinkInBrowserInjectable = getInjectable({
   id: "open-link-in-browser",
-  instantiate: (): OpenLinkInBrowser => async (url) => {
-    const { protocol } = new URL(url);
-
-    if (!allowedProtocols.has(protocol)) {
-      throw new TypeError("not an http(s) URL");
-    }
-
-    await shell.openExternal(url);
-  },
-  causesSideEffects: true,
+  instantiate: (di) => di.inject(openLinkInBrowserImplementationInjectionToken),
 });
 
 export default openLinkInBrowserInjectable;

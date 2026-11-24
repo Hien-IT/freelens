@@ -6,13 +6,13 @@
 
 import { onLoadOfApplicationInjectionToken } from "@freelensapp/application";
 import { loggerInjectionToken } from "@freelensapp/logger";
-import { unionPATHs } from "@freelensapp/utilities";
 import { getInjectable } from "@ogre-tools/injectable";
 import isSnapPackageInjectable from "../../../common/vars/is-snap-package.injectable";
 import electronAppInjectable from "../../../main/electron-app/electron-app.injectable";
-import userShellSettingInjectable from "../../user-preferences/common/shell-setting.injectable";
+import userShellSettingInjectable from "../../user-preferences/main/shell-setting.injectable";
 import computeShellEnvironmentInjectable from "./compute-shell-environment.injectable";
 import shellSyncStartupFailureInjectable from "./startup-failure.injectable";
+import { unionPATHs } from "./union-env-path";
 
 const setupShellInjectable = getInjectable({
   id: "setup-shell",

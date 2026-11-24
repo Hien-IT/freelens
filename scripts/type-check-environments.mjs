@@ -18,11 +18,12 @@
 // - Files that break their environment's rules today are on the legacy lists
 //   in type-check-environments/legacy.jsonc. Their errors are tolerated, and
 //   a listed file that no longer has any fails the check until it is removed
-//   from the list, so the lists only ever shrink.
+//   from the list, so the lists only ever shrink. The renderer runs without
+//   Node, so its list must stay empty.
 //
 // It also checks biome.jsonc: every override path must start with `**/`, and
-// the files exempted there from `noNodejsModules` must be on the renderer
-// legacy list, so the exemptions shrink with it.
+// a file exempted there from `noNodejsModules` must be on the renderer legacy
+// list, so no exemption is allowed.
 
 import { spawn } from "node:child_process";
 import { readFileSync } from "node:fs";
@@ -154,11 +155,10 @@ function checkBiomeOverridePaths(overrides) {
     );
 }
 
-// The Biome override that turns `noNodejsModules` off exempts renderer and
-// common files that import a Node builtin today. Each of them also fails the
-// renderer program, so an exemption that is not on the renderer legacy list is
-// either stale or new, and neither is allowed. The legacy list is
-// root-relative, so the `**/` prefix is dropped for the comparison.
+// An override that turns `noNodejsModules` off exempts renderer or common files
+// that import a Node builtin. Such a file also fails the renderer program, so
+// an exemption that is not on the renderer legacy list is refused. The legacy
+// list is root-relative, so the `**/` prefix is dropped for the comparison.
 function checkBiomeExemptions(overrides, rendererLegacyFiles) {
   const legacy = new Set(rendererLegacyFiles);
 
@@ -175,6 +175,14 @@ function checkBiomeExemptions(overrides, rendererLegacyFiles) {
 const legacyLists = parseJsonc(readFileSync(legacyListsFile, "utf8"));
 const results = await Promise.all(programs.map((program) => checkProgram(program, legacyLists[program.name] ?? [])));
 let failed = false;
+
+// A renderer file on its list would pass here and fail at runtime, where the
+// renderer has no Node.
+for (const file of legacyLists.renderer ?? []) {
+  results[programs.findIndex(({ name }) => name === "renderer")].problems.push(
+    `${file}: on the "renderer" legacy list, which must stay empty as the renderer runs without Node; move the code that needs Node to main`,
+  );
+}
 
 for (const [index, { problems, summary }] of results.entries()) {
   if (summary) console.log(summary);

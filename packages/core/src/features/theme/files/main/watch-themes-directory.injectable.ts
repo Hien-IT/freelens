@@ -5,7 +5,7 @@
 
 import { prefixedLoggerInjectable } from "@freelensapp/logger";
 import { getInjectable } from "@ogre-tools/injectable";
-import watchInjectable from "../../../../common/fs/watch/watch.injectable";
+import watchInjectable from "../../../../common/fs/main/watch.injectable";
 import themesDirectoryInjectable from "./themes-directory.injectable";
 
 export type WatchThemesDirectory = (onChange: () => void) => void;

@@ -1,5 +1,5 @@
-import os from "node:os";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import platformInjectable from "../../../../common/vars/platform.injectable";
 import { getDiForUnitTesting } from "../../../getDiForUnitTesting";
 import createTerminalTabInjectable from "../../dock/terminal/create-terminal-tab.injectable";
 import sendCommandInjectable from "../../dock/terminal/send-command.injectable";
@@ -94,7 +94,7 @@ describe("pod-attach-menu", () => {
       },
     };
 
-    vi.spyOn(os, "platform").mockReturnValue("linux");
+    di.override(platformInjectable, () => "linux");
 
     // WHEN
     expect(() => {
@@ -120,7 +120,7 @@ describe("pod-attach-menu", () => {
       },
     };
 
-    vi.spyOn(os, "platform").mockReturnValue("win32");
+    di.override(platformInjectable, () => "win32");
 
     // WHEN
     expect(() => {

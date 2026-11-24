@@ -3,11 +3,11 @@
  * Licensed under MIT License. See LICENSE in root directory for more information.
  */
 
-import os from "node:os";
 import { Pod } from "@freelensapp/kube-object";
 import { withInjectables } from "@ogre-tools/injectable-react";
 import React from "react";
 import { v4 as uuidv4 } from "uuid";
+import isWindowsInjectable from "../../../common/vars/is-windows.injectable";
 import { App } from "../../../extensions/common-api";
 import createTerminalTabInjectable from "../dock/terminal/create-terminal-tab.injectable";
 import sendCommandInjectable, { type SendCommand } from "../dock/terminal/send-command.injectable";
@@ -24,13 +24,14 @@ export interface PodAttachMenuProps {
 }
 
 interface Dependencies {
+  isWindows: boolean;
   createTerminalTab: (tabParams: DockTabCreateSpecific) => void;
   sendCommand: SendCommand;
   hideDetails: HideDetails;
 }
 
 const NonInjectedPodAttachMenu: React.FC<PodAttachMenuProps & Dependencies> = (props) => {
-  const { object, toolbar, createTerminalTab, sendCommand, hideDetails } = props;
+  const { object, toolbar, isWindows, createTerminalTab, sendCommand, hideDetails } = props;
 
   if (!object) return null;
   let pod: Pod;
@@ -52,7 +53,7 @@ const NonInjectedPodAttachMenu: React.FC<PodAttachMenuProps & Dependencies> = (p
     const kubectlPath = App.Preferences.getKubectlPath() || "kubectl";
     const commandParts = [kubectlPath, "attach", "-i", "-t", "-n", pod.getNs(), pod.getName()];
 
-    if (os.platform() !== "win32") {
+    if (!isWindows) {
       commandParts.unshift("exec");
     }
 
@@ -90,6 +91,7 @@ const NonInjectedPodAttachMenu: React.FC<PodAttachMenuProps & Dependencies> = (p
 export const PodAttachMenu = withInjectables<Dependencies, PodAttachMenuProps>(NonInjectedPodAttachMenu, {
   getProps: (di, props) => ({
     ...props,
+    isWindows: di.inject(isWindowsInjectable),
     createTerminalTab: di.inject(createTerminalTabInjectable),
     sendCommand: di.inject(sendCommandInjectable),
     hideDetails: di.inject(hideDetailsInjectable),

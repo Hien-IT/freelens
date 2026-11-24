@@ -120,8 +120,8 @@ describe("extension contract, against the built fixture extension", () => {
     di = getDiForUnitTesting();
     di.override(buildVersionInitializable.stateToken, () => "1.2.3");
     di.override(isFlatpakPackageInjectable, () => false);
-    // Reads `process.isMainFrame`, which only Electron defines; every renderer
-    // extension instance injects it through `navigate-to-route`.
+    // Causes side effects, so a unit test sets it; every renderer extension
+    // instance injects it through `navigate-to-route`.
     di.override(currentlyInClusterFrameInjectable, () => false);
     di.override(directoryForUserDataInjectable, () => "/some-directory-for-user-data");
 

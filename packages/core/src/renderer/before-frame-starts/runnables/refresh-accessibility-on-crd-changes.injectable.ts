@@ -15,7 +15,7 @@ const refreshAccessibilityOnCrdChangesInjectable = getInjectable({
       const hostedClusterId = di.inject(hostedClusterIdInjectable);
       const requestFromChannel = di.inject(requestFromChannelInjectionToken);
 
-      let debounceTimer: NodeJS.Timeout | undefined;
+      let debounceTimer: ReturnType<typeof setTimeout> | undefined;
 
       reaction(
         () =>

@@ -5,7 +5,7 @@
 
 import { getInjectable } from "@ogre-tools/injectable";
 import getDirnameOfPathInjectable from "../../common/path/get-dirname.injectable";
-import baseBundledBinariesDirectoryInjectable from "../../common/vars/base-bundled-binaries-dir.injectable";
+import baseBundledBinariesDirectoryInjectable from "../../common/vars/main/base-bundled-binaries-dir.injectable";
 import userPreferencesStateInjectable from "../../features/user-preferences/common/state.injectable";
 import helmBinaryPathInjectable from "../helm/helm-binary-path.injectable";
 import bundledKubectlBinaryPathInjectable from "../kubectl/bundled-binary-path.injectable";

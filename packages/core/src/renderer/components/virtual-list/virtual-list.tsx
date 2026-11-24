@@ -57,7 +57,7 @@ function setRef<T>(ref: React.Ref<T> | undefined, value: T | null) {
 // what the react-virtualized-auto-sizer mock used to provide). In the running
 // app ResizeObserver reports the real size, so this initial value only affects
 // the very first frame — keep it 0 there to avoid rendering off-screen rows.
-const initialListHeight = process.env.NODE_ENV === "test" ? 420_000 : 0;
+const initialListHeight = import.meta.env.MODE === "test" ? 420_000 : 0;
 
 function VirtualListInner<T extends { getId(): string } | string>({
   items,

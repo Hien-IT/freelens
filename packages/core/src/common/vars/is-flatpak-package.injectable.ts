@@ -5,10 +5,11 @@
  */
 
 import { getInjectable } from "@ogre-tools/injectable";
+import { machineValuesInjectionToken } from "../../features/machine-values/common/token";
 
 const isFlatpakPackageInjectable = getInjectable({
   id: "is-flatpak",
-  instantiate: () => Boolean(process.env.FLATPAK_SANDBOX_DIR),
+  instantiate: (di) => di.inject(machineValuesInjectionToken).isFlatpak,
   causesSideEffects: true,
 });
 

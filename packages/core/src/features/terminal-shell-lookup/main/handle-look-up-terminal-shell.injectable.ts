@@ -4,11 +4,11 @@
  */
 
 import { getRequestChannelListenerInjectable } from "@freelensapp/messaging";
-import accessPathInjectable from "../../../common/fs/access-path.injectable";
-import statInjectable from "../../../common/fs/stat.injectable";
-import defaultShellInjectable from "../../../common/vars/default-shell.injectable";
+import accessPathInjectable from "../../../common/fs/main/access-path.injectable";
+import statInjectable from "../../../common/fs/main/stat.injectable";
 import isWindowsInjectable from "../../../common/vars/is-windows.injectable";
-import userInfoInjectable from "../../../common/vars/user-info.injectable";
+import defaultShellInjectable from "../../../common/vars/main/default-shell.injectable";
+import userInfoInjectable from "../../../common/vars/main/user-info.injectable";
 import processEnvInjectable from "../../shell-sync/main/env.injectable";
 import { lookUpTerminalShellChannel } from "../common/channels";
 import { lookUpTerminalShell } from "./look-up-terminal-shell";

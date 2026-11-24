@@ -6,7 +6,7 @@
 
 import { formatDuration } from "@freelensapp/utilities";
 import { observer } from "mobx-react";
-import { reactiveNow } from "../../../common/utils/reactive-now/reactive-now";
+import { reactiveNow } from "../../utils/reactive-now/reactive-now";
 
 export interface ReactiveDurationProps {
   timestamp: string | undefined;

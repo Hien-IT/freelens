@@ -10,8 +10,8 @@ import { showErrorNotificationInjectable } from "@freelensapp/notifications";
 import { noop } from "@freelensapp/utilities";
 import { type RenderResult, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import execFileInjectable, { type ExecFile } from "../../common/fs/exec-file.injectable";
-import readYamlFileInjectable from "../../common/fs/read-yaml-file.injectable";
+import execFileInjectable, { type ExecFile } from "../../common/fs/main/exec-file.injectable";
+import readYamlFileInjectable from "../../common/fs/main/read-yaml-file.injectable";
 import helmBinaryPathInjectable from "../../main/helm/helm-binary-path.injectable";
 import { getApplicationBuilder } from "../../renderer/components/test-utils/get-application-builder";
 import requestPublicHelmRepositoriesInjectable from "./child-features/preferences/renderer/adding-of-public-helm-repository/public-helm-repositories/request-public-helm-repositories.injectable";
@@ -21,7 +21,7 @@ import type { Logger } from "@freelensapp/logger";
 import type { AsyncFnMock } from "@async-fn/vitest";
 import type { Mock } from "vitest";
 
-import type { ReadYamlFile } from "../../common/fs/read-yaml-file.injectable";
+import type { ReadYamlFile } from "../../common/fs/main/read-yaml-file.injectable";
 import type { HelmRepositoriesFromYaml } from "../../main/helm/repositories/get-active-helm-repositories/get-active-helm-repositories.injectable";
 import type { ApplicationBuilder } from "../../renderer/components/test-utils/get-application-builder";
 

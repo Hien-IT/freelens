@@ -7,9 +7,9 @@
 import { withInjectables } from "@ogre-tools/injectable-react";
 import { observer } from "mobx-react";
 import { useState } from "react";
-import bundledBinaryPathInjectable from "../../../../../../../common/utils/bundled-binary-path.injectable";
 import { Input, InputValidators } from "../../../../../../../renderer/components/input";
 import { SubTitle } from "../../../../../../../renderer/components/layout/sub-title";
+import { machineValuesInjectionToken } from "../../../../../../machine-values/common/token";
 import userPreferencesStateInjectable from "../../../../../../user-preferences/common/state.injectable";
 
 import type { UserPreferencesState } from "../../../../../../user-preferences/common/state.injectable";
@@ -45,7 +45,7 @@ const NonInjectedHelmPathToBinary = observer(({ state, defaultPathForHelmBinary 
 
 export const HelmPathToBinary = withInjectables<Dependencies>(NonInjectedHelmPathToBinary, {
   getProps: (di) => ({
-    defaultPathForHelmBinary: di.inject(bundledBinaryPathInjectable, "helm"),
+    defaultPathForHelmBinary: di.inject(machineValuesInjectionToken).bundledHelmPath,
     state: di.inject(userPreferencesStateInjectable),
   }),
 });

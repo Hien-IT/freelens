@@ -10,10 +10,10 @@ import { Spinner } from "@freelensapp/spinner";
 import { withInjectables } from "@ogre-tools/injectable-react";
 import { action, runInAction } from "mobx";
 import { observer } from "mobx-react";
-import validateDirectoryInjectable from "../../../common/fs/validate-directory.injectable";
 import resolveTildeInjectable from "../../../common/path/resolve-tilde.injectable";
 import isWindowsInjectable from "../../../common/vars/is-windows.injectable";
 import openPathPickingDialogInjectable from "../../../features/path-picking-dialog/renderer/pick-paths.injectable";
+import validateDirectoryInjectable from "../../../features/validate-directory/renderer/validate-directory.injectable";
 import { Gutter } from "../gutter";
 import { Input } from "../input";
 import { SubTitle } from "../layout/sub-title";
@@ -22,9 +22,9 @@ import localTerminalSettingPresenterInjectable from "./local-terminal-setting-pr
 import type { ShowNotification } from "@freelensapp/notifications";
 
 import type { Cluster } from "../../../common/cluster/cluster";
-import type { ValidateDirectory } from "../../../common/fs/validate-directory.injectable";
 import type { ResolveTilde } from "../../../common/path/resolve-tilde.injectable";
 import type { OpenPathPickingDialog } from "../../../features/path-picking-dialog/renderer/pick-paths.injectable";
+import type { ValidateDirectory } from "../../../features/validate-directory/renderer/validate-directory.injectable";
 import type { LocalTerminalSettingPresenter } from "./local-terminal-setting-presenter.injectable";
 
 export interface ClusterLocalTerminalSettingProps {

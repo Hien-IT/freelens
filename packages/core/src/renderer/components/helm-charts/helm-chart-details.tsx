@@ -6,10 +6,9 @@
 
 import "./helm-chart-details.scss";
 
-import assert from "node:assert";
 import { Button } from "@freelensapp/button";
 import { Spinner } from "@freelensapp/spinner";
-import { stopPropagation } from "@freelensapp/utilities";
+import { assert, stopPropagation } from "@freelensapp/utilities";
 import { styled, Tooltip } from "@mui/material";
 import { withInjectables } from "@ogre-tools/injectable-react";
 import autoBindReact from "auto-bind/react";

@@ -4,7 +4,7 @@
  * Licensed under MIT License. See LICENSE in root directory for more information.
  */
 
-import { dumpConfigYaml } from "../../common/kube-helpers";
+import { dumpConfigYaml } from "../../common/kube-helpers/main/kube-helpers";
 
 import type { Logger } from "@freelensapp/logger";
 
@@ -13,11 +13,11 @@ import type { PartialDeep } from "type-fest";
 
 import type { SelfSignedCert } from "../../common/certificate/certificate";
 import type { Cluster } from "../../common/cluster/cluster";
-import type { LoadKubeconfig } from "../../common/cluster/load-kubeconfig.injectable";
-import type { EnsureDirectory } from "../../common/fs/ensure-dir.injectable";
-import type { PathExists } from "../../common/fs/path-exists.injectable";
-import type { RemovePath } from "../../common/fs/remove.injectable";
-import type { WriteFile } from "../../common/fs/write-file.injectable";
+import type { LoadKubeconfig } from "../../common/cluster/main/load-kubeconfig.injectable";
+import type { EnsureDirectory } from "../../common/fs/main/ensure-dir.injectable";
+import type { PathExists } from "../../common/fs/main/path-exists.injectable";
+import type { RemovePath } from "../../common/fs/main/remove.injectable";
+import type { WriteFile } from "../../common/fs/main/write-file.injectable";
 import type { GetDirnameOfPath } from "../../common/path/get-dirname.injectable";
 import type { JoinPaths } from "../../common/path/join-paths.injectable";
 import type { FreelensK8sProxyManager } from "../cluster/freelens-k8s-proxy-manager.injectable";

@@ -9,9 +9,12 @@ import { waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { Cluster } from "../../../../common/cluster/cluster";
-import loadKubeconfigInjectable from "../../../../common/cluster/load-kubeconfig.injectable";
-import statInjectable from "../../../../common/fs/stat.injectable";
-import { getDiForUnitTesting } from "../../../getDiForUnitTesting";
+import loadKubeconfigInjectable from "../../../../common/cluster/main/load-kubeconfig.injectable";
+import statInjectable from "../../../../common/fs/main/stat.injectable";
+import getRegisteredClusterInjectable from "../../../../features/cluster/delete-dialog/main/get-registered-cluster.injectable";
+import clusterKubeconfigContextsListenerInjectable from "../../../../features/cluster/delete-dialog/main/kubeconfig-contexts-listener.injectable";
+import validateDirectoryListenerInjectable from "../../../../features/validate-directory/main/validate-directory-listener.injectable";
+import { getMainAndRenderer } from "../../../../test-utils/channels-between-main-and-renderer";
 import { renderFor } from "../../test-utils/renderFor";
 import { ClusterLocalTerminalSetting } from "../local-terminal-settings";
 import type { Stats } from "node:fs";
@@ -29,18 +32,30 @@ describe("ClusterLocalTerminalSettings", () => {
   let user: UserEvent;
 
   beforeEach(() => {
-    const di = getDiForUnitTesting();
+    // main checks the directory and reads the kubeconfig, with its stat and its kubeconfig faked
+    const { mainDi, rendererDi: di, listenInMain } = getMainAndRenderer();
 
     showErrorNotificationMock = vi.fn();
 
     statMock = vi.fn();
 
-    di.override(statInjectable, () => statMock);
+    mainDi.override(statInjectable, () => statMock);
+    listenInMain(validateDirectoryListenerInjectable);
 
     di.override(showErrorNotificationInjectable, () => showErrorNotificationMock);
 
     loadKubeconfigMock = vi.fn();
-    di.override(loadKubeconfigInjectable, () => loadKubeconfigMock);
+    mainDi.override(loadKubeconfigInjectable, () => async (fullResult?: boolean) => {
+      // the kubeconfig the mock answers, with the parts main reads besides
+      const config = { contexts: [], currentContext: "", ...(await loadKubeconfigMock()) };
+
+      return fullResult ? { config } : config;
+    });
+    mainDi.override(
+      getRegisteredClusterInjectable,
+      () => (id: string) => new Cluster({ id, contextName: "some-context-name", kubeConfigPath: "/some/path" }),
+    );
+    listenInMain(clusterKubeconfigContextsListenerInjectable);
 
     render = renderFor(di);
 

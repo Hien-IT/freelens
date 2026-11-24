@@ -11,7 +11,7 @@ import { withInjectables } from "@ogre-tools/injectable-react";
 import * as yaml from "js-yaml";
 import { observer } from "mobx-react";
 import apiManagerInjectable from "../../../common/k8s-api/api-manager/manager.injectable";
-import { defaultYamlDumpOptions } from "../../../common/kube-helpers";
+import { defaultYamlDumpOptions } from "../../../common/kube-helpers/yaml-dump-options";
 import { DrawerItem, DrawerItemLabels, DrawerParamToggler } from "../drawer";
 import { DurationAbsoluteTimestamp } from "../events";
 import getDetailsUrlInjectable from "../kube-detail-params/get-details-url.injectable";

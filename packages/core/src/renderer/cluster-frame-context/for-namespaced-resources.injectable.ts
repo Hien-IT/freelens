@@ -4,7 +4,7 @@
  * Licensed under MIT License. See LICENSE in root directory for more information.
  */
 
-import assert from "node:assert";
+import { assert } from "@freelensapp/utilities";
 import { getInjectable } from "@ogre-tools/injectable";
 import { computed } from "mobx";
 import selectedNamespacesStorageInjectable from "../../features/namespace-filtering/renderer/storage.injectable";

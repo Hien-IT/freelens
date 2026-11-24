@@ -8,6 +8,10 @@
 
 import clearClusterAsDeletingChannelListenerInjectable from "./clear-as-deleting-channel-listener.injectable";
 import deleteClusterChannelListenerInjectable from "./delete-channel-listener.injectable";
+import getRegisteredClusterInjectable from "./get-registered-cluster.injectable";
+import clusterKubeconfigContextsListenerInjectable from "./kubeconfig-contexts-listener.injectable";
+import removeClusterContextFromKubeconfigListenerInjectable from "./remove-context-listener.injectable";
+import saveKubeconfigInjectable from "./save-kubeconfig.injectable";
 import setClusterAsDeletingChannelHandlerInjectable from "./set-as-deleteing-channel-listener.injectable";
 
 import type { DiContainerForInjection } from "@ogre-tools/injectable";
@@ -19,7 +23,27 @@ export function registerInjectables(di: DiContainerForInjection): void {
     /* Ignore duplicate registration */
   }
   try {
+    di.register(clusterKubeconfigContextsListenerInjectable);
+  } catch (e) {
+    /* Ignore duplicate registration */
+  }
+  try {
     di.register(deleteClusterChannelListenerInjectable);
+  } catch (e) {
+    /* Ignore duplicate registration */
+  }
+  try {
+    di.register(getRegisteredClusterInjectable);
+  } catch (e) {
+    /* Ignore duplicate registration */
+  }
+  try {
+    di.register(removeClusterContextFromKubeconfigListenerInjectable);
+  } catch (e) {
+    /* Ignore duplicate registration */
+  }
+  try {
+    di.register(saveKubeconfigInjectable);
   } catch (e) {
     /* Ignore duplicate registration */
   }

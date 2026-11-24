@@ -20,7 +20,8 @@
   "main": "./index.ts",
   "types": "./index.ts",
   "scripts": {
-    "clean:dist": "pnpm dlx rimraf@6.1.4 dist"
+    "clean:dist": "pnpm dlx rimraf@6.1.4 dist",
+    "test:unit": "vitest run -c ../../../vitest.config.ts --project @freelensapp/json-api"
   },
   "dependencies": {
     "@freelensapp/event-emitter": "workspace:^",
@@ -32,7 +33,8 @@
     "@freelensapp/typescript": "workspace:^",
     "@types/node": "catalog:",
     "rfc6902": "catalog:",
-    "type-fest": "catalog:"
+    "type-fest": "catalog:",
+    "vitest": "catalog:"
   },
   "publishConfig": {
     "access": "public",

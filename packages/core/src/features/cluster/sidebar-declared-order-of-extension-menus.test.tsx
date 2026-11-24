@@ -8,7 +8,7 @@ import { runInAction } from "mobx";
 import { beforeEach, describe, expect, it } from "vitest";
 import directoryForUserDataInjectable from "../../common/app-paths/directory-for-user-data/directory-for-user-data.injectable";
 import directoryForLensLocalStorageInjectable from "../../common/directory-for-lens-local-storage/directory-for-lens-local-storage.injectable";
-import writeJsonSyncInjectable from "../../common/fs/write-json-sync.injectable";
+import writeJsonSyncInjectable from "../../common/fs/main/write-json-sync.injectable";
 import { getApplicationBuilder } from "../../renderer/components/test-utils/get-application-builder";
 import userPreferencesStateInjectable from "../user-preferences/common/state.injectable";
 

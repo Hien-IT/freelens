@@ -1,6 +1,6 @@
 {
   "extends": "../../tsconfig.json",
-  "include": ["src/**/*", "../core/types/*.d.ts"],
+  "include": ["src/**/*", "../core/types/*.d.ts", "../core/src/renderer/import-meta-env.d.ts"],
   "exclude": ["node_modules", "../core/src/"],
   "references": [
     {

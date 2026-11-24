@@ -6,17 +6,11 @@
  * This replaces the webpack-based auto-registration system.
  */
 
-import caCertificatesInjectable from "./ca-certificates.injectable";
 import freelensProxyCertificateInjectable from "./freelens-proxy-certificate.injectable";
 
 import type { DiContainerForInjection } from "@ogre-tools/injectable";
 
 export function registerInjectables(di: DiContainerForInjection): void {
-  try {
-    di.register(caCertificatesInjectable);
-  } catch (e) {
-    /* Ignore duplicate registration */
-  }
   try {
     di.register(freelensProxyCertificateInjectable);
   } catch (e) {

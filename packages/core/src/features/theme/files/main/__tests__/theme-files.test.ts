@@ -5,10 +5,10 @@
 
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import directoryForUserDataInjectable from "../../../../../common/app-paths/directory-for-user-data/directory-for-user-data.injectable";
-import fsInjectable from "../../../../../common/fs/fs.injectable";
-import pathExistsInjectable from "../../../../../common/fs/path-exists.injectable";
-import readFileInjectable from "../../../../../common/fs/read-file.injectable";
-import writeFileInjectable from "../../../../../common/fs/write-file.injectable";
+import fsInjectable from "../../../../../common/fs/main/fs.injectable";
+import pathExistsInjectable from "../../../../../common/fs/main/path-exists.injectable";
+import readFileInjectable from "../../../../../common/fs/main/read-file.injectable";
+import writeFileInjectable from "../../../../../common/fs/main/write-file.injectable";
 import randomUUIDInjectable from "../../../../../main/crypto/random-uuid.injectable";
 import electronDialogInjectable from "../../../../../main/electron-app/features/electron-dialog.injectable";
 import proxyFetchInjectable from "../../../../../main/fetch/proxy-fetch.injectable";

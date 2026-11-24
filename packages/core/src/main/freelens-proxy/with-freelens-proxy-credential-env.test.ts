@@ -6,7 +6,7 @@
 import { describe, expect, it } from "vitest";
 import directoryForTempInjectable from "../../common/app-paths/directory-for-temp/directory-for-temp.injectable";
 import directoryForUserDataInjectable from "../../common/app-paths/directory-for-user-data/directory-for-user-data.injectable";
-import baseBundledBinariesDirectoryInjectable from "../../common/vars/base-bundled-binaries-dir.injectable";
+import baseBundledBinariesDirectoryInjectable from "../../common/vars/main/base-bundled-binaries-dir.injectable";
 import platformInjectable from "../../common/vars/platform.injectable";
 import { getDiForUnitTesting } from "../getDiForUnitTesting";
 import freelensProxyTokenInjectable from "./freelens-proxy-token.injectable";

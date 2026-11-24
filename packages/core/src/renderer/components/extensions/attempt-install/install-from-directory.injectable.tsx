@@ -4,17 +4,18 @@
  */
 
 import { loggerInjectionToken } from "@freelensapp/logger";
+import { requestFromChannelInjectionToken } from "@freelensapp/messaging";
 import { showErrorNotificationInjectable, showInfoNotificationInjectable } from "@freelensapp/notifications";
 import { getInjectable } from "@ogre-tools/injectable";
 import { when } from "mobx";
-import readJsonFileInjectable from "../../../../common/fs/read-json-file.injectable";
-import joinPathsInjectable from "../../../../common/path/join-paths.injectable";
 import { ExtensionInstallationState } from "../../../../extensions/extension-installation-state-store/extension-installation-state-store";
 import extensionInstallationStateStoreInjectable from "../../../../extensions/extension-installation-state-store/extension-installation-state-store.injectable";
 import extensionLoaderInjectable from "../../../../extensions/extension-loader/extension-loader.injectable";
 import { extensionDisplayName } from "../../../../extensions/lens-extension";
-import activateInstalledBuildInjectable from "../../../../features/extensions/installer/common/activate-installed-build.injectable";
-import { manifestFilename, validateExtensionManifest } from "../../../../features/extensions/installer/common/manifest";
+import {
+  readExtensionPathChannel,
+  registerExtensionDirectoryChannel,
+} from "../../../../features/extensions/installer/common/install-channels";
 import confirmInjectable from "../../confirm-dialog/confirm.injectable";
 import { getMessageFromError } from "../get-message-from-error/get-message-from-error";
 import { disabledForReinstallNote, installFailureSubject } from "./disabled-for-reinstall";
@@ -34,10 +35,8 @@ const installFromDirectoryInjectable = getInjectable({
 
   instantiate: (di): InstallFromDirectory => {
     const extensionLoader = di.inject(extensionLoaderInjectable);
-    const activateInstalledBuild = di.inject(activateInstalledBuildInjectable);
     const installStateStore = di.inject(extensionInstallationStateStoreInjectable);
-    const readJsonFile = di.inject(readJsonFileInjectable);
-    const joinPaths = di.inject(joinPathsInjectable);
+    const requestFromChannel = di.inject(requestFromChannelInjectionToken);
     const confirm = di.inject(confirmInjectable);
     const showInfoNotification = di.inject(showInfoNotificationInjectable);
     const showErrorNotification = di.inject(showErrorNotificationInjectable);
@@ -47,11 +46,17 @@ const installFromDirectoryInjectable = getInjectable({
       const dispose = installStateStore.startPreInstall();
 
       try {
-        const manifestPath = joinPaths(directory, manifestFilename);
         let manifest;
 
         try {
-          manifest = validateExtensionManifest(await readJsonFile(manifestPath));
+          // main reads and validates the manifest of the directory the user chose
+          const contents = await requestFromChannel(readExtensionPathChannel, { path: directory });
+
+          if (contents.kind !== "directory") {
+            throw new Error("it is not a directory");
+          }
+
+          manifest = contents.manifest;
         } catch (error) {
           const message = getMessageFromError(error);
 
@@ -172,12 +177,8 @@ const installFromDirectoryInjectable = getInjectable({
             await extensionLoader.whenTornDown(id);
           }
 
-          await activateInstalledBuild({
-            name: id,
-            path: directory,
-            source: { kind: "directory", path: directory },
-            verified: false,
-          });
+          // main records it as loaded from where it is, unverified
+          await requestFromChannel(registerExtensionDirectoryChannel, { path: directory });
 
           await when(() => extensionLoader.userExtensions.get().has(id), { timeout: 10_000 });
 

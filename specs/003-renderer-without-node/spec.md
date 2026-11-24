@@ -53,6 +53,10 @@ In this specification:
 - Q: How does FR-007 apply to the extension API calls that take a folder from the extension, the upload folder of `FilePicker`, the folder of `createResourceStack` and the `cwd` of an `ExtensionStore`? → A: They are exempt: the main side reads or writes the folder the extension names, as today. Failing for another folder would be a breaking change to the extension API, which Principle III allows only in a major release.
 - Q: The main side cannot tell whether a path a view sends came from the user. What does FR-007 promise then? → A: It bounds what each channel does, not who calls it. With context isolation off, any script in a page can call any channel, as it can use Node today; restricting the callers needs context isolation, which is out of scope.
 
+### Session 2026-11-24
+
+- Q: With the sandbox on, a cluster frame opens 16 to 19% slower than on `main`, beyond the 10% of SC-005, while FR-012 requires the sandbox, which alone accounts for the difference. Which one gives way? → A: SC-005. The sandbox stays on; the 10% applies to the cluster frame of a build that differs only by having the sandbox off, and the sandbox's own cost is accepted and reported with the figures.
+
 ## User Scenarios & Testing _(mandatory)_
 
 The people served by this feature are the maintainers porting Freelens to the
@@ -345,7 +349,10 @@ tests and the manual check of the paths the moved values served.
   than 10% above the same measurement of `main`, built the same way, on the
   same machine. The time from clicking a connected cluster to the first page of
   its frame being shown, median of three runs, is no more than 10% above
-  `main`'s.
+  `main`'s on a build of the branch that differs only by having the sandbox
+  off. The sandbox's own cost, the difference between that build and the
+  branch, is accepted and reported with the figures, as FR-012 requires the
+  sandbox.
 - **SC-006**: A review of every channel the feature adds finds each in the
   channel list with a core area of R9 as owner, or among the channels not
   ported for serving only the extension system, none marked `non-JSON`, none

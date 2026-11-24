@@ -3,8 +3,8 @@
  * Licensed under MIT License. See LICENSE in root directory for more information.
  */
 
-import assert from "node:assert";
 import { requestFromChannelInjectionToken } from "@freelensapp/messaging";
+import { assert } from "@freelensapp/utilities";
 import { getInjectable } from "@ogre-tools/injectable";
 import { clusterShellTokenChannel } from "../../common/ipc/shell-token-channels";
 import hostedClusterIdInjectable from "../cluster-frame-context/hosted-cluster-id.injectable";

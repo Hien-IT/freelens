@@ -4,7 +4,7 @@
  */
 
 import { getInjectable } from "@ogre-tools/injectable";
-import randomBytesInjectable from "../../common/utils/random-bytes.injectable";
+import randomBytesInjectable from "../../common/utils/main/random-bytes.injectable";
 import { tokenMatches } from "./freelens-proxy-token";
 
 export interface FreelensProxyToken {

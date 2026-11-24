@@ -6,8 +6,8 @@
 import { constants } from "node:fs";
 import path from "node:path";
 
-import type { AccessPath } from "../../common/fs/access-path.injectable";
-import type { Stat } from "../../common/fs/stat.injectable";
+import type { AccessPath } from "../../common/fs/main/access-path.injectable";
+import type { Stat } from "../../common/fs/main/stat.injectable";
 
 type Environment = Record<string, string | undefined>;
 

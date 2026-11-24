@@ -11,9 +11,9 @@ import userPreferencesPersistentStorageInjectable from "../../features/user-pref
 import releaseChannelInjectable from "../../features/vars/common/release-channel.injectable";
 import { getDiForUnitTesting } from "../../main/getDiForUnitTesting";
 import directoryForUserDataInjectable from "../app-paths/directory-for-user-data/directory-for-user-data.injectable";
-import readJsonSyncInjectable from "../fs/read-json-sync.injectable";
-import writeFileInjectable from "../fs/write-file.injectable";
-import writeJsonSyncInjectable from "../fs/write-json-sync.injectable";
+import readJsonSyncInjectable from "../fs/main/read-json-sync.injectable";
+import writeFileInjectable from "../fs/main/write-file.injectable";
+import writeJsonSyncInjectable from "../fs/main/write-json-sync.injectable";
 import { defaultThemePreference, defaultThemeVariantPreference } from "../vars";
 
 import type { DiContainer } from "@ogre-tools/injectable";

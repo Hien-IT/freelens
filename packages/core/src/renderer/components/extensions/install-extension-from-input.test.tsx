@@ -5,8 +5,9 @@
 
 import { showErrorNotificationInjectable } from "@freelensapp/notifications";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import statInjectable from "../../../common/fs/stat.injectable";
-import { getDiForUnitTesting } from "../../getDiForUnitTesting";
+import statInjectable from "../../../common/fs/main/stat.injectable";
+import { extensionPathKindListenerInjectable } from "../../../features/extensions/installer/main/path-listeners.injectable";
+import { getMainAndRenderer } from "../../../test-utils/channels-between-main-and-renderer";
 import installFromDirectoryInjectable from "./attempt-install/install-from-directory.injectable";
 import installFromFileInjectable from "./attempt-install/install-from-file.injectable";
 import installFromUrlInjectable from "./attempt-install/install-from-url.injectable";
@@ -29,7 +30,8 @@ describe("installExtensionFromInput", () => {
   const statsOf = (isDirectory: boolean) => ({ isDirectory: () => isDirectory }) as Stats;
 
   beforeEach(() => {
-    const di = getDiForUnitTesting();
+    // main reads what is at a path, with its stat faked
+    const { mainDi, rendererDi: di, listenInMain } = getMainAndRenderer();
 
     installFromUrlMock = vi.fn(async () => {});
     installFromFileMock = vi.fn(async () => {});
@@ -43,7 +45,8 @@ describe("installExtensionFromInput", () => {
     di.override(installFromFileInjectable, () => installFromFileMock);
     di.override(installFromDirectoryInjectable, () => installFromDirectoryMock);
     di.override(attemptInstallByInfoInjectable, () => attemptInstallByInfoMock);
-    di.override(statInjectable, () => statMock);
+    mainDi.override(statInjectable, () => statMock);
+    listenInMain(extensionPathKindListenerInjectable);
     di.override(showErrorNotificationInjectable, () => vi.fn());
 
     installExtensionFromInput = di.inject(installExtensionFromInputInjectable);

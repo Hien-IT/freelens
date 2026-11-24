@@ -7,8 +7,8 @@ import { getRandomIdInjectionToken } from "@freelensapp/random";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import directoryForUserDataInjectable from "../../common/app-paths/directory-for-user-data/directory-for-user-data.injectable";
 import fetchInjectable from "../../common/fetch/fetch.injectable";
-import pathExistsInjectable from "../../common/fs/path-exists.injectable";
-import readFileInjectable from "../../common/fs/read-file.injectable";
+import pathExistsInjectable from "../../common/fs/main/path-exists.injectable";
+import readFileInjectable from "../../common/fs/main/read-file.injectable";
 import { isExtensionFileProbe } from "../../features/extensions/loader/common/scheme";
 import { getDiForUnitTesting } from "../../renderer/getDiForUnitTesting";
 import currentlyInClusterFrameInjectable from "../../renderer/routes/currently-in-cluster-frame.injectable";
@@ -16,8 +16,8 @@ import extensionLoaderInjectable from "../extension-loader/extension-loader.inje
 
 import type { Fetch, FetchResponse } from "@freelensapp/json-api";
 
-import type { PathExists } from "../../common/fs/path-exists.injectable";
-import type { ReadFile } from "../../common/fs/read-file.injectable";
+import type { PathExists } from "../../common/fs/main/path-exists.injectable";
+import type { ReadFile } from "../../common/fs/main/read-file.injectable";
 import type { InstalledExtension } from "../installed-extension";
 
 /**

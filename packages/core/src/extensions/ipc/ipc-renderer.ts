@@ -4,10 +4,14 @@
  * Licensed under MIT License. See LICENSE in root directory for more information.
  */
 
-import { ipcRenderer } from "electron";
 import { once } from "es-toolkit";
+import { getDiForExtensionApi } from "../extension-api-di";
 import { Disposers } from "../lens-extension";
 import { IpcPrefix, IpcRegistrar } from "./ipc-registrar";
+import ipcRendererInjectable from "./ipc-renderer.injectable";
+
+// Taken at each call, from the bridge the preload gives the view.
+const ipcRenderer = () => getDiForExtensionApi().inject(ipcRendererInjectable);
 
 import type { Disposer } from "@freelensapp/utilities";
 
@@ -45,14 +49,14 @@ export abstract class IpcRenderer extends IpcRegistrar {
         extension: { name: this.extension.name, version: this.extension.version },
       });
 
-      return ipcRenderer.removeListener(prefixedChannel, listener);
+      return ipcRenderer().removeListener(prefixedChannel, listener);
     });
 
     console.debug(`[IPC-RENDERER]: adding extension listener`, {
       channel,
       extension: { name: this.extension.name, version: this.extension.version },
     });
-    ipcRenderer.addListener(prefixedChannel, listener);
+    ipcRenderer().addListener(prefixedChannel, listener);
     this.extension[Disposers].push(cleanup);
 
     return cleanup;
@@ -69,6 +73,6 @@ export abstract class IpcRenderer extends IpcRegistrar {
   invoke(channel: string, ...args: any[]): Promise<any> {
     const prefixedChannel = `extensions@${this[IpcPrefix]}:${channel}`;
 
-    return ipcRenderer.invoke(prefixedChannel, ...args);
+    return ipcRenderer().invoke(prefixedChannel, ...args);
   }
 }

@@ -6,7 +6,6 @@
 
 // Base class for building all kubernetes apis
 
-import assert from "node:assert";
 import { stringifyQuery } from "@freelensapp/json-api";
 import {
   isJsonApiData,
@@ -15,7 +14,7 @@ import {
   isPartialJsonApiData,
   KubeStatus,
 } from "@freelensapp/kube-object";
-import { isDefined, noop, WrappedAbortController } from "@freelensapp/utilities";
+import { assert, isDefined, noop, WrappedAbortController } from "@freelensapp/utilities";
 import { matches, merge } from "es-toolkit/compat";
 import { observable } from "mobx";
 import { createKubeApiURL, parseKubeApi } from "./kube-api-parse";

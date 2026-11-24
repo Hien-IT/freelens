@@ -21,7 +21,7 @@ import type WebSocket from "ws";
 
 import type { EmitAppEvent } from "../../common/app-event-bus/emit-event.injectable";
 import type { Cluster } from "../../common/cluster/cluster";
-import type { Stat } from "../../common/fs/stat.injectable";
+import type { Stat } from "../../common/fs/main/stat.injectable";
 import type { ComputeUserShellEnvironment } from "../kube-tools/compute-user-shell-environment.injectable";
 import type { GetUserShell } from "../kube-tools/get-user-shell.injectable";
 import type { KubeTools } from "../kube-tools/kube-tools";

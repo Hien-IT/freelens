@@ -4,9 +4,9 @@
  * Licensed under MIT License. See LICENSE in root directory for more information.
  */
 
-import { loggerInjectionToken } from "@freelensapp/logger";
+import { requestFromChannelInjectionToken } from "@freelensapp/messaging";
 import { getInjectable } from "@ogre-tools/injectable";
-import statInjectable from "../../../../../../common/fs/stat.injectable";
+import { discoverKubeconfigSyncKindChannel } from "../../../../../kubeconfig-sync-kind/common/channel";
 
 export interface SyncKind {
   type: "file" | "folder" | "unknown";
@@ -14,33 +14,20 @@ export interface SyncKind {
 
 export type DiscoverKubeconfigSyncKind = (path: string) => Promise<[string, SyncKind]>;
 
+/** Main reads the kind of the path, and logs what it cannot tell. */
 const discoverKubeconfigSyncKindInjectable = getInjectable({
   id: "discover-kubeconfig-sync-kind",
   instantiate: (di): DiscoverKubeconfigSyncKind => {
-    const stat = di.inject(statInjectable);
-    const logger = di.inject(loggerInjectionToken);
+    const requestFromChannel = di.inject(requestFromChannelInjectionToken);
 
     return async (path) => {
-      try {
-        // stat follows the stat(2) linux syscall spec, namely it follows symlinks
-        const stats = await stat(path);
+      const answer = await requestFromChannel(discoverKubeconfigSyncKindChannel, path);
 
-        if (stats.isFile()) {
-          return [path, { type: "file" }];
-        }
-
-        if (stats.isDirectory()) {
-          return [path, { type: "folder" }];
-        }
-
-        logger.warn("[KUBECONFIG-SYNCS]: unknown stat entry", { stats });
-
-        return [path, { type: "unknown" }];
-      } catch (error) {
-        logger.warn(`[KUBECONFIG-SYNCS]: failed to stat entry: ${error}`, { error });
-
-        return [path, { type: "unknown" }];
+      if ("kind" in answer) {
+        return [path, { type: answer.kind === "dir" ? "folder" : "file" }];
       }
+
+      return [path, { type: "unknown" }];
     };
   },
 });

@@ -5,7 +5,7 @@
 
 import { getInjectable, type Injectable } from "@ogre-tools/injectable";
 import { Agent } from "undici";
-import caCertificatesInjectable from "../../common/certificate/ca-certificates.injectable";
+import caCertificatesInjectable from "../../common/certificate/main/ca-certificates.injectable";
 import userPreferencesStateInjectable from "../../features/user-preferences/common/state.injectable";
 import { createHttpsProxyAgent } from "./https-proxy-agent";
 

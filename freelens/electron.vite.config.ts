@@ -12,11 +12,11 @@
 //   (Phase 2, single transpilation shot) instead of being externalized and
 //   consumed from dist/. Everything else in dependencies stays external in
 //   the main process, like webpack-node-externals did.
-// - The renderer keeps nodeIntegration (plan §1); runtimeRequireExternalsPlugin
-//   (below) rewrites `electron` and node builtin imports to runtime require()
-//   calls, replacing the webpack `node-commonjs` externals hook. The old
-//   externals regex (byline, js-yaml, tar, ...) is dropped: those are plain JS
-//   packages and are simply bundled.
+// - The renderer runs without Node; rendererNodeGatePlugin (below) fails on any
+//   `electron` or Node builtin import in its graph, where the webpack
+//   `node-commonjs` externals hook left them to the runtime. The old externals
+//   regex (byline, js-yaml, tar, ...) is dropped: those are plain JS packages
+//   and are simply bundled.
 // - monaco-editor-webpack-plugin is replaced by MonacoEnvironment.getWorker
 //   with module workers (packages/core/src/renderer/monaco/setup-monaco-environment.ts).
 // - CopyPlugin for @freelensapp/core fonts is dropped: the fonts are now
@@ -29,15 +29,16 @@
 // if the build aborts with an out-of-memory error.
 
 import { existsSync, readdirSync, readFileSync, rmSync } from "node:fs";
-import { builtinModules, createRequire } from "node:module";
+import { builtinModules } from "node:module";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import tailwindcss from "@tailwindcss/postcss";
 import react from "@vitejs/plugin-react";
 import { defineConfig, externalizeDepsPlugin } from "electron-vite";
 import { standardDecorators } from "../scripts/vite-plugin-standard-decorators.mjs";
+import { findNodeBringers, formatGateResult } from "./build-plugins/renderer-bundle-gate";
 
-const require = createRequire(import.meta.url);
+import type { GetModuleInfo, NodeImport } from "./build-plugins/renderer-bundle-gate";
 
 const root = dirname(fileURLToPath(import.meta.url));
 const buildDir = resolve(root, "static", "build"); // == webpack vars.buildDir
@@ -128,182 +129,84 @@ function rewriteElectronNamedImportsPlugin() {
   };
 }
 
-// Resolve `electron` and Node builtins to runtime require() shims for the
-// renderer.
-//
-// The renderer keeps nodeIntegration (plan §1), so `electron` and the Node
-// builtins are provided by the Electron/Node runtime and must stay
-// `require(...)` calls rather than being bundled as browser modules. This
-// replaces vite-plugin-electron-renderer, whose shims enumerate a module's
-// exports with `Object.getOwnPropertyNames` — which, for a builtin whose
-// require() returns a *function* (e.g. `require("events")` is the EventEmitter
-// constructor), includes the non-enumerable function intrinsics `prototype`,
-// `length` and `name`. A `prototype` named export then makes Rollup's
-// CJS-interop helper `getAugmentedNamespace` (used by any bundled CommonJS
-// consumer, e.g. the browserified readable-stream) redefine a function's
-// non-configurable `prototype`, crashing the renderer at startup with
-//   Uncaught TypeError: Cannot redefine property: prototype
-//
-// Mirroring freelens-example-extension/build/global-externals.js, this plugin
-// instead emits explicit named exports discovered with `Object.keys`
-// (enumerable own keys only — never `prototype`/`length`/`name`), so the module
-// graph is fully static and deterministic. See that file for the history behind
-// dropping the introspection-shim approach (intermittent MISSING_EXPORT builds).
 const nodeBuiltins = new Set([...builtinModules, ...builtinModules.map((m) => `node:${m}`)]);
 
-// Names to re-export from the runtime `require("electron")`. Renderer-process
-// APIs resolve to real objects; main/utility-process APIs resolve to `undefined`
-// in the renderer (shared code imports them and branches on their presence, as
-// the old CommonJS build did). `require("electron")` returns a path string at
-// build time, so these cannot be introspected and are listed explicitly, as
-// vite-plugin-electron-renderer did.
-const electronApiNames = [
-  // Renderer-process modules
-  "contextBridge",
-  "crashReporter",
-  "ipcRenderer",
-  "nativeImage",
-  "shell",
-  "webFrame",
-  "webUtils",
-  "deprecate",
-  // Main/utility-process modules (undefined in the renderer)
-  "app",
-  "autoUpdater",
-  "BaseWindow",
-  "BrowserView",
-  "BrowserWindow",
-  "clipboard",
-  "contentTracing",
-  "desktopCapturer",
-  "dialog",
-  "globalShortcut",
-  "inAppPurchase",
-  "ipcMain",
-  "Menu",
-  "MenuItem",
-  "MessageChannelMain",
-  "MessagePortMain",
-  "nativeTheme",
-  "net",
-  "netLog",
-  "Notification",
-  "parentPort",
-  "powerMonitor",
-  "powerSaveBlocker",
-  "protocol",
-  "pushNotifications",
-  "safeStorage",
-  "screen",
-  "session",
-  "ShareMenu",
-  "systemPreferences",
-  "TouchBar",
-  "Tray",
-  "utilityProcess",
-  "View",
-  "webContents",
-  "WebContentsView",
-  "webFrameMain",
-];
+// The stub Vite puts in place of a Node builtin in a browser build.
+const browserExternalId = "__vite-browser-external";
 
-const IDENTIFIER_RE = /^[A-Za-z_$][A-Za-z0-9_$]*$/;
+// The renderer bundle gate (specs/003-renderer-without-node/contracts/bundle-gate.md).
+// The renderer runs without Node, so an import of a Node builtin or of
+// `electron` anywhere in its graph, or of a stub Vite puts in place of one,
+// fails: a build with every such import and its chain of importers, the dev
+// server with the first one. In development, the imports inside the
+// dependencies the dev server pre-bundles reach the gate only in a build.
+const repositoryRoot = resolve(root, "..");
 
-function runtimeRequireExternalsPlugin() {
-  const PREFIX = "\0freelens-runtime-external:";
-  const namedExportsCache = new Map<string, string[]>();
-
-  // Enumerable own export names of a builtin, computed once in the build's Node
-  // process. Object.keys skips a function's non-configurable `prototype` (the
-  // root of the getAugmentedNamespace crash) as well as `length`/`name`.
-  const builtinNamedExports = (spec: string) => {
-    const bare = spec.startsWith("node:") ? spec.slice(5) : spec;
-    let names = namedExportsCache.get(bare);
-    if (!names) {
-      names = [];
-      try {
-        const mod = require(bare);
-        if (mod && (typeof mod === "object" || typeof mod === "function")) {
-          names = Object.keys(mod).filter(
-            (name) => name !== "default" && name !== "__esModule" && IDENTIFIER_RE.test(name),
-          );
-        }
-      } catch {
-        // Not requireable at build time; the default export shim still works.
-      }
-      namedExportsCache.set(bare, names);
-    }
-    return names;
-  };
-
+function rendererNodeGatePlugin() {
+  const nodeImports = new Map<string, NodeImport>();
   let isBuild = false;
+  let devModuleInfo: GetModuleInfo = () => null;
+
+  function refuse(this: { error(message: string): never }, nodeImport: NodeImport) {
+    if (!isBuild) {
+      this.error(formatGateResult(findNodeBringers([nodeImport], devModuleInfo, repositoryRoot)));
+    }
+
+    nodeImports.set(`${nodeImport.specifier}\0${nodeImport.importer}`, nodeImport);
+  }
 
   return {
-    name: "freelens:runtime-require-externals",
+    name: "freelens:renderer-node-gate",
     enforce: "pre" as const,
     config(_config: unknown, env: { command: string }) {
       isBuild = env.command === "build";
-      // Keep Vite's dep pre-bundler (esbuild) from trying to resolve these as
-      // browser modules; excluded ids stay external and reach resolveId below.
+      // Keep Vite's dependency pre-bundler from resolving these as browser
+      // modules, so that they reach resolveId below.
       return { optimizeDeps: { exclude: ["electron", ...nodeBuiltins] } };
     },
-    resolveId(id: string) {
+    configureServer(server: {
+      environments: {
+        client: { moduleGraph: { getModuleById(id: string): { importers: Set<{ id: string | null }> } | undefined } };
+      };
+    }) {
+      const { moduleGraph } = server.environments.client;
+
+      devModuleInfo = (id) => {
+        const node = moduleGraph.getModuleById(id);
+
+        return (
+          node && {
+            importers: [...node.importers].flatMap(({ id }) => id ?? []),
+            dynamicImporters: [],
+            isEntry: node.importers.size === 0,
+          }
+        );
+      };
+    },
+    resolveId(this: { error(message: string): never }, id: string, importer?: string) {
       if (id === "electron" || id.startsWith("electron/") || nodeBuiltins.has(id)) {
-        return PREFIX + id;
+        refuse.call(this, { specifier: id, importer: importer ?? id });
+
+        return { id, external: true };
       }
+
       return null;
     },
-    load(id: string) {
-      if (!id.startsWith(PREFIX)) return null;
-      const spec = id.slice(PREFIX.length);
-
-      // Look up `require` off the runtime global through a computed property so
-      // the bundler cannot recognise a static require() call. Under Vite 8
-      // (rolldown) a plain `require(spec)` — even behind a `const _r_ = require`
-      // alias — is re-resolved back into this same virtual module, yielding a
-      // self-referential module whose exports are all undefined. Consumers then
-      // crash with "Class extends value undefined" (e.g. minipass extending
-      // EventEmitter from `node:events`). Rollup (Vite 7) left the call alone,
-      // hence the regression.
-      const requireExpr = `globalThis[${JSON.stringify("require")}](${JSON.stringify(spec)})`;
-
-      // Node builtins in the production build (rolldown): emit a CommonJS module
-      // so `require("fs")` and friends return the real, MUTABLE runtime module
-      // object. Modules like graceful-fs monkey-patch their `require("fs")`
-      // result (`fs.close = ...`); an ESM shim's named exports become read-only
-      // namespace bindings, which rolldown's `__toCommonJS` reconstruction turns
-      // into getter-only properties, so the monkey-patch throws "Cannot set
-      // property close ... which has only a getter". A real `module.exports`
-      // passes the runtime object through untouched, and `import { x } from "fs"`
-      // still works via rolldown's CommonJS→ESM interop.
-      //
-      // The dev server (Vite native ESM) does NOT do that interop: a consumer's
-      // `import { Buffer } from "node:buffer"` against a `module.exports = ...`
-      // module fails at runtime ("does not provide an export named 'Buffer'").
-      // So in dev, emit real ESM named exports instead. graceful-fs works there
-      // because Vite's dev interop hands it a mutable object.
-      if (isBuild && spec !== "electron" && !spec.startsWith("electron/")) {
-        return { code: `module.exports = ${requireExpr};`, moduleSideEffects: false };
+    load(this: { error(message: string): never }, id: string) {
+      if (id.startsWith(browserExternalId)) {
+        refuse.call(this, { specifier: id.slice(browserExternalId.length + 1) || id, importer: id });
       }
 
-      // ESM shim: dev-mode Node builtins, and `electron` in every mode.
-      // `require("electron")` returns a path string at build time, so its
-      // exports cannot be introspected — hence the explicit `electronApiNames`
-      // list — whereas builtins are introspected with `Object.keys` (enumerable
-      // own keys only, never `prototype`/`length`/`name`).
-      const lines = [`const _m_ = ${requireExpr};`, `export default (_m_?.default ?? _m_);`];
-
-      if (spec === "electron") {
-        for (const name of electronApiNames) {
-          lines.push(`export const ${name} = _m_[${JSON.stringify(name)}];`);
-        }
-      } else if (!spec.startsWith("electron/")) {
-        for (const name of builtinNamedExports(spec)) {
-          lines.push(`export const ${name} = _m_[${JSON.stringify(name)}];`);
-        }
+      return null;
+    },
+    buildEnd(this: { getModuleInfo: GetModuleInfo; error(message: string): never }, error?: Error) {
+      if (!isBuild || error || nodeImports.size === 0) {
+        return;
       }
 
-      return { code: lines.join("\n"), moduleSideEffects: false };
+      this.error(
+        formatGateResult(findNodeBringers([...nodeImports.values()], (id) => this.getModuleInfo(id), repositoryRoot)),
+      );
     },
   };
 }
@@ -398,6 +301,23 @@ export default defineConfig({
       },
     },
   },
+  // The preload of every frame (freelens/src/preload/index.ts). It runs
+  // sandboxed, where a preload cannot load other files, so it is one CommonJS
+  // file; only `electron` stays external.
+  preload: {
+    plugins: [removeOwnOutputPlugin((name) => /^preload\.cjs(\.map)?$/.test(name))],
+    build: {
+      outDir: buildDir,
+      emptyOutDir: false,
+      minify: false,
+      sourcemap: true,
+      lib: { entry: resolve(root, "src/preload/index.ts"), formats: ["cjs"] },
+      rollupOptions: {
+        external: ["electron"],
+        output: { entryFileNames: "preload.cjs" },
+      },
+    },
+  },
   renderer: {
     root: resolve(root, "src/renderer"),
     plugins: [
@@ -407,7 +327,7 @@ export default defineConfig({
       // react-refresh pass through Oxc on the lowered code.
       standardDecorators(),
       react(),
-      runtimeRequireExternalsPlugin(),
+      rendererNodeGatePlugin(),
       rendererBuildBasePlugin("/build/"),
     ],
     server: {
@@ -444,34 +364,15 @@ export default defineConfig({
     },
     worker: {
       // Monaco workers are instantiated as module workers (verified working
-      // in the Electron renderer, see #1718). Reapply the runtime-require
-      // externals so a worker that pulls in a Node builtin gets the same shim.
+      // in the Electron renderer, see #1718). The gate covers them too.
       format: "es",
-      plugins: () => [runtimeRequireExternalsPlugin()],
+      plugins: () => [rendererNodeGatePlugin()],
     },
     build: {
       outDir: buildDir,
       emptyOutDir: false,
       minify: false,
       sourcemap: true,
-      // Leave `require("<node-builtin>")` calls in bundled CommonJS deps
-      // untouched, so at runtime (nodeIntegration) they return the real, shared,
-      // mutable Node builtin instead of a Rollup CJS-interop wrapper.
-      //
-      // Without this, @rollup/plugin-commonjs routes a CJS `require("fs")`
-      // through getAugmentedNamespace, which returns a per-consumer object whose
-      // properties are getter-only. graceful-fs then monkeypatches it
-      // (`fs.close = ...`) and throws:
-      //   Uncaught TypeError: Cannot set property close of #<Object> which has
-      //   only a getter
-      // The same wrapper path is what made a bundled readable-stream crash on a
-      // builtin's non-configurable `prototype`. Keeping builtin requires literal
-      // matches the old webpack `electron-renderer` target and lets patches like
-      // graceful-fs mutate the one real fs the whole app shares. ESM `import`s of
-      // builtins still go through runtimeRequireExternalsPlugin above.
-      commonjsOptions: {
-        ignore: (id) => nodeBuiltins.has(id),
-      },
       rollupOptions: {
         input: resolve(root, "src/renderer/index.html"),
       },

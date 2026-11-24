@@ -6,7 +6,7 @@
 
 import * as yaml from "js-yaml";
 import { temporaryDirectory } from "tempy";
-import { defaultYamlDumpOptions } from "../../common/kube-helpers";
+import { defaultYamlDumpOptions } from "../../common/kube-helpers/yaml-dump-options";
 
 import type { Logger } from "@freelensapp/logger";
 import type { AsyncResult } from "@freelensapp/utilities";
@@ -16,9 +16,9 @@ import type { Patch } from "rfc6902";
 
 import type { EmitAppEvent } from "../../common/app-event-bus/emit-event.injectable";
 import type { Cluster } from "../../common/cluster/cluster";
-import type { ExecFile } from "../../common/fs/exec-file.injectable";
-import type { RemovePath } from "../../common/fs/remove.injectable";
-import type { WriteFile } from "../../common/fs/write-file.injectable";
+import type { ExecFile } from "../../common/fs/main/exec-file.injectable";
+import type { RemovePath } from "../../common/fs/main/remove.injectable";
+import type { WriteFile } from "../../common/fs/main/write-file.injectable";
 import type { JoinPaths } from "../../common/path/join-paths.injectable";
 import type { WithFreelensProxyCredentialEnv } from "../freelens-proxy/with-freelens-proxy-credential-env.injectable";
 import type { KubeconfigManager, ProxyKubeconfigPaths } from "../kubeconfig-manager/kubeconfig-manager";

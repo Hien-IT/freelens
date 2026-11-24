@@ -4,7 +4,6 @@
  * Licensed under MIT License. See LICENSE in root directory for more information.
  */
 
-import assert from "node:assert";
 import { ValidatingWebhookConfigurationApi } from "@freelensapp/kube-api";
 import {
   logDebugInjectionToken,
@@ -12,6 +11,7 @@ import {
   logInfoInjectionToken,
   logWarningInjectionToken,
 } from "@freelensapp/logger";
+import { assert } from "@freelensapp/utilities";
 import { getInjectable } from "@ogre-tools/injectable";
 import { storesAndApisCanBeCreatedInjectionToken } from "./can-be-created-token";
 import { maybeKubeApiInjectable } from "./maybe-kube-api.injectable";

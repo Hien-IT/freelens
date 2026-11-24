@@ -4,10 +4,8 @@
  * Licensed under MIT License. See LICENSE in root directory for more information.
  */
 
-import assert from "node:assert";
-import * as path from "node:path";
-import { getOrInsertWith } from "@freelensapp/utilities";
-import directoryForUserDataInjectable from "../common/app-paths/directory-for-user-data/directory-for-user-data.injectable";
+import { assert, getOrInsertWith } from "@freelensapp/utilities";
+import { prepareExtensionStoreInjectionToken } from "../features/extensions/stores/common/prepare";
 import createPersistentStorageInjectable, {
   type PersistentStorage,
 } from "../features/persistent-storage/common/create.injectable";
@@ -67,7 +65,7 @@ export abstract class BaseExtensionStore<M extends object = any> {
 
     return {
       createPersistentStorage: di.inject(createPersistentStorageInjectable),
-      directoryForUserData: di.inject(directoryForUserDataInjectable),
+      prepareExtensionStore: di.inject(prepareExtensionStoreInjectionToken),
     } as const;
   })();
 
@@ -78,6 +76,9 @@ export abstract class BaseExtensionStore<M extends object = any> {
   }
 
   protected extension?: LensExtension;
+
+  /** The folder of the store's file, which main gives. */
+  private storeFolder?: string;
 
   loadExtension(extension: LensExtension) {
     // The instance outlives a disable: enabling the extension again reuses its
@@ -91,6 +92,16 @@ export abstract class BaseExtensionStore<M extends object = any> {
       migrations = {},
       ...params
     } = this.rawParams;
+
+    this.storeFolder = this.dependencies.prepareExtensionStore({
+      extensionId: extension.id,
+      storeName: extension.storeName,
+      configName: params.configName,
+      fileExtension: params.fileExtension,
+      encryptionKey: params.encryptionKey as string | Uint8Array | undefined,
+      encryptionAlgorithm: params.encryptionAlgorithm,
+      cwd: this.rawParams.cwd,
+    });
 
     const persistentStorage = this.dependencies.createPersistentStorage({
       ...params,
@@ -116,12 +127,9 @@ export abstract class BaseExtensionStore<M extends object = any> {
   }
 
   protected cwd() {
-    assert(this.extension, "cwd can only be called in loadExtension");
+    assert(this.extension && this.storeFolder, "cwd can only be called in loadExtension");
 
-    return (
-      this.rawParams.cwd ??
-      path.join(this.dependencies.directoryForUserData, "extension-store", this.extension.storeName)
-    );
+    return this.storeFolder;
   }
 
   abstract fromStore(data: Partial<M>): void;

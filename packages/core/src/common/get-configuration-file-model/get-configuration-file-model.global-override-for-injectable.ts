@@ -9,8 +9,8 @@ import path from "node:path";
 import { getGlobalOverride } from "@freelensapp/test-utils";
 import { get, has, set } from "es-toolkit/compat";
 import * as verkit from "verkit";
-import readJsonSyncInjectable from "../fs/read-json-sync.injectable";
-import writeJsonSyncInjectable from "../fs/write-json-sync.injectable";
+import readJsonSyncInjectable from "../fs/main/read-json-sync.injectable";
+import writeJsonSyncInjectable from "../fs/main/write-json-sync.injectable";
 import getConfigurationFileModelInjectable from "./get-configuration-file-model.injectable";
 
 import type Config from "conf";

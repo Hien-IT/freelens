@@ -11,7 +11,7 @@ import createCanIInjectable from "../../common/cluster/create-can-i.injectable";
 import createRequestNamespaceListPermissionsInjectable from "../../common/cluster/create-request-namespace-list-permissions.injectable";
 import createListNamespacesInjectable from "../../common/cluster/list-namespaces.injectable";
 import { ClusterMetadataKey } from "../../common/cluster-types";
-import writeJsonSyncInjectable from "../../common/fs/write-json-sync.injectable";
+import writeJsonSyncInjectable from "../../common/fs/main/write-json-sync.injectable";
 import normalizedPlatformInjectable from "../../common/vars/normalized-platform.injectable";
 import addClusterInjectable from "../../features/cluster/storage/common/add.injectable";
 import clusterVersionDetectorInjectable from "../cluster-detectors/cluster-version-detector.injectable";

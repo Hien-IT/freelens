@@ -12,7 +12,7 @@ import { act, fireEvent } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import directoryForLensLocalStorageInjectable from "../../../common/directory-for-lens-local-storage/directory-for-lens-local-storage.injectable";
 import navigateToNamespacesInjectable from "../../../common/front-end-routing/routes/cluster/namespaces/navigate-to-namespaces.injectable";
-import readJsonFileInjectable from "../../../common/fs/read-json-file.injectable";
+import readJsonFileInjectable from "../../../common/fs/main/read-json-file.injectable";
 import hostedClusterIdInjectable from "../../../renderer/cluster-frame-context/hosted-cluster-id.injectable";
 import dockStoreInjectable from "../../../renderer/components/dock/dock/store.injectable";
 import createEditResourceTabInjectable from "../../../renderer/components/dock/edit-resource/edit-resource-tab.injectable";
@@ -45,9 +45,12 @@ describe("cluster/namespaces - edit namespace from new tab", () => {
 
     builder.setEnvironmentToClusterFrame();
 
-    builder.beforeWindowStart(({ windowDi }) => {
-      windowDi.override(directoryForLensLocalStorageInjectable, () => "/some-directory-for-lens-local-storage");
+    // main reads and writes the local storage
+    builder.beforeApplicationStart(({ mainDi }) => {
+      mainDi.override(directoryForLensLocalStorageInjectable, () => "/some-directory-for-lens-local-storage");
+    });
 
+    builder.beforeWindowStart(({ windowDi }) => {
       windowDi.override(hostedClusterIdInjectable, () => "some-cluster-id");
 
       showSuccessNotificationMock = vi.fn();

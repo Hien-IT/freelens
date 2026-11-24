@@ -178,11 +178,8 @@ for the messages).
   `freelens-extension` scheme.
 - **Top-level await is allowed** in either entry point: the renderer imports the
   served URL and main imports a `file:` URL, both asynchronously.
-- **Renderer code gets no guarantee of Node or Electron**, `require()`
-  included. They are reachable only because the renderer is not
-  context-isolated, and they may disappear in any release, a minor one included:
-  being reachable does not make them part of the surface that
-  [C14](#c14-versioning-and-compatibility) freezes. **Main** keeps both.
+- **Renderer code gets no Node or Electron**, `require()` included. **Main**
+  keeps both.
 
 **Surface.** `main` and `renderer` in the manifest, each a path relative to the
 package root. Under URL-based loading the renderer has **no `__dirname`**, which
@@ -228,16 +225,12 @@ naming the extension and the reason; the extension goes on running the build it
 already has, in both processes, rather than one process moving on without the
 other.
 
-Extension code calling `globalThis.require` in the renderer is **warned, not
-blocked**: the host logs a deprecation warning once per extension and module
-id, and returns the module. Nothing stronger would hold while the renderer is
-not context-isolated, since the globals are shared. The warning goes by the
-**immediate caller** — the call is the extension's when the frame that made it
-is at a `freelens-extension://extensions/<name>/` URL, which also names the
-extension. So the host's own calls, and host code an extension calls into, do
-not warn; code an extension bundles is part of its file and does. The wrapper
-is installed in every frame that loads extensions, cluster frames included,
-before the first extension loads.
+`globalThis.require` is **absent** in the renderer, as are `process`, `Buffer`
+and the other globals of Node, in every frame that loads extensions, cluster
+frames included. Renderer code that uses one throws a `ReferenceError`, such
+as `require is not defined`. Thrown at import or by `onActivate`, it is a load
+failure like any other: recorded and logged with the extension's name, while
+the other extensions load.
 
 ---
 

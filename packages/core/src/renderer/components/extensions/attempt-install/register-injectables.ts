@@ -8,7 +8,6 @@
 
 import attemptInstallInjectable from "./attempt-install.injectable";
 import createTempFilesAndValidateInjectable from "./create-temp-files-and-validate.injectable";
-import getExtensionDestFolderInjectable from "./get-extension-dest-folder.injectable";
 import installFromDirectoryInjectable from "./install-from-directory.injectable";
 import installFromFileInjectable from "./install-from-file.injectable";
 import installFromUrlInjectable from "./install-from-url.injectable";
@@ -24,11 +23,6 @@ export function registerInjectables(di: DiContainerForInjection): void {
   }
   try {
     di.register(createTempFilesAndValidateInjectable);
-  } catch (e) {
-    /* Ignore duplicate registration */
-  }
-  try {
-    di.register(getExtensionDestFolderInjectable);
   } catch (e) {
     /* Ignore duplicate registration */
   }

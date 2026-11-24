@@ -75,13 +75,21 @@ describe("the Terminal Shell Path setting", () => {
     expect(await result.findByTestId("terminal-shell-lookup")).toHaveTextContent("Terminals start /bin/zsh.");
   });
 
-  it("shows the default shell of the renderer in the empty field until main answers", () => {
-    requestTerminalShellLookup.mockImplementation(() => new Promise(() => {}));
+  it("leaves the empty field without a placeholder until main answers, then shows main's default shell", async () => {
+    // only main can compute the default shell, which used to stand in here
+    let answer: (lookup: TerminalShellLookup) => void = () => {};
+
+    requestTerminalShellLookup.mockImplementation(() => new Promise((resolve) => (answer = resolve)));
 
     const result = render(<TerminalShellPath />);
 
-    expect(result.getByPlaceholderText("some-default-shell")).toHaveValue("");
+    expect(result.container.querySelector("input")).toHaveAttribute("placeholder", "");
+    expect(result.container.querySelector("input")).toHaveValue("");
     expect(result.queryByTestId("terminal-shell-lookup")).toBeNull();
+
+    await act(async () => answer({ shell: "/bin/bash", path: "/bin/bash" }));
+
+    expect(result.getByPlaceholderText("/bin/bash")).toHaveValue("");
   });
 
   it("shows the file terminals start once the field is left", async () => {

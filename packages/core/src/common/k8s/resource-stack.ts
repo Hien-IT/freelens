@@ -8,17 +8,15 @@ import { hasTypedProperty, isObject } from "@freelensapp/utilities";
 import hb from "handlebars";
 import * as yaml from "js-yaml";
 import { getDiForExtensionApi } from "../../extensions/extension-api-di";
-import { defaultYamlDumpOptions } from "../kube-helpers";
+import { defaultYamlDumpOptions } from "../kube-helpers/yaml-dump-options";
 import productNameInjectable from "../vars/product-name.injectable";
 
 import type { Logger } from "@freelensapp/logger";
 import type { AsyncResult } from "@freelensapp/utilities";
 
 import type { KubernetesCluster } from "../catalog-entities";
-import type { ReadDirectory } from "../fs/read-directory.injectable";
-import type { ReadFile } from "../fs/read-file.injectable";
 import type { KubectlApplyAll, KubectlDeleteAll } from "../kube-helpers/channels";
-import type { JoinPaths } from "../path/join-paths.injectable";
+import type { ResourceFile } from "./read-resource-folder";
 
 export interface ResourceApplyingStack {
   kubectlApplyFolder(folderPath: string, templateContext?: any, extraArgs?: string[]): Promise<string>;
@@ -29,9 +27,8 @@ export interface ResourceStackDependencies {
   readonly logger: Logger;
   kubectlApplyAll: KubectlApplyAll;
   kubectlDeleteAll: KubectlDeleteAll;
-  readDirectory: ReadDirectory;
-  joinPaths: JoinPaths;
-  readFile: ReadFile;
+  /** Main reads the folder; the renderer asks main for it. */
+  readFolder: (folderPath: string) => Promise<ResourceFile[]>;
 }
 
 export class ResourceStack {
@@ -111,11 +108,7 @@ export class ResourceStack {
     const productName = di.inject(productNameInjectable);
 
     this.dependencies.logger.info(`[RESOURCE-STACK]: render templates from ${folderPath}`);
-    const files = await this.dependencies.readDirectory(folderPath);
-
-    for (const filename of files) {
-      const file = this.dependencies.joinPaths(folderPath, filename);
-      const raw = await this.dependencies.readFile(file);
+    for (const { name: filename, contents: raw } of await this.dependencies.readFolder(folderPath)) {
       const data = (filename.endsWith(".hb") ? hb.compile(raw)(templateContext) : raw).trim();
 
       if (!data) {

@@ -8,7 +8,7 @@ import { createServer as createHttpsServer, type Server as HttpsServer } from "n
 import { connect, createServer as createNetServer, type Server as NetServer, type Socket } from "node:net";
 import { fetch as undiciFetch } from "undici";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import caCertificatesInjectable from "../../common/certificate/ca-certificates.injectable";
+import caCertificatesInjectable from "../../common/certificate/main/ca-certificates.injectable";
 import userPreferencesStateInjectable from "../../features/user-preferences/common/state.injectable";
 import { testCertificate } from "../../test-utils/test-certificate";
 import { getDiForUnitTesting } from "../getDiForUnitTesting";

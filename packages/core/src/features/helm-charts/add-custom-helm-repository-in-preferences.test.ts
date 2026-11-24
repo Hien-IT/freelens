@@ -8,7 +8,7 @@ import asyncFn from "@async-fn/vitest";
 import { showErrorNotificationInjectable, showSuccessNotificationInjectable } from "@freelensapp/notifications";
 import { fireEvent, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import execFileInjectable from "../../common/fs/exec-file.injectable";
+import execFileInjectable from "../../common/fs/main/exec-file.injectable";
 import helmBinaryPathInjectable from "../../main/helm/helm-binary-path.injectable";
 import getActiveHelmRepositoriesInjectable from "../../main/helm/repositories/get-active-helm-repositories/get-active-helm-repositories.injectable";
 import isPathInjectable from "../../renderer/components/input/validators/is-path.injectable";
@@ -22,7 +22,7 @@ import type { AsyncFnMock } from "@async-fn/vitest";
 import type { RenderResult } from "@testing-library/react";
 import type { Mock } from "vitest";
 
-import type { ExecFile } from "../../common/fs/exec-file.injectable";
+import type { ExecFile } from "../../common/fs/main/exec-file.injectable";
 import type { HelmRepo } from "../../common/helm/helm-repo";
 import type { ApplicationBuilder } from "../../renderer/components/test-utils/get-application-builder";
 

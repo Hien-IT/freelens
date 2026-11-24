@@ -4,7 +4,7 @@
  * Licensed under MIT License. See LICENSE in root directory for more information.
  */
 
-import { winstonLoggerInjectable } from "@freelensapp/logger";
+import { rendererLoggerInjectable } from "@freelensapp/logger/renderer";
 import { sendMessageToChannelInjectionToken } from "@freelensapp/messaging";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { getDiForUnitTesting } from "../../../renderer/getDiForUnitTesting";
@@ -12,17 +12,17 @@ import closeRendererLogFileInjectable from "./close-renderer-log-file.injectable
 import ipcLogTransportInjectable from "./ipc-transport.injectable";
 import rendererLogFileIdInjectable from "./renderer-log-file-id.injectable";
 
+import type { RendererLogger } from "@freelensapp/logger/renderer";
 import type { SendMessageToChannel } from "@freelensapp/messaging";
 
 import type { DiContainer } from "@ogre-tools/injectable";
-import type winston from "winston";
 
 import type IpcLogTransport from "./ipc-transport";
 
 describe("close renderer file logging", () => {
   let di: DiContainer;
   let sendIpcMock: SendMessageToChannel;
-  let winstonMock: winston.Logger;
+  let winstonMock: RendererLogger;
   let ipcTransportMock: IpcLogTransport;
 
   beforeEach(() => {
@@ -30,10 +30,10 @@ describe("close renderer file logging", () => {
     sendIpcMock = vi.fn();
     winstonMock = {
       remove: vi.fn(),
-    } as any as winston.Logger;
+    } as any as RendererLogger;
     ipcTransportMock = { name: "ipc-renderer-transport" } as IpcLogTransport;
 
-    di.override(winstonLoggerInjectable, () => winstonMock);
+    di.override(rendererLoggerInjectable, () => winstonMock);
     di.override(sendMessageToChannelInjectionToken, () => sendIpcMock);
     di.override(rendererLogFileIdInjectable, () => "some-log-id");
     di.override(ipcLogTransportInjectable, () => ipcTransportMock);

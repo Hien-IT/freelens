@@ -9,8 +9,8 @@ import { inspect } from "node:util";
 import { getOrInsertWith, isErrnoException, iter } from "@freelensapp/utilities";
 import { getInjectable } from "@ogre-tools/injectable";
 import { computed, observable } from "mobx";
-import statInjectable from "../../../common/fs/stat.injectable";
-import watchInjectable from "../../../common/fs/watch/watch.injectable";
+import statInjectable from "../../../common/fs/main/stat.injectable";
+import watchInjectable from "../../../common/fs/main/watch.injectable";
 import diffChangedKubeconfigInjectable from "./diff-changed-kubeconfig.injectable";
 import kubeconfigSyncLoggerInjectable from "./logger.injectable";
 
@@ -20,7 +20,7 @@ import type { IComputedValue, ObservableMap } from "mobx";
 
 import type { CatalogEntity } from "../../../common/catalog";
 import type { Cluster } from "../../../common/cluster/cluster";
-import type { Watcher } from "../../../common/fs/watch/watch.injectable";
+import type { Watcher } from "../../../common/fs/main/watch.injectable";
 
 export type WatchKubeconfigFileChanges = (filepath: string) => [IComputedValue<CatalogEntity[]>, Disposer];
 

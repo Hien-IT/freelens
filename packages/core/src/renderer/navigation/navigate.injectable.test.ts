@@ -3,15 +3,14 @@
  * Licensed under MIT License. See LICENSE in root directory for more information.
  */
 
-import { winstonLoggerInjectable } from "@freelensapp/logger";
+import { rendererLoggerInjectable } from "@freelensapp/logger/renderer";
 import { observableHistoryInjectionToken } from "@freelensapp/routing";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { getDiForUnitTesting } from "../getDiForUnitTesting";
 import navigateInjectable from "./navigate.injectable";
 
+import type { RendererLogger } from "@freelensapp/logger/renderer";
 import type { ObservableHistory, To } from "@freelensapp/routing";
-
-import type winston from "winston";
 
 import type { Navigate } from "./navigate.injectable";
 
@@ -26,7 +25,7 @@ describe("navigate", () => {
     warn = vi.fn();
 
     di.override(
-      winstonLoggerInjectable,
+      rendererLoggerInjectable,
       () =>
         ({
           warn,
@@ -34,7 +33,8 @@ describe("navigate", () => {
           error: vi.fn(),
           info: vi.fn(),
           silly: vi.fn(),
-        }) as unknown as winston.Logger,
+          remove: vi.fn(),
+        }) as unknown as RendererLogger,
     );
 
     navigate = di.inject(navigateInjectable);

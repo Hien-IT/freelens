@@ -12,7 +12,7 @@ import assert from "node:assert";
 import userEvent from "@testing-library/user-event";
 import * as selectEvent from "react-select-event";
 import directoryForUserDataInjectable from "../../../../../common/app-paths/directory-for-user-data/directory-for-user-data.injectable";
-import fsInjectable from "../../../../../common/fs/fs.injectable";
+import fsInjectable from "../../../../../common/fs/main/fs.injectable";
 import { defaultLogViewerPreferences } from "../../../../../features/user-preferences/common/preferences-helpers";
 import userPreferencesStateInjectable from "../../../../../features/user-preferences/common/state.injectable";
 import { getDiForUnitTesting } from "../../../../getDiForUnitTesting";

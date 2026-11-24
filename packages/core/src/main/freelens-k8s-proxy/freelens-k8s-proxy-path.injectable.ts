@@ -5,7 +5,7 @@
  */
 
 import { getInjectable } from "@ogre-tools/injectable";
-import bundledBinaryPathInjectable from "../../common/utils/bundled-binary-path.injectable";
+import bundledBinaryPathInjectable from "../../common/utils/main/bundled-binary-path.injectable";
 
 const freeLensK8sProxyPathInjectable = getInjectable({
   id: "freelens-k8s-proxy-path",

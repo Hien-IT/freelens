@@ -3,6 +3,7 @@
  * Licensed under MIT License. See LICENSE in root directory for more information.
  */
 
+import { pathToFileURL } from "node:url";
 import { observable, runInAction } from "mobx";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
@@ -252,6 +253,7 @@ const createLoader = (process: Process, enabledStates: boolean[]) =>
     extensionInstances: observable.map<LensExtensionId, LensExtensionInstance>(),
     logger,
     extensionEntryPointName: process === "main" ? "main" : "renderer",
+    fileUrlOfPath: pathToFileURL,
     updateExtensionsState: (state) => {
       for (const [id, { enabled }] of state as [LensExtensionId, { enabled: boolean }][]) {
         if (id === extensionId) {

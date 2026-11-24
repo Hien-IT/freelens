@@ -23,7 +23,7 @@ import {
 import { registerFeature } from "@freelensapp/feature-core";
 import { keyboardShortcutsFeature } from "@freelensapp/keyboard-shortcuts";
 import { kubeApiSpecificsFeature } from "@freelensapp/kube-api-specifics";
-import { loggerFeature } from "@freelensapp/logger";
+import { loggerFeatureForRenderer } from "@freelensapp/logger/renderer";
 import { messagingFeatureForRenderer } from "@freelensapp/messaging-for-renderer";
 import { notificationsFeature } from "@freelensapp/notifications";
 import { randomFeature } from "@freelensapp/random";
@@ -47,7 +47,7 @@ runInAction(() => {
   registerMobX(di);
   registerLensCore(di, environment);
 
-  registerFeature(di, loggerFeature);
+  registerFeature(di, loggerFeatureForRenderer);
 
   registerFeature(
     di,

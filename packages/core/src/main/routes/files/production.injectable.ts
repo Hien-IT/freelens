@@ -7,7 +7,7 @@
 import path from "node:path";
 import { prefixedLoggerInjectable } from "@freelensapp/logger";
 import { getInjectable } from "@ogre-tools/injectable";
-import readFileBufferInjectable from "../../../common/fs/read-file-buffer.injectable";
+import readFileBufferInjectable from "../../../common/fs/main/read-file-buffer.injectable";
 import joinPathsInjectable from "../../../common/path/join-paths.injectable";
 import staticFilesDirectoryInjectable from "../../../common/vars/static-files-directory.injectable";
 import { contentTypes } from "../../router/router-content-types";

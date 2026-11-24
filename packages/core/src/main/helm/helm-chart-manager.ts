@@ -9,8 +9,8 @@ import * as yaml from "js-yaml";
 
 import type { Logger } from "@freelensapp/logger";
 
-import type { ReadFile } from "../../common/fs/read-file.injectable";
-import type { Stat } from "../../common/fs/stat.injectable";
+import type { ReadFile } from "../../common/fs/main/read-file.injectable";
+import type { Stat } from "../../common/fs/main/stat.injectable";
 import type { HelmRepo } from "../../common/helm/helm-repo";
 import type { RepoHelmChartList } from "../../common/k8s-api/endpoints/helm-charts.api/request-charts.injectable";
 import type { ExecHelm } from "./exec-helm/exec-helm.injectable";

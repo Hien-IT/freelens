@@ -4,8 +4,8 @@
  */
 
 import { getInjectable } from "@ogre-tools/injectable";
-import defaultShellInjectable from "../../common/vars/default-shell.injectable";
-import userShellSettingInjectable from "../../features/user-preferences/common/shell-setting.injectable";
+import defaultShellInjectable from "../../common/vars/main/default-shell.injectable";
+import userShellSettingInjectable from "../../features/user-preferences/main/shell-setting.injectable";
 
 export type GetUserShell = () => string;
 

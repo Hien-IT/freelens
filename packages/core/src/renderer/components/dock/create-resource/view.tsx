@@ -15,7 +15,7 @@ import { observer } from "mobx-react";
 import React from "react";
 import apiManagerInjectable from "../../../../common/k8s-api/api-manager/manager.injectable";
 import requestKubeObjectCreationInjectable from "../../../../common/k8s-api/endpoints/resource-applier.api/request-update.injectable";
-import { defaultYamlDumpOptions } from "../../../../common/kube-helpers";
+import { defaultYamlDumpOptions } from "../../../../common/kube-helpers/yaml-dump-options";
 import navigateInjectable from "../../../navigation/navigate.injectable";
 import getDetailsUrlInjectable from "../../kube-detail-params/get-details-url.injectable";
 import { Select } from "../../select";

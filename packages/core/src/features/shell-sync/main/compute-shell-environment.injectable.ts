@@ -5,8 +5,8 @@
  */
 
 import { getInjectable } from "@ogre-tools/injectable";
-import defaultShellInjectable from "../../../common/vars/default-shell.injectable";
 import isWindowsInjectable from "../../../common/vars/is-windows.injectable";
+import defaultShellInjectable from "../../../common/vars/main/default-shell.injectable";
 import computeUnixShellEnvironmentInjectable from "./compute-unix-shell-environment.injectable";
 
 import type { AsyncResult } from "@freelensapp/utilities";

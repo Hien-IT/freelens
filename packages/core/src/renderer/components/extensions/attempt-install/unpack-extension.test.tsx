@@ -9,12 +9,14 @@ import { NotificationStatus, notificationsStoreInjectable } from "@freelensapp/n
 import fse from "fs-extra";
 import { computed } from "mobx";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import extractTarInjectable from "../../../../common/fs/extract-tar.injectable";
+import extractTarInjectable from "../../../../common/fs/main/extract-tar.injectable";
 import extensionLoaderInjectable from "../../../../extensions/extension-loader/extension-loader.injectable";
-import activateInstalledBuildInjectable from "../../../../features/extensions/installer/common/activate-installed-build.injectable";
 import extensionsRootInjectable from "../../../../features/extensions/installer/common/extensions-root.injectable";
+import activateInstalledBuildInjectable from "../../../../features/extensions/installer/main/activate-installed-build.injectable";
+import commitExtensionPackageListenerInjectable from "../../../../features/extensions/installer/main/commit-listener.injectable";
+import stagedExtensionPackagesInjectable from "../../../../features/extensions/installer/main/staged-packages.injectable";
+import { getMainAndRenderer } from "../../../../test-utils/channels-between-main-and-renderer";
 import { textOf } from "../../../../test-utils/text-of";
-import { getDiForUnitTesting } from "../../../getDiForUnitTesting";
 import unpackExtensionInjectable from "./unpack-extension.injectable";
 
 import type { DiContainer } from "@ogre-tools/injectable";
@@ -28,6 +30,7 @@ const extensionId = "/some-extension-id";
 
 describe("unpackExtension", () => {
   let di: DiContainer;
+  let mainDi: DiContainer;
   let unpackExtension: UnpackExtension;
   let workDir: string;
   let setIsEnabledMock: Mock;
@@ -36,34 +39,51 @@ describe("unpackExtension", () => {
   // enabled state left behind for its name decides.
   let comesUpEnabled: boolean;
 
+  // a package main staged, which the renderer has by its id
+  const staged = (
+    tempFile: string,
+    manifest: InstallRequestValidated["manifest"],
+    checksum?: InstallRequestValidated["checksum"],
+  ): InstallRequestValidated => {
+    const stagingId = `some-staging-id-${Math.random()}`;
+    const data = Buffer.from("not really a tarball");
+
+    mainDi.inject(stagedExtensionPackagesInjectable).set(stagingId, {
+      fileName: "my-extension-0.1.0.tgz",
+      tempFile,
+      data,
+      manifest,
+    });
+
+    return { id: extensionId, fileName: "my-extension-0.1.0.tgz", data, stagingId, manifest, checksum };
+  };
+
   const request = async (checksum?: InstallRequestValidated["checksum"]): Promise<InstallRequestValidated> => {
     const tempFile = path.join(workDir, "my-extension-0.1.0.tgz");
 
     await fse.writeFile(tempFile, "not really a tarball");
 
-    return {
-      id: extensionId,
-      fileName: "my-extension-0.1.0.tgz",
-      data: Buffer.from("not really a tarball"),
-      tempFile,
-      manifest: { name: "my-extension", version: "0.1.0", engines: { freelens: "^2.0.0" } },
-      checksum,
-    };
+    return staged(tempFile, { name: "my-extension", version: "0.1.0", engines: { freelens: "^2.0.0" } }, checksum);
   };
 
   const notifications = () => di.inject(notificationsStoreInjectable).notifications;
 
   beforeEach(async () => {
-    di = getDiForUnitTesting();
+    // the renderer installs, and main extracts and records the build
+    const both = getMainAndRenderer();
+
+    di = both.rendererDi;
+    mainDi = both.mainDi;
 
     workDir = await fse.mkdtemp(path.join(os.tmpdir(), "freelens-unpack-extension-"));
 
-    di.override(extensionsRootInjectable, () => path.join(workDir, "extensions"));
-    di.override(extractTarInjectable, () => async (_filePath, opts) => {
+    mainDi.override(extensionsRootInjectable, () => path.join(workDir, "extensions"));
+    mainDi.override(extractTarInjectable, () => async (_filePath, opts) => {
       await fse.outputJson(path.join(opts?.cwd ?? workDir, "package", "package.json"), { name: "my-extension" });
     });
     activateInstalledBuildMock = vi.fn(async () => {});
-    di.override(activateInstalledBuildInjectable, () => activateInstalledBuildMock);
+    mainDi.override(activateInstalledBuildInjectable, () => activateInstalledBuildMock);
+    both.listenInMain(commitExtensionPackageListenerInjectable);
     comesUpEnabled = false;
     setIsEnabledMock = vi.fn(async () => {});
     di.override(
@@ -151,14 +171,13 @@ describe("unpackExtension", () => {
 
     await fse.writeFile(tempFile, "not really a tarball");
 
-    await unpackExtension({
-      id: extensionId,
-      fileName: "my-extension-0.1.0.tgz",
-      data: Buffer.from("not really a tarball"),
-      tempFile,
-      manifest: { name: "my-extension", version: "0.1.0", engines: { freelens: "^2.0.0" } },
-      checksum: { kind: "sha256", value: "0".repeat(64) },
-    });
+    await unpackExtension(
+      staged(
+        tempFile,
+        { name: "my-extension", version: "0.1.0", engines: { freelens: "^2.0.0" } },
+        { kind: "sha256", value: "0".repeat(64) },
+      ),
+    );
 
     expect(await fse.pathExists(tempDirectory)).toBe(false);
   });
@@ -168,20 +187,19 @@ describe("unpackExtension", () => {
 
     await fse.outputFile(tempFile, "not really a tarball");
 
-    await unpackExtension({
-      id: extensionId,
-      fileName: "my-extension-0.1.0.tgz",
-      data: Buffer.from("not really a tarball"),
-      tempFile,
-      manifest: { name: "my-extension", version: "0.1.0/../../../escaped", engines: { freelens: "^2.0.0" } },
-      checksum: { kind: "sha256", value: "0".repeat(64) },
-    });
+    await unpackExtension(
+      staged(
+        tempFile,
+        { name: "my-extension", version: "0.1.0/../../../escaped", engines: { freelens: "^2.0.0" } },
+        { kind: "sha256", value: "0".repeat(64) },
+      ),
+    );
 
     const notificationsStore = di.inject(notificationsStoreInjectable);
 
     expect((await fse.readdir(workDir)).filter((entry) => entry.startsWith("escaped"))).toEqual([]);
     expect(notificationsStore.notifications).toHaveLength(1);
     expect(notificationsStore.notifications[0].status).toBe(NotificationStatus.ERROR);
-    expect(di.inject(activateInstalledBuildInjectable)).not.toHaveBeenCalled();
+    expect(mainDi.inject(activateInstalledBuildInjectable)).not.toHaveBeenCalled();
   });
 });

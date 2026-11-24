@@ -7,7 +7,7 @@ import { loggerInjectionToken } from "@freelensapp/logger";
 import { getRandomIdInjectionToken } from "@freelensapp/random";
 import { getInjectable } from "@ogre-tools/injectable";
 import directoryForUserDataInjectable from "../../../common/app-paths/directory-for-user-data/directory-for-user-data.injectable";
-import fsInjectable from "../../../common/fs/fs.injectable";
+import fsInjectable from "../../../common/fs/main/fs.injectable";
 import joinPathsInjectable from "../../../common/path/join-paths.injectable";
 import isLinuxInjectable from "../../../common/vars/is-linux.injectable";
 import electronAppInjectable from "../../../main/electron-app/electron-app.injectable";

@@ -5,7 +5,7 @@
  */
 
 import { getInjectable } from "@ogre-tools/injectable";
-import execFileInjectable from "../../../common/fs/exec-file.injectable";
+import execFileInjectable from "../../../common/fs/main/exec-file.injectable";
 import withFreelensProxyCredentialEnvInjectable from "../../freelens-proxy/with-freelens-proxy-credential-env.injectable";
 import helmBinaryPathInjectable from "../helm-binary-path.injectable";
 import execHelmEnvInjectable from "./exec-env.injectable";

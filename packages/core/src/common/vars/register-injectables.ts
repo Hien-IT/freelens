@@ -9,12 +9,9 @@
 import appNameInjectable from "./app-name.injectable";
 import applicationCopyrightInjectable from "./application-copyright.injectable";
 import applicationDescriptionInjectable from "./application-description.injectable";
-import baseBundledBinariesDirectoryInjectable from "./base-bundled-binaries-dir.injectable";
 import bundledKubectlVersionInjectable from "./bundled-kubectl-version.injectable";
-import bundledResourcesDirectoryInjectable from "./bundled-resources-dir.injectable";
 import contentSecurityPolicyInjectable from "./content-security-policy.injectable";
 import currentTimezoneInjectable from "./current-timezone.injectable";
-import defaultShellInjectable from "./default-shell.injectable";
 import extensionApiVersionInjectable from "./extension-api-version.injectable";
 import isDebuggingInjectable from "./is-debugging.injectable";
 import isDevelopmentInjectable from "./is-development.injectable";
@@ -25,15 +22,11 @@ import isMacInjectable from "./is-mac.injectable";
 import isProductionInjectable from "./is-production.injectable";
 import isSnapPackageInjectable from "./is-snap-package.injectable";
 import isWindowsInjectable from "./is-windows.injectable";
-import lensResourcesDirInjectable from "./lens-resources-dir.injectable";
 import normalizedPlatformInjectable from "./normalized-platform.injectable";
-import normalizedPlatformArchitectureInjectable from "./normalized-platform-architecture.injectable";
 import platformInjectable from "./platform.injectable";
-import processArchInjectable from "./process-arch.injectable";
 import productNameInjectable from "./product-name.injectable";
 import staticFilesDirectoryInjectable from "./static-files-directory.injectable";
 import storeMigrationVersionInjectable from "./store-migration-version.injectable";
-import userInfoInjectable from "./user-info.injectable";
 
 import type { DiContainerForInjection } from "@ogre-tools/injectable";
 
@@ -54,17 +47,7 @@ export function registerInjectables(di: DiContainerForInjection): void {
     /* Ignore duplicate registration */
   }
   try {
-    di.register(baseBundledBinariesDirectoryInjectable);
-  } catch (e) {
-    /* Ignore duplicate registration */
-  }
-  try {
     di.register(bundledKubectlVersionInjectable);
-  } catch (e) {
-    /* Ignore duplicate registration */
-  }
-  try {
-    di.register(bundledResourcesDirectoryInjectable);
   } catch (e) {
     /* Ignore duplicate registration */
   }
@@ -75,11 +58,6 @@ export function registerInjectables(di: DiContainerForInjection): void {
   }
   try {
     di.register(currentTimezoneInjectable);
-  } catch (e) {
-    /* Ignore duplicate registration */
-  }
-  try {
-    di.register(defaultShellInjectable);
   } catch (e) {
     /* Ignore duplicate registration */
   }
@@ -134,27 +112,12 @@ export function registerInjectables(di: DiContainerForInjection): void {
     /* Ignore duplicate registration */
   }
   try {
-    di.register(lensResourcesDirInjectable);
-  } catch (e) {
-    /* Ignore duplicate registration */
-  }
-  try {
-    di.register(normalizedPlatformArchitectureInjectable);
-  } catch (e) {
-    /* Ignore duplicate registration */
-  }
-  try {
     di.register(normalizedPlatformInjectable);
   } catch (e) {
     /* Ignore duplicate registration */
   }
   try {
     di.register(platformInjectable);
-  } catch (e) {
-    /* Ignore duplicate registration */
-  }
-  try {
-    di.register(processArchInjectable);
   } catch (e) {
     /* Ignore duplicate registration */
   }
@@ -170,11 +133,6 @@ export function registerInjectables(di: DiContainerForInjection): void {
   }
   try {
     di.register(storeMigrationVersionInjectable);
-  } catch (e) {
-    /* Ignore duplicate registration */
-  }
-  try {
-    di.register(userInfoInjectable);
   } catch (e) {
     /* Ignore duplicate registration */
   }

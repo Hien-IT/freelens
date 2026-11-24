@@ -6,8 +6,8 @@
 
 import { loggerInjectionToken } from "@freelensapp/logger";
 import { getInjectable, lifecycleEnum } from "@ogre-tools/injectable";
-import readFileInjectable from "../../common/fs/read-file.injectable";
-import statInjectable from "../../common/fs/stat.injectable";
+import readFileInjectable from "../../common/fs/main/read-file.injectable";
+import statInjectable from "../../common/fs/main/stat.injectable";
 import execHelmInjectable from "./exec-helm/exec-helm.injectable";
 import { HelmChartManager } from "./helm-chart-manager";
 import helmChartManagerCacheInjectable from "./helm-chart-manager-cache.injectable";

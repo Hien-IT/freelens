@@ -5,15 +5,12 @@
  */
 
 import { loggerInjectionToken } from "@freelensapp/logger";
+import { requestFromChannelInjectionToken } from "@freelensapp/messaging";
 import { showErrorNotificationInjectable } from "@freelensapp/notifications";
-import { noop } from "@freelensapp/utilities";
 import { getInjectable } from "@ogre-tools/injectable";
-import fse from "fs-extra";
-import writeFileInjectable from "../../../../common/fs/write-file.injectable";
-import tempDirectoryPathInjectable from "../../../../common/os/temp-directory-path.injectable";
-import joinPathsInjectable from "../../../../common/path/join-paths.injectable";
+import { stageExtensionPackageChannel } from "../../../../features/extensions/installer/common/install-channels";
 import { getMessageFromError } from "../get-message-from-error/get-message-from-error";
-import { validatePackage } from "./validate-package";
+import { toBase64 } from "./to-base64";
 
 import type { LensExtensionId, LensExtensionManifest } from "../../../../extensions/installed-extension";
 import type { InstallChecksum } from "../../../../features/extensions/installer/common/checksums";
@@ -26,10 +23,10 @@ export interface InstallRequestValidated {
   id: LensExtensionId;
   manifest: LensExtensionManifest;
   /**
-   * The path of the packed extension for unpacking, alone in a directory
-   * created for this install, which goes with it once the install is over.
+   * The id main staged the packed extension under, in a directory of its own,
+   * good for one commit or discard.
    */
-  tempFile: string;
+  stagingId: string;
   source?: InstalledExtensionSource;
   checksum?: InstallChecksum;
 }
@@ -40,33 +37,22 @@ const createTempFilesAndValidateInjectable = getInjectable({
   id: "create-temp-files-and-validate",
   instantiate: (di): CreateTempFilesAndValidate => {
     const logger = di.inject(loggerInjectionToken);
-    const writeFile = di.inject(writeFileInjectable);
-    const joinPaths = di.inject(joinPathsInjectable);
+    const requestFromChannel = di.inject(requestFromChannelInjectionToken);
     const showErrorNotification = di.inject(showErrorNotificationInjectable);
-    const tempDirectoryPath = di.inject(tempDirectoryPathInjectable);
 
     return async ({ fileName, data, source, checksum }) => {
-      let tempDirectory: string | undefined;
-
       try {
-        // A directory of this install's own, created with a random name and
-        // readable by this user alone: the tarball is read again after it is
-        // validated, so nobody else may be able to replace it in between, and
-        // two installs of the same file name must not overwrite each other.
-        const directory: string = await fse.mkdtemp(joinPaths(tempDirectoryPath, "freelens-extension-"));
-
-        tempDirectory = directory;
-
-        const tempFile = joinPaths(directory, fileName);
-
-        await writeFile(tempFile, data);
-        const manifest = await validatePackage(tempFile);
+        // main writes the tarball where nobody else can replace it, and reads its manifest
+        const { stagingId, manifest } = await requestFromChannel(stageExtensionPackageChannel, {
+          fileName,
+          base64: toBase64(data),
+        });
 
         return {
           fileName,
           data,
           manifest,
-          tempFile,
+          stagingId,
           source,
           checksum,
           // An extension is identified by its name, independently of which
@@ -74,10 +60,6 @@ const createTempFilesAndValidateInjectable = getInjectable({
           id: manifest.name,
         };
       } catch (error) {
-        if (tempDirectory) {
-          await fse.remove(tempDirectory).catch(noop);
-        }
-
         const message = getMessageFromError(error);
 
         logger.info(`[EXTENSION-INSTALLATION]: installing ${fileName} has failed: ${message}`, { error });

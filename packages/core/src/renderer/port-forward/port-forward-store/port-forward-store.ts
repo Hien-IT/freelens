@@ -7,13 +7,13 @@
 import { disposer } from "@freelensapp/utilities";
 import autoBind from "auto-bind";
 import { action, observable, reaction } from "mobx";
-import { waitUntilFree } from "tcp-port-used";
 import { ItemStore } from "../../../common/item.store";
 import { PortForwardItem } from "../port-forward-item";
 
 import type { JsonApi } from "@freelensapp/json-api";
 import type { Logger } from "@freelensapp/logger";
 
+import type { WaitUntilPortFree } from "../../../features/port-forward/renderer/wait-until-port-free.injectable";
 import type { StorageLayer } from "../../utils/storage-helper";
 import type { ForwardedPort } from "../port-forward-item";
 import type { RequestActivePortForward } from "./request-active-port-forward.injectable";
@@ -24,6 +24,7 @@ interface Dependencies {
   readonly logger: Logger;
   notifyErrorPortForwarding: (message: string) => void;
   requestActivePortForward: RequestActivePortForward;
+  waitUntilPortFree: WaitUntilPortFree;
 }
 
 export class PortForwardStore extends ItemStore<PortForwardItem> {
@@ -222,7 +223,7 @@ export class PortForwardStore extends ItemStore<PortForwardItem> {
         `/pods/port-forward/${portForward.namespace}/${portForward.kind}/${portForward.name}`,
         { query: { port, forwardPort } },
       );
-      await waitUntilFree(+forwardPort, 200, 1000);
+      await this.dependencies.waitUntilPortFree(+forwardPort);
     } catch (error) {
       this.dependencies.logger.warn(`[PORT-FORWARD-STORE] Error stopping active port-forward: ${error}`, portForward);
       throw error;

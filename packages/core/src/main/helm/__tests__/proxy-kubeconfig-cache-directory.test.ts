@@ -7,9 +7,9 @@ import path from "node:path";
 import { computed } from "mobx";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { Cluster } from "../../../common/cluster/cluster";
-import execFileInjectable from "../../../common/fs/exec-file.injectable";
-import removePathInjectable from "../../../common/fs/remove.injectable";
-import writeFileInjectable from "../../../common/fs/write-file.injectable";
+import execFileInjectable from "../../../common/fs/main/exec-file.injectable";
+import removePathInjectable from "../../../common/fs/main/remove.injectable";
+import writeFileInjectable from "../../../common/fs/main/write-file.injectable";
 import userPreferencesStateInjectable from "../../../features/user-preferences/common/state.injectable";
 import freelensProxyTokenInjectable from "../../freelens-proxy/freelens-proxy-token.injectable";
 import { getDiForUnitTesting } from "../../getDiForUnitTesting";
@@ -30,9 +30,9 @@ import rollbackHelmReleaseInjectable from "../rollback-helm-release.injectable";
 import type { DiContainer } from "@ogre-tools/injectable";
 import type { Mock } from "vitest";
 
-import type { ExecFile } from "../../../common/fs/exec-file.injectable";
-import type { RemovePath } from "../../../common/fs/remove.injectable";
-import type { WriteFile } from "../../../common/fs/write-file.injectable";
+import type { ExecFile } from "../../../common/fs/main/exec-file.injectable";
+import type { RemovePath } from "../../../common/fs/main/remove.injectable";
+import type { WriteFile } from "../../../common/fs/main/write-file.injectable";
 import type { KubeconfigManager, ProxyKubeconfigPaths } from "../../kubeconfig-manager/kubeconfig-manager";
 import type { ExecHelm } from "../exec-helm/exec-helm.injectable";
 

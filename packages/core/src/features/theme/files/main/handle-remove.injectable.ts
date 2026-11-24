@@ -4,7 +4,7 @@
  */
 
 import { getRequestChannelListenerInjectable } from "@freelensapp/messaging";
-import removePathInjectable from "../../../../common/fs/remove.injectable";
+import removePathInjectable from "../../../../common/fs/main/remove.injectable";
 import { removeThemeChannel } from "../common/channels";
 import { getThemeNameError } from "../common/schema";
 import getThemeFilePathInjectable from "./get-theme-file-path.injectable";

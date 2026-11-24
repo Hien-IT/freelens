@@ -4,8 +4,7 @@
  * Licensed under MIT License. See LICENSE in root directory for more information.
  */
 
-import assert from "node:assert";
-import { onceDefined } from "@freelensapp/utilities";
+import { assert, onceDefined } from "@freelensapp/utilities";
 import { action, observable, when } from "mobx";
 import { getClusterFrameUrl } from "../../../common/utils";
 

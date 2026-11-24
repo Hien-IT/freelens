@@ -6,6 +6,7 @@
 
 import { loggerInjectionToken } from "@freelensapp/logger";
 import catalogCategoryRegistryInjectable from "../common/catalog/category-registry.injectable";
+import requestExtensionFileFolderInjectable from "../features/extensions/file-folder/renderer/request-extension-file-folder.injectable";
 import navigateToPreferencesInjectable from "../features/preferences/common/navigate-to-preferences.injectable";
 import catalogEntityRegistryInjectable from "../renderer/api/catalog/entity/registry.injectable";
 import { getExtensionRoutePath } from "../renderer/routes/for-extension";
@@ -13,7 +14,6 @@ import getExtensionPageParametersInjectable from "../renderer/routes/get-extensi
 import navigateToRouteInjectable from "../renderer/routes/navigate-to-route.injectable";
 import routesInjectable from "../renderer/routes/routes.injectable";
 import { getEnvironmentSpecificDiForExtensionApi } from "./extension-api-di";
-import ensureHashedDirectoryForExtensionInjectable from "./extension-loader/file-system-provisioner-store/ensure-hashed-directory-for-extension.injectable";
 import { Disposers, LensExtension } from "./lens-extension";
 
 import type { ClusterFrameChildComponent } from "@freelensapp/react-application";
@@ -94,7 +94,8 @@ export class LensRendererExtension extends LensExtension {
     const deps: LensRendererExtensionDependencies = {
       getExtensionPageParameters: di.inject(getExtensionPageParametersInjectable),
       navigateToRoute: di.inject(navigateToRouteInjectable),
-      ensureHashedDirectoryForExtension: di.inject(ensureHashedDirectoryForExtensionInjectable),
+      // main computes the store name from the manifest it has, and creates the folder
+      ensureHashedDirectoryForExtension: () => di.inject(requestExtensionFileFolderInjectable)(extension.id),
       categoryRegistry: di.inject(catalogCategoryRegistryInjectable),
       entityRegistry: di.inject(catalogEntityRegistryInjectable),
       routes: di.inject(routesInjectable),

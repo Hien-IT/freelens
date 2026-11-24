@@ -5,7 +5,7 @@
  */
 
 import { createFsFromVolume, Volume } from "memfs";
-import fsInjectable from "../common/fs/fs.injectable";
+import fsInjectable from "../common/fs/main/fs.injectable";
 
 import type { DiContainer } from "@ogre-tools/injectable";
 import type {

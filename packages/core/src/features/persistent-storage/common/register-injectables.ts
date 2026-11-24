@@ -8,6 +8,7 @@
 
 import createPersistentStorageInjectable from "./create.injectable";
 import persistentStorageMigrationsInjectable from "./migrations.injectable";
+import persistentStorageRegistryInjectable from "./registry.injectable";
 
 import type { DiContainerForInjection } from "@ogre-tools/injectable";
 
@@ -19,6 +20,11 @@ export function registerInjectables(di: DiContainerForInjection): void {
   }
   try {
     di.register(persistentStorageMigrationsInjectable);
+  } catch (e) {
+    /* Ignore duplicate registration */
+  }
+  try {
+    di.register(persistentStorageRegistryInjectable);
   } catch (e) {
     /* Ignore duplicate registration */
   }

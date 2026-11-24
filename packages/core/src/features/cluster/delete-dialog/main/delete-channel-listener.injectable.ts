@@ -9,7 +9,7 @@ import { noop } from "@freelensapp/utilities";
 import emitAppEventInjectable from "../../../../common/app-event-bus/emit-event.injectable";
 import clusterFramesInjectable from "../../../../common/cluster-frames.injectable";
 import directoryForLensLocalStorageInjectable from "../../../../common/directory-for-lens-local-storage/directory-for-lens-local-storage.injectable";
-import removePathInjectable from "../../../../common/fs/remove.injectable";
+import removePathInjectable from "../../../../common/fs/main/remove.injectable";
 import joinPathsInjectable from "../../../../common/path/join-paths.injectable";
 import clusterConnectionInjectable from "../../../../main/cluster/cluster-connection.injectable";
 import clustersStateInjectable from "../../storage/common/state.injectable";

@@ -7,8 +7,8 @@
 import { loggerInjectionToken } from "@freelensapp/logger";
 import { getInjectable } from "@ogre-tools/injectable";
 import { temporaryDirectory } from "tempy";
-import removePathInjectable from "../../../common/fs/remove.injectable";
-import writeFileInjectable from "../../../common/fs/write-file.injectable";
+import removePathInjectable from "../../../common/fs/main/remove.injectable";
+import writeFileInjectable from "../../../common/fs/main/write-file.injectable";
 import joinPathsInjectable from "../../../common/path/join-paths.injectable";
 import userPreferencesStateInjectable from "../../../features/user-preferences/common/state.injectable";
 import kubeconfigManagerInjectable from "../../kubeconfig-manager/kubeconfig-manager.injectable";

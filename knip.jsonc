@@ -93,6 +93,9 @@
         // devDependencies
         "src/main/index.ts!",
         "src/renderer/index.ts",
+        // the preload of every frame: the entry of the preload section of
+        // electron.vite.config.ts, fully bundled with only electron external
+        "src/preload/index.ts",
         // the ambient type of the FreelensExtensionApi global: tsconfig.json
         // includes it, and nothing imports it
         "src/freelens-extension-api.ts!",

@@ -919,7 +919,7 @@ exports[`preferences - navigation to terminal preferences > given in preferences
                     >
                       <input
                         class="input grow"
-                        placeholder="some-default-shell"
+                        placeholder=""
                         spellcheck="false"
                         value=""
                       />

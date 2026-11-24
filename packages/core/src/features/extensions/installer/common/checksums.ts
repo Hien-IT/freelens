@@ -3,7 +3,9 @@
  * Licensed under MIT License. See LICENSE in root directory for more information.
  */
 
-import { createHash } from "node:crypto";
+import { sha1 } from "@noble/hashes/legacy.js";
+import { sha256, sha512 } from "@noble/hashes/sha2.js";
+import { bytesToHex } from "@noble/hashes/utils.js";
 
 /**
  * How much of the tarball digest goes into the install path. Eight hex
@@ -26,8 +28,26 @@ export interface ChecksumMismatch {
  * The identity of an installed build: sha256 over the archive bytes, not over
  * the extracted tree, whose hash depends on extraction order and filesystem.
  */
+const hashes = { sha1, sha256, sha512 };
+
+/**
+ * The bytes as noble wants them: a view of this realm's \`Uint8Array\`, as a
+ * \`Buffer\` or bytes from another frame are refused otherwise.
+ */
+const bytesOf = (data: Uint8Array) => new Uint8Array(data.buffer, data.byteOffset, data.byteLength);
+
+const toBase64 = (bytes: Uint8Array) => {
+  let binary = "";
+
+  for (let index = 0; index < bytes.length; index += 0x8000) {
+    binary += String.fromCharCode(...bytes.subarray(index, index + 0x8000));
+  }
+
+  return btoa(binary);
+};
+
 export function computeTarballDigest(data: Uint8Array): string {
-  return createHash("sha256").update(data).digest("hex");
+  return bytesToHex(sha256(bytesOf(data)));
 }
 
 export function shortenDigest(digest: string): string {
@@ -60,7 +80,7 @@ export function verifySubresourceIntegrity(data: Uint8Array, integrity: string):
     throw new Error(`unsupported integrity algorithm "${algorithm}"`);
   }
 
-  const actual = createHash(algorithm).update(data).digest("base64");
+  const actual = toBase64(hashes[algorithm](bytesOf(data)));
 
   return actual === expected ? undefined : { algorithm, expected, actual };
 }

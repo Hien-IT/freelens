@@ -56,10 +56,9 @@ pnpm test:unit
 pnpm build && pnpm knip:check
 ```
 
-`pnpm type:check` fails when a file that no longer uses Node is still on the
-renderer legacy list or the Biome exemption. `pnpm build` fails when the
-renderer bundle brings in Node from a module not on the `rendererBundle` list,
-or when a listed module no longer does ([bundle-gate.md](./contracts/bundle-gate.md)).
+`pnpm type:check` fails when a file is on the renderer legacy list or exempt
+from `noNodejsModules` in `biome.jsonc`. `pnpm build` fails when the renderer
+bundle brings in Node ([bundle-gate.md](./contracts/bundle-gate.md)).
 
 ## User Story 1: values and actions of the machine
 
@@ -146,8 +145,12 @@ Then:
 
   The median startup of this branch is at most 10% above `main`'s.
 - **Cluster frame**: the Playwright script of research R15, which T075 writes
-  to `$TMPDIR/003-sc005/cluster-frame.mjs`, three runs on each build. The median time from the click to the first page is at most 10% above
-  `main`'s.
+  to `$TMPDIR/003-sc005/cluster-frame.mjs`, three runs on each build: this
+  branch, `main`, and this branch with `sandbox: false` in
+  `create-electron-window.injectable.ts`. The median time from the click to
+  the first page of the build with the sandbox off is at most 10% above
+  `main`'s; the difference between this branch and that build is the
+  sandbox's own cost, which goes with the figures.
 
 ## SC-006: the channels
 

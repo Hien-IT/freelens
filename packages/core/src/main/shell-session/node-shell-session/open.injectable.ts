@@ -7,7 +7,7 @@
 import { loggerInjectionToken } from "@freelensapp/logger";
 import { getInjectable } from "@ogre-tools/injectable";
 import emitAppEventInjectable from "../../../common/app-event-bus/emit-event.injectable";
-import statInjectable from "../../../common/fs/stat.injectable";
+import statInjectable from "../../../common/fs/main/stat.injectable";
 import createKubeApiInjectable from "../../../common/k8s-api/create-kube-api.injectable";
 import createKubeJsonApiForClusterInjectable from "../../../common/k8s-api/create-kube-json-api-for-cluster.injectable";
 import appNameInjectable from "../../../common/vars/app-name.injectable";

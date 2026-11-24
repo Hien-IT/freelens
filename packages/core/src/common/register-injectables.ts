@@ -17,12 +17,10 @@ import { registerInjectables as registerDependencyInjectionInjectables } from ".
 import { registerInjectables as registerDirectoryForLensLocalStorageInjectables } from "./directory-for-lens-local-storage/register-injectables";
 import { registerInjectables as registerFetchInjectables } from "./fetch/register-injectables";
 import { registerInjectables as registerFrontEndRoutingInjectables } from "./front-end-routing/register-injectables";
-import { registerInjectables as registerFsInjectables } from "./fs/register-injectables";
 import { registerInjectables as registerGetConfigurationFileModelInjectables } from "./get-configuration-file-model/register-injectables";
 import { registerInjectables as registerIpcInjectables } from "./ipc/register-injectables";
 import { registerInjectables as registerK8sInjectables } from "./k8s/register-injectables";
 import { registerInjectables as registerK8sApiInjectables } from "./k8s-api/register-injectables";
-import { registerInjectables as registerKubeHelpersInjectables } from "./kube-helpers/register-injectables";
 import logErrorInjectable from "./log-error.injectable";
 import { registerInjectables as registerOsInjectables } from "./os/register-injectables";
 import { registerInjectables as registerPathInjectables } from "./path/register-injectables";
@@ -93,11 +91,6 @@ export function registerInjectables(di: DiContainerForInjection): void {
     /* Ignore duplicate registration */
   }
   try {
-    registerFsInjectables(di);
-  } catch (e) {
-    /* Ignore duplicate registration */
-  }
-  try {
     registerGetConfigurationFileModelInjectables(di);
   } catch (e) {
     /* Ignore duplicate registration */
@@ -114,11 +107,6 @@ export function registerInjectables(di: DiContainerForInjection): void {
   }
   try {
     registerK8sApiInjectables(di);
-  } catch (e) {
-    /* Ignore duplicate registration */
-  }
-  try {
-    registerKubeHelpersInjectables(di);
   } catch (e) {
     /* Ignore duplicate registration */
   }

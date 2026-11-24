@@ -6,8 +6,7 @@
 
 import "./table.scss";
 
-import assert from "node:assert";
-import { cssNames, isDefined } from "@freelensapp/utilities";
+import { assert, cssNames, isDefined } from "@freelensapp/utilities";
 import { withInjectables } from "@ogre-tools/injectable-react";
 import autoBindReact from "auto-bind/react";
 import { observer } from "mobx-react";

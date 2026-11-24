@@ -1,7 +1,7 @@
 import { cssNames, isIso8601DateString } from "@freelensapp/utilities";
 import { upperFirst } from "es-toolkit";
 import * as yaml from "js-yaml";
-import { defaultYamlDumpOptions } from "../../../common/kube-helpers";
+import { defaultYamlDumpOptions } from "../../../common/kube-helpers/yaml-dump-options";
 import { DurationAbsoluteTimestamp } from "../events";
 
 import type { Condition } from "@freelensapp/kube-object";
