@@ -25,7 +25,8 @@ the Tauri build has no extensions (Principle VII).
 **Decision**: keep the scheme, hosts and `Origin` rule that spec 001 proved
 and spec 002 builds on, and add what is missing for several frames at once:
 audiences on routes (R3), the frame record (R4, R5), the two channels (R6) and
-the lifecycle of the pages (R7). No WKWebView setting changes (R2).
+the lifecycle of the pages (R7). The website data store does not change (R2);
+the one new WebView setting is the main window's navigation handler (R12).
 
 **Alternatives considered**: a loopback HTTP server in the core with
 `<id>.localhost` hosts, rejected in R4 of spec 001 (a port, a server, and for a
@@ -52,8 +53,9 @@ secure context a certificate WKWebView must trust).
 - Whether WebKit gives each origin its own WebContent process is
   **Unverified** (R10 of spec 001); the spec leaves crash isolation out.
 
-**Decision**: no change to the WKWebView settings. The non-persistent store
-stays: no view keeps anything in browser storage across runs, because the
+**Decision**: no change to the website data store; the one new WebView
+setting is the main window's navigation handler of R12. The non-persistent
+store stays: no view keeps anything in browser storage across runs, because the
 renderer's own storage goes through main (`lens-local-storage:*` of spec 003),
 and FR-001 asks the same origin across restarts, which the id gives, not the
 same storage. Whether a persistent store is wanted belongs to
@@ -82,8 +84,9 @@ shape as `Channels`:
 
 - each route has a method, a path (exact, or a prefix ending in `/`), an
   audience (`Main`, `Clusters` or `Both`) and a handler that gets the `View`;
-- a second route with the same method and path stops the core at startup, as
-  a duplicate channel does;
+- a second route with the same method, the same path and an overlapping
+  audience stops the core at startup, as a duplicate channel does; `/` is the
+  one path served twice, once per audience;
 - the handler of the scheme checks, in this order: known host (else `404`),
   a route for the path (else `404`) and the method (else `405`), `Origin`
   equal to the request's own origin when present (else `403`), the audience
@@ -299,11 +302,14 @@ Inspector.
 - the core registers the check-only message channel `frames-check:report`
   and prints each report (`contracts/frames-log.md`), and in this run it also
   prints each request that reaches it with a `Cookie` header;
-- the catalog page opens the first three clusters of the catalog; each frame
-  records its origin, a page-state mark (a random value held in memory), a
-  mark in each kind of browser storage (local storage, session storage, an
-  IndexedDB database, a cache of the Cache API) and a cookie, each named after
-  its own cluster;
+- the catalog page opens the first three clusters of the catalog, or, with
+  fewer than three, reports `not run` and opens none; each view, the catalog
+  page included, records its origin, a page-state mark (a random value held in
+  memory), a mark in each kind of browser storage (local storage, session
+  storage, an IndexedDB database, a cache of the Cache API) and a cookie, each
+  named after the view: `main` or its cluster id; the catalog page looks for
+  the frames' marks in its own storage and cookie, as each frame looks for the
+  other views';
 - each frame then tries to cross into the main window and the other two
   frames, and reports each attempt as blocked or not: reading and changing
   their documents through `window.parent` and `window.parent.frames`; finding
@@ -312,7 +318,9 @@ Inspector.
   cluster's `/api-kube/api/v1/namespaces`; requesting `cluster:set-frame-id`
   with another cluster's id and sending `current-visible-cluster`; showing the
   main window's page and another cluster's page in an iframe of its own;
-  opening a window; and, last, because a success ends the run, moving another
+  opening a window; writing to the clipboard; loading from an outside address,
+  blocked only if the page receives a `securitypolicyviolation` event for it;
+  and, last, because a success ends the run, moving another
   frame and the main window to another page, both to a page of the scheme and
   to an outside address;
 - the catalog page tries to read and change each frame's document through

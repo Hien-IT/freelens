@@ -43,8 +43,10 @@ One thing the core serves on the scheme.
 | `audience` | `Audience`                                  | a request from a view outside it answers `404`                           |
 | `handler`  | request and `View` → response, asynchronous | gets the view the host names; never reads a view from the request's body |
 
-- A second route with the same `method` and `path` stops the core at startup
-  with an error naming both.
+- A second route with the same `method`, the same `path` and an overlapping
+  `audience` stops the core at startup with an error naming the method and
+  the path. `/` is the one path served twice, once per audience
+  ([contracts/routes.md](./contracts/routes.md)).
 - The rows that exist when this feature ends are in
   [contracts/routes.md](./contracts/routes.md).
 

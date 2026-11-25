@@ -224,8 +224,9 @@ build finds no sender.
 - A frame never announces itself, because its page failed to load: the core
   does not count it as a frame, and a message for that cluster's frame reaches
   no view.
-- The visible cluster is closed: the core no longer has a visible cluster
-  until the main window names one.
+- The visible cluster is closed: the core keeps naming it as visible until the
+  main window names another cluster or none, and a message sent to the visible
+  frame meanwhile is dropped, as for any cluster without a frame.
 - Content shown in a frame comes from the cluster and is not trusted: a script
   in it can do in its own frame whatever the page can, and nothing in another
   frame or in the main window.
@@ -381,8 +382,10 @@ build finds no sender.
   NOT be removed or weakened to make it pass.
 - **FR-023**: Each rule of FR-005 to FR-008 and of FR-012, and each answer of
   FR-016 to FR-018, MUST be covered by tests of the core, including the
-  refusals. FR-024 to FR-028 depend on the browser engine and are shown by
-  the check of SC-002 and SC-003.
+  refusals. FR-024 to FR-026 and FR-028 depend on the browser engine and are
+  shown by the check of SC-002 and SC-003. FR-027 is shown by the pages of
+  the Tauri build adding no listener for messages posted to the window, which
+  the review of the pages confirms.
 
 ### Key Entities
 
@@ -420,6 +423,8 @@ build finds no sender.
   - moving the main window or another frame to another page, and opening a
     window;
   - showing the main window's page or another cluster's page in a frame;
+  - writing to the clipboard, and loading from or sending to an address
+    outside its origin;
   - announcing itself as another cluster, and naming the visible cluster.
 - **SC-003**: With three clusters open and a mark in the page state and in the
   local storage of each, closing one leaves both marks unchanged in each of

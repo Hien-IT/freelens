@@ -94,6 +94,33 @@ cd freelens-tauri/src-tauri && cargo run -- --kubeconfig="$PWD/tests/fixtures/th
    open. Expected: a `forgotten: the main window reloaded` line for each, at
    once.
 
+## Surroundings and the control
+
+With an empty catalog, and with a kubeconfig that does not parse:
+
+```bash
+cd freelens-tauri/src-tauri && cargo run -- --kubeconfig="$PWD/tests/fixtures/no-contexts.yaml" --frames-check
+```
+
+```bash
+cd freelens-tauri/src-tauri && cargo run -- --kubeconfig="$PWD/tests/fixtures/invalid.yaml" --frames-check
+```
+
+Expected for each: `Frames check: not run: the catalog has 0 clusters, three
+are needed`, no frame opened, the catalog page showing its message, and no
+`isolation failed` line.
+
+The missing field, a host whose cluster id is not in the catalog, is a cargo
+test of `core/tests/scheme.rs` (T010).
+
+On `main` as the control, with the spike's pages and `three-contexts.yaml`:
+open the three clusters, switch between them, close one and open it again.
+Expected: the frames show, hide and go away as on the branch; `main` prints no
+`Frames:` line, which only the branch has.
+
+A change in the cluster while a frame is open does not apply: the frame page
+reads its cluster once and holds nothing a watch updates.
+
 ## The Electron build
 
 After the deletions of research R8:
