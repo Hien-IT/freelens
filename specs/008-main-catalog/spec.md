@@ -31,6 +31,10 @@ In this specification:
   context: the MD5 of `<synced file path>:<context name>`. The stores, the
   hotbars, the local storage files and the cluster frames all name a cluster by
   it.
+- **The large catalog** is 500 generated contexts in two syncs: a file sync of
+  one file with 250 contexts, and a folder sync of a folder with 25 files of
+  10 contexts each. It stands for a large catalog in Story 5, SC-006 and
+  SC-007.
 - **The channel list** is
   `specs/002-messaging-for-tauri/contracts/channel-list.md`. **The channels of
   main-catalog** are the rows of its section "main-catalog": `catalog:init`,
@@ -46,6 +50,13 @@ In this specification:
   its channels (`features/kubeconfig-sync-kind` and the main side of
   `features/add-cluster`), and those of what FR-006 takes over from the cluster
   manager (`main/cluster/update-entity-metadata.test.ts`).
+
+## Clarifications
+
+### Session 2026-11-25
+
+- Q: Does the catalog take from the Electron build's cluster manager the parts that need no connection: the icon, short name, metrics settings and recorded distribution and version of the cluster store, a cluster store entry for a new context, and the active flag of the visible cluster? → A: Yes, all of them (FR-006, FR-005). The connection status, disconnecting a cluster whose context leaves a file, and the deleting state stay with main-cluster-connection.
+- Q: How many contexts make the large catalog of SC-006 and SC-007, and how are they split into files? → A: 500 generated contexts: a file sync of one file with 250, and a folder sync of 25 files with 10 each ("the large catalog").
 
 ## User Scenarios & Testing _(mandatory)_
 
@@ -206,12 +217,12 @@ It is measured once the other stories work.
 
 **Independent Test**: Measure the startup of the Tauri build as
 `specs/baseline.md` measures it, three times, with the five stores of spec 007
-and syncs that hold 500 contexts; measure the time until a view has the whole
-catalog in both builds with the same syncs.
+and the syncs of the large catalog; measure the time until a view has the
+whole catalog in both builds with the same syncs.
 
 **Acceptance Scenarios**:
 
-1. **Given** the five stores and syncs that hold 500 contexts, **When** the
+1. **Given** the five stores and the syncs of the large catalog, **When** the
    Tauri build is started three times, **Then** the median startup time is at
    most 2.37 s.
 2. **Given** the same syncs, **When** a view asks for the catalog, **Then** it
@@ -292,12 +303,16 @@ catalog in both builds with the same syncs.
   main-cluster-connection connects clusters, and the cluster shown in a frame
   MUST be marked active, as the Electron build's main side marks it.
 - **FR-006**: What the cluster store holds about a cluster MUST shape its entity
-  as in the Electron build: a name, a short name, an icon or labels the user
-  set, the metrics settings, and the distribution and version the Electron
-  build recorded. A context with no entry in the cluster store MUST get one,
-  through the stores of spec 007, with the fields the Electron build writes
-  for it; an entry MUST NOT be removed when its context leaves a file, as in
-  the Electron build.
+  as in the Electron build, both where the kubeconfig sync builds the entity
+  and where the cluster manager updates it: a name, a short name, an icon or
+  labels the user set, the metrics settings, and the distribution and version
+  the Electron build recorded. A context with no entry in the cluster store
+  MUST get one, through the stores of spec 007, with the fields the Electron
+  build writes for it; an entry MUST NOT be removed when its context leaves a
+  file, as in the Electron build. Of the cluster manager, this feature takes
+  only these and the active flag of FR-005; its connection status, the
+  disconnecting of a cluster whose context leaves a file and the deleting
+  state come with main-cluster-connection.
 - **FR-007**: A cluster id reached through two syncs MUST be listed once.
 - **FR-008**: The web links MUST be those of the web link store, one entity
   each with the fields the Electron build gives it, following every change of
@@ -427,8 +442,8 @@ catalog in both builds with the same syncs.
   gives the same answer in both builds.
 - **SC-005**: Each behaviour the existing tests of this area check has a test of
   the core that checks the same behaviour, and the tests of the core pass.
-- **SC-006**: With the five stores of spec 007 and syncs that hold 500
-  contexts, the median of three startups of the Tauri build, measured as in
+- **SC-006**: With the five stores of spec 007 and the syncs of the large
+  catalog, the median of three startups of the Tauri build, measured as in
   `specs/baseline.md`, is at most 2.37 s.
 - **SC-007**: With the same syncs, the median of three times from a view's
   request to its having the whole catalog is no longer in the Tauri build than
@@ -457,10 +472,10 @@ catalog in both builds with the same syncs.
   cluster of the Tauri build is disconnected, as each is in the Electron build
   before the user connects it, which is the state SC-001 compares.
 - FR-006 takes from the Electron build's cluster manager, which R9 gives to
-  main-cluster-connection, only what shapes the catalog without a connection:
-  the entity from the cluster store entry, the entry of a new context, and the
-  active flag of the visible cluster. Without it, a cluster the user renamed
-  would show another name in each build.
+  main-cluster-connection, only what shapes the catalog without a connection
+  (Clarifications). Without it, the icons and metrics settings of the catalog
+  and the cluster store file would differ between the builds; the name and
+  labels a user set reach the entity through the kubeconfig sync either way.
 - The Electron build checks a web link with a request straight to its address:
   its main side sets no proxy for that request. The Tauri build does the same
   (FR-019).
@@ -468,14 +483,15 @@ catalog in both builds with the same syncs.
   directory, so neither build reads the user's own `~/.kube`: changing `HOME`
   does not keep the Electron build away from it, as the spike's run of the
   integration tests found (`specs/baseline.md`).
-- 500 contexts stand for a large catalog in SC-006 and SC-007; no figure of the
-  size of users' catalogs exists.
+- The large catalog is generated, so no measurement reads the user's own
+  kubeconfig files or the data of the measuring machine; no figure of the size
+  of users' catalogs exists. It holds no credential that reaches a cluster.
 - `specs/baseline.md` has no figure yet for a change reaching the catalog or for
   a large catalog in the Electron build; this feature measures both builds
   with the same steps and records them there.
 - The startup of `specs/baseline.md` is measured from the creation of the
   process to the main window having loaded, median of three runs, on the
-  development machine. Syncs that hold 500 contexts are the condition this
+  development machine. The syncs of the large catalog are the condition this
   feature adds to the five stores of spec 007.
 - Depends on the channels of `specs/002-messaging-for-tauri`, the cluster frames
   of `specs/004-cluster-frames`, and the settings, stores, log and data
