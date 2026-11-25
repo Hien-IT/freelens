@@ -1,0 +1,19 @@
+{
+  "lens-cluster-store": {
+    "clusters": [
+      {
+        "id": "c1",
+        "kubeConfigPath": "/k/config",
+        "contextName": "ctx",
+        "preferences": {
+          "clusterName": "One"
+        }
+      },
+      {
+        "id": "c2",
+        "kubeConfigPath": "/k/config",
+        "contextName": "ctx-2"
+      }
+    ]
+  }
+}

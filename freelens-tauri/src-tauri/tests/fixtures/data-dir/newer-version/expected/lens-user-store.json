@@ -1,0 +1,27 @@
+{
+	"__internal__": {
+		"migrations": {
+			"version": "9.0.0"
+		}
+	},
+	"preferences": {
+		"zoom": 150,
+		"editorConfiguration": {
+			"tabSize": 2,
+			"lineNumbers": "on",
+			"fontSize": 12,
+			"fontFamily": "RobotoMono",
+			"minimap": {
+				"enabled": true,
+				"side": "right"
+			}
+		},
+		"terminalConfig": {
+			"fontSize": 12,
+			"fontFamily": "RobotoMono"
+		}
+	},
+	"futureTopLevel": {
+		"a": 1
+	}
+}

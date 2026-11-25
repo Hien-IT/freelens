@@ -24,7 +24,7 @@ use serde_json::{Map, Value};
 
 use crate::foundation::paths::BuildKind;
 use crate::messaging::{Channels, DuplicateChannel, Log, MessageChannel, RequestChannel, Sender};
-use file::StoreFile;
+use file::{LoadError, StoreFile};
 pub use user::Preferences;
 
 /// One of the five stores.
@@ -190,23 +190,37 @@ impl Stores {
             .iter()
             .map(|&name| {
                 let path = data_dir.join(format!("{}.json", name.config_name()));
-                let (file, writable) = match StoreFile::read(&path) {
-                    Ok(mut file) => {
-                        if file.raise_version()
-                            && let Err(error) = file.write()
-                        {
-                            log(&write_error(&path, &error));
+                let (mut file, writable) = match StoreFile::read(&path) {
+                    Ok(file) => (file, true),
+                    Err(LoadError::Invalid(reason)) => match copy_aside(&path, name) {
+                        Ok(copy) => {
+                            log(&format!(
+                                "error: Stores: {} is not valid JSON, copied it to {} and reset it: {reason}",
+                                path.display(),
+                                copy.display()
+                            ));
+                            (StoreFile::empty(&path), true)
                         }
-                        (file, true)
-                    }
+                        // A file that cannot be copied aside is not cleared either.
+                        Err(error) => {
+                            log(&format!(
+                                "error: Stores: {} is not valid JSON and cannot copy it aside, so it is kept and not written: {error}",
+                                path.display()
+                            ));
+                            (StoreFile::empty(&path), false)
+                        }
+                    },
                     Err(error) => {
                         log(&format!(
-                            "error: Stores: cannot read {}: {error:?}",
+                            "error: Stores: cannot read {}, so it is kept and not written: {error:?}",
                             path.display()
                         ));
                         (StoreFile::empty(&path), false)
                     }
                 };
+                if writable && file.raise_version() && let Err(error) = file.write() {
+                    log(&write_error(&path, &error));
+                }
                 let model = normalize(name, &file.data(), None, &machine);
                 entry(name, file, model, writable)
             })
@@ -290,7 +304,8 @@ impl Stores {
             }
             entry.model = normalized.clone();
             if entry.writable {
-                entry.file.merge(store.keys(), &normalized);
+                let written = with_unknown_keys(store, entry.file.content(), &normalized);
+                entry.file.merge(store.keys(), &written);
                 if let Err(error) = entry.file.write() {
                     (self.inner.log)(&write_error(entry.file.path(), &error));
                 }
@@ -329,6 +344,75 @@ fn entry(name: StoreName, file: StoreFile, model: Map<String, Value>, writable: 
         file,
         model,
         writable,
+    }
+}
+
+/// Copies a file that is not valid JSON to `<config name>.corrupt-<ms>.json`
+/// next to it, as the Electron build does before it starts the store over.
+fn copy_aside(path: &Path, store: StoreName) -> std::io::Result<PathBuf> {
+    let millis = std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .map(|elapsed| elapsed.as_millis())
+        .unwrap_or_default();
+    let copy = path.with_file_name(format!("{}.corrupt-{millis}.json", store.config_name()));
+    std::fs::write(&copy, std::fs::read(path)?)?;
+    Ok(copy)
+}
+
+/// The model to write, with the keys the core does not know kept from the
+/// file: inside `preferences`, and inside each cluster matched by id (research
+/// R3). A newer Electron build keeps its new settings this way.
+fn with_unknown_keys(
+    store: StoreName,
+    file: &Map<String, Value>,
+    model: &Map<String, Value>,
+) -> Map<String, Value> {
+    let mut written = model.clone();
+    match store {
+        StoreName::User => {
+            if let (Some(Value::Object(stored)), Some(Value::Object(preferences))) =
+                (file.get("preferences"), written.get_mut("preferences"))
+            {
+                append_unknown(preferences, stored, user::KNOWN_KEYS);
+            }
+        }
+        StoreName::Cluster => {
+            let stored: Vec<&Map<String, Value>> = file
+                .get("clusters")
+                .and_then(Value::as_array)
+                .into_iter()
+                .flatten()
+                .filter_map(Value::as_object)
+                .collect();
+            for cluster in written
+                .get_mut("clusters")
+                .and_then(Value::as_array_mut)
+                .into_iter()
+                .flatten()
+                .filter_map(Value::as_object_mut)
+            {
+                let Some(id) = cluster.get("id").cloned() else {
+                    continue;
+                };
+                if let Some(stored) = stored
+                    .iter()
+                    .rev()
+                    .find(|stored| stored.get("id") == Some(&id))
+                {
+                    append_unknown(cluster, stored, cluster::FIELDS);
+                }
+            }
+        }
+        StoreName::Hotbar | StoreName::Favorites | StoreName::Weblink => {}
+    }
+    written
+}
+
+fn append_unknown(target: &mut Map<String, Value>, stored: &Map<String, Value>, known: &[&str]) {
+    for (key, value) in stored {
+        if !known.contains(&key.as_str()) && !target.contains_key(key) {
+            target.insert(key.clone(), value.clone());
+        }
     }
 }
 

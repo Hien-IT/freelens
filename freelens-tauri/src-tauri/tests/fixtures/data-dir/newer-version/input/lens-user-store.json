@@ -1,0 +1,13 @@
+{
+  "__internal__": {
+    "migrations": {
+      "version": "9.0.0"
+    }
+  },
+  "preferences": {
+    "zoom": 125
+  },
+  "futureTopLevel": {
+    "a": 1
+  }
+}

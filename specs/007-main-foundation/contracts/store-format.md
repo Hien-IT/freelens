@@ -70,7 +70,7 @@ input/<config_name>.json       # files as found (any may be absent)
 change.json                    # { "<config_name>": <model a view sends> } applied after load
 expected/models.json           # { "<config_name>": <model> } after load
 expected/<config_name>.json    # bytes after load and the change
-expected/corrupt               # present when a .corrupt- copy is expected
+expected/corrupt/<config_name>.json  # the bytes of the .corrupt- copy, when one is expected
 ```
 
 Both `tests/stores.rs` and

@@ -10,6 +10,8 @@ import { testUtils } from "@freelensapp/messaging";
 import Conf from "conf";
 import { afterEach, describe, expect, it } from "vitest";
 import directoryForUserDataInjectable from "../../../common/app-paths/directory-for-user-data/directory-for-user-data.injectable";
+import readFileBufferSyncInjectable from "../../../common/fs/main/read-file-buffer-sync.injectable";
+import writeBufferSyncInjectable from "../../../common/fs/main/write-buffer-sync.injectable";
 import getConfigurationFileModelInjectable from "../../../common/get-configuration-file-model/get-configuration-file-model.injectable";
 import kubeDirectoryPathInjectable from "../../../common/os/kube-directory-path.injectable";
 import currentTimezoneInjectable from "../../../common/vars/current-timezone.injectable";
@@ -95,6 +97,9 @@ describe("the store fixtures shared with the Tauri build", () => {
 
     di.override(directoryForUserDataInjectable, () => dataDirectory);
     di.override(getConfigurationFileModelInjectable, () => (options) => new Conf(options));
+    // The copy of a file that is not valid JSON goes to the disk, as `conf` does.
+    di.override(readFileBufferSyncInjectable, () => (file) => readFileSync(file));
+    di.override(writeBufferSyncInjectable, () => (file, contents) => writeFileSync(file, contents));
     di.override(isDevelopmentInjectable, () => false);
     di.override(kubeDirectoryPathInjectable, () => "/home/test/.kube");
     di.override(currentTimezoneInjectable, () => "UTC");
@@ -139,6 +144,14 @@ describe("the store fixtures shared with the Tauri build", () => {
         return [configName, existsSync(file) ? withoutRandomIds(readFileSync(file, "utf-8")) : undefined];
       }),
     );
+    // The copies of a file that is not valid JSON, by store; their names carry the time.
+    const corrupt = Object.fromEntries(
+      readdirSync(dataDirectory)
+        .map((file) => /^(.+)\.corrupt-\d+\.json$/.exec(file))
+        .filter((match) => match !== null)
+        .map((match) => [match[1], readFileSync(path.join(dataDirectory, match[0]), "utf-8")]),
+    );
+    const expectedCorrupt = path.join(expected, "corrupt");
 
     if (update) {
       mkdirSync(expected, { recursive: true });
@@ -148,6 +161,11 @@ describe("the store fixtures shared with the Tauri build", () => {
         if (text !== undefined) {
           writeFileSync(path.join(expected, `${configName}.json`), text);
         }
+      }
+
+      for (const [configName, text] of Object.entries(corrupt)) {
+        mkdirSync(expectedCorrupt, { recursive: true });
+        writeFileSync(path.join(expectedCorrupt, `${configName}.json`), text);
       }
 
       return;
@@ -160,5 +178,16 @@ describe("the store fixtures shared with the Tauri build", () => {
 
       expect(text, configName).toBe(existsSync(expectedFile) ? readFileSync(expectedFile, "utf-8") : undefined);
     }
+
+    const expectedCopies = existsSync(expectedCorrupt)
+      ? Object.fromEntries(
+          readdirSync(expectedCorrupt).map((file) => [
+            file.replace(/\.json$/, ""),
+            readFileSync(path.join(expectedCorrupt, file), "utf-8"),
+          ]),
+        )
+      : {};
+
+    expect(corrupt).toEqual(expectedCopies);
   });
 });

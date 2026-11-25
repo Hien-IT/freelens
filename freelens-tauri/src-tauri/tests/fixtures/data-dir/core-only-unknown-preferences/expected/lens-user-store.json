@@ -1,0 +1,26 @@
+{
+	"__internal__": {
+		"migrations": {
+			"version": "0.1.0"
+		}
+	},
+	"preferences": {
+		"zoom": 150,
+		"editorConfiguration": {
+			"tabSize": 2,
+			"lineNumbers": "on",
+			"fontSize": 12,
+			"fontFamily": "RobotoMono",
+			"minimap": {
+				"enabled": true,
+				"side": "right"
+			}
+		},
+		"terminalConfig": {
+			"fontSize": 12,
+			"fontFamily": "RobotoMono"
+		},
+		"futureSetting": 1,
+		"anotherFuture": "x"
+	}
+}

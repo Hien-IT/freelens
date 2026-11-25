@@ -1,0 +1,30 @@
+{
+	"__internal__": {
+		"migrations": {
+			"version": "0.1.0"
+		}
+	},
+	"clusters": [
+		{
+			"id": "c1",
+			"contextName": "ctx",
+			"kubeConfigPath": "/k/config",
+			"preferences": {
+				"clusterName": "One"
+			},
+			"metadata": {},
+			"accessibleNamespaces": [],
+			"labels": {},
+			"futureField": "x"
+		},
+		{
+			"id": "c2",
+			"contextName": "ctx-2",
+			"kubeConfigPath": "/k/config",
+			"preferences": {},
+			"metadata": {},
+			"accessibleNamespaces": [],
+			"labels": {}
+		}
+	]
+}

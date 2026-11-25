@@ -1,0 +1,12 @@
+{
+  "__internal__": {
+    "migrations": {
+      "version": "0.1.0"
+    }
+  },
+  "preferences": {
+    "futureSetting": 1,
+    "zoom": 125,
+    "anotherFuture": "x"
+  }
+}

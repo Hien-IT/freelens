@@ -13,6 +13,18 @@ use serde_json::{Map, Value};
 pub const CONFIG_NAME: &str = "lens-cluster-store";
 pub const KEYS: &[&str] = &["clusters"];
 
+/// The keys of a cluster the Electron build reads; any other is one a newer
+/// build wrote, and is kept in the file.
+pub const FIELDS: &[&str] = &[
+    "id",
+    "contextName",
+    "kubeConfigPath",
+    "preferences",
+    "metadata",
+    "accessibleNamespaces",
+    "labels",
+];
+
 /// The fields `Cluster.toJSON` writes, in its order.
 #[derive(Debug, Clone)]
 struct Cluster {

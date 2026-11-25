@@ -585,8 +585,28 @@ fn uuid_shaped(text: &str) -> bool {
         && uuid::Uuid::parse_str(text).is_ok_and(|id| id.get_version_num() == 4)
 }
 
+/// The copies of the files that were not valid JSON, by store.
+fn corrupt_copies(dir: &Path) -> Map<String, Value> {
+    fs::read_dir(dir)
+        .unwrap()
+        .filter_map(|entry| {
+            let name = entry.unwrap().file_name().to_string_lossy().into_owned();
+            let (store, rest) = name.split_once(".corrupt-")?;
+            let stamp = rest.strip_suffix(".json")?;
+            (!stamp.is_empty() && stamp.bytes().all(|byte| byte.is_ascii_digit())).then(|| {
+                let text = fs::read_to_string(dir.join(&name)).unwrap();
+                (store.to_string(), Value::String(text))
+            })
+        })
+        .collect()
+}
+
+/// Runs every case of `fixtures()`. The `core-only-` cases hold the deliberate
+/// differences of research R3, which the Electron build's test skips; with
+/// `UPDATE_TAURI_PARITY=1` their `expected/` is written from the core.
 #[test]
 fn every_fixture_case_gives_the_models_and_bytes_of_the_electron_build() {
+    let update = std::env::var("UPDATE_TAURI_PARITY").as_deref() == Ok("1");
     let mut cases: Vec<_> = fs::read_dir(fixtures())
         .unwrap()
         .map(|entry| entry.unwrap().path())
@@ -596,6 +616,7 @@ fn every_fixture_case_gives_the_models_and_bytes_of_the_electron_build() {
     assert!(!cases.is_empty());
     for case in cases {
         let name = case.file_name().unwrap().to_string_lossy().into_owned();
+        let write_expected = update && name.starts_with("core-only-");
         let dir = TempDir::new();
         if let Ok(entries) = fs::read_dir(case.join("input")) {
             for entry in entries {
@@ -608,10 +629,15 @@ fn every_fixture_case_gives_the_models_and_bytes_of_the_electron_build() {
             .iter()
             .map(|store| (store.config_name().to_string(), stores.model(*store)))
             .collect();
-        let models: Value = serde_json::from_str(&without_random_ids(
-            &serde_json::to_string(&Value::Object(models)).unwrap(),
-        ))
-        .unwrap();
+        let models_text = format!(
+            "{}\n",
+            without_random_ids(&serde_json::to_string_pretty(&Value::Object(models)).unwrap())
+        );
+        if write_expected {
+            fs::create_dir_all(case.join("expected")).unwrap();
+            fs::write(case.join("expected/models.json"), &models_text).unwrap();
+        }
+        let models: Value = serde_json::from_str(&models_text).unwrap();
         let expected: Value =
             serde_json::from_str(&fs::read_to_string(case.join("expected/models.json")).unwrap())
                 .unwrap();
@@ -628,12 +654,249 @@ fn every_fixture_case_gives_the_models_and_bytes_of_the_electron_build() {
             }
         }
         for config_name in STORES {
-            let expected =
-                fs::read_to_string(case.join(format!("expected/{config_name}.json"))).ok();
             let written = fs::read_to_string(store_path(&dir.0, config_name))
                 .ok()
                 .map(|text| without_random_ids(&text));
+            let expected_path = case.join(format!("expected/{config_name}.json"));
+            if write_expected && let Some(text) = &written {
+                fs::write(&expected_path, text).unwrap();
+            }
+            let expected = fs::read_to_string(expected_path).ok();
             assert_eq!(written, expected, "{config_name} of {name}");
+        }
+        let expected_copies: Map<String, Value> = fs::read_dir(case.join("expected/corrupt"))
+            .map(|entries| {
+                entries
+                    .map(|entry| {
+                        let path = entry.unwrap().path();
+                        let store = path.file_stem().unwrap().to_string_lossy().into_owned();
+                        (store, Value::String(fs::read_to_string(&path).unwrap()))
+                    })
+                    .collect()
+            })
+            .unwrap_or_default();
+        assert_eq!(
+            corrupt_copies(&dir.0),
+            expected_copies,
+            "corrupt copies of {name}"
+        );
+    }
+}
+
+// User Story 2: a broken or newer file does not cost the user's setup.
+
+fn logged(lines: &Arc<Mutex<Vec<String>>>, part: &str) -> bool {
+    lines.lock().unwrap().iter().any(|line| line.contains(part))
+}
+
+fn recording() -> (Log, Arc<Mutex<Vec<String>>>) {
+    let lines = Arc::new(Mutex::new(Vec::new()));
+    let sink = Arc::clone(&lines);
+    (
+        Arc::new(move |line| sink.lock().unwrap().push(line.to_string())),
+        lines,
+    )
+}
+
+#[test]
+fn a_file_that_is_not_json_is_copied_aside_and_reset() {
+    let dir = TempDir::new();
+    let path = store_path(&dir.0, "lens-hotbar-store");
+    fs::write(&path, "{\n  \"hotbars\": [\n").unwrap();
+    let (log, lines) = recording();
+    let stores = Stores::load(&dir.0, machine(), log);
+    let copies = corrupt_copies(&dir.0);
+    assert_eq!(copies.len(), 1);
+    assert_eq!(copies["lens-hotbar-store"], "{\n  \"hotbars\": [\n");
+    assert_eq!(fs::read_to_string(&path).unwrap(), VERSION_BLOCK);
+    assert_eq!(
+        stores.model(StoreName::Hotbar)["hotbars"][0]["name"],
+        "Default"
+    );
+    assert!(
+        logged(&lines, "is not valid JSON, copied it to"),
+        "{:?}",
+        lines.lock().unwrap()
+    );
+    // The other stores load as usual.
+    assert_eq!(
+        fs::read_to_string(store_path(&dir.0, "lens-user-store")).unwrap(),
+        VERSION_BLOCK
+    );
+    assert!(stores.update(
+        StoreName::Hotbar,
+        json!({"hotbars": [{"id": "h", "name": "H"}]})
+    ));
+    assert!(fs::read_to_string(&path).unwrap().contains("\"H\""));
+}
+
+#[test]
+fn a_file_that_cannot_be_copied_aside_is_kept_and_not_written() {
+    let dir = TempDir::new();
+    let path = store_path(&dir.0, "lens-hotbar-store");
+    fs::write(&path, "{").unwrap();
+    set_mode(&dir.0, 0o555).unwrap();
+    let (log, lines) = recording();
+    let stores = Stores::load(&dir.0, machine(), log);
+    set_mode(&dir.0, 0o755).unwrap();
+    assert!(corrupt_copies(&dir.0).is_empty());
+    assert_eq!(fs::read_to_string(&path).unwrap(), "{");
+    assert!(logged(&lines, "cannot copy"), "{:?}", lines.lock().unwrap());
+    assert!(stores.update(
+        StoreName::Hotbar,
+        json!({"hotbars": [{"id": "h", "name": "H"}]})
+    ));
+    assert_eq!(
+        fs::read_to_string(&path).unwrap(),
+        "{",
+        "the store is not written"
+    );
+}
+
+#[test]
+fn an_unreadable_file_is_kept_and_not_written() {
+    let dir = TempDir::new();
+    let path = store_path(&dir.0, "lens-weblink-store");
+    fs::write(&path, r#"{"weblinks": [{"id": "w"}]}"#).unwrap();
+    set_mode(&path, 0o000).unwrap();
+    let (log, lines) = recording();
+    let stores = Stores::load(&dir.0, machine(), log);
+    assert!(logged(&lines, "cannot read"), "{:?}", lines.lock().unwrap());
+    assert_eq!(stores.model(StoreName::Weblink), json!({"weblinks": []}));
+    assert!(stores.update(StoreName::Weblink, json!({"weblinks": [{"id": "x"}]})));
+    set_mode(&path, 0o644).unwrap();
+    assert_eq!(
+        fs::read_to_string(&path).unwrap(),
+        r#"{"weblinks": [{"id": "w"}]}"#
+    );
+    assert!(corrupt_copies(&dir.0).is_empty());
+}
+
+#[test]
+fn a_file_only_javascript_reads_is_kept_and_not_written() {
+    let dir = TempDir::new();
+    let path = store_path(&dir.0, "lens-weblink-store");
+    let text = r#"{"weblinks": [{"id": "w", "name": "\ud800"}]}"#;
+    fs::write(&path, text).unwrap();
+    let (log, lines) = recording();
+    let stores = Stores::load(&dir.0, machine(), log);
+    assert!(logged(&lines, "cannot read"), "{:?}", lines.lock().unwrap());
+    assert!(stores.update(StoreName::Weblink, json!({"weblinks": [{"id": "x"}]})));
+    assert_eq!(fs::read_to_string(&path).unwrap(), text);
+    assert!(corrupt_copies(&dir.0).is_empty());
+}
+
+#[tokio::test]
+async fn an_unwritable_store_answers_its_model_and_sends_changes() {
+    let dir = TempDir::new();
+    let path = store_path(&dir.0, "lens-weblink-store");
+    fs::write(&path, "{\"weblinks\": [], \"x\": \"\\ud800\"}").unwrap();
+    let core = core_on(&dir.0);
+    poll(&core, MAIN, "main", 0).await;
+    let model = json!({"weblinks": [{"id": "sent"}]});
+    send(
+        &core,
+        MAIN,
+        &format!("store-sync-main:{}", path.display()),
+        model.clone(),
+    )
+    .await;
+    let messages = poll(&core, MAIN, "main", 0).await;
+    assert_eq!(messages.len(), 1);
+    assert_eq!(messages[0]["payload"], model);
+    let answer = post(
+        &core,
+        MAIN,
+        "/ipc/request",
+        json!({"channel": "persistent-storage-initial-values"}),
+    )
+    .await;
+    assert_eq!(answer["payload"][4]["model"], model);
+    assert!(fs::read_to_string(&path).unwrap().contains("\\ud800"));
+}
+
+#[tokio::test]
+async fn a_failed_write_is_logged_and_the_model_still_sent() {
+    let dir = TempDir::new();
+    let core = core_on(&dir.0);
+    let path = store_path(&dir.0, "lens-weblink-store");
+    poll(&core, MAIN, "main", 0).await;
+    set_mode(&dir.0, 0o555).unwrap();
+    let model = json!({"weblinks": [{"id": "after"}]});
+    send(
+        &core,
+        MAIN,
+        &format!("store-sync-main:{}", path.display()),
+        model.clone(),
+    )
+    .await;
+    set_mode(&dir.0, 0o755).unwrap();
+    let messages = poll(&core, MAIN, "main", 0).await;
+    assert_eq!(messages.len(), 1);
+    assert_eq!(messages[0]["payload"], model);
+    assert!(
+        logged(
+            &core.lines,
+            &format!("error: Stores: cannot write {}", path.display())
+        ),
+        "{:?}",
+        core.lines.lock().unwrap()
+    );
+    assert!(temporary_files(&dir.0).is_empty());
+    assert_eq!(fs::read_to_string(&path).unwrap(), VERSION_BLOCK);
+}
+
+/// FR-006: a process killed while it writes leaves a file whole, old or new.
+#[test]
+fn a_write_killed_part_way_leaves_a_whole_file() {
+    let dir = TempDir::new();
+    let path = store_path(&dir.0, "lens-weblink-store");
+    let small = json!({"weblinks": [{"id": "small"}]});
+    let large = json!({"weblinks": (0..2000).map(|index| json!({"id": format!("w{index}"), "url": "https://example.test/".repeat(4)})).collect::<Vec<_>>()});
+    let mut file = StoreFile::read(&path).unwrap();
+    file.merge(&["weblinks"], small.as_object().unwrap());
+    file.write().unwrap();
+    for round in 0..20u64 {
+        let mut child = std::process::Command::new(std::env::current_exe().unwrap())
+            .args([
+                "--exact",
+                "writer_for_the_kill_test",
+                "--ignored",
+                "--nocapture",
+            ])
+            .env("FREELENS_STORES_WRITER", &path)
+            .stdout(std::process::Stdio::null())
+            .stderr(std::process::Stdio::null())
+            .spawn()
+            .unwrap();
+        std::thread::sleep(std::time::Duration::from_millis(30 + round * 17));
+        child.kill().unwrap();
+        child.wait().unwrap();
+        let text = fs::read_to_string(&path).unwrap();
+        let value: Value =
+            serde_json::from_str(&text).unwrap_or_else(|error| panic!("round {round}: {error}"));
+        assert!(
+            value["weblinks"] == small["weblinks"] || value["weblinks"] == large["weblinks"],
+            "round {round}"
+        );
+    }
+}
+
+/// The child of `a_write_killed_part_way_leaves_a_whole_file`: writes the two
+/// models in turn until it is killed. Does nothing when run on its own.
+#[test]
+#[ignore = "run by a_write_killed_part_way_leaves_a_whole_file"]
+fn writer_for_the_kill_test() {
+    let Ok(path) = std::env::var("FREELENS_STORES_WRITER") else {
+        return;
+    };
+    let small = json!({"weblinks": [{"id": "small"}]});
+    let large = json!({"weblinks": (0..2000).map(|index| json!({"id": format!("w{index}"), "url": "https://example.test/".repeat(4)})).collect::<Vec<_>>()});
+    let mut file = StoreFile::read(Path::new(&path)).unwrap();
+    loop {
+        for model in [&large, &small] {
+            file.merge(&["weblinks"], model.as_object().unwrap());
+            file.write().unwrap();
         }
     }
 }

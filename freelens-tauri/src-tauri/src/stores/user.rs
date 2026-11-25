@@ -15,6 +15,44 @@ pub const CONFIG_NAME: &str = "lens-user-store";
 /// The keys `toJSON` writes.
 pub const KEYS: &[&str] = &["preferences"];
 
+/// The preference keys the Electron build reads, `colorTheme` included, which
+/// it turns into `theme`; any other key of `preferences` is one a newer build
+/// wrote, and is kept in the file.
+pub const KNOWN_KEYS: &[&str] = &[
+    "allowErrorReporting",
+    "allowUntrustedCAs",
+    "theme",
+    "themeVariant",
+    "accentColorDark",
+    "accentColorLight",
+    "zoom",
+    "downloadBinariesPath",
+    "downloadKubectlBinaries",
+    "downloadMirror",
+    "downloadCustomMirror",
+    "editorConfiguration",
+    "extensionRegistryUrl",
+    "helmBinariesPath",
+    "helmServerSide",
+    "hiddenTableColumns",
+    "httpsProxy",
+    "kubectlBinariesPath",
+    "localeTimezone",
+    "openAtLogin",
+    "showTrayIcon",
+    "hotbarAutoHide",
+    "persistentSearch",
+    "logViewerPreferences",
+    "shell",
+    "syncKubeconfigEntries",
+    "terminalConfig",
+    "terminalCopyOnSelect",
+    "terminalTheme",
+    "terminalThemeVariant",
+    "clusterPageMenuOrder",
+    "colorTheme",
+];
+
 const ZOOM_STEPS: [f64; 10] = [
     67.0, 75.0, 80.0, 90.0, 100.0, 110.0, 125.0, 150.0, 175.0, 200.0,
 ];
