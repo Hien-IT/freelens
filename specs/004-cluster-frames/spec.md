@@ -248,12 +248,11 @@ build finds no sender.
   (Assumptions); FR-011 is about closing a cluster, not about a failure of
   its content.
 - Every page of the application stops polling for more than 60 seconds while
-  its frames are open, as happened once with the application left in the
-  background on a loaded machine: the core forgets those frames (FR-012), and
-  a frame forgotten that way stays unrecorded until it announces itself again,
-  so what the core sends to it is dropped. This feature does not prevent it;
-  `main-catalog`, the first area that sends to a frame through the record,
-  decides how such a frame is recorded again (research R11).
+  its frames are open, as happens with the application left in the
+  background: the core forgets those frames (FR-012), and records each again
+  when its page polls again (FR-028). What the core sent to a frame while it
+  was forgotten is dropped; an area that needs it sent again follows the
+  `Announced` of the record (research R11).
 
 ## Requirements _(mandatory)_
 
@@ -318,8 +317,7 @@ build finds no sender.
 - **FR-028**: A cluster frame MUST stay recorded for as long as it is open,
   shown or hidden: hiding a frame MUST NOT make the core forget it. A frame
   whose page stops polling for 60 seconds is forgotten like a removed one
-  (FR-012); recording it again once it polls again belongs to the first area
-  that sends to a frame through the frame record (Edge Cases).
+  (FR-012), and MUST be recorded again as soon as the same page polls again.
 
 #### Opening, switching and closing
 

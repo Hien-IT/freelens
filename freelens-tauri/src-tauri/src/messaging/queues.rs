@@ -94,8 +94,12 @@ pub enum QueueEvent {
     /// The queue closed: no poll and none waiting for 60 seconds, or more
     /// than the message limit.
     Closed(View),
-    /// A poll named a new session for an open queue, which started afresh.
+    /// A poll named a new session for an open queue, which started afresh, or
+    /// for a view whose queue had closed: a new page load either way.
     Restarted(View),
+    /// A poll named the session of a view whose queue had closed: the same
+    /// page, still open, polls again after it stopped for a while.
+    Reopened(View),
 }
 
 type Subscriber = Arc<dyn Fn(&QueueEvent) + Send + Sync>;
@@ -151,11 +155,18 @@ impl Queues {
             self.close_idle(&mut state, now, &mut events);
             state.next_poll += 1;
             let id = state.next_poll;
-            let next_seq = state
-                .closed
-                .remove(&view)
-                .filter(|closed| closed.session == session)
-                .map_or(1, |closed| closed.next_seq);
+            // Only a view with no queue has a closed one behind it.
+            let next_seq = match state.closed.remove(&view) {
+                Some(closed) if closed.session == session => {
+                    events.push(QueueEvent::Reopened(view.clone()));
+                    closed.next_seq
+                }
+                Some(_) => {
+                    events.push(QueueEvent::Restarted(view.clone()));
+                    1
+                }
+                None => 1,
+            };
             let queue = state.queues.entry(view.clone()).or_insert_with(|| Queue {
                 next_seq,
                 ..Queue::new(session, now)
@@ -418,6 +429,40 @@ mod tests {
         queues.push("note", None);
 
         assert_eq!(seqs(&poll.await.unwrap()), [3]);
+    }
+
+    #[tokio::test(start_paused = true)]
+    async fn a_closed_queue_polled_again_by_its_page_is_reported_reopened() {
+        let (queues, _) = queues();
+        let events = events(&queues);
+        closed_after_two_messages(&queues).await;
+
+        queues.poll(View::Main, "s1", 2).await;
+
+        assert_eq!(
+            *events.lock().unwrap(),
+            [
+                QueueEvent::Closed(View::Main),
+                QueueEvent::Reopened(View::Main)
+            ]
+        );
+    }
+
+    #[tokio::test(start_paused = true)]
+    async fn a_closed_queue_polled_by_a_new_page_load_is_reported_restarted() {
+        let (queues, _) = queues();
+        let events = events(&queues);
+        closed_after_two_messages(&queues).await;
+
+        queues.poll(View::Main, "s2", 0).await;
+
+        assert_eq!(
+            *events.lock().unwrap(),
+            [
+                QueueEvent::Closed(View::Main),
+                QueueEvent::Restarted(View::Main)
+            ]
+        );
     }
 
     #[tokio::test(start_paused = true)]

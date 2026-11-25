@@ -11,6 +11,7 @@ The core prints these lines on standard output, in addition to those of
 | ------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------ |
 | `Frames: cluster <id> announced`                                    | the frame of `<id>` goes from Absent to Recorded                                                                   |
 | `Frames: cluster <id> forgotten: <reason>`                          | `<reason>` is `its queue closed`, `the main window reloaded` or `removed`                                          |
+| `Frames: cluster <id> recorded again: its page polls again`         | the page of a frame forgotten because its queue closed polls again with its session                                |
 | `Frames: visible cluster <id>` / `Frames: no visible cluster`       | the main window names a visible cluster, or none                                                                   |
 | `Frames: refused cluster:set-frame-id from <view> for cluster <id>` | the sender is the main window, or another cluster's frame                                                          |
 | `Frames: dropped current-visible-cluster from <view>`               | a cluster frame sent it                                                                                            |

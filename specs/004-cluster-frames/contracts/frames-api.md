@@ -34,6 +34,10 @@ pub enum FrameEvent {
 
 - Every read runs the idle check of the queues first, so a frame whose queue
   has closed is never reported (research R5).
+- `Announced(id)` comes when a frame announces itself, and again when a frame
+  forgotten because its queue closed is recorded again as its page polls
+  again (research R11). What was sent to it in between is lost, so an area
+  that keeps a frame up to date sends it again on `Announced`.
 - `announce` and `set_visible` are not public: only the two channels below
   change the record from the views.
 - Subscribing happens at startup, before the window opens; a subscriber does

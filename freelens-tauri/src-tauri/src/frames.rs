@@ -41,6 +41,9 @@ type Listener = Arc<dyn Fn(&FrameEvent) + Send + Sync>;
 struct State {
     frames: BTreeSet<String>,
     visible: Option<String>,
+    /// Frames forgotten because their queue closed, recorded again if the same
+    /// page polls again (research R11).
+    lost: BTreeSet<String>,
 }
 
 struct Inner {
@@ -79,6 +82,7 @@ impl Frames {
 
     /// Forgets the frame of `cluster`, as disconnecting or deleting it does.
     pub fn forget(&self, cluster: &str) {
+        self.state().lost.remove(cluster);
         self.forget_with(cluster, "removed");
     }
 
@@ -140,10 +144,43 @@ impl Frames {
     }
 
     fn announce(&self, cluster: &str) {
-        let added = self.state().frames.insert(cluster.to_string());
+        let added = {
+            let mut state = self.state();
+            state.lost.remove(cluster);
+            state.frames.insert(cluster.to_string())
+        };
         if added {
             self.log(&format!("Frames: cluster {cluster} announced"));
             self.emit(&[FrameEvent::Announced(cluster.to_string())]);
+        }
+    }
+
+    /// The same page of a frame forgotten for its closed queue polls again.
+    fn record_again(&self, cluster: &str) {
+        let added = {
+            let mut state = self.state();
+            state.lost.remove(cluster) && state.frames.insert(cluster.to_string())
+        };
+        if added {
+            self.log(&format!(
+                "Frames: cluster {cluster} recorded again: its page polls again"
+            ));
+            self.emit(&[FrameEvent::Announced(cluster.to_string())]);
+        }
+    }
+
+    /// Forgets a frame whose queue closed, which its page may still have.
+    fn lose(&self, cluster: &str) {
+        let removed = {
+            let mut state = self.state();
+            let removed = state.frames.remove(cluster);
+            if removed {
+                state.lost.insert(cluster.to_string());
+            }
+            removed
+        };
+        if removed {
+            self.forgotten(cluster, "its queue closed");
         }
     }
 
@@ -159,13 +196,22 @@ impl Frames {
     fn forget_with(&self, cluster: &str, reason: &str) {
         let removed = self.state().frames.remove(cluster);
         if removed {
-            self.log(&format!("Frames: cluster {cluster} forgotten: {reason}"));
-            self.emit(&[FrameEvent::Forgotten(cluster.to_string())]);
+            self.forgotten(cluster, reason);
         }
     }
 
+    fn forgotten(&self, cluster: &str, reason: &str) {
+        self.log(&format!("Frames: cluster {cluster} forgotten: {reason}"));
+        self.emit(&[FrameEvent::Forgotten(cluster.to_string())]);
+    }
+
     fn forget_all(&self, reason: &str) {
-        let forgotten = std::mem::take(&mut self.state().frames);
+        let forgotten = {
+            let mut state = self.state();
+            // The frames of the earlier main page are gone with it.
+            state.lost.clear();
+            std::mem::take(&mut state.frames)
+        };
         for cluster in &forgotten {
             self.log(&format!("Frames: cluster {cluster} forgotten: {reason}"));
         }
@@ -175,8 +221,9 @@ impl Frames {
 }
 
 /// Builds the record, answers the two channels of cluster-frames, and has the
-/// record follow the queues: a closed queue forgets its frame, and a reload
-/// of the main window forgets them all (research R5 of spec 004).
+/// record follow the queues: a closed queue forgets its frame, the same page
+/// polling again records it again, and a reload of the main window forgets
+/// them all (research R5 and R11 of spec 004).
 pub fn register(
     channels: &mut Channels,
     catalog: HashSet<String>,
@@ -226,9 +273,8 @@ pub fn register(
 
     let following = frames.clone();
     channels.sender().on_queue_event(move |event| match event {
-        QueueEvent::Closed(View::Cluster(cluster)) => {
-            following.forget_with(cluster, "its queue closed");
-        }
+        QueueEvent::Closed(View::Cluster(cluster)) => following.lose(cluster),
+        QueueEvent::Reopened(View::Cluster(cluster)) => following.record_again(cluster),
         QueueEvent::Restarted(View::Main) => following.forget_all("the main window reloaded"),
         _ => {}
     });

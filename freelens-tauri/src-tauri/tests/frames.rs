@@ -257,6 +257,74 @@ async fn a_frame_whose_queue_closes_is_forgotten_on_the_next_read() {
     );
 }
 
+/// A frame that announced itself and whose queue then closed while its page
+/// still lives, as when every page stops polling for a while (research R11).
+async fn forgotten_while_open(f: &Fixture) {
+    f.poll(&f.host(0), "frame-0", 0).await;
+    f.announce(&f.host(0), &f.id(0)).await;
+    tokio::time::advance(IDLE_LIMIT - std::time::Duration::from_secs(25)).await;
+    assert!(!f.frames.has_frame(&f.id(0)));
+}
+
+#[tokio::test(start_paused = true)]
+async fn a_frame_forgotten_while_open_is_recorded_again_when_it_polls_again() {
+    let f = fixture();
+    forgotten_while_open(&f).await;
+
+    f.poll(&f.host(0), "frame-0", 0).await;
+
+    assert!(f.frames.has_frame(&f.id(0)));
+    assert_eq!(
+        f.events(),
+        [
+            FrameEvent::Announced(f.id(0)),
+            FrameEvent::Forgotten(f.id(0)),
+            FrameEvent::Announced(f.id(0))
+        ]
+    );
+    assert_eq!(
+        f.frames_lines().last().unwrap(),
+        &format!(
+            "Frames: cluster {} recorded again: its page polls again",
+            f.id(0)
+        )
+    );
+}
+
+#[tokio::test(start_paused = true)]
+async fn a_frame_an_area_forgot_is_not_recorded_again_when_it_polls_again() {
+    let f = fixture();
+    f.poll(&f.host(0), "frame-0", 0).await;
+    f.announce(&f.host(0), &f.id(0)).await;
+    f.frames.forget(&f.id(0));
+    tokio::time::advance(IDLE_LIMIT - std::time::Duration::from_secs(25)).await;
+    assert!(!f.frames.has_frame(&f.id(0)));
+
+    f.poll(&f.host(0), "frame-0", 0).await;
+
+    assert!(!f.frames.has_frame(&f.id(0)));
+    assert_eq!(
+        f.events(),
+        [
+            FrameEvent::Announced(f.id(0)),
+            FrameEvent::Forgotten(f.id(0))
+        ]
+    );
+}
+
+#[tokio::test(start_paused = true)]
+async fn a_frame_forgotten_while_open_is_not_recorded_again_after_the_main_window_reloads() {
+    let f = fixture();
+    f.poll(MAIN, "main-1", 0).await;
+    forgotten_while_open(&f).await;
+
+    // The main window reloads after its own queue closed: its frames are gone.
+    f.poll(MAIN, "main-2", 0).await;
+    f.poll(&f.host(0), "frame-0", 0).await;
+
+    assert!(!f.frames.has_frame(&f.id(0)));
+}
+
 #[tokio::test(start_paused = true)]
 async fn a_reload_of_the_main_window_forgets_every_frame() {
     let f = fixture();

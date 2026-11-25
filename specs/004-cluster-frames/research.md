@@ -179,7 +179,8 @@ order).
 - the frame record forgets cluster `id` on `Closed(Cluster(id))`, and every
   frame on `Restarted(Main)`, the reload of the main window; a
   `Restarted(Cluster(id))` changes nothing, as the reloaded frame announces
-  itself again;
+  itself again; a `Reopened(Cluster(id))`, the same page polling again after
+  its queue closed, records again a frame its closed queue forgot (R11);
 - every read of the record runs the idle check first, so a read at
   `t + 60 s` finds the frame gone, and a background task runs it once a
   second, so the `Forgotten` event comes at most a second later;
@@ -384,14 +385,16 @@ switched, one closed and reopened) runs on the branch and on `main`.
   first and third frames, hidden for 65 seconds, stayed recorded and received
   what the core sent them).
 - **Every page of the application stops polling while it is open.** Seen
-  once: an instance left running for minutes after its check run, covered by
-  two other instances while the unit tests of the Electron build loaded the
-  machine, closed the queues of the main window and of its three frames, and
-  the record forgot frames that were still open. A main window covered for 80
-  seconds on an idle machine kept every queue open, so the cause is
-  **Unverified**. A frame forgotten that way is not recorded again when it
-  polls again: its queue opens again, numbered on from the closed one, with no
-  `Restarted` event, and only an announcement records a frame.
+  twice: an instance left running for minutes after its check run, covered by
+  other instances on a loaded machine, and an instance in use while the user
+  worked in another application; each time the queues of the main window and
+  of every frame closed, and the record forgot frames that were still open. A
+  main window covered for 80 seconds on an idle machine kept every queue open,
+  so the cause is **Unverified**. The core therefore records such a frame
+  again when its page polls again: the queue reports `Reopened` for a poll
+  that names the session of a closed queue, and numbers on from it, so the
+  page's `after` drops nothing new. What was sent to the frame while it had no
+  queue is lost (FR-028, cargo tests of `Queues` and of the record).
 - **wry dropping a cancelled poll.** A waiting poll whose request has been
   dropped no longer keeps its queue open, so the queue closes 60 seconds after
   its last poll started whether wry keeps the task of a cancelled poll or drops

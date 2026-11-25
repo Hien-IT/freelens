@@ -66,6 +66,7 @@ cluster it shows before its frame has loaded, as in the Electron build.
 
 ```text
            announce(id) from View::Cluster(id)
+           Reopened(Cluster(id)), if its closed queue forgot it
   Absent ───────────────────────────────────────▶ Recorded
     ▲                                                │
     │   Closed(Cluster(id)) of its queue             │
@@ -78,8 +79,10 @@ cluster it shows before its frame has loaded, as in the Electron build.
   frame is not recorded twice.
 - `Restarted(Cluster(id))`, the frame of `id` reloading, leaves the record as
   it is; the reloaded frame announces itself again.
-- A frame forgotten while it is still open, because its page stopped polling
-  (research R11), stays Absent until it announces itself again.
+- A frame forgotten because its queue closed is recorded again on
+  `Reopened(Cluster(id))`, its same page polling again (research R11). A
+  frame an area forgot, or one forgotten by a reload of the main window, is
+  not.
 - Forgetting an absent id changes nothing and emits nothing.
 - Forgetting the visible cluster's frame leaves `visible` as it is: the main
   window names the next one (Edge Cases of the spec).
@@ -96,10 +99,11 @@ and outside the lock, so a subscriber may read the record or send.
 
 ## Queue events (added to the Queue of spec 002)
 
-| Event             | When                                                                               |
-| ----------------- | ---------------------------------------------------------------------------------- |
-| `Closed(view)`    | the queue closes: no poll and none waiting for 60 seconds, or over 10 000 messages |
-| `Restarted(view)` | a poll names a new `session` for an open queue, which starts afresh                |
+| Event             | When                                                                                                  |
+| ----------------- | ----------------------------------------------------------------------------------------------------- |
+| `Closed(view)`    | the queue closes: no poll and none waiting for 60 seconds, or over 10 000 messages                    |
+| `Restarted(view)` | a poll names a new `session` for an open queue, which starts afresh, or for a view whose queue closed |
+| `Reopened(view)`  | a poll names the `session` of a view whose queue closed: the same page polls again                    |
 
 The idle check runs on every poll, every send, every read of the frame
 record, and once a second in the background (research R5).
