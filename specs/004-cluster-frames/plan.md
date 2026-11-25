@@ -50,7 +50,8 @@ No new crate and no new npm package.
 stays non-persistent (R2).
 
 **Testing**: `cargo test` for the route table, the frame record, the two
-channels and the queue events (`tests/scheme.rs`, new `tests/frames.rs`, unit
+channels and the queue events (`tests/scheme.rs`, new `tests/frames.rs` and
+`tests/navigation.rs`, unit
 tests in `src/messaging/queues.rs`); the `--frames-check` run and the manual
 steps of [quickstart.md](./quickstart.md); the Electron build's
 `pnpm type:check`, unit tests, integration tests and `knip:check` after the
@@ -135,7 +136,8 @@ freelens-tauri/
     │       ├── mod.rs         # Sender::send_to
     │       └── queues.rs      # push_to, sweep, Closed and Restarted events
     └── tests/
-        ├── scheme.rs          # + audiences, Origin, duplicates, the /ipc/ rows, hosts with a port or user name, the navigation rule
+        ├── scheme.rs          # + audiences, Origin, duplicates, the /ipc/ rows, hosts with a port or user name, the policies
+        ├── navigation.rs      # new: the navigation rule of the main window
         └── frames.rs          # new: record, events, forgetting, sending, the two channels
 
 packages/core/src/                                   # Electron build, R8: deleted
