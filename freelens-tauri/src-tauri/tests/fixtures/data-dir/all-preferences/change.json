@@ -1,0 +1,74 @@
+{
+  "lens-user-store": {
+    "preferences": {
+      "httpsProxy": "http://proxy.example:3128",
+      "shell": "",
+      "theme": "dracula",
+      "themeVariant": "light",
+      "accentColorDark": "#123456",
+      "accentColorLight": "#abcdef",
+      "zoom": 150,
+      "terminalTheme": "solarized",
+      "terminalThemeVariant": "light",
+      "localeTimezone": "Europe/Paris",
+      "allowUntrustedCAs": true,
+      "allowErrorReporting": false,
+      "downloadMirror": "custom",
+      "downloadCustomMirror": "https://mirror.example/release",
+      "downloadKubectlBinaries": false,
+      "downloadBinariesPath": "/opt/kubectl",
+      "kubectlBinariesPath": "/usr/local/bin/kubectl",
+      "helmBinariesPath": "/usr/local/bin/helm",
+      "helmServerSide": false,
+      "openAtLogin": true,
+      "showTrayIcon": false,
+      "hotbarAutoHide": true,
+      "persistentSearch": true,
+      "logViewerPreferences": {
+        "showTimestamps": true,
+        "maxCombinedLogsPods": 250,
+        "extra": 1
+      },
+      "terminalCopyOnSelect": true,
+      "hiddenTableColumns": [
+        [
+          "pods",
+          [
+            "age",
+            "qos"
+          ]
+        ],
+        [
+          "nodes",
+          []
+        ]
+      ],
+      "syncKubeconfigEntries": [
+        {
+          "filePath": "/home/test/.kube"
+        },
+        {
+          "filePath": "/work/configs",
+          "extra": true
+        }
+      ],
+      "editorConfiguration": {
+        "tabSize": 4,
+        "minimap": {
+          "enabled": false
+        }
+      },
+      "terminalConfig": {
+        "fontSize": 14
+      },
+      "extensionRegistryUrl": {
+        "location": "custom",
+        "customUrl": "https://registry.example"
+      },
+      "clusterPageMenuOrder": {
+        "workloads": 1,
+        "config": 2
+      }
+    }
+  }
+}

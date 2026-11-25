@@ -1,0 +1,25 @@
+{
+  "__internal__": {
+    "migrations": {
+      "version": "0.1.0"
+    }
+  },
+  "weblinks": [
+    {
+      "id": "w1",
+      "name": "Docs",
+      "url": "https://a.example",
+      "extra": true
+    },
+    {
+      "id": "w2",
+      "name": "B",
+      "url": "https://b.example"
+    },
+    {
+      "id": "w1",
+      "name": "Docs 2",
+      "url": "https://a2.example"
+    }
+  ]
+}

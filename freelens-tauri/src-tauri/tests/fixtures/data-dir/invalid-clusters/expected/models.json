@@ -1,0 +1,124 @@
+{
+  "lens-user-store": {
+    "preferences": {
+      "editorConfiguration": {
+        "tabSize": 2,
+        "lineNumbers": "on",
+        "fontSize": 12,
+        "fontFamily": "RobotoMono",
+        "minimap": {
+          "enabled": true,
+          "side": "right"
+        }
+      },
+      "terminalConfig": {
+        "fontSize": 12,
+        "fontFamily": "RobotoMono"
+      }
+    }
+  },
+  "lens-cluster-store": {
+    "clusters": [
+      {
+        "id": "c1",
+        "contextName": "ctx-1b",
+        "kubeConfigPath": "/k/other",
+        "preferences": {},
+        "metadata": {},
+        "accessibleNamespaces": [],
+        "labels": {}
+      },
+      {
+        "id": "c2",
+        "contextName": "ctx-2",
+        "kubeConfigPath": "/k/config",
+        "preferences": {},
+        "metadata": {},
+        "accessibleNamespaces": [],
+        "labels": {}
+      },
+      {
+        "id": "c3",
+        "kubeConfigPath": "/k/config",
+        "contextName": ""
+      },
+      {
+        "id": "c4",
+        "kubeConfigPath": "/k/config",
+        "contextName": "ctx-4",
+        "labels": {
+          "a": ""
+        }
+      },
+      {
+        "id": "c5",
+        "kubeConfigPath": "/k/config",
+        "contextName": "ctx-5",
+        "accessibleNamespaces": [
+          1
+        ]
+      },
+      {
+        "kubeConfigPath": "/k/config",
+        "contextName": "no-id"
+      },
+      {
+        "id": "c6",
+        "kubeConfigPath": "/k/config",
+        "contextName": "ctx-6",
+        "preferences": null
+      },
+      {
+        "id": "c7",
+        "kubeConfigPath": "/k/config",
+        "contextName": "ctx-7",
+        "metadata": [],
+        "labels": {
+          "n": 1
+        }
+      }
+    ]
+  },
+  "freelens-favorites-store": {
+    "items": [],
+    "useShortNames": true
+  },
+  "lens-hotbar-store": {
+    "hotbars": [
+      {
+        "id": "<uuid>",
+        "items": [
+          {
+            "entity": {
+              "uid": "welcome-page-entity",
+              "name": "Welcome Page",
+              "source": "app"
+            }
+          },
+          {
+            "entity": {
+              "uid": "catalog-entity",
+              "name": "Catalog",
+              "source": "app"
+            }
+          },
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        "name": "Default"
+      }
+    ],
+    "activeHotbarId": "<uuid>"
+  },
+  "lens-weblink-store": {
+    "weblinks": []
+  }
+}

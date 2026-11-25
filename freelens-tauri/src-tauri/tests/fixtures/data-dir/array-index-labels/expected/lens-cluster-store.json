@@ -1,0 +1,28 @@
+{
+	"__internal__": {
+		"migrations": {
+			"version": "0.1.0"
+		}
+	},
+	"clusters": [
+		{
+			"id": "c1",
+			"contextName": "kind-x",
+			"kubeConfigPath": "/k/config",
+			"preferences": {
+				"10": "x",
+				"clusterName": "n"
+			},
+			"metadata": {
+				"distribution": "kind"
+			},
+			"accessibleNamespaces": [],
+			"labels": {
+				"2": "y",
+				"10": "x",
+				"b": "1",
+				"a": "z"
+			}
+		}
+	]
+}

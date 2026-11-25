@@ -5,12 +5,15 @@
 
 pub mod catalog;
 pub mod clusters;
+pub mod foundation;
 pub mod frames;
 pub mod frames_check;
+pub mod instance;
 pub mod messaging;
 pub mod options;
 pub mod routes;
 pub mod scheme;
+pub mod stores;
 pub mod version;
 
 use std::collections::HashSet;
@@ -27,11 +30,13 @@ use catalog::Catalog;
 use frames::Frames;
 use messaging::{Channels, DuplicateChannel, Log, Messaging};
 use routes::{Audience, Env};
+use stores::{Machine, Stores};
 
 /// What startup builds for the areas of the core to share.
 pub struct Core {
     pub messaging: Messaging,
     pub frames: Frames,
+    pub stores: Stores,
 }
 
 /// The check runs whose channels the core registers.
@@ -44,11 +49,13 @@ pub struct Checks {
 }
 
 /// Registers the channels of every core area (`contracts/core-channels.md`)
-/// and builds the frame record over the clusters of `catalog`.
+/// and builds the frame record over the clusters of `catalog`, with `stores`
+/// behind the channels of the stores.
 pub fn register_core(
     checks: Checks,
     version: String,
     catalog: &Catalog,
+    stores: &Stores,
     log: &Log,
 ) -> Result<Core, DuplicateChannel> {
     let ids = catalog
@@ -56,7 +63,7 @@ pub fn register_core(
         .iter()
         .map(|entry| entry.id.clone())
         .collect();
-    build(checks, version, ids, log)
+    build(checks, version, ids, stores, log)
 }
 
 /// The channels alone, with no catalog behind the frame record, so that no
@@ -70,16 +77,19 @@ pub fn register_channels(
         messaging: check,
         frames: false,
     };
-    build(checks, version, HashSet::new(), log).map(|core| core.messaging)
+    let stores = Stores::in_memory(Machine::current(), Arc::clone(log));
+    build(checks, version, HashSet::new(), &stores, log).map(|core| core.messaging)
 }
 
 fn build(
     checks: Checks,
     version: String,
     catalog: HashSet<String>,
+    stores: &Stores,
     log: &Log,
 ) -> Result<Core, DuplicateChannel> {
     let mut channels = Channels::with_log(Arc::clone(log));
+    stores::register(&mut channels, stores)?;
     let announcements = messaging::admin::register(&mut channels, Arc::clone(log))?;
     version::register(&mut channels, version)?;
     let frames = frames::register(&mut channels, catalog, Arc::clone(log))?;
@@ -92,6 +102,7 @@ fn build(
     Ok(Core {
         messaging: channels.build(),
         frames,
+        stores: stores.clone(),
     })
 }
 
@@ -104,18 +115,35 @@ pub fn run() {
             std::process::exit(2);
         }
     };
-    let context = tauri::generate_context!();
     let log: Log = Arc::new(|line| println!("{line}"));
+    // Nothing of the data directory is read or written before the lock is
+    // held (specs/007-main-foundation/contracts/instance-lock.md).
+    let data_dir = foundation::paths::data_dir(
+        options.data_dir.as_deref(),
+        std::env::var_os("FREELENS_INTEGRATION_TESTING_DIR").as_deref(),
+        &std::env::home_dir().unwrap_or_default(),
+        foundation::paths::BuildKind::current(),
+    );
+    let instance_lock = match instance::acquire(&data_dir, &log) {
+        Ok(lock) => std::sync::Mutex::new(Some(lock)),
+        Err(refusal) => {
+            refusal.show_alert();
+            std::process::exit(1);
+        }
+    };
+    let context = tauri::generate_context!();
     let checks = Checks {
         messaging: options.messaging_check,
         frames: options.frames_check,
     };
     let home = std::env::var_os("HOME").map(PathBuf::from);
     let catalog = Catalog::load(&options.kubeconfig, home.as_deref());
+    let stores = Stores::load(&data_dir, Machine::current(), Arc::clone(&log));
     let Core { messaging, .. } = match register_core(
         checks,
         context.package_info().version.to_string(),
         &catalog,
+        &stores,
         &log,
     ) {
         Ok(core) => core,
@@ -235,6 +263,13 @@ pub fn run() {
                 .build()?;
             Ok(())
         })
-        .run(context)
-        .expect("error while running the application");
+        .build(context)
+        .expect("error while building the application")
+        .run(move |_, event| {
+            // The event loop ends the process without dropping the locals of
+            // `run`, so the lock is released here.
+            if let tauri::RunEvent::Exit = event {
+                drop(instance_lock.lock().ok().and_then(|mut lock| lock.take()));
+            }
+        });
 }

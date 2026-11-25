@@ -32,6 +32,10 @@ pub struct LaunchOptions {
     /// `--frames-check`: registers the check-only channels and runs the steps
     /// of `specs/004-cluster-frames/contracts/frames-log.md`.
     pub frames_check: bool,
+    /// `--data-dir=<path>`: the data directory to use instead of the Electron
+    /// build's, resolved against the working directory; for measurements and
+    /// tests (`specs/007-main-foundation`, research R6).
+    pub data_dir: Option<PathBuf>,
 }
 
 #[derive(Debug, PartialEq, Eq)]
@@ -58,6 +62,7 @@ where
     let mut open_cluster = None;
     let mut messaging_check = false;
     let mut frames_check = false;
+    let mut data_dir = None;
 
     for arg in args {
         match arg.split_once('=') {
@@ -66,9 +71,11 @@ where
             Some(("--kubeconfig", path)) => kubeconfig = KubeconfigChoice::File(cwd.join(path)),
             Some(("--open-cluster", "")) => return Err(OptionsError::MissingValue(arg)),
             Some(("--open-cluster", name)) => open_cluster = Some(name.to_string()),
+            Some(("--data-dir", "")) => return Err(OptionsError::MissingValue(arg)),
+            Some(("--data-dir", path)) => data_dir = Some(cwd.join(path)),
             None if arg == "--messaging-check" => messaging_check = true,
             None if arg == "--frames-check" => frames_check = true,
-            None if arg == "--kubeconfig" || arg == "--open-cluster" => {
+            None if arg == "--kubeconfig" || arg == "--open-cluster" || arg == "--data-dir" => {
                 return Err(OptionsError::MissingValue(arg));
             }
             _ => return Err(OptionsError::Unknown(arg)),
@@ -80,6 +87,7 @@ where
         open_cluster,
         messaging_check,
         frames_check,
+        data_dir,
     })
 }
 
@@ -184,6 +192,25 @@ mod tests {
             parse_args(&["--frames-check=yes"]),
             Err(OptionsError::Unknown("--frames-check=yes".into()))
         );
+    }
+
+    #[test]
+    fn data_dir_is_resolved_against_the_working_directory() {
+        assert_eq!(parse_args(&[]).unwrap().data_dir, None);
+        assert_eq!(
+            parse_args(&["--data-dir=seed"]).unwrap().data_dir,
+            Some(PathBuf::from("/work/seed"))
+        );
+        assert_eq!(
+            parse_args(&["--data-dir=/tmp/seed"]).unwrap().data_dir,
+            Some(PathBuf::from("/tmp/seed"))
+        );
+        for arg in ["--data-dir", "--data-dir="] {
+            assert_eq!(
+                parse_args(&[arg]),
+                Err(OptionsError::MissingValue(arg.into()))
+            );
+        }
     }
 
     #[test]

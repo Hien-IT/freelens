@@ -1,0 +1,12 @@
+{
+	"preferences": {
+		"colorTheme": "Light",
+		"terminalTheme": "Dark",
+		"zoom": 101
+	},
+	"__internal__": {
+		"migrations": {
+			"version": "0.1.0"
+		}
+	}
+}

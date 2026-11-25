@@ -1,0 +1,41 @@
+{
+  "__internal__": {
+    "migrations": {
+      "version": "0.1.0"
+    }
+  },
+  "hotbars": [
+    {
+      "id": "same",
+      "name": "First",
+      "items": [
+        {
+          "entity": {
+            "uid": "a",
+            "name": "A",
+            "source": "local"
+          }
+        }
+      ]
+    },
+    {
+      "id": "other",
+      "name": "Other",
+      "items": []
+    },
+    {
+      "id": "same",
+      "name": "Second",
+      "items": [
+        {
+          "entity": {
+            "uid": "b",
+            "name": "B",
+            "source": "local"
+          }
+        }
+      ]
+    }
+  ],
+  "activeHotbarId": "other"
+}

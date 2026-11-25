@@ -1,0 +1,14 @@
+{
+  "lens-user-store": {
+    "preferences": {
+      "zoom": 100,
+      "logViewerPreferences": {
+        "maxCombinedLogsPods": 20.4
+      },
+      "extensionRegistryUrl": {
+        "location": "npmrc"
+      },
+      "syncKubeconfigEntries": []
+    }
+  }
+}

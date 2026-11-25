@@ -1,0 +1,24 @@
+{
+  "lens-cluster-store": {
+    "clusters": [
+      {
+        "id": "c1",
+        "kubeConfigPath": "/k/config",
+        "contextName": "kind-x",
+        "preferences": {
+          "clusterName": "n",
+          "10": "x"
+        },
+        "labels": {
+          "b": "1",
+          "10": "x",
+          "2": "y",
+          "a": "z"
+        },
+        "metadata": {
+          "distribution": "kind"
+        }
+      }
+    ]
+  }
+}

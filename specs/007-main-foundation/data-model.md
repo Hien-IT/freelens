@@ -2,11 +2,11 @@
 
 ## Data directory
 
-| Field      | Value                                                                                                                                                                                 |
-| ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `path`     | `--data-dir`; else `<FREELENS_INTEGRATION_TESTING_DIR>/<appName>` when the variable starts with the temporary directory; else `~/Library/Application Support/<appName>` (research R6) |
-| `app_name` | `Freelens` for a release build of the core, `FreelensDev` for a debug build                                                                                                           |
-| `lock`     | held from before the first read to the exit (contracts/instance-lock.md)                                                                                                              |
+| Field      | Value                                                                                                                                                                  |
+| ---------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `path`     | `--data-dir`; else `<FREELENS_INTEGRATION_TESTING_DIR>/<appName>` when the variable is set and not empty; else `~/Library/Application Support/<appName>` (research R6) |
+| `app_name` | `Freelens` for a release build of the core, `FreelensDev` for a debug build                                                                                            |
+| `lock`     | held from before the first read to the exit (contracts/instance-lock.md)                                                                                               |
 
 The data directory is created when missing, as conf creates it.
 
@@ -106,15 +106,30 @@ builds, so the core uses fresh defaults for each read.
 `{ clusters: [...] }`. A cluster model is valid when `id`, `kubeConfigPath` and
 `contextName` are non-empty strings, `preferences` and `metadata` are objects
 when present, `accessibleNamespaces` is an array of strings when present, and
-`labels` maps strings to strings when present (`common/cluster-types.ts`). A
-valid model is written as `{ id, contextName, kubeConfigPath, preferences,
-metadata, accessibleNamespaces, labels }`; an invalid one is kept as it is,
-unless a valid model has its `id`. Nothing else of a cluster is done here.
+`labels` maps strings to strings when present (`common/cluster-types.ts`); a
+string is never empty, as Joi has it. A valid model is written as `{ id,
+contextName, kubeConfigPath, preferences, metadata, accessibleNamespaces,
+labels }`, with `{}`, `{}`, `[]` and `{}` for what it leaves out; valid models
+with one `id` collapse into the last, in the first one's place; an invalid one
+is kept as it is, unless a valid model has its `id`. Nothing else of a cluster
+is done here.
 
 ### Web link store
 
 `{ weblinks: [...] }`, keyed by `id` on read (a later duplicate replaces the
 earlier one in place), written as the values are.
+
+### What a store keeps between two models
+
+The Electron build reads a model a view sends into the state of the first,
+so a few values depend on the model before (`previous` of `normalize`):
+
+- the active hotbar of a model without one is the one before;
+- a known cluster keeps the `preferences`, `metadata`, `accessibleNamespaces`
+  and `labels` a model leaves out;
+- the kubeconfig sync entries keep their places, new ones after;
+- the editor and terminal settings of a partial value are merged into the
+  ones before, not into the defaults.
 
 ## Local storage file
 

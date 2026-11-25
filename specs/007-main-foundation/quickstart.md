@@ -44,6 +44,12 @@ const names = [
   "crashDumps",
   "recent",
 ];
+// A temporary appData, as an integration-testing run sets it: Chromium writes
+// under userData once its paths are read, and the user's own must stay untouched.
+app.setPath(
+  "appData",
+  require("node:fs").mkdtempSync(require("node:path").join(require("node:os").tmpdir(), "probe-")),
+);
 app.setPath("userData", require("node:path").join(app.getPath("appData"), "Freelens"));
 app.setPath("sessionData", app.getPath("userData"));
 const out = {};
@@ -79,9 +85,8 @@ Expected: `tests/stores.rs`, `tests/foundation.rs`, `tests/instance.rs` and the
 unit tests of `src/stores/` and `src/foundation/` pass; every case of
 `tests/fixtures/data-dir/` is run.
 
-```bash
-pnpm --filter @freelensapp/core exec vitest run src/features/persistent-storage/main/tauri-parity.test.ts src/main/electron-app/runnables/enforce-single-application-instance.test.ts
-```
+````bash
+TZ=UTC pnpm exec vitest run -c vitest.config.ts packages/core/src/features/persistent-storage/main/tauri-parity.test.ts packages/core/src/main/electron-app/runnables/enforce-single-application-instance.test.ts```
 
 Expected: the Electron build's own store code and `conf` give the models and
 the bytes of every shared fixture, the `core-only-` cases skipped; the lock
@@ -97,7 +102,7 @@ directory so both builds accept it:
 
 ```bash
 export FREELENS_INTEGRATION_TESTING_DIR="$(mktemp -d "$TMPDIR/foundation.XXXXXX")"
-```
+````
 
 1. Start the Electron build with that variable (the packaged app of
    `pnpm build:app:dir`, or `pnpm dev`, which uses `FreelensDev`). Change

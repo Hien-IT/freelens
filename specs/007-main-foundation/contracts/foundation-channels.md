@@ -26,25 +26,26 @@ order.
 ## app-paths
 
 `app-paths`: none → `Record<PathName, string>`, the 17 names of
-`common/app-paths/app-path-names.ts`. The core's values on macOS, to be
-confirmed by the Electron probe of [quickstart.md](../quickstart.md) before
-the core encodes them; a value the probe shows as `""` is answered `""`:
+`common/app-paths/app-path-names.ts`. The values on macOS are those the
+Electron probe of [quickstart.md](../quickstart.md) printed with Electron
+44.10.1, a name whose call throws answered `""` as the Electron build
+answers it; `~` is the home directory of the user database:
 
-| Name                                                     | Value                                                                             |
-| -------------------------------------------------------- | --------------------------------------------------------------------------------- |
-| `currentApp`                                             | the Tauri build's `Resources` directory (FR-012)                                  |
-| `home`                                                   | the home directory of the user database                                           |
-| `appData`                                                | `FREELENS_INTEGRATION_TESTING_DIR` when set, else `~/Library/Application Support` |
-| `userData`                                               | `<appData>/<appName>`                                                             |
-| `sessionData`                                            | `userData`                                                                        |
-| `temp`                                                   | `TMPDIR`                                                                          |
-| `exe`                                                    | the Tauri build's executable (FR-012)                                             |
-| `module`                                                 | the Tauri build's executable (FR-012)                                             |
-| `desktop`, `documents`, `downloads`, `music`, `pictures` | `~/Desktop`, `~/Documents`, `~/Downloads`, `~/Music`, `~/Pictures`                |
-| `videos`                                                 | `~/Movies`                                                                        |
-| `logs`                                                   | `~/Library/Logs/<name>`, the name as the probe shows it                           |
-| `crashDumps`                                             | as the probe shows it                                                             |
-| `recent`                                                 | as the probe shows it (`""` expected: the name is Windows-only)                   |
+| Name                                                     | Value                                                                                                                         |
+| -------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
+| `currentApp`                                             | the Tauri build's `Resources` directory (FR-012)                                                                              |
+| `home`                                                   | the home directory of the user database                                                                                       |
+| `appData`                                                | `FREELENS_INTEGRATION_TESTING_DIR` when set, else `~/Library/Application Support`                                             |
+| `userData`                                               | `<appData>/<appName>`                                                                                                         |
+| `sessionData`                                            | `userData`                                                                                                                    |
+| `temp`                                                   | `TMPDIR` as it is, with its trailing `/`                                                                                      |
+| `exe`                                                    | the Tauri build's executable (FR-012)                                                                                         |
+| `module`                                                 | the Tauri build's executable (FR-012); Electron's own framework binary in the Electron build                                  |
+| `desktop`, `documents`, `downloads`, `music`, `pictures` | `~/Desktop`, `~/Documents`, `~/Downloads`, `~/Music`, `~/Pictures`                                                            |
+| `videos`                                                 | `~/Movies`                                                                                                                    |
+| `logs`                                                   | `~/Library/Logs/Freelens`, in a development build too: the name is the product name when the paths are read, before `setName` |
+| `crashDumps`                                             | `<userData>/Crashpad`                                                                                                         |
+| `recent`                                                 | `""`: Electron throws `Failed to get 'recent' path` on macOS                                                                  |
 
 ## machine-values
 

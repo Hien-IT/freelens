@@ -1,0 +1,119 @@
+{
+  "lens-user-store": {
+    "preferences": {
+      "allowErrorReporting": false,
+      "allowUntrustedCAs": true,
+      "theme": "dracula",
+      "themeVariant": "light",
+      "accentColorDark": "#123456",
+      "accentColorLight": "#abcdef",
+      "zoom": 125,
+      "downloadBinariesPath": "/opt/kubectl",
+      "downloadKubectlBinaries": false,
+      "downloadMirror": "custom",
+      "downloadCustomMirror": "https://mirror.example/release",
+      "editorConfiguration": {
+        "tabSize": 4,
+        "lineNumbers": "on",
+        "fontSize": 12,
+        "fontFamily": "RobotoMono",
+        "minimap": {
+          "enabled": false,
+          "side": "right"
+        }
+      },
+      "extensionRegistryUrl": {
+        "location": "custom",
+        "customUrl": "https://registry.example"
+      },
+      "helmBinariesPath": "/usr/local/bin/helm",
+      "helmServerSide": false,
+      "hiddenTableColumns": [
+        [
+          "pods",
+          [
+            "age",
+            "qos"
+          ]
+        ]
+      ],
+      "httpsProxy": "http://proxy.example:3128",
+      "kubectlBinariesPath": "/usr/local/bin/kubectl",
+      "localeTimezone": "Europe/Paris",
+      "openAtLogin": true,
+      "showTrayIcon": false,
+      "hotbarAutoHide": true,
+      "persistentSearch": true,
+      "logViewerPreferences": {
+        "showTimestamps": true,
+        "maxCombinedLogsPods": 100
+      },
+      "shell": "/bin/zsh",
+      "syncKubeconfigEntries": [
+        {
+          "filePath": "/home/test/.kube"
+        },
+        {
+          "filePath": "/work/configs",
+          "extra": true
+        }
+      ],
+      "terminalConfig": {
+        "fontSize": 14,
+        "fontFamily": "RobotoMono"
+      },
+      "terminalCopyOnSelect": true,
+      "terminalTheme": "solarized",
+      "terminalThemeVariant": "light",
+      "clusterPageMenuOrder": {
+        "workloads": 1,
+        "config": 2
+      }
+    }
+  },
+  "lens-cluster-store": {
+    "clusters": []
+  },
+  "freelens-favorites-store": {
+    "items": [],
+    "useShortNames": true
+  },
+  "lens-hotbar-store": {
+    "hotbars": [
+      {
+        "id": "<uuid>",
+        "items": [
+          {
+            "entity": {
+              "uid": "welcome-page-entity",
+              "name": "Welcome Page",
+              "source": "app"
+            }
+          },
+          {
+            "entity": {
+              "uid": "catalog-entity",
+              "name": "Catalog",
+              "source": "app"
+            }
+          },
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        "name": "Default"
+      }
+    ],
+    "activeHotbarId": "<uuid>"
+  },
+  "lens-weblink-store": {
+    "weblinks": []
+  }
+}

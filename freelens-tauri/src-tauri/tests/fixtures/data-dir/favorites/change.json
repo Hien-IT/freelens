@@ -1,0 +1,20 @@
+{
+  "freelens-favorites-store": {
+    "items": [
+      {
+        "id": "sidebar-item-pods",
+        "type": "static",
+        "title": "Pods",
+        "order": 10
+      },
+      {
+        "id": "crd-example",
+        "type": "crd",
+        "title": "Examples",
+        "order": 20,
+        "group": "example.io"
+      }
+    ],
+    "useShortNames": false
+  }
+}

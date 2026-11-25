@@ -157,6 +157,13 @@ lint:
         - .specify/**
         - "!.specify/memory/constitution.md"
         - .claude/skills/speckit-*/**
+    # The store fixtures of the Tauri build are the exact bytes the Electron
+    # build writes (tab indentation, no final newline), which both builds'
+    # tests compare against, so no linter reformats them.
+    - linters:
+        - ALL
+      paths:
+        - freelens-tauri/src-tauri/tests/fixtures/data-dir/**
     # Vitest/testing-library snapshots are generated artifacts whose DOM
     # serializer emits whitespace-only lines (e.g. indented empty elements and
     # inline SVG <style> blocks). git-diff-check only flags such lines when they

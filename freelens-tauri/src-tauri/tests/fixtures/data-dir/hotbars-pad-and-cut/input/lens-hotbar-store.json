@@ -1,0 +1,217 @@
+{
+  "__internal__": {
+    "migrations": {
+      "version": "0.0.1"
+    }
+  },
+  "hotbars": [
+    {
+      "id": "short",
+      "name": "Short",
+      "items": [
+        {
+          "entity": {
+            "uid": "a",
+            "name": "A",
+            "source": "local"
+          }
+        },
+        null,
+        {
+          "entity": {
+            "uid": "b",
+            "name": "B"
+          }
+        }
+      ]
+    },
+    {
+      "id": "long-with-nulls",
+      "name": "Long",
+      "items": [
+        {
+          "entity": {
+            "uid": "x1",
+            "name": "X1",
+            "source": "local"
+          }
+        },
+        null,
+        {
+          "entity": {
+            "uid": "x2",
+            "name": "X2",
+            "source": "local"
+          }
+        },
+        null,
+        {
+          "entity": {
+            "uid": "x3",
+            "name": "X3",
+            "source": "local"
+          }
+        },
+        {
+          "entity": {
+            "uid": "x4",
+            "name": "X4",
+            "source": "local"
+          }
+        },
+        {
+          "entity": {
+            "uid": "x5",
+            "name": "X5",
+            "source": "local"
+          }
+        },
+        {
+          "entity": {
+            "uid": "x6",
+            "name": "X6",
+            "source": "local"
+          }
+        },
+        {
+          "entity": {
+            "uid": "x7",
+            "name": "X7",
+            "source": "local"
+          }
+        },
+        {
+          "entity": {
+            "uid": "x8",
+            "name": "X8",
+            "source": "local"
+          }
+        },
+        {
+          "entity": {
+            "uid": "x9",
+            "name": "X9",
+            "source": "local"
+          }
+        },
+        {
+          "entity": {
+            "uid": "x10",
+            "name": "X10",
+            "source": "local"
+          }
+        },
+        {
+          "entity": {
+            "uid": "x11",
+            "name": "X11",
+            "source": "local"
+          }
+        },
+        null
+      ]
+    },
+    {
+      "id": "long-full",
+      "name": "Full",
+      "items": [
+        {
+          "entity": {
+            "uid": "f1",
+            "name": "F1",
+            "source": "local"
+          }
+        },
+        {
+          "entity": {
+            "uid": "f2",
+            "name": "F2",
+            "source": "local"
+          }
+        },
+        {
+          "entity": {
+            "uid": "f3",
+            "name": "F3",
+            "source": "local"
+          }
+        },
+        {
+          "entity": {
+            "uid": "f4",
+            "name": "F4",
+            "source": "local"
+          }
+        },
+        {
+          "entity": {
+            "uid": "f5",
+            "name": "F5",
+            "source": "local"
+          }
+        },
+        {
+          "entity": {
+            "uid": "f6",
+            "name": "F6",
+            "source": "local"
+          }
+        },
+        {
+          "entity": {
+            "uid": "f7",
+            "name": "F7",
+            "source": "local"
+          }
+        },
+        {
+          "entity": {
+            "uid": "f8",
+            "name": "F8",
+            "source": "local"
+          }
+        },
+        {
+          "entity": {
+            "uid": "f9",
+            "name": "F9",
+            "source": "local"
+          }
+        },
+        {
+          "entity": {
+            "uid": "f10",
+            "name": "F10",
+            "source": "local"
+          }
+        },
+        {
+          "entity": {
+            "uid": "f11",
+            "name": "F11",
+            "source": "local"
+          }
+        },
+        {
+          "entity": {
+            "uid": "f12",
+            "name": "F12",
+            "source": "local"
+          }
+        },
+        {
+          "entity": {
+            "uid": "f13",
+            "name": "F13",
+            "source": "local"
+          }
+        }
+      ]
+    },
+    {
+      "id": "no-items",
+      "name": "Empty"
+    }
+  ],
+  "activeHotbarId": "missing"
+}

@@ -1,0 +1,256 @@
+{
+  "lens-user-store": {
+    "preferences": {
+      "editorConfiguration": {
+        "tabSize": 2,
+        "lineNumbers": "on",
+        "fontSize": 12,
+        "fontFamily": "RobotoMono",
+        "minimap": {
+          "enabled": true,
+          "side": "right"
+        }
+      },
+      "terminalConfig": {
+        "fontSize": 12,
+        "fontFamily": "RobotoMono"
+      }
+    }
+  },
+  "lens-cluster-store": {
+    "clusters": []
+  },
+  "freelens-favorites-store": {
+    "items": [],
+    "useShortNames": true
+  },
+  "lens-hotbar-store": {
+    "hotbars": [
+      {
+        "id": "short",
+        "items": [
+          {
+            "entity": {
+              "uid": "a",
+              "name": "A",
+              "source": "local"
+            }
+          },
+          null,
+          {
+            "entity": {
+              "uid": "b",
+              "name": "B"
+            }
+          },
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        "name": "Short"
+      },
+      {
+        "id": "long-with-nulls",
+        "items": [
+          {
+            "entity": {
+              "uid": "x1",
+              "name": "X1",
+              "source": "local"
+            }
+          },
+          null,
+          {
+            "entity": {
+              "uid": "x2",
+              "name": "X2",
+              "source": "local"
+            }
+          },
+          {
+            "entity": {
+              "uid": "x3",
+              "name": "X3",
+              "source": "local"
+            }
+          },
+          {
+            "entity": {
+              "uid": "x4",
+              "name": "X4",
+              "source": "local"
+            }
+          },
+          {
+            "entity": {
+              "uid": "x5",
+              "name": "X5",
+              "source": "local"
+            }
+          },
+          {
+            "entity": {
+              "uid": "x6",
+              "name": "X6",
+              "source": "local"
+            }
+          },
+          {
+            "entity": {
+              "uid": "x7",
+              "name": "X7",
+              "source": "local"
+            }
+          },
+          {
+            "entity": {
+              "uid": "x8",
+              "name": "X8",
+              "source": "local"
+            }
+          },
+          {
+            "entity": {
+              "uid": "x9",
+              "name": "X9",
+              "source": "local"
+            }
+          },
+          {
+            "entity": {
+              "uid": "x10",
+              "name": "X10",
+              "source": "local"
+            }
+          },
+          {
+            "entity": {
+              "uid": "x11",
+              "name": "X11",
+              "source": "local"
+            }
+          }
+        ],
+        "name": "Long"
+      },
+      {
+        "id": "long-full",
+        "items": [
+          {
+            "entity": {
+              "uid": "f1",
+              "name": "F1",
+              "source": "local"
+            }
+          },
+          {
+            "entity": {
+              "uid": "f2",
+              "name": "F2",
+              "source": "local"
+            }
+          },
+          {
+            "entity": {
+              "uid": "f3",
+              "name": "F3",
+              "source": "local"
+            }
+          },
+          {
+            "entity": {
+              "uid": "f4",
+              "name": "F4",
+              "source": "local"
+            }
+          },
+          {
+            "entity": {
+              "uid": "f5",
+              "name": "F5",
+              "source": "local"
+            }
+          },
+          {
+            "entity": {
+              "uid": "f6",
+              "name": "F6",
+              "source": "local"
+            }
+          },
+          {
+            "entity": {
+              "uid": "f7",
+              "name": "F7",
+              "source": "local"
+            }
+          },
+          {
+            "entity": {
+              "uid": "f8",
+              "name": "F8",
+              "source": "local"
+            }
+          },
+          {
+            "entity": {
+              "uid": "f9",
+              "name": "F9",
+              "source": "local"
+            }
+          },
+          {
+            "entity": {
+              "uid": "f10",
+              "name": "F10",
+              "source": "local"
+            }
+          },
+          {
+            "entity": {
+              "uid": "f11",
+              "name": "F11",
+              "source": "local"
+            }
+          },
+          {
+            "entity": {
+              "uid": "f12",
+              "name": "F12",
+              "source": "local"
+            }
+          }
+        ],
+        "name": "Full"
+      },
+      {
+        "id": "no-items",
+        "items": [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        "name": "Empty"
+      }
+    ],
+    "activeHotbarId": "short"
+  },
+  "lens-weblink-store": {
+    "weblinks": []
+  }
+}

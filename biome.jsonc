@@ -58,6 +58,9 @@
       "!**/dist/**",
       "**/build/*.{js,cjs,mjs}",
       "!**/packages/resource-templates/templates/**",
+      // The store fixtures shared with the Tauri build are the bytes the
+      // Electron build writes, tabs and missing final newline included.
+      "!**/freelens-tauri/src-tauri/tests/fixtures/data-dir/**",
       "!**/pnpm-lock.yaml",
       "!**/pnpm-workspace.yaml"
     ]

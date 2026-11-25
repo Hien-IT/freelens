@@ -1,0 +1,24 @@
+{
+	"__internal__": {
+		"migrations": {
+			"version": "0.1.0"
+		}
+	},
+	"preferences": {
+		"editorConfiguration": {
+			"tabSize": 2,
+			"lineNumbers": "on",
+			"fontSize": 12,
+			"fontFamily": "RobotoMono",
+			"minimap": {
+				"enabled": true,
+				"side": "right"
+			}
+		},
+		"syncKubeconfigEntries": [],
+		"terminalConfig": {
+			"fontSize": 12,
+			"fontFamily": "RobotoMono"
+		}
+	}
+}

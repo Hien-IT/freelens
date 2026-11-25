@@ -1,0 +1,16 @@
+{
+  "__internal__": {
+    "migrations": {
+      "version": "0.1.0"
+    }
+  },
+  "items": [
+    {
+      "id": "sidebar-item-pods",
+      "type": "static",
+      "title": "Pods",
+      "order": 10
+    }
+  ],
+  "useShortNames": false
+}

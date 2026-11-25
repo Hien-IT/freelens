@@ -206,9 +206,12 @@ the five stores of Story 1.
 - The two builds run on different data directories, such as a development
   build next to a packaged one: both start.
 - A store's file is missing: the store starts from the defaults, as in the
-  Electron build. A file that exists but cannot be read is handled as the
-  Electron build handles it; a write that fails is logged, and the other
-  values are still written and sent to the views, as in the Electron build.
+  Electron build. A file that exists but cannot be read, for a permission or
+  an I/O error, is kept as it is and logged, and the store runs from its
+  defaults for the run without writing the file; the Electron build fails to
+  start instead, and keeping the file is the safer of the two (User Story 2).
+  A write that fails is logged, and the model is still sent to the views, as
+  in the Electron build.
 - A view sends a model of a store that is not an object, or names a store the
   core does not keep: the core ignores it and logs it, and writes nothing.
 - Two views send changes to the same store at the same time: the core applies
@@ -222,9 +225,11 @@ the five stores of Story 1.
   appears, as in the Electron build.
 - A view asks for the local storage of a cluster removed from the catalog
   while it runs: the core refuses, as for any cluster it does not have.
-- The data directory is on a read-only volume: the stores load, each write
-  fails and is logged, and the views keep the model they were sent for the
-  run, as in the Electron build.
+- The data directory is on a read-only volume: the Tauri build cannot write
+  its lock, logs it, and still refuses to start while the Electron build
+  runs there (FR-023); otherwise the stores load, each write fails and is
+  logged, and the views keep the model they were sent for the run, as in the
+  Electron build.
 - The Electron build's extension stores (`installed-extensions`,
   `lens-extensions`, `lens-filesystem-provisioner-store`) are in the data
   directory: the Tauri build neither reads nor writes them.
@@ -306,8 +311,9 @@ the five stores of Story 1.
   main window and for each cluster of the catalog, and MUST refuse a cluster
   the catalog does not have. A missing file MUST read as an empty object.
 - **FR-014**: The core MUST answer `validate-directory` and `path-exists` as the
-  Electron build does, resolving `~` to the home directory, and MUST read only
-  the kind of the path, never its contents.
+  Electron build does, resolving `~` to the home directory where the Electron
+  build resolves it (a path of `~` or `~/` alone, not `~/foo`), and MUST read
+  only the kind of the path, never its contents.
 - **FR-015**: The core MUST answer `initial-user-resource-templates` with the
   templates of the templates folder, and from the first request on MUST send
   `user-resource-templates-update` on every change of the folder, with the

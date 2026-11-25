@@ -1,0 +1,83 @@
+{
+  "__internal__": {
+    "migrations": {
+      "version": "0.1.0"
+    }
+  },
+  "clusters": [
+    {
+      "id": "c1",
+      "kubeConfigPath": "/k/config",
+      "contextName": "ctx-1",
+      "preferences": {
+        "clusterName": "One",
+        "terminalCWD": "/tmp"
+      },
+      "metadata": {
+        "version": "v1.30.0"
+      },
+      "accessibleNamespaces": [
+        "default"
+      ],
+      "labels": {
+        "env": "dev"
+      },
+      "extraField": 1
+    },
+    {
+      "id": "c2",
+      "kubeConfigPath": "/k/config",
+      "contextName": "ctx-2"
+    },
+    {
+      "id": "c3",
+      "kubeConfigPath": "/k/config",
+      "contextName": ""
+    },
+    {
+      "id": "c4",
+      "kubeConfigPath": "/k/config",
+      "contextName": "ctx-4",
+      "labels": {
+        "a": ""
+      }
+    },
+    {
+      "id": "c5",
+      "kubeConfigPath": "/k/config",
+      "contextName": "ctx-5",
+      "accessibleNamespaces": [
+        1
+      ]
+    },
+    {
+      "id": "c2",
+      "kubeConfigPath": "",
+      "contextName": "x"
+    },
+    {
+      "id": "c1",
+      "kubeConfigPath": "/k/other",
+      "contextName": "ctx-1b"
+    },
+    {
+      "kubeConfigPath": "/k/config",
+      "contextName": "no-id"
+    },
+    {
+      "id": "c6",
+      "kubeConfigPath": "/k/config",
+      "contextName": "ctx-6",
+      "preferences": null
+    },
+    {
+      "id": "c7",
+      "kubeConfigPath": "/k/config",
+      "contextName": "ctx-7",
+      "metadata": [],
+      "labels": {
+        "n": 1
+      }
+    }
+  ]
+}

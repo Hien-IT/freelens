@@ -36,13 +36,15 @@ assert (R13).
 build's lock check and the parity test
 
 **Primary Dependencies**: no crate that `Cargo.lock` does not already have.
-New direct dependencies at their locked versions: `libc` (`kill`),
-`objc2-app-kit` with the `NSAlert` feature and `objc2-foundation` (the alert),
-`hyper`, `hyper-util` with `client-legacy`, `client-proxy` and `http1`,
-`hyper-rustls`, `rustls-platform-verifier` (the download),
-`iana-time-zone` (`localeTimezone`) and `uuid` with `v4` (the default
-hotbar). `serde_json` gains its `preserve_order` feature. The Electron build
-adds no package.
+New direct dependencies at their locked versions: `libc` (`kill`,
+`gethostname`), `hyper`, `hyper-util` with `client-legacy`, `client-proxy`
+and `http1`, `hyper-rustls` and `rustls` without their default features
+(which would add `aws-lc-rs`), `http-body-util` and
+`rustls-platform-verifier` (the download), `iana-time-zone`
+(`localeTimezone`) and `uuid` with `v4` (the default hotbar and the names of
+temporary files). `serde_json` gains its `preserve_order` and
+`float_roundtrip` features. The alert of the lock is `osascript`'s, so no
+AppKit binding is added (research R5). The Electron build adds no package.
 
 **Storage**: the five store files, the local storage files and the lock link in
 the data directory; the log file in the log directory. Formats in

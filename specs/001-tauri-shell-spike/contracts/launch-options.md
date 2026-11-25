@@ -3,12 +3,13 @@
 The experimental build reads its options from the process arguments, once, at
 launch.
 
-| Option                          | Effect                                                                                             |
-| ------------------------------- | -------------------------------------------------------------------------------------------------- |
-| (none)                          | read `$HOME/.kube/config`                                                                          |
-| `--kubeconfig=<path>`           | read `<path>` instead; a relative path is resolved against the working directory                   |
-| `--kubeconfig=none`             | read no kubeconfig file; the catalog is empty                                                      |
-| `--open-cluster=<context name>` | open that cluster as soon as the catalog is shown, as a click would; for measurement runs (FR-011) |
+| Option                          | Effect                                                                                                                 |
+| ------------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
+| (none)                          | read `$HOME/.kube/config`                                                                                              |
+| `--kubeconfig=<path>`           | read `<path>` instead; a relative path is resolved against the working directory                                       |
+| `--kubeconfig=none`             | read no kubeconfig file; the catalog is empty                                                                          |
+| `--open-cluster=<context name>` | open that cluster as soon as the catalog is shown, as a click would; for measurement runs (FR-011)                     |
+| `--data-dir=<path>`             | use `<path>` as the data directory instead of the Electron build's; for measurements and tests (spec 007, research R6) |
 
 Rules:
 

@@ -49,7 +49,11 @@ sequence, not its steps: one change of the model is one atomic write of the
 whole file, with the content the per-key writes would have left.
 
 - Parse with `serde_json` with its `preserve_order` feature (indexmap 2 is in
-  `Cargo.lock` already), stripping a BOM.
+  `Cargo.lock` already) and its `float_roundtrip` feature, stripping a BOM.
+  Without `float_roundtrip`, `serde_json` may read a large or long number
+  one unit in the last place away from the double `JSON.parse` reads
+  (`123456789012345680000` read back as `123456789012345670000`), which a
+  write would then print differently.
 - Write with a formatter that prints what `JSON.stringify(v, undefined, '\t')`
   prints: `serde_json`'s pretty printer with a tab indent, plus two things it
   does differently: objects put array-index keys first in ascending order, and
@@ -198,7 +202,10 @@ the views already ignore an equal model.
   is alive, or if `SingletonLock` does, the Tauri build shows a native alert
   naming the build that runs and the data directory, and exits without
   writing. A link naming a process that is gone is stale: the Tauri build
-  replaces it. Its own link is removed when it quits.
+  replaces it. Its own link is removed when it quits. When the link cannot be
+  written for another reason, such as a read-only volume, the Tauri build
+  logs it and still checks `SingletonLock`, then runs without a link: nothing
+  it would write there can succeed anyway.
 - The Electron build, right after it gets its own lock, reads
   `FreelensTauriLock` the same way, and when it names a live process, shows
   `dialog.showErrorBox` (callable before `ready`) and exits. One injectable,
@@ -211,9 +218,13 @@ the views already ignore an equal model.
   started while the Tauri build runs needs the new check.
 - Liveness is `kill(pid, 0)` (`libc`, in `Cargo.lock` already; `process.kill(pid, 0)`
   in Node), and a process of another host counts as alive, as in Chromium.
-- The alert is `NSAlert` from `objc2-app-kit` 0.3.2, in `Cargo.lock` already
-  through Tauri, with its `NSAlert` feature, run on the main thread before
-  Tauri starts.
+- The alert is `osascript`'s `display alert`, with the two texts passed as
+  arguments to the script rather than written into it. `NSAlert` was tried
+  first, as the plan had it: run on the main thread before Tauri sets the
+  application up, `runModal` returns at once without showing, even with the
+  activation policy set and `finishLaunching` called, so the process exited
+  before the user could read anything. `osascript` shows the alert and waits
+  for it to be closed (checked on the development machine).
 
 **Rationale**: the only lock every Electron build already writes is Chromium's;
 a link in its format lets both builds use one reader. Creating a symbolic link
@@ -233,8 +244,9 @@ both refuse, which writes nothing.
 
 ## R6. The data directory and the paths
 
-**Finding** (Verified, source; the macOS values of Electron's `getPath` are
-Unverified):
+**Finding** (Verified, source, and the macOS values of `getPath` by the
+Electron probe of quickstart.md step 1, run with Electron 44.10.1 on the
+development machine):
 
 - `appName` is `Freelens`, plus `Dev` when the build was made with
   `NODE_ENV=development` (`common/vars/app-name.injectable.ts`,
@@ -245,27 +257,33 @@ Unverified):
   `app.getPath` (`currentApp` with `app.getAppPath()`), and stores `""` for a
   name whose call throws (`main/app-paths/get-electron-app-path/`).
 - The stores use `directoryForUserData`, which takes
-  `<FREELENS_INTEGRATION_TESTING_DIR>/<appName>` only when the variable starts
-  with the temporary directory, and `userData` otherwise.
-- The values of `getPath` on macOS are Electron's: `recent` is Windows-only and
-  probably throws, `logs` is `~/Library/Logs/<name>` with the name Electron
-  has at that moment, which `setName` changes only later.
+  `<FREELENS_INTEGRATION_TESTING_DIR>/<appName>` when the variable starts with
+  the temporary directory, and `userData` otherwise; since `userData` is
+  `<FREELENS_INTEGRATION_TESTING_DIR>/<appName>` too whenever the variable is
+  set, the stores are there whenever it is set, wherever it points.
+- The values of `getPath` on macOS: `recent` throws
+  `Failed to get 'recent' path`, so the Electron build answers `""`; `logs` is
+  `~/Library/Logs/Freelens`, because the name is the product name when the
+  paths are read and `setName` adds `Dev` only later; `crashDumps` is
+  `<userData>/Crashpad` and follows a changed `userData`; `temp` keeps the
+  trailing `/` of `TMPDIR`; `module` is Electron's framework binary. The
+  probe sets `appData` to a temporary directory first, as an
+  integration-testing run does, because Chromium creates `Crashpad` under
+  `userData` as soon as the path is read.
 
 **Decision**:
 
 - The data directory: `--data-dir=<path>` when given; else
-  `<FREELENS_INTEGRATION_TESTING_DIR>/<appName>` when the variable starts with
-  the temporary directory; else `~/Library/Application Support/<appName>`,
+  `<FREELENS_INTEGRATION_TESTING_DIR>/<appName>` when the variable is set and
+  not empty; else `~/Library/Application Support/<appName>`,
   with `appName` `Freelens` for a release build and `FreelensDev` for a debug
   build of the core.
 - `app-paths` answers the 17 names with the values the Electron build gives on
   macOS, computed from the home directory, `TMPDIR`, the data directory and
   the application bundle. The table in
   [contracts/foundation-channels.md](./contracts/foundation-channels.md#app-paths)
-  is filled from an Electron probe run on the development machine (quickstart
-  step "Electron probe"), which also settles `recent`, `crashDumps`, `module`
-  and `logs`. `exe`, `module` and `currentApp` name the Tauri build's own
-  files (FR-012).
+  holds the values of the Electron probe (quickstart step "Electron probe").
+  `exe`, `module` and `currentApp` name the Tauri build's own files (FR-012).
 
 **Rationale**: FR-001 and FR-011; the probe turns the Unverified values into
 fixed ones before the core encodes them.
@@ -350,7 +368,9 @@ texts cannot be reproduced; no view reads more than the whole string.
 
 **Limits**: the system's authorities only, where the Electron build adds Node's
 bundled list; a server whose authority is in Mozilla's list and not in
-macOS's would fail. On macOS the two lists differ by little (Unverified).
+macOS's would fail. On macOS the two lists differ by little (Unverified). The
+trusted authorities are a parameter of the client, the system's in the
+application and a test's own in the tests (R14).
 
 **Alternatives considered**: `reqwest` (not in the graph of the macOS build; a
 new dependency tree); kube's own client (built for one API server and its
@@ -420,6 +440,12 @@ with `--data-dir`, so the user's own files are never used for it.
   by shape. The deliberate differences of R3 have cases of their own, whose
   `expected/` holds the core's bytes and which the Vitest test skips.
 
+The `expected/` files are written by the Vitest test itself, run once with
+`UPDATE_TAURI_PARITY=1`, from the Electron build's own code, and reviewed
+against data-model.md before they are committed; without the variable the test
+only compares. Biome and Trunk leave the directory alone (`biome.jsonc`,
+`.trunk/trunk.yaml`), since the files are the bytes `conf` writes.
+
 **Rationale**: SC-001, SC-002 and SC-005 in CI rather than by hand, with one
 set of expected files that neither side can drift from.
 
@@ -431,28 +457,54 @@ Rust literals (the Electron side would never check them).
 
 **Finding** (Verified, source), and where each is ported:
 
-| Electron test                                                                          | Cargo test                                     |
-| -------------------------------------------------------------------------------------- | ---------------------------------------------- |
-| `features/persistent-storage/common/create.test.ts` (corrupt file)                     | `tests/stores.rs`, R2 cases                    |
-| `features/persistent-storage/main/persist-state-to-config.test.ts`                     | `tests/stores.rs`, writing                     |
-| `features/persistent-storage/initial-values.test.ts` (main's side)                     | `tests/stores.rs`, initial values and sync     |
-| `features/user-preferences/common/migrate-legacy-theme-preferences.test.ts`            | `src/stores/user.rs` unit tests                |
-| `features/user-preferences/sync-kubeconfig-entries-default.test.ts`                    | `src/stores/user.rs` unit tests                |
-| `features/favorites/storage-technical.test.ts`                                         | `src/stores/favorites.rs` unit tests           |
-| `features/hotbar/storage/storage-technical.test.ts` (load and normalization)           | `src/stores/hotbar.rs` unit tests              |
-| `features/local-storage/local-storage.test.ts`                                         | `tests/foundation.rs`                          |
-| `features/machine-values/machine-values.test.ts` (main's answer)                       | `tests/foundation.rs`                          |
-| `features/validate-directory/validate-directory.test.ts`                               | `tests/foundation.rs`                          |
-| `features/user-resource-templates/user-resource-templates.test.ts`                     | `tests/foundation.rs`, with a temporary folder |
-| `common/app-paths/app-paths.test.ts`, `main/app-paths/get-electron-app-path/*.test.ts` | `src/foundation/paths.rs` unit tests           |
-| `common/utils/sync-box/sync-box.test.ts` (main's side)                                 | `tests/foundation.rs`                          |
+| Electron test                                                                                        | Cargo test                                                            |
+| ---------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------- |
+| `features/persistent-storage/common/create.test.ts` (corrupt file)                                   | `tests/stores.rs`, R2 cases                                           |
+| `features/persistent-storage/main/persist-state-to-config.test.ts` (key by key, absent keys removed) | `tests/stores.rs`, writing                                            |
+| `features/persistent-storage/initial-values.test.ts` (main's side)                                   | `tests/stores.rs`, initial values and sync                            |
+| `features/user-preferences/common/migrate-legacy-theme-preferences.test.ts`                          | `src/stores/user.rs` unit tests                                       |
+| `features/user-preferences/sync-kubeconfig-entries-default.test.ts`                                  | `src/stores/user.rs` unit tests                                       |
+| `features/favorites/storage-technical.test.ts` (load and defaults)                                   | `src/stores/favorites.rs` unit tests                                  |
+| `features/hotbar/storage/storage-technical.test.ts` (load and normalization)                         | `src/stores/hotbar.rs` unit tests                                     |
+| `features/local-storage/local-storage.test.ts`                                                       | `tests/foundation.rs`                                                 |
+| `features/machine-values/machine-values.test.ts` (main's answer)                                     | `src/foundation/paths.rs` unit tests                                  |
+| `features/validate-directory/validate-directory.test.ts`                                             | `tests/foundation.rs`                                                 |
+| `features/user-resource-templates/user-resource-templates.test.ts`                                   | `tests/foundation.rs`, with a temporary folder                        |
+| `common/app-paths/app-paths.test.ts`, `main/app-paths/get-electron-app-path/*.test.ts`               | `src/foundation/paths.rs` unit tests                                  |
+| `common/utils/sync-box/sync-box.test.ts` (main's side)                                               | `tests/foundation.rs`                                                 |
+| `main/fetch/https-agent.test.ts`, `main/fetch/https-proxy-agent.test.ts`                             | `tests/foundation.rs`, download, with a certificate made at test time |
 
-The parts of these tests that check the renderer (a renderer store filled from
-main, refused double fills) stay in the Electron build: the renderer is not
-ported. `main/logger/ignore-broken-pipe-errors.test.ts` has no counterpart: the
-core writes to standard output with `println!`, and a closed pipe there is
-the check runner's concern. `download-json` has no Electron test; the core's
-tests of R9 use a local server.
+What is not ported, and why:
+
+- The parts of these tests that check the renderer (a renderer store filled
+  from main, refused double fills, `common/app-paths/directory-for-user-data/renderer/directory-for-user-data.test.ts`)
+  stay in the Electron build: the renderer is not ported.
+- Adding, removing, moving and ordering items in
+  `features/favorites/storage-technical.test.ts` and
+  `features/hotbar/storage/storage-technical.test.ts` is the stores' common
+  code, which runs in the renderer; its result reaches the core as a model on
+  `store-sync-main`, which `tests/stores.rs` covers.
+- The case of `persist-state-to-config.test.ts` where one key fails and the
+  others are still saved has no counterpart: a model that arrives as JSON
+  cannot hold a value `conf` refuses, and the core writes the file whole.
+- `main/logger/ignore-broken-pipe-errors.test.ts`: the core writes to
+  standard output with `println!`, and a closed pipe there is the check
+  runner's concern.
+- `main/fetch/host-header-dispatcher.test.ts`: `download-json` sends no `Host`
+  header of its own, so the dispatcher never applies to it.
+- `main/fetch/download-binary.test.ts` (extensions only),
+  `main/fetch/freelens-proxy-agent.test.ts` (main-cluster-connection) and
+  `main/utils/resolve-system-proxy/resolve-system-proxy-from-electron.test.ts`
+  (extension API only) belong to other areas.
+
+`download-json` itself has no Electron test; the core's tests of R9 use a local
+server, and port the cases of the two agent tests above: a server reached
+through an `http:`, an `https:` and a SOCKS5 proxy, trusted by the given
+authorities, refused when its authority is not trusted, and reached when
+untrusted authorities are allowed. The certificate is made when the test runs,
+with `openssl req -x509 -newkey ec` as `test-utils/test-certificate.ts` was;
+no certificate or key file is added to the repository, and the client takes
+the trusted authorities as a parameter so that a test can name its own.
 
 ## R15. What this feature does not port
 

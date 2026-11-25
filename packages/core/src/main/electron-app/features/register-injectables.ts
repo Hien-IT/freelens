@@ -14,6 +14,7 @@ import getBuildVersionInjectable from "./get-build-version.injectable";
 import getCommandLineSwitchInjectable from "./get-command-line-switch.injectable";
 import getElectronThemeInjectable from "./get-electron-theme.injectable";
 import isAutoUpdatingInjectable from "./is-auto-updating.injectable";
+import isTauriBuildRunningInjectable from "./is-tauri-build-running.injectable";
 import nativeThemeInjectable from "./native-theme.injectable";
 import powerMonitorInjectable from "./power-monitor.injectable";
 import requestSingleInstanceLockInjectable from "./request-single-instance-lock.injectable";
@@ -65,6 +66,11 @@ export function registerInjectables(di: DiContainerForInjection): void {
   }
   try {
     di.register(isAutoUpdatingInjectable);
+  } catch (e) {
+    /* Ignore duplicate registration */
+  }
+  try {
+    di.register(isTauriBuildRunningInjectable);
   } catch (e) {
     /* Ignore duplicate registration */
   }
