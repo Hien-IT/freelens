@@ -400,6 +400,9 @@ core prints today goes there too as `info`, and to standard output as before,
 which the checks of specs 002 and 004 read. An area that logs an error or a
 warning prefixes its line with `error: ` or `warn: `, written as it is.
 
+The file is opened first, before the lock of R5, so that a refusal to start
+is in the file too; it is in the log directory, which the lock does not cover.
+
 **Rationale**: FR-019; a file of its own because two builds appending to one
 rotating file would rotate each other's lines away.
 

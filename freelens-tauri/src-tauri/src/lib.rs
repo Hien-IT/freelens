@@ -119,7 +119,16 @@ pub fn run() {
             std::process::exit(2);
         }
     };
-    let log: Log = Arc::new(|line| println!("{line}"));
+    // Every line goes to standard output, which the checks read, and to the
+    // log file next to the Electron build's (research R10). The log comes
+    // first, so that a refusal of the lock is in the file too.
+    let log_file = Arc::new(foundation::log_file::LogFile::new(
+        &foundation::paths::logs_dir(&foundation::paths::user_home()),
+    ));
+    let log: Log = Arc::new(move |line| {
+        println!("{line}");
+        log_file.write(line);
+    });
     // Nothing of the data directory is read or written before the lock is
     // held (specs/007-main-foundation/contracts/instance-lock.md).
     let data_dir = foundation::paths::data_dir(
@@ -172,7 +181,10 @@ pub fn run() {
         catalog,
         clusters: Box::new(clusters),
         open_cluster: options.open_cluster,
-        log: Box::new(|line| println!("{line}")),
+        log: Box::new({
+            let log = Arc::clone(&log);
+            move |line| log(line)
+        }),
     });
     let loaded = AtomicBool::new(false);
 
@@ -224,48 +236,54 @@ pub fn run() {
                 });
             },
         )
-        .on_page_load(move |webview, payload| {
-            if webview.label() == "main"
-                && payload.event() == PageLoadEvent::Finished
-                && !loaded.swap(true, Ordering::SeqCst)
-            {
-                println!("Window \"main\" loaded");
+        .on_page_load({
+            let log = Arc::clone(&log);
+            move |webview, payload| {
+                if webview.label() == "main"
+                    && payload.event() == PageLoadEvent::Finished
+                    && !loaded.swap(true, Ordering::SeqCst)
+                {
+                    log("Window \"main\" loaded");
+                }
             }
         })
-        .setup(move |app| {
-            let runs: Vec<&str> = [
-                (checks.messaging, "messaging-check"),
-                (checks.frames, "frames-check"),
-            ]
-            .into_iter()
-            .filter_map(|(on, name)| on.then_some(name))
-            .collect();
-            let query = if runs.is_empty() {
-                String::new()
-            } else {
-                format!("?{}", runs.join("&"))
-            };
-            let url = format!("{}://{}/{query}", scheme::SCHEME, scheme::MAIN_HOST).parse()?;
-            WebviewWindowBuilder::new(app, "main", WebviewUrl::CustomProtocol(url))
-                .title("Freelens Spike")
-                .inner_size(1200.0, 800.0)
-                // A non-persistent website data store: no run leaves data behind.
-                .incognito(true)
-                // The main window stays on the scheme, whatever a frame tries
-                // (FR-024, research R12). No `on_new_window`: by default
-                // nothing opens.
-                .on_navigation(move |url| {
-                    let allowed = routes::allows_navigation(url, &navigating.catalog);
-                    if !allowed {
-                        println!(
-                            "Frames: refused a navigation of the main window to {}",
-                            url.scheme()
-                        );
-                    }
-                    allowed
-                })
-                .build()?;
-            Ok(())
+        .setup({
+            let log = Arc::clone(&log);
+            move |app| {
+                let runs: Vec<&str> = [
+                    (checks.messaging, "messaging-check"),
+                    (checks.frames, "frames-check"),
+                ]
+                .into_iter()
+                .filter_map(|(on, name)| on.then_some(name))
+                .collect();
+                let query = if runs.is_empty() {
+                    String::new()
+                } else {
+                    format!("?{}", runs.join("&"))
+                };
+                let url = format!("{}://{}/{query}", scheme::SCHEME, scheme::MAIN_HOST).parse()?;
+                WebviewWindowBuilder::new(app, "main", WebviewUrl::CustomProtocol(url))
+                    .title("Freelens Spike")
+                    .inner_size(1200.0, 800.0)
+                    // A non-persistent website data store: no run leaves data behind.
+                    .incognito(true)
+                    // The main window stays on the scheme, whatever a frame tries
+                    // (FR-024, research R12). No `on_new_window`: by default
+                    // nothing opens.
+                    .on_navigation(move |url| {
+                        let allowed = routes::allows_navigation(url, &navigating.catalog);
+                        if !allowed {
+                            log(&format!(
+                                "Frames: refused a navigation of the main window to {}",
+                                url.scheme()
+                            ));
+                        }
+                        allowed
+                    })
+                    .build()?;
+                Ok(())
+            }
         })
         .build(context)
         .expect("error while building the application")

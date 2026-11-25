@@ -58,6 +58,12 @@ const restoreDefaults = () => {
   }
 };
 
+/** What the stub of the message listeners is handed. */
+interface Listener {
+  channel: { id: string };
+  handler: (model: unknown) => void;
+}
+
 const withoutRandomIds = (text: string) => text.replace(uuid, "<uuid>");
 
 const cases = existsSync(fixtures)
@@ -103,11 +109,17 @@ describe("the store fixtures shared with the Tauri build", () => {
     di.override(isDevelopmentInjectable, () => false);
     di.override(kubeDirectoryPathInjectable, () => "/home/test/.kube");
     di.override(currentTimezoneInjectable, () => "UTC");
-    di.override(testUtils.enlistMessageChannelListenerStubInjectable, () => (listener) => {
-      listeners.set(listener.channel.id, listener.handler as (model: unknown) => void);
+    // The stub is declared without the listener its callers pass, so the
+    // function that records them is given the stub's own type.
+    const enlist = ((listener?: Listener) => {
+      if (listener) {
+        listeners.set(listener.channel.id, listener.handler);
+      }
 
       return () => {};
-    });
+    }) as () => () => void;
+
+    di.override(testUtils.enlistMessageChannelListenerStubInjectable, () => enlist);
 
     for (const storage of [
       userPreferencesPersistentStorageInjectable,

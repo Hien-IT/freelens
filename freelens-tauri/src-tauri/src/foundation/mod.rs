@@ -9,6 +9,7 @@
 pub mod directories;
 pub mod download;
 pub mod local_storage;
+pub mod log_file;
 pub mod paths;
 pub mod sync_box;
 pub mod templates;

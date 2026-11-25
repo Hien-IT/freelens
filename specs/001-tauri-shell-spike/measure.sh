@@ -14,7 +14,12 @@
 # and --open-cluster=kind-freelens-profile, times from Mark "cluster-opened" to
 # Mark "namespaces-shown", and takes the RSS the idle seconds after that.
 #
-# usage: measure.sh <spike|electron|spike-cluster> <app bundle or dmg> <runs> <idle seconds> [kubeconfig]
+# The experimental build gets a data directory of its own in each run, so that
+# it never uses the user's (spec 007). With MEASURE_DATA_DIR set, each run
+# starts from a copy of that directory, as SC-006 of spec 007 measures startup
+# with the five stores; unset, the directory starts empty, as before.
+#
+# usage: [MEASURE_DATA_DIR=<seed>] measure.sh <spike|electron|spike-cluster> <app bundle or dmg> <runs> <idle seconds> [kubeconfig]
 set -u
 MODE=$1 SOURCE=$2 RUNS=$3 IDLE=$4 KUBECONFIG_FILE=${5-}
 HERE=$(cd "$(dirname "$0")" && pwd)
@@ -60,12 +65,21 @@ for run in $(seq 1 "$RUNS"); do
   mkdir -p "$D"
   touch "$D/stdout.log" "$D/stderr.log"
 
+  if [[ $MODE != electron ]]; then
+    if [[ -n ${MEASURE_DATA_DIR-} ]]; then
+      ditto "$MEASURE_DATA_DIR" "$D/data"
+    else
+      mkdir -p "$D/data"
+    fi
+  fi
+
   t0=$(now)
   if [[ $MODE == spike ]]; then
-    open -n -F --stdout "$D/stdout.log" --stderr "$D/stderr.log" "$BUNDLE" --args --kubeconfig=none
+    open -n -F --stdout "$D/stdout.log" --stderr "$D/stderr.log" "$BUNDLE" \
+      --args --kubeconfig=none --data-dir="$D/data"
   elif [[ $MODE == spike-cluster ]]; then
     open -n -F --stdout "$D/stdout.log" --stderr "$D/stderr.log" "$BUNDLE" \
-      --args --kubeconfig="$KUBECONFIG_FILE" --open-cluster=kind-freelens-profile
+      --args --kubeconfig="$KUBECONFIG_FILE" --open-cluster=kind-freelens-profile --data-dir="$D/data"
   else
     mkdir -p "$D/Freelens"
     printf '{"preferences":{"syncKubeconfigEntries":[]}}\n' >"$D/Freelens/lens-user-store.json"

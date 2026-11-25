@@ -11,22 +11,24 @@ import requestSingleInstanceLockInjectable from "../features/request-single-inst
 import showErrorPopupInjectable from "../features/show-error-popup.injectable";
 import enforceSingleApplicationInstanceInjectable from "./enforce-single-application-instance.injectable";
 
-import type { TauriBuildLock } from "../features/is-tauri-build-running.injectable";
+import type { Mock } from "vitest";
+
+import type { IsTauriBuildRunning, TauriBuildLock } from "../features/is-tauri-build-running.injectable";
 
 describe("enforce-single-application-instance", () => {
   let gotLock: boolean;
   let tauriLock: TauriBuildLock | undefined;
-  let isTauriBuildRunning: ReturnType<typeof vi.fn>;
-  let forceAppExit: ReturnType<typeof vi.fn>;
-  let showErrorPopup: ReturnType<typeof vi.fn>;
+  let isTauriBuildRunning: Mock<IsTauriBuildRunning>;
+  let forceAppExit: Mock<() => void>;
+  let showErrorPopup: Mock<(heading: string, message: string) => void>;
   let run: () => void;
 
   beforeEach(() => {
     gotLock = true;
     tauriLock = undefined;
-    isTauriBuildRunning = vi.fn(() => tauriLock);
-    forceAppExit = vi.fn();
-    showErrorPopup = vi.fn();
+    isTauriBuildRunning = vi.fn<IsTauriBuildRunning>(() => tauriLock);
+    forceAppExit = vi.fn<() => void>();
+    showErrorPopup = vi.fn<(heading: string, message: string) => void>();
 
     const di = createContainer("enforce-single-application-instance");
 

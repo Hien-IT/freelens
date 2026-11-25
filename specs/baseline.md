@@ -252,3 +252,34 @@ specs/001-tauri-shell-spike/measure.sh spike-cluster "$PWD/freelens-tauri/src-ta
 ```bash
 SCENARIO=namespaces node specs/profile-main.mjs <thư mục> "${TMPDIR%/}/kind-freelens-profile.yaml" "$PWD/freelens/dist/mac-arm64/Freelens.app" 60
 ```
+
+## Bản Tauri với năm store (spec 007)
+
+Số đo cho SC-006 của `specs/007-main-foundation`: thời gian khởi động khi
+core nạp năm store. Đo ngày 2026-11-25 trên cùng máy với phần Kết quả.
+
+### Kết quả
+
+| Chỉ số                                   | Bản Tauri, năm store      | Bản thử nghiệm (spec 001) | Cổng   |
+| ---------------------------------------- | ------------------------- | ------------------------- | ------ |
+| Khởi động, trung vị 3 lần (s)            | 0.44 (1.47 / 0.38 / 0.44) | 0.39 (1.65 / 0.33 / 0.39) | ≤ 2.37 |
+| RAM sau 60 s đứng yên, trung vị (MB RSS) | 205 (203 / 205 / 205)     | 183 (177 / 183 / 183)     | ≤ 394  |
+| Số tiến trình lúc đứng yên               | 6                         | 6                         |        |
+
+- **Dữ liệu:** năm file store của bản Electron trên máy đo, trong đó cluster
+  store 150 KB, chép vào một thư mục mới cho mỗi lần chạy bằng
+  `MEASURE_DATA_DIR`; bản chép được xoá sau khi đo.
+- **Bản cài:** dmg 57,5 MB, build bằng `pnpm --filter @freelensapp/freelens-tauri tauri:build`
+  từ commit có phase 6 của spec 007.
+- RAM cao hơn bản thử nghiệm khoảng 20 MB; nguyên nhân chưa được kiểm chứng.
+- `measure.sh` dừng app bằng `kill`, nên `FreelensTauriLock` còn lại trong thư
+  mục của mỗi lần chạy: lần khởi động sau thấy pid đã chết và thay link đó.
+
+### Đo lại
+
+```bash
+MEASURE_DATA_DIR=<thư mục có năm store> specs/001-tauri-shell-spike/measure.sh spike "$PWD/freelens-tauri/src-tauri/target/release/bundle/dmg/Freelens Spike_0.1.0_aarch64.dmg" 3 60
+```
+
+Không có `MEASURE_DATA_DIR`, mỗi lần chạy bắt đầu với một thư mục dữ liệu rỗng
+của riêng nó, như số đo của spec 001.
