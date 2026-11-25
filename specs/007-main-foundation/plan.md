@@ -37,10 +37,11 @@ build's lock check and the parity test
 
 **Primary Dependencies**: no crate that `Cargo.lock` does not already have.
 New direct dependencies at their locked versions: `libc` (`kill`,
-`gethostname`), `hyper`, `hyper-util` with `client-legacy`, `client-proxy`
-and `http1`, `hyper-rustls` and `rustls` without their default features
-(which would add `aws-lc-rs`), `http-body-util` and
-`rustls-platform-verifier` (the download), `iana-time-zone`
+`gethostname`, `getpwuid_r`), `hyper` with `client` and `http1`,
+`hyper-util` with `tokio`, `tokio-rustls` and `rustls` without their default
+features (which would add `aws-lc-rs`), `http-body-util` and
+`rustls-platform-verifier` (the download; research R9), and the `net` and
+`io-util` features of `tokio`, `iana-time-zone`
 (`localeTimezone`) and `uuid` with `v4` (the default hotbar and the names of
 temporary files). `serde_json` gains its `preserve_order` and
 `float_roundtrip` features. The alert of the lock is `osascript`'s, so no

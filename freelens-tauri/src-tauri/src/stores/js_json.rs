@@ -12,8 +12,13 @@ use serde_json::{Map, Number, Value};
 /// level, array-index keys first, numbers as JavaScript prints them, and no
 /// newline at the end.
 pub fn to_js_string(value: &Value) -> String {
+    to_js_string_indented(value, "\t")
+}
+
+/// `JSON.stringify(value, undefined, indent)`.
+pub fn to_js_string_indented(value: &Value, indent: &str) -> String {
     let mut out = String::new();
-    write_value(&mut out, value, 0);
+    write_value(&mut out, value, 0, indent);
     out
 }
 
@@ -23,7 +28,7 @@ pub fn remove_key(map: &mut Map<String, Value>, key: &str) -> Option<Value> {
     map.shift_remove(key)
 }
 
-fn write_value(out: &mut String, value: &Value, depth: usize) {
+fn write_value(out: &mut String, value: &Value, depth: usize, unit: &str) {
     match value {
         Value::Null => out.push_str("null"),
         Value::Bool(flag) => out.push_str(if *flag { "true" } else { "false" }),
@@ -34,11 +39,11 @@ fn write_value(out: &mut String, value: &Value, depth: usize) {
             out.push('[');
             for (index, item) in items.iter().enumerate() {
                 out.push_str(if index == 0 { "\n" } else { ",\n" });
-                indent(out, depth + 1);
-                write_value(out, item, depth + 1);
+                indent(out, depth + 1, unit);
+                write_value(out, item, depth + 1, unit);
             }
             out.push('\n');
-            indent(out, depth);
+            indent(out, depth, unit);
             out.push(']');
         }
         Value::Object(map) if map.is_empty() => out.push_str("{}"),
@@ -46,20 +51,22 @@ fn write_value(out: &mut String, value: &Value, depth: usize) {
             out.push('{');
             for (index, (key, item)) in js_key_order(map).into_iter().enumerate() {
                 out.push_str(if index == 0 { "\n" } else { ",\n" });
-                indent(out, depth + 1);
+                indent(out, depth + 1, unit);
                 write_string(out, key);
                 out.push_str(": ");
-                write_value(out, item, depth + 1);
+                write_value(out, item, depth + 1, unit);
             }
             out.push('\n');
-            indent(out, depth);
+            indent(out, depth, unit);
             out.push('}');
         }
     }
 }
 
-fn indent(out: &mut String, depth: usize) {
-    out.extend(std::iter::repeat_n('\t', depth));
+fn indent(out: &mut String, depth: usize, unit: &str) {
+    for _ in 0..depth {
+        out.push_str(unit);
+    }
 }
 
 /// The keys in the order JavaScript enumerates them: array indices first,
@@ -240,6 +247,14 @@ mod tests {
         assert_eq!(
             to_js_string(&value),
             "\"q\\\" s\\\\ \\b\\f\\n\\r\\t \\u0001 \\u001f é 日 \u{2028} /\""
+        );
+    }
+
+    #[test]
+    fn indents_with_what_it_is_given() {
+        assert_eq!(
+            to_js_string_indented(&json!({"a": [1]}), "  "),
+            "{\n  \"a\": [\n    1\n  ]\n}"
         );
     }
 

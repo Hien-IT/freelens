@@ -116,13 +116,14 @@ impl StoreFile {
     /// synced, given the mode of the file it replaces, then renamed over it.
     pub fn write(&self) -> io::Result<()> {
         let text = to_js_string(&Value::Object(self.content.clone()));
-        write_atomically(&self.path, text.as_bytes())
+        write_atomically(&self.path, text.as_bytes(), None)
     }
 }
 
 /// Writes `bytes` to `path` so that the file is the old one or the new one,
-/// never a part of either, as `atomically` does for `conf`.
-pub fn write_atomically(path: &Path, bytes: &[u8]) -> io::Result<()> {
+/// never a part of either, as `atomically` does for `conf`. The file gets
+/// `mode` when given, else the mode of the file it replaces.
+pub fn write_atomically(path: &Path, bytes: &[u8], mode: Option<u32>) -> io::Result<()> {
     if let Some(parent) = path.parent() {
         fs::create_dir_all(parent)?;
     }
@@ -131,10 +132,13 @@ pub fn write_atomically(path: &Path, bytes: &[u8]) -> io::Result<()> {
         let mut file = fs::File::create(&temporary)?;
         file.write_all(bytes)?;
         file.sync_all()?;
-        if let Ok(existing) = fs::metadata(path) {
-            file.set_permissions(fs::Permissions::from_mode(
-                existing.permissions().mode() & 0o7777,
-            ))?;
+        let mode = mode.or_else(|| {
+            fs::metadata(path)
+                .ok()
+                .map(|existing| existing.permissions().mode() & 0o7777)
+        });
+        if let Some(mode) = mode {
+            file.set_permissions(fs::Permissions::from_mode(mode))?;
         }
         drop(file);
         fs::rename(&temporary, path)

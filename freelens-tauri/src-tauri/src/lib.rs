@@ -90,6 +90,10 @@ fn build(
 ) -> Result<Core, DuplicateChannel> {
     let mut channels = Channels::with_log(Arc::clone(log));
     stores::register(&mut channels, stores)?;
+    foundation::register(
+        &mut channels,
+        foundation::Setup::current(stores, catalog.clone(), Arc::clone(log)),
+    )?;
     let announcements = messaging::admin::register(&mut channels, Arc::clone(log))?;
     version::register(&mut channels, version)?;
     let frames = frames::register(&mut channels, catalog, Arc::clone(log))?;

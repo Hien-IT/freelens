@@ -964,7 +964,6 @@ dependencies = [
  "http",
  "http-body-util",
  "hyper",
- "hyper-rustls",
  "hyper-util",
  "iana-time-zone",
  "k8s-openapi",
@@ -978,6 +977,7 @@ dependencies = [
  "tauri",
  "tauri-build",
  "tokio",
+ "tokio-rustls",
  "uuid",
 ]
 

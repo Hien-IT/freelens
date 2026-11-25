@@ -91,7 +91,7 @@ following symbolic links:
 | `ELOOP`                                                | `the provided path is a sym-link which points to a chain of sym-links that is too long to resolve. Perhaps it is cyclic.`                  |
 | `ENAMETOOLONG`                                         | `the pathname is too long to be used.`                                                                                                     |
 | `ENOTDIR`                                              | `a prefix of the provided path is not a directory.`                                                                                        |
-| any other errno                                        | `error: undefined`                                                                                                                         |
+| any other errno                                        | no `error`: the Electron build answers `{ ok: false, error: undefined }`, which a view receives as `{ ok: false }`                         |
 
 `path-exists`: `string` → `boolean`, true when the path, its symbolic links
 followed, exists; never refused.
@@ -116,7 +116,7 @@ followed, exists; never refused.
 | -------------------------------- | ---------------------------------------------------------------------------------------------------------- |
 | status outside 200 to 299        | `<status>: <reason>`, the reason as the status's standard phrase                                           |
 | `timeout` given and passed       | `Operation timed out: timeout <duration>`, the duration as `common/fetch/timeout-controller.ts` formats it |
-| proxy scheme not supported       | `Unsupported proxy URL scheme "<scheme>" in the HTTP Proxy preference: use http:, https: or socks5:`       |
+| proxy scheme not supported       | `Unsupported proxy URL scheme "<scheme>:" in the HTTP Proxy preference: use http:, https: or socks5:`      |
 | connection, proxy or TLS failure | `fetch failed: <the core's reason>`                                                                        |
 | body not JSON                    | the core's parser message                                                                                  |
 

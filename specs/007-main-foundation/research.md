@@ -299,9 +299,9 @@ quote the Electron build's answers and error strings:
   user database (`os.userInfo()`, not `$HOME`) or the integration-testing one,
   `~/.kube`, and the bundled helm.
 - `validate-directory` and `path-exists`: `~` is resolved only as the whole
-  path or as `~/` exactly (`common/path/resolve-tilde.injectable.ts`); seven
-  error strings, one of them `error: undefined` for an errno the Electron
-  build does not name.
+  path or as `~/` exactly (`common/path/resolve-tilde.injectable.ts`); six
+  error strings, and for an errno the Electron build does not name
+  `{ ok: false, error: undefined }`, which reaches a view as `{ ok: false }`.
 - `lens-local-storage:*`: `<data dir>/lens-local-storage/<clusterId|app>.json`,
   read as `{}` when missing or invalid, written with two spaces and a trailing
   newline, mode `0600` in a `0700` directory, not atomically; a cluster the
@@ -310,7 +310,7 @@ quote the Electron build's answers and error strings:
 - `sync-box-*`: no sync box exists; the answer is `[]` and the messages are
   heard and dropped.
 
-**Decision**: the same answers and the same strings, `error: undefined`
+**Decision**: the same answers and the same strings, the missing `error`
 included, since a view may compare them. The local storage files are written
 with the same bytes and modes, atomically as R1 writes, which the Electron
 build does not do and which changes nothing it reads. Which clusters exist is
@@ -357,11 +357,19 @@ or `{ callWasSuccessful: false, error }`, with the errors
 `<status>: <statusText>`, `Operation timed out: timeout <duration>`,
 `fetch failed: <cause>`, and the message of the JSON parser.
 
-**Decision**: `hyper-util`'s legacy client with its `Tunnel` and SOCKS
-connectors (feature `client-proxy`) over `hyper-rustls`, with the system's
-authorities through `rustls-platform-verifier`, all in `Cargo.lock` already
-through kube, added as direct dependencies at the locked versions. The proxy
-schemes, the timeout string and the status string are the Electron build's.
+**Decision**: the core opens the connection itself, a TCP connection, a
+`CONNECT` tunnel through an `http:` or `https:` proxy or a SOCKS5 handshake,
+then TLS with `tokio-rustls`, and sends the request with `hyper`'s HTTP/1
+connection, following redirects as `fetch` does (up to 20). The system's
+authorities come through `rustls-platform-verifier`. Everything is in
+`Cargo.lock` already through kube and Tauri. `hyper-util`'s legacy client
+with its `Tunnel` and SOCKS connectors was the first choice: its `Tunnel`
+takes port 443 for any target without a port, an `http:` one included, and
+layering its generic connectors under `hyper-rustls` cost more code than the
+connection itself. The proxy schemes, the timeout string and the status
+string are the Electron build's; the unsupported scheme is named with its
+colon, as `URL.protocol` gives it (`"ftp:"`), and a proxy setting that is not
+a URL answers `Invalid URL`.
 The texts that come from the network stack or the JSON parser are the core's
 own, after the same prefix (`fetch failed: `), because undici's and Node's
 texts cannot be reproduced; no view reads more than the whole string.
