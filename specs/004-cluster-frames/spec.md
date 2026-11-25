@@ -180,7 +180,8 @@ build finds no sender.
    a frame is announced, or its cluster's frame is forgotten, **Then** that
    area learns it, with the cluster's id.
 7. **Given** a view of either build, **When** it starts, **Then** it does not
-   ask for the private key of a local proxy, and no channel hands it one.
+   ask for the certificate of a local proxy, and no channel hands it the
+   certificate or the private key.
 
 ---
 
