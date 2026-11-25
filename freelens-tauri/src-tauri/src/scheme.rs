@@ -4,18 +4,25 @@
  */
 
 //! The `freelens-app` scheme, the only channel between the views and the core
-//! (`specs/001-tauri-shell-spike/contracts/scheme-routes.md`).
+//! (`specs/001-tauri-shell-spike/contracts/scheme-routes.md`), and its routes,
+//! rows of the table of `specs/004-cluster-frames/contracts/routes.md`.
+
+use std::sync::LazyLock;
 
 use http::{Method, Request, Response, StatusCode, header};
 use serde_json::json;
 
 use crate::catalog::{Catalog, CatalogEntry};
 use crate::clusters::{ApiOutcome, ClusterApi};
+use crate::messaging::View;
+use crate::routes::{Audience, Env, Routes};
 
 pub const SCHEME: &str = "freelens-app";
 pub const MAIN_HOST: &str = "renderer.freelens.app";
 
-const MAIN_CSP: &str = "default-src 'self'; frame-src freelens-app:";
+// The catalog page is never shown in a frame, and the frame page only in the
+// main window's page (FR-025, research R12).
+const MAIN_CSP: &str = "default-src 'self'; frame-src freelens-app:; frame-ancestors 'none'";
 const CLUSTER_CSP: &str =
     "default-src 'self'; frame-ancestors freelens-app://renderer.freelens.app";
 
@@ -35,75 +42,78 @@ pub struct State {
     pub log: Box<dyn Fn(&str) + Send + Sync>,
 }
 
-enum Host<'a> {
-    Main,
-    Cluster(&'a CatalogEntry),
-    Unknown,
+/// The routes of the scheme's own pages, files and data; the core adds the
+/// routes of its other areas to this table at startup.
+pub fn routes() -> Routes {
+    let mut routes = Routes::default();
+    let rows = [
+        routes.add(Method::GET, "/", Audience::Main, |_, _, env| {
+            Box::pin(async move { page(env.assets, "index.html", MAIN_CSP) })
+        }),
+        routes.add(Method::GET, "/", Audience::Clusters, |_, _, env| {
+            Box::pin(async move { page(env.assets, "cluster.html", CLUSTER_CSP) })
+        }),
+        routes.add(
+            Method::GET,
+            "/assets/",
+            Audience::Both,
+            |request, _, env| {
+                Box::pin(async move {
+                    let path = request.uri().path();
+                    if path.contains("..") {
+                        return empty(StatusCode::NOT_FOUND);
+                    }
+                    match (env.assets)(&path[1..]) {
+                        Some(asset) => with_body(StatusCode::OK, &asset.mime, asset.bytes),
+                        None => empty(StatusCode::NOT_FOUND),
+                    }
+                })
+            },
+        ),
+        routes.add(Method::GET, "/api/clusters", Audience::Main, |_, _, env| {
+            Box::pin(async move { clusters(&env.state.catalog, env.state.open_cluster.as_deref()) })
+        }),
+        routes.add(
+            Method::GET,
+            "/api/mark",
+            Audience::Both,
+            |request, _, env| Box::pin(async move { mark(request.uri().query(), env.state) }),
+        ),
+        routes.add(
+            Method::GET,
+            "/api-kube/",
+            Audience::Clusters,
+            |request, view, env| {
+                Box::pin(async move {
+                    // The cluster comes from the view, never from the path (FR-006).
+                    let entry = match &view {
+                        View::Cluster(id) => env.state.catalog.entry(id),
+                        View::Main => None,
+                    };
+                    let Some(entry) = entry else {
+                        return empty(StatusCode::NOT_FOUND);
+                    };
+                    let path = &request.uri().path()["/api-kube".len()..];
+                    kube(entry, path, request.uri().query(), env.state).await
+                })
+            },
+        ),
+    ];
+    for row in rows {
+        row.expect("the scheme's own routes are distinct");
+    }
+    routes
 }
 
-/// Answers one request on the scheme. `assets` looks up a file of the built UI
-/// by its path, such as `index.html` or `assets/index-1234.js`.
+/// Answers one request on the scheme's own routes. `assets` looks up a file
+/// of the built UI by its path, such as `index.html` or `assets/index-1234.js`.
 pub async fn handle(
     request: Request<Vec<u8>>,
     state: &State,
     assets: &(dyn Fn(&str) -> Option<Asset> + Sync),
 ) -> Response<Vec<u8>> {
-    let host_name = request
-        .uri()
-        .host()
-        .unwrap_or_default()
-        .to_ascii_lowercase();
-    let host = host_of(&host_name, &state.catalog);
-
-    if matches!(host, Host::Unknown) {
-        return empty(StatusCode::NOT_FOUND);
-    }
-
-    if let Some(origin) = request.headers().get(header::ORIGIN)
-        && origin.as_bytes() != format!("{SCHEME}://{host_name}").as_bytes()
-    {
-        eprintln!("Refused a request whose Origin is not its own");
-        return empty(StatusCode::FORBIDDEN);
-    }
-
-    if request.method() != Method::GET {
-        return empty(StatusCode::METHOD_NOT_ALLOWED);
-    }
-
-    let path = request.uri().path();
-
-    match (&host, path) {
-        (Host::Main, "/") => page(assets, "index.html", MAIN_CSP),
-        (Host::Cluster(_), "/") => page(assets, "cluster.html", CLUSTER_CSP),
-        (Host::Cluster(entry), path) if path.starts_with("/api-kube/") => {
-            kube(
-                entry,
-                &path["/api-kube".len()..],
-                request.uri().query(),
-                state,
-            )
-            .await
-        }
-        (_, "/api/mark") => mark(request.uri().query(), state),
-        (Host::Main, "/api/clusters") => clusters(&state.catalog, state.open_cluster.as_deref()),
-        (_, path) if path.starts_with("/assets/") && !path.contains("..") => {
-            match assets(&path[1..]) {
-                Some(asset) => with_body(StatusCode::OK, &asset.mime, asset.bytes),
-                None => empty(StatusCode::NOT_FOUND),
-            }
-        }
-        _ => empty(StatusCode::NOT_FOUND),
-    }
-}
-
-fn host_of<'a>(host: &str, catalog: &'a Catalog) -> Host<'a> {
-    if host == MAIN_HOST {
-        return Host::Main;
-    }
-    host.strip_suffix(MAIN_HOST)
-        .and_then(|prefix| prefix.strip_suffix('.'))
-        .and_then(|id| catalog.entry(id))
-        .map_or(Host::Unknown, Host::Cluster)
+    static ROUTES: LazyLock<Routes> = LazyLock::new(routes);
+    ROUTES.handle(request, Env { state, assets }).await
 }
 
 /// `GET /api-kube/<api path>`, sent to the cluster by the core, which adds the

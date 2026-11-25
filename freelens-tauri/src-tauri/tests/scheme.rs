@@ -11,7 +11,10 @@ use std::sync::{Arc, Mutex};
 
 use freelens_tauri::catalog::{Catalog, CatalogEntry};
 use freelens_tauri::clusters::{ApiOutcome, BoxFuture, ClusterApi};
+use freelens_tauri::messaging::{Log, View};
 use freelens_tauri::options::KubeconfigChoice;
+use freelens_tauri::routes::{Audience, Env};
+use freelens_tauri::scheme;
 use freelens_tauri::scheme::{Asset, State, handle};
 use http::{Method, Request, Response, StatusCode, header};
 
@@ -137,7 +140,7 @@ async fn the_main_host_serves_the_catalog_page() {
     assert_eq!(body(&response), "index.html");
     assert_eq!(
         csp(&response),
-        "default-src 'self'; frame-src freelens-app:"
+        "default-src 'self'; frame-src freelens-app:; frame-ancestors 'none'"
     );
 }
 
@@ -498,4 +501,219 @@ async fn other_paths_get_404() {
             "{path}"
         );
     }
+}
+
+// The order of the checks of `specs/004-cluster-frames/contracts/routes.md`:
+// host, path, method, `Origin`, audience, handler; the first that fails answers.
+#[tokio::test]
+async fn each_check_of_the_route_table_answers_its_status_in_order() {
+    let f = fixture();
+    let cluster = cluster_host(&f, 0);
+    let cases = [
+        // An unknown host, whatever the path, method and `Origin`.
+        (
+            Method::POST,
+            "freelens-app://example.com/api/clusters".to_string(),
+            Some(cluster.as_str()),
+            StatusCode::NOT_FOUND,
+        ),
+        // An unknown path, before its method and its foreign `Origin`.
+        (
+            Method::POST,
+            format!("{MAIN}/nowhere"),
+            Some(cluster.as_str()),
+            StatusCode::NOT_FOUND,
+        ),
+        // A known path with another method, before its foreign `Origin`.
+        (
+            Method::POST,
+            format!("{MAIN}/api/clusters"),
+            Some(cluster.as_str()),
+            StatusCode::METHOD_NOT_ALLOWED,
+        ),
+        // A foreign `Origin` on an existing route and method.
+        (
+            Method::GET,
+            format!("{MAIN}/api/clusters"),
+            Some(cluster.as_str()),
+            StatusCode::FORBIDDEN,
+        ),
+        // A route of the other audience looks absent, with the view's own `Origin`.
+        (
+            Method::GET,
+            format!("{cluster}/api/clusters"),
+            Some(cluster.as_str()),
+            StatusCode::NOT_FOUND,
+        ),
+        (
+            Method::GET,
+            format!("{MAIN}/api-kube/api/v1/namespaces"),
+            Some(MAIN),
+            StatusCode::NOT_FOUND,
+        ),
+        // Every check passed: the handler answers.
+        (
+            Method::GET,
+            format!("{MAIN}/api/clusters"),
+            Some(MAIN),
+            StatusCode::OK,
+        ),
+    ];
+    for (method, url, origin, status) in cases {
+        let response = send(&f, method.clone(), &url, origin).await;
+        assert_eq!(response.status(), status, "{method} {url} from {origin:?}");
+    }
+    assert!(f.calls.lock().unwrap().is_empty());
+}
+
+#[tokio::test]
+async fn a_host_in_upper_case_is_served() {
+    let f = fixture();
+    let response = get(&f, "freelens-app://RENDERER.Freelens.APP/").await;
+    assert_eq!(response.status(), StatusCode::OK);
+    assert_eq!(body(&response), "index.html");
+
+    let id = f.state.catalog.entries[2].id.to_uppercase();
+    let response = get(&f, &format!("freelens-app://{id}.RENDERER.FREELENS.APP/")).await;
+    assert_eq!(response.status(), StatusCode::OK);
+    assert_eq!(body(&response), "cluster.html");
+}
+
+#[tokio::test]
+async fn a_host_with_a_trailing_dot_a_port_or_a_user_name_names_no_view() {
+    let f = fixture();
+    let id = &f.state.catalog.entries[0].id;
+    let hosts = [
+        "freelens-app://renderer.freelens.app.".to_string(),
+        format!("freelens-app://{id}.renderer.freelens.app."),
+        "freelens-app://renderer.freelens.app:1".to_string(),
+        format!("freelens-app://{id}.renderer.freelens.app:443"),
+        "freelens-app://user@renderer.freelens.app".to_string(),
+        format!("freelens-app://user:secret@{id}.renderer.freelens.app"),
+    ];
+    for host in &hosts {
+        for path in [
+            "/",
+            "/assets/app.js",
+            "/api/clusters",
+            "/api/mark?name=x",
+            "/api-kube/api/v1/namespaces",
+        ] {
+            let response = get(&f, &format!("{host}{path}")).await;
+            assert_eq!(response.status(), StatusCode::NOT_FOUND, "{host}{path}");
+            assert!(response.body().is_empty(), "{host}{path}");
+        }
+    }
+    assert!(f.calls.lock().unwrap().is_empty());
+    assert!(f.lines.lock().unwrap().is_empty());
+}
+
+#[tokio::test]
+async fn the_policies_of_the_two_pages_match_the_table() {
+    let f = fixture();
+    assert_eq!(
+        csp(&get(&f, &format!("{MAIN}/")).await),
+        "default-src 'self'; frame-src freelens-app:; frame-ancestors 'none'"
+    );
+    assert_eq!(
+        csp(&get(&f, &format!("{}/", cluster_host(&f, 0))).await),
+        "default-src 'self'; frame-ancestors freelens-app://renderer.freelens.app"
+    );
+}
+
+fn echo_view<'a>(_: Request<Vec<u8>>, view: View, _: Env<'a>) -> BoxFuture<'a, Response<Vec<u8>>> {
+    Box::pin(async move { Response::new(view.to_string().into_bytes()) })
+}
+
+#[test]
+fn a_route_that_overlaps_one_already_added_fails_with_its_method_and_path() {
+    let mut routes = scheme::routes();
+    let error = routes
+        .add(Method::GET, "/", Audience::Both, echo_view)
+        .unwrap_err();
+    assert_eq!(error.to_string(), "Route GET / is added twice");
+    let error = routes
+        .add(Method::GET, "/assets/", Audience::Main, echo_view)
+        .unwrap_err();
+    assert_eq!(error.to_string(), "Route GET /assets/ is added twice");
+
+    // Another audience that does not overlap, or another method, is no duplicate.
+    routes
+        .add(Method::GET, "/api/clusters", Audience::Clusters, echo_view)
+        .unwrap();
+    routes
+        .add(Method::POST, "/assets/", Audience::Main, echo_view)
+        .unwrap();
+}
+
+#[tokio::test]
+async fn a_handler_gets_the_view_of_the_host_and_the_longest_path_wins() {
+    let f = fixture();
+    let mut routes = scheme::routes();
+    routes
+        .add(Method::GET, "/assets/view", Audience::Both, echo_view)
+        .unwrap();
+    let env = Env {
+        state: &f.state,
+        assets: &assets,
+    };
+    let id = &f.state.catalog.entries[1].id;
+    for (host, view) in [
+        (MAIN.to_string(), "main".to_string()),
+        (cluster_host(&f, 1), format!("cluster {id}")),
+    ] {
+        let request = Request::get(format!("{host}/assets/view"))
+            .body(Vec::new())
+            .unwrap();
+        let response = routes.handle(request, env).await;
+        assert_eq!(body(&response), view);
+    }
+}
+
+#[tokio::test]
+async fn with_frames_check_a_request_with_a_cookie_prints_the_check_cookie_and_its_view() {
+    let f = fixture();
+    let lines = Arc::new(Mutex::new(Vec::new()));
+    let sink = Arc::clone(&lines);
+    let log: Log = Arc::new(move |line| sink.lock().unwrap().push(line.to_string()));
+    let mut routes = scheme::routes();
+    routes.log_cookies(log);
+    let env = Env {
+        state: &f.state,
+        assets: &assets,
+    };
+    let id = f.state.catalog.entries[0].id.clone();
+    for (host, cookie) in [
+        (MAIN.to_string(), Some("a=b; frames-check=main".to_string())),
+        (cluster_host(&f, 0), Some(format!("frames-check={id}"))),
+        (cluster_host(&f, 0), Some("other=x".to_string())),
+        (cluster_host(&f, 0), None),
+        (
+            "freelens-app://example.com".to_string(),
+            Some("frames-check=x".to_string()),
+        ),
+    ] {
+        let mut request = Request::get(format!("{host}/nowhere"));
+        if let Some(cookie) = cookie {
+            request = request.header(header::COOKIE, cookie);
+        }
+        let response = routes.handle(request.body(Vec::new()).unwrap(), env).await;
+        assert_eq!(response.status(), StatusCode::NOT_FOUND);
+    }
+    assert_eq!(
+        *lines.lock().unwrap(),
+        [
+            "Frames check: cookie on a request from main: main".to_string(),
+            format!("Frames check: cookie on a request from cluster {id}: {id}"),
+            format!("Frames check: cookie on a request from cluster {id}: none"),
+        ]
+    );
+
+    // Without the option, nothing is printed.
+    let request = Request::get(format!("{MAIN}/"))
+        .header(header::COOKIE, "frames-check=main")
+        .body(Vec::new())
+        .unwrap();
+    handle(request, &f.state, &assets).await;
+    assert!(f.lines.lock().unwrap().is_empty());
 }

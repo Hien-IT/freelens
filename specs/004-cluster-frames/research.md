@@ -236,6 +236,14 @@ no such crash is known for WKWebView (**Unverified**).
 
 - a module `ui/src/renderer/messaging.ts` builds the messaging container, as
   `messaging-check.ts` does today; `messaging-check.ts` uses it;
+- each page builds one container and the checks run on it: a second container
+  polls with a session of its own, which restarts the view's queue;
+- the container always enlists a listener, on a channel that only views send:
+  messaging-for-tauri polls only once a listener is enlisted (R3 of spec 002),
+  and the pages have none of their own, so without it no view has a queue and
+  the record of R5 cannot learn that a frame closed or the main window
+  reloaded (**Verified**: without it, a reloaded main window never polled; with
+  it, its reload forgot every frame at once);
 - the frame page always starts messaging and, once it is loaded, requests
   `cluster:set-frame-id` with its own id, which it reads from its host as the
   Electron renderer does;

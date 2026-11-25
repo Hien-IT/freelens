@@ -29,6 +29,9 @@ pub struct LaunchOptions {
     /// `--messaging-check`: registers the check-only channels and runs the
     /// rounds of `specs/002-messaging-for-tauri/contracts/check-log.md`.
     pub messaging_check: bool,
+    /// `--frames-check`: registers the check-only channels and runs the steps
+    /// of `specs/004-cluster-frames/contracts/frames-log.md`.
+    pub frames_check: bool,
 }
 
 #[derive(Debug, PartialEq, Eq)]
@@ -54,6 +57,7 @@ where
     let mut kubeconfig = KubeconfigChoice::Default;
     let mut open_cluster = None;
     let mut messaging_check = false;
+    let mut frames_check = false;
 
     for arg in args {
         match arg.split_once('=') {
@@ -63,6 +67,7 @@ where
             Some(("--open-cluster", "")) => return Err(OptionsError::MissingValue(arg)),
             Some(("--open-cluster", name)) => open_cluster = Some(name.to_string()),
             None if arg == "--messaging-check" => messaging_check = true,
+            None if arg == "--frames-check" => frames_check = true,
             None if arg == "--kubeconfig" || arg == "--open-cluster" => {
                 return Err(OptionsError::MissingValue(arg));
             }
@@ -74,6 +79,7 @@ where
         kubeconfig,
         open_cluster,
         messaging_check,
+        frames_check,
     })
 }
 
@@ -166,6 +172,17 @@ mod tests {
         assert_eq!(
             parse_args(&["--messaging-check=yes"]),
             Err(OptionsError::Unknown("--messaging-check=yes".into()))
+        );
+    }
+
+    #[test]
+    fn frames_check_takes_no_value() {
+        assert!(parse_args(&["--frames-check"]).unwrap().frames_check);
+        assert!(!parse_args(&[]).unwrap().frames_check);
+        assert!(!parse_args(&["--messaging-check"]).unwrap().frames_check);
+        assert_eq!(
+            parse_args(&["--frames-check=yes"]),
+            Err(OptionsError::Unknown("--frames-check=yes".into()))
         );
     }
 

@@ -15,7 +15,7 @@ use freelens_tauri::frames::{FrameEvent, Frames};
 use freelens_tauri::messaging::queues::IDLE_LIMIT;
 use freelens_tauri::messaging::{Log, MessageChannel, Messaging, routes};
 use freelens_tauri::options::KubeconfigChoice;
-use freelens_tauri::register_core;
+use freelens_tauri::{Checks, register_core};
 use http::{Method, Request, Response, StatusCode, header};
 use serde_json::{Value, json};
 
@@ -36,7 +36,7 @@ fn fixture() -> Arc<Fixture> {
     let log: Log = Arc::new(move |line| sink.lock().unwrap().push(line.to_string()));
     let file = Path::new(env!("CARGO_MANIFEST_DIR")).join("tests/fixtures/three-contexts.yaml");
     let catalog = Catalog::load(&KubeconfigChoice::File(file), None);
-    let core = register_core(false, "0.1.0".into(), &catalog, &log).unwrap();
+    let core = register_core(Checks::default(), "0.1.0".into(), &catalog, &log).unwrap();
     let events = Arc::new(Mutex::new(Vec::new()));
     let events_sink = Arc::clone(&events);
     core.frames

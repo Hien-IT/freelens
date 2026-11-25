@@ -6,8 +6,10 @@
 pub mod catalog;
 pub mod clusters;
 pub mod frames;
+pub mod frames_check;
 pub mod messaging;
 pub mod options;
+pub mod routes;
 pub mod scheme;
 pub mod version;
 
@@ -17,12 +19,14 @@ use std::sync::Arc;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::time::Duration;
 
+use http::Method;
 use tauri::webview::PageLoadEvent;
 use tauri::{WebviewUrl, WebviewWindowBuilder};
 
 use catalog::Catalog;
 use frames::Frames;
 use messaging::{Channels, DuplicateChannel, Log, Messaging};
+use routes::{Audience, Env};
 
 /// What startup builds for the areas of the core to share.
 pub struct Core {
@@ -30,10 +34,19 @@ pub struct Core {
     pub frames: Frames,
 }
 
+/// The check runs whose channels the core registers.
+#[derive(Debug, Clone, Copy, Default)]
+pub struct Checks {
+    /// `--messaging-check` of spec 002.
+    pub messaging: bool,
+    /// `--frames-check` of spec 004.
+    pub frames: bool,
+}
+
 /// Registers the channels of every core area (`contracts/core-channels.md`)
 /// and builds the frame record over the clusters of `catalog`.
 pub fn register_core(
-    check: bool,
+    checks: Checks,
     version: String,
     catalog: &Catalog,
     log: &Log,
@@ -43,7 +56,7 @@ pub fn register_core(
         .iter()
         .map(|entry| entry.id.clone())
         .collect();
-    build(check, version, ids, log)
+    build(checks, version, ids, log)
 }
 
 /// The channels alone, with no catalog behind the frame record, so that no
@@ -53,11 +66,15 @@ pub fn register_channels(
     version: String,
     log: &Log,
 ) -> Result<Messaging, DuplicateChannel> {
-    build(check, version, HashSet::new(), log).map(|core| core.messaging)
+    let checks = Checks {
+        messaging: check,
+        frames: false,
+    };
+    build(checks, version, HashSet::new(), log).map(|core| core.messaging)
 }
 
 fn build(
-    check: bool,
+    checks: Checks,
     version: String,
     catalog: HashSet<String>,
     log: &Log,
@@ -66,8 +83,11 @@ fn build(
     let announcements = messaging::admin::register(&mut channels, Arc::clone(log))?;
     version::register(&mut channels, version)?;
     let frames = frames::register(&mut channels, catalog, Arc::clone(log))?;
-    if check {
+    if checks.messaging {
         messaging::check::register(&mut channels, announcements, Arc::clone(log))?;
+    }
+    if checks.frames {
+        frames_check::register(&mut channels, frames.clone(), Arc::clone(log))?;
     }
     Ok(Core {
         messaging: channels.build(),
@@ -86,11 +106,14 @@ pub fn run() {
     };
     let context = tauri::generate_context!();
     let log: Log = Arc::new(|line| println!("{line}"));
-    let messaging_check = options.messaging_check;
+    let checks = Checks {
+        messaging: options.messaging_check,
+        frames: options.frames_check,
+    };
     let home = std::env::var_os("HOME").map(PathBuf::from);
     let catalog = Catalog::load(&options.kubeconfig, home.as_deref());
     let Core { messaging, .. } = match register_core(
-        messaging_check,
+        checks,
         context.package_info().version.to_string(),
         &catalog,
         &log,
@@ -121,21 +144,39 @@ pub fn run() {
     });
     let loaded = AtomicBool::new(false);
 
+    // Every request of the scheme goes through one table
+    // (specs/004-cluster-frames/contracts/routes.md).
+    let mut routes = scheme::routes();
+    // The routes of messaging, contracts/ipc-routes.md of spec 002.
+    let added = routes.add(
+        Method::POST,
+        "/ipc/",
+        Audience::Both,
+        move |request, _, env| {
+            let messaging = messaging.clone();
+            Box::pin(async move {
+                messaging::routes::handle(request, &env.state.catalog, &messaging).await
+            })
+        },
+    );
+    if let Err(error) = added {
+        eprintln!("{error}");
+        std::process::exit(1);
+    }
+    if checks.frames {
+        routes.log_cookies(Arc::clone(&log));
+    }
+    let routes = Arc::new(routes);
+    let navigating = Arc::clone(&state);
+
     tauri::Builder::default()
         .register_asynchronous_uri_scheme_protocol(
             scheme::SCHEME,
             move |context, request, responder| {
                 let app = context.app_handle().clone();
                 let state = Arc::clone(&state);
-                let messaging = messaging.clone();
+                let routes = Arc::clone(&routes);
                 tauri::async_runtime::spawn(async move {
-                    // The routes of messaging, contracts/ipc-routes.md of spec 002.
-                    if request.uri().path().starts_with("/ipc/") {
-                        let response =
-                            messaging::routes::handle(request, &state.catalog, &messaging).await;
-                        responder.respond(response);
-                        return;
-                    }
                     let resolver = app.asset_resolver();
                     let assets = |path: &str| {
                         resolver.get(path.to_string()).map(|asset| scheme::Asset {
@@ -143,7 +184,11 @@ pub fn run() {
                             mime: asset.mime_type,
                         })
                     };
-                    responder.respond(scheme::handle(request, &state, &assets).await);
+                    let env = Env {
+                        state: &state,
+                        assets: &assets,
+                    };
+                    responder.respond(routes.handle(request, env).await);
                 });
             },
         )
@@ -156,10 +201,17 @@ pub fn run() {
             }
         })
         .setup(move |app| {
-            let query = if messaging_check {
-                "?messaging-check"
+            let runs: Vec<&str> = [
+                (checks.messaging, "messaging-check"),
+                (checks.frames, "frames-check"),
+            ]
+            .into_iter()
+            .filter_map(|(on, name)| on.then_some(name))
+            .collect();
+            let query = if runs.is_empty() {
+                String::new()
             } else {
-                ""
+                format!("?{}", runs.join("&"))
             };
             let url = format!("{}://{}/{query}", scheme::SCHEME, scheme::MAIN_HOST).parse()?;
             WebviewWindowBuilder::new(app, "main", WebviewUrl::CustomProtocol(url))
@@ -167,6 +219,19 @@ pub fn run() {
                 .inner_size(1200.0, 800.0)
                 // A non-persistent website data store: no run leaves data behind.
                 .incognito(true)
+                // The main window stays on the scheme, whatever a frame tries
+                // (FR-024, research R12). No `on_new_window`: by default
+                // nothing opens.
+                .on_navigation(move |url| {
+                    let allowed = routes::allows_navigation(url, &navigating.catalog);
+                    if !allowed {
+                        println!(
+                            "Frames: refused a navigation of the main window to {}",
+                            url.scheme()
+                        );
+                    }
+                    allowed
+                })
                 .build()?;
             Ok(())
         })

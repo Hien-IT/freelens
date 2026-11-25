@@ -4,10 +4,17 @@
  */
 
 // The catalog page of the main window. Its data comes from the core on
-// `/api/clusters` (specs/001-tauri-shell-spike/contracts/scheme-routes.md).
+// `/api/clusters` (specs/001-tauri-shell-spike/contracts/scheme-routes.md); it
+// keeps one frame per open cluster and names the visible one to the core
+// (specs/004-cluster-frames, research R7).
 
-// Only a --messaging-check run loads the check and its dependencies.
-const messagingCheck = new URLSearchParams(location.search).has("messaging-check");
+import { sendMessageToChannelInjectionToken } from "@freelensapp/messaging";
+import { currentVisibleClusterChannel, startMessaging } from "./messaging";
+
+const query = new URLSearchParams(location.search);
+// Only a check run loads the check and its dependencies.
+const messagingCheck = query.has("messaging-check");
+const framesCheck = query.has("frames-check");
 
 interface CatalogResponse {
   source: string | null;
@@ -16,16 +23,33 @@ interface CatalogResponse {
   openOnLoad: string | null;
 }
 
-interface Cluster {
+export interface Cluster {
   id: string;
   name: string;
+}
+
+/** What `openCluster` adds to the query of a new frame, in a --frames-check run. */
+export interface FrameQuery {
+  siblings: string[];
+  reopened: boolean;
+}
+
+// One messaging container per page: a second one would poll with a session of
+// its own and restart this view's queue (spec 002, research R3).
+const messaging = startMessaging("catalog");
+
+messaging.catch((error: unknown) => console.error("[CATALOG]: messaging did not start:", error));
+
+/** Names the visible cluster to the core, or none (FR-014, FR-017). */
+function sendVisibleCluster(id: string | undefined): void {
+  void messaging.then((di) => di.inject(sendMessageToChannelInjectionToken)(currentVisibleClusterChannel, id));
 }
 
 // One section per open cluster, each with its frame on the cluster's own host.
 const frames = document.createElement("div");
 
 /** Shows the frame of `cluster`, creating it only if it is not open yet. */
-function openCluster(cluster: Cluster): void {
+function openCluster(cluster: Cluster, frameQuery?: FrameQuery): HTMLIFrameElement {
   let open: HTMLElement | undefined;
   for (const section of frames.querySelectorAll<HTMLElement>(":scope > section")) {
     section.hidden = section.dataset.clusterId !== cluster.id;
@@ -33,8 +57,9 @@ function openCluster(cluster: Cluster): void {
       open = section;
     }
   }
+  sendVisibleCluster(cluster.id);
   if (open) {
-    return;
+    return open.querySelector("iframe") as HTMLIFrameElement;
   }
 
   const section = document.createElement("section");
@@ -49,12 +74,14 @@ function openCluster(cluster: Cluster): void {
   close.type = "button";
   close.textContent = "Close";
   close.setAttribute("aria-label", `Close ${cluster.name}`);
-  close.addEventListener("click", () => section.remove());
+  close.addEventListener("click", () => closeCluster(cluster.id));
 
   const frame = document.createElement("iframe");
   frame.title = cluster.name;
-  // The frame runs the messaging check when the main window does.
-  frame.src = `freelens-app://${cluster.id}.renderer.freelens.app/${messagingCheck ? "?messaging-check" : ""}`;
+  // No top navigation, window, dialog or permission for the frame; it stays
+  // on its own origin (FR-024, FR-026, research R12). No `allow` attribute.
+  frame.setAttribute("sandbox", "allow-scripts allow-same-origin allow-forms");
+  frame.src = `freelens-app://${cluster.id}.renderer.freelens.app/${frameSearch(frameQuery)}`;
   frame.width = "100%";
   frame.height = "480";
 
@@ -62,6 +89,36 @@ function openCluster(cluster: Cluster): void {
   // Marks when the frame is created, for the cluster-open figures (FR-011).
   void fetch("/api/mark?name=cluster-opened");
   frames.append(section);
+
+  return frame;
+}
+
+/** Removes the frame of the cluster; no cluster is visible if it was shown. */
+function closeCluster(id: string): void {
+  const section = frames.querySelector<HTMLElement>(`:scope > section[data-cluster-id="${id}"]`);
+  if (!section) {
+    return;
+  }
+  const shown = !section.hidden;
+  section.remove();
+  if (shown) {
+    sendVisibleCluster(undefined);
+  }
+}
+
+// The frame runs the check the main window runs; cluster ids are hexadecimal.
+function frameSearch(frameQuery: FrameQuery | undefined): string {
+  const flags: string[] = [];
+  if (messagingCheck) {
+    flags.push("messaging-check");
+  }
+  if (framesCheck && frameQuery) {
+    flags.push("frames-check", `siblings=${frameQuery.siblings.join(",")}`);
+    if (frameQuery.reopened) {
+      flags.push("reopened");
+    }
+  }
+  return flags.length > 0 ? `?${flags.join("&")}` : "";
 }
 
 function paragraph(text: string, role?: string): HTMLParagraphElement {
@@ -107,9 +164,17 @@ async function showCatalog(): Promise<void> {
   }
 
   if (messagingCheck) {
-    void import("./messaging-check").then(
-      ({ runMessagingCheck }) => runMessagingCheck(),
+    void Promise.all([messaging, import("./messaging-check")]).then(
+      ([di, { runMessagingCheck }]) => runMessagingCheck(di),
       () => fetch("/api/mark?name=messaging-check-failed"),
+    );
+  }
+
+  if (framesCheck) {
+    void Promise.all([messaging, import("./frames-check")]).then(
+      ([di, { runFramesCheckOfCatalog }]) =>
+        runFramesCheckOfCatalog(di, catalog.clusters, { open: openCluster, close: closeCluster }),
+      () => fetch("/api/mark?name=frames-check-failed"),
     );
   }
 }
@@ -117,6 +182,3 @@ async function showCatalog(): Promise<void> {
 showCatalog().catch((error: unknown) => {
   document.body.append(paragraph(`Cannot load the catalog: ${String(error)}`, "alert"));
 });
-
-// A module, so that its top-level names stay local to the page.
-export {};

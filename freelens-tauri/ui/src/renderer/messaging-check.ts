@@ -15,7 +15,9 @@ import {
   requestFromChannelInjectionToken,
   sendMessageToChannelInjectionToken,
 } from "@freelensapp/messaging";
-import { frameCommunicationAdminChannel, startMessaging } from "./messaging";
+import { frameCommunicationAdminChannel } from "./messaging";
+
+import type { DiContainer } from "@ogre-tools/injectable";
 
 type Step = "request" | "message to view";
 
@@ -63,9 +65,10 @@ async function postToMainWindowHost(): Promise<boolean> {
   }
 }
 
-export async function runMessagingCheck(): Promise<void> {
+/** Runs the check on the page's own messaging container. */
+export async function runMessagingCheck(di: DiContainer): Promise<void> {
   try {
-    await run();
+    await run(di);
   } catch (error) {
     console.error("[MESSAGING-CHECK]:", error);
     // Reported on a path that does not use messaging.
@@ -73,8 +76,7 @@ export async function runMessagingCheck(): Promise<void> {
   }
 }
 
-async function run(): Promise<void> {
-  const di = await startMessaging("messaging-check");
+async function run(di: DiContainer): Promise<void> {
   const request = di.inject(requestFromChannelInjectionToken);
   const send = di.inject(sendMessageToChannelInjectionToken);
 

@@ -512,8 +512,11 @@ build finds no sender.
   others" is about closing a cluster (FR-011), not about such a failure.
 - Some behaviour of the engine that the isolation relies on is not yet
   verified: that a hidden frame keeps running, that a frame can be removed
-  without first being emptied, and what happens to a cookie on the scheme of
-  the Tauri build. The check of SC-002 and SC-003 runs each of them.
+  without first being emptied, what happens to a cookie on the scheme of the
+  Tauri build, and that WebKit applies the `sandbox` attribute to a frame of
+  the scheme as it does to one of `https`. The check of SC-002 and SC-003 runs
+  each of them; the attempts to move a view and to open a window show the
+  last.
 - The feature sets no target for memory or for the time to open a frame; the
   targets of the port are those of `specs/baseline.md` and of spec 001.
 - The Tauri build runs on macOS on Apple Silicon only (Principle VII of the

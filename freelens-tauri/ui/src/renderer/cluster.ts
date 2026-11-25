@@ -4,10 +4,16 @@
  */
 
 // The page of a cluster frame. It lists the namespaces once, through the core,
-// which holds the credentials (specs/001-tauri-shell-spike/contracts/scheme-routes.md).
+// which holds the credentials (specs/001-tauri-shell-spike/contracts/scheme-routes.md),
+// and announces itself to the core (specs/004-cluster-frames, research R7).
 
-// Only a --messaging-check run loads the check and its dependencies.
-const messagingCheck = new URLSearchParams(location.search).has("messaging-check");
+import { requestFromChannelInjectionToken } from "@freelensapp/messaging";
+import { setClusterFrameIdChannel, startMessaging, viewOfPage } from "./messaging";
+
+const query = new URLSearchParams(location.search);
+// Only a check run loads the check and its dependencies.
+const messagingCheck = query.has("messaging-check");
+const framesCheck = query.has("frames-check");
 
 interface NamespaceList {
   items: { metadata: { name: string } }[];
@@ -56,12 +62,26 @@ async function showNamespaces(): Promise<void> {
 
 showNamespaces().catch((error: unknown) => alert(`Cannot list namespaces: ${String(error)}`));
 
+// One messaging container per page: a second one would poll with a session of
+// its own and restart this view's queue (spec 002, research R3).
+const messaging = startMessaging("cluster-frame");
+
+// The frame announces its own cluster, as init-cluster-frame does in the
+// Electron build (FR-014, FR-016).
+void messaging
+  .then((di) => di.inject(requestFromChannelInjectionToken)(setClusterFrameIdChannel, viewOfPage()))
+  .catch((error: unknown) => console.error("[CLUSTER-FRAME]: cannot announce the frame:", error));
+
 if (messagingCheck) {
-  void import("./messaging-check").then(
-    ({ runMessagingCheck }) => runMessagingCheck(),
+  void Promise.all([messaging, import("./messaging-check")]).then(
+    ([di, { runMessagingCheck }]) => runMessagingCheck(di),
     () => fetch("/api/mark?name=messaging-check-failed"),
   );
 }
 
-// A module, so that its top-level names stay local to the page.
-export {};
+if (framesCheck) {
+  void Promise.all([messaging, import("./frames-check")]).then(
+    ([di, { runFramesCheck }]) => runFramesCheck(di),
+    () => fetch("/api/mark?name=frames-check-failed"),
+  );
+}
