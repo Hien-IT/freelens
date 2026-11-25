@@ -379,21 +379,23 @@ switched, one closed and reopened) runs on the branch and on `main`.
   that is still there; messages sent to it are then dropped. The poll loop
   re-polls at once after each answer and uses timers only after a failure, so
   timer throttling alone does not stop it (**Verified**,
-  `messaging-for-tauri/src/polling.injectable.ts`); suspension of a hidden
-  frame is **Unverified**. The check keeps the second and third frames hidden
-  for more than 60 seconds before they report their marks again (R9).
+  `messaging-for-tauri/src/polling.injectable.ts`). WebKit does not suspend a
+  hidden frame enough to close its queue (**Verified**, the check run: the
+  first and third frames, hidden for 65 seconds, stayed recorded and received
+  what the core sent them).
 - **wry dropping a cancelled poll.** A waiting poll whose request has been
   dropped no longer keeps its queue open, so the queue closes 60 seconds after
   its last poll started whether wry keeps the task of a cancelled poll or drops
   it; cargo tests of `Queues` cover both, and the check's forgetting step shows
   it in the running application.
-- **Removing a frame without blanking it** crashed Chromium; whether WKWebView
-  has a problem with it is **Unverified**. The check closes and reopens a
-  frame.
-- **The `sandbox` attribute on a frame of the custom scheme** (R12): that
-  WebKit applies it to such a frame as to an `https` one is **Unverified**;
-  the check's attempts to move the main window, move another frame and open a
-  window show it.
+- **Removing a frame without blanking it** crashed Chromium; WKWebView has no
+  problem with it (**Verified**, the check run: the second frame is removed,
+  forgotten within the wait, and reopened on its origin).
+- **The `sandbox` attribute on a frame of the custom scheme** (R12): WebKit
+  applies it to such a frame (**Verified**: with it, a frame cannot move the
+  main window; in a control run without it, a frame moved the main window to
+  a page of the scheme). Opening a window and moving another frame failed in
+  both runs, so for those two the sandbox is not the only guard.
 
 ## R12. Navigation, windows, framing, permissions and outside addresses (FR-024 to FR-027)
 

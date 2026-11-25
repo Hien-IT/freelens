@@ -45,6 +45,7 @@ export interface CatalogActions {
 // Check-only channels, registered by the core only with --frames-check, and
 // the relay of spec 002, declared by id.
 const reportChannel = getMessageChannel<Report>("frames-check:report");
+const sendToChannel = getRequestChannel<{ cluster: string; token: string }, boolean>("frames-check:send-to");
 const sendToVisibleChannel = getRequestChannel<{ token: string }, boolean>("frames-check:send-to-visible");
 const pingChannel = getMessageChannel<string>("frames-check:ping");
 const reportMarksChannel = getMessageChannel<undefined>("frames-check:report-marks");
@@ -54,6 +55,8 @@ const broadcastToViewsChannel = getRequestChannel<{ channel: string; message?: u
 // The sandbox of research R12, which the catalog page gives every frame.
 const sandbox = "allow-scripts allow-same-origin allow-forms";
 const stepTimeout = 30_000;
+// Longer than the 60 seconds after which the core closes a queue with no poll.
+const hiddenWait = 65_000;
 const moveWait = 1_000;
 const violationWait = 3_000;
 const mainPage = "freelens-app://renderer.freelens.app/";
@@ -419,11 +422,23 @@ export async function runFramesCheckOfCatalog(
     }
     check.listen(pingChannel, (token) => check.report({ kind: "ping", token }));
     const attemptsDone = new Set<string>();
+    // Emptied before each step that waits for marks, so that an earlier one does not count.
+    const marksDone = new Set<string>();
     check.listen(stepDoneChannel, ({ cluster, step }) => {
-      if (step === "attempts") {
-        attemptsDone.add(cluster);
-      }
+      (step === "attempts" ? attemptsDone : marksDone).add(cluster);
     });
+    const waitForMarks = async (ids: string[]) => {
+      if (!(await waitUntil(() => ids.every((id) => marksDone.has(id)), stepTimeout))) {
+        check.report({ kind: "failed", attempt: "step not finished" });
+      }
+    };
+    // Each frame still open reports its marks again (contracts/frames-log.md).
+    const reportMarksOf = async (ids: string[]) => {
+      marksDone.clear();
+      await check.broadcast(reportMarksChannel, undefined);
+      await waitForMarks(ids);
+    };
+    const sendTo = (cluster: string) => check.request(sendToChannel, { cluster, token: newToken() });
 
     check.report({ kind: "origin", origin: window.origin });
     await setMarks();
@@ -467,6 +482,35 @@ export async function runFramesCheckOfCatalog(
     await searchStorage(check);
 
     await check.request(sendToVisibleChannel, { token: newToken() });
+
+    // The second half of research R9: closing, forgetting and reopening.
+    const [first, second, third] = three;
+    const others = [first.id, third.id];
+    await sendTo(first.id);
+
+    // The second cluster shown, then closed: no frame is shown.
+    catalog.open(second, { siblings: [first.id, third.id], reopened: false });
+    catalog.close(second.id);
+
+    // Its queue is still open: the core takes the message and no view gets it.
+    await sendTo(second.id);
+    await sendTo(first.id);
+    await sendTo(third.id);
+    await reportMarksOf(others);
+
+    // The first and third frames stay hidden while the core closes the
+    // second one's queue (FR-028, research R11).
+    await delay(hiddenWait);
+    await sendTo(second.id);
+    await sendTo(first.id);
+    await sendTo(third.id);
+    await reportMarksOf(others);
+
+    // Reopened on its origin, with new page state and its local storage.
+    marksDone.clear();
+    catalog.open(second, { siblings: [first.id, third.id], reopened: true });
+    await waitForMarks([second.id]);
+    check.report({ kind: "done" });
   } catch (error) {
     console.error("[FRAMES-CHECK]:", error);
     await fetch("/api/mark?name=frames-check-failed");
