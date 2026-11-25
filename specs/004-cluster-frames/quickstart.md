@@ -13,6 +13,22 @@ check: Docker and the reference kind cluster of section 0.4 of
 `specs/tauri-port-runbook.md`. Pass `--kubeconfig` to every `kind` and
 `kubectl` command, so that nothing reaches a real cluster.
 
+The core does not compile without `freelens-tauri/src-tauri/payload/`, which
+`tauri.conf.json` bundles and git ignores: on a fresh checkout, stage it once
+after building the renderer bundle it copies.
+
+```bash
+pnpm build && bash freelens-tauri/scripts/stage-payload.sh
+```
+
+The unit tests of the Electron build need the Electron binary, which
+`pnpm install` does not download; install it once, as CI does, or the
+parallel test files each start the download and fail:
+
+```bash
+cd freelens && node "$(node -p "require.resolve('electron/install.js')")"
+```
+
 ## The core
 
 Route table, frame record, queue events and the two channels, refusals

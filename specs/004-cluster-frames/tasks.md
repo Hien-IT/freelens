@@ -157,9 +157,9 @@ sent by no view, and the Electron build still builds and passes its tests.
 
 **Purpose**: the full checks and the quickstart.
 
-- [ ] T027 [P] Run `pnpm biome check` and `pnpm trunk check` on the changed files of `freelens-tauri/`, `packages/core/src/` and `specs/`, and fix what they report.
-- [ ] T028 Run every command of `specs/004-cluster-frames/quickstart.md` from a clean checkout of the branch: the cargo checks, the check run, the steps by hand, the Electron commands and the channel list, and fix what fails.
-- [ ] T029 Compare the output of `cd freelens-tauri/src-tauri && cargo test -- --list` with `$TMPDIR/004-baseline/cargo-tests.txt` of T001: every test listed there is still listed (FR-022).
+- [x] T027 [P] Run `pnpm biome check` and `pnpm trunk check` on the changed files of `freelens-tauri/`, `packages/core/src/` and `specs/`, and fix what they report. Done: neither reports anything on the files the feature changed.
+- [ ] T028 Run every command of `specs/004-cluster-frames/quickstart.md` from a clean checkout of the branch: the cargo checks, the check run, the steps by hand, the Electron commands and the channel list, and fix what fails. Partly done, in a worktree of the branch: the cargo checks, the check run with steps 1 to 7 of its pass condition, the runs with the empty and the invalid kubeconfig, `build:di` with no change to the generated files, `type:check`, `test:unit` matching the baseline, `build`, `knip:check`, `build:app:dir`, `test:integration` and the search all pass. Two commands of quickstart.md failed on a fresh checkout and its prerequisites now say why: the core does not compile until `stage-payload.sh` has staged `src-tauri/payload/`, and the unit tests need the Electron binary installed first. An instance left running afterwards stopped polling in every page and its frames were forgotten while open, which research R11 records as a risk. Open: the steps by hand.
+- [x] T029 Compare the output of `cd freelens-tauri/src-tauri && cargo test -- --list` with `$TMPDIR/004-baseline/cargo-tests.txt` of T001: every test listed there is still listed (FR-022). Done: all 58 are listed, among 92.
 
 ---
 
