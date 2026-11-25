@@ -23,16 +23,23 @@ followed by exit status 1.
 
 The launch option `--frames-check` registers the check-only channels below
 and opens the main window at `/?frames-check`. The catalog page opens the
-first three clusters of the catalog with the same query, and the pages run
-the steps of research R9.
+first three clusters of the catalog with the query
+`?frames-check&siblings=<id>,<id>`, which names the other two clusters to
+each frame: a frame learns its own id from its host and has no other way to
+learn theirs, since the catalog is a route of the main window only. When it
+opens a cluster again, the catalog page adds `&reopened` to the query: a frame
+with `reopened` makes no attempt, reports its origin and its marks, then
+broadcasts `frames-check:step-done` with `marks`. The pages then run the
+steps of research R9.
 
-| Channel                        | Kind | Dir   | Values                                                                                                                           |
-| ------------------------------ | ---- | ----- | -------------------------------------------------------------------------------------------------------------------------------- |
-| `frames-check:report`          | msg  | v→m   | one report, below                                                                                                                |
-| `frames-check:send-to`         | req  | v→m   | `{ cluster, token }` → `boolean`, whether `cluster` had a frame                                                                  |
-| `frames-check:send-to-visible` | req  | v→m   | `{ token }` → `boolean`, whether there was a visible frame; the core sends `frames-check:ping` through `Frames::send_to_visible` |
-| `frames-check:ping`            | msg  | m→v   | `token`, sent by `send-to` through `Frames::send_to`, or by `send-to-visible` through `Frames::send_to_visible`                  |
-| `frames-check:report-marks`    | msg  | relay | none; each frame reports its marks                                                                                               |
+| Channel                        | Kind | Dir   | Values                                                                                                                              |
+| ------------------------------ | ---- | ----- | ----------------------------------------------------------------------------------------------------------------------------------- |
+| `frames-check:report`          | msg  | v→m   | one report, below                                                                                                                   |
+| `frames-check:send-to`         | req  | v→m   | `{ cluster, token }` → `boolean`, whether `cluster` had a frame                                                                     |
+| `frames-check:send-to-visible` | req  | v→m   | `{ token }` → `boolean`, whether there was a visible frame; the core sends `frames-check:ping` through `Frames::send_to_visible`    |
+| `frames-check:ping`            | msg  | m→v   | `token`, sent by `send-to` through `Frames::send_to`, or by `send-to-visible` through `Frames::send_to_visible`                     |
+| `frames-check:report-marks`    | msg  | relay | none; each frame reports its marks                                                                                                  |
+| `frames-check:step-done`       | msg  | relay | `{ cluster, step }`, `step` being `attempts` or `marks`; a frame broadcasts it once it has made its attempts, or reported its marks |
 
 The core prints each report:
 
@@ -52,18 +59,18 @@ The core prints each report:
 
 The attempts are named:
 
-| Attempt                                                                    | From                                                                  |
-| -------------------------------------------------------------------------- | --------------------------------------------------------------------- |
-| `parent document`, `sibling document`                                      | each frame, read and change                                           |
-| `frame document`                                                           | the catalog page, for each frame, read and change                     |
-| `frame permissions`                                                        | the catalog page, for each frame                                      |
-| `local storage`, `session storage`, `indexeddb`, `cache storage`, `cookie` | each frame and the catalog page: another view's mark found in its own |
-| `main catalog`, `sibling kube`                                             | each frame                                                            |
-| `set-frame-id for sibling`, `visible from frame`                           | each frame                                                            |
-| `frame main page`, `frame sibling page`                                    | each frame                                                            |
-| `open window`                                                              | each frame                                                            |
-| `outside address`                                                          | each frame                                                            |
-| `move sibling`, `move main to scheme`, `move main outside`                 | each frame, last                                                      |
+| Attempt                                                                                              | From                                                                  |
+| ---------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------- |
+| `parent document read`, `parent document change`, `sibling document read`, `sibling document change` | each frame                                                            |
+| `frame document read`, `frame document change`                                                       | the catalog page, for each frame                                      |
+| `frame permissions`                                                                                  | the catalog page, for each frame                                      |
+| `local storage`, `session storage`, `indexeddb`, `cache storage`, `cookie`                           | each frame and the catalog page: another view's mark found in its own |
+| `main catalog`, `sibling kube`                                                                       | each frame                                                            |
+| `set-frame-id for sibling`, `visible from frame`                                                     | each frame                                                            |
+| `frame main page`, `frame sibling page`                                                              | each frame                                                            |
+| `open window`                                                                                        | each frame                                                            |
+| `outside address`                                                                                    | each frame                                                            |
+| `move sibling`, `move main to scheme`, `move main outside`                                           | each frame, last                                                      |
 
 A frame reports `blocked` for a `move` attempt once the attempt has thrown or
 has left the target where it was after a second; a move that worked shows up
@@ -74,12 +81,34 @@ not taken for the policy. `frame permissions` counts as `blocked` when the
 frame carries exactly the `sandbox` of research R12 and no `allow` attribute:
 what FR-026 asks is that the page grants none. A refused clipboard write is
 no evidence, because WebKit may refuse it for want of a user gesture alone
-(unverified).
+(unverified). This checks what the page sets up, not what WebKit enforces;
+the engine's side of FR-024 is shown by the `open window` and `move`
+attempts.
+
+An attempt named `sibling …` runs against each of the two other frames and
+reports one line per sibling, with the sibling's cluster id after the
+attempt's name: `Frames check: <view> blocked sibling kube <id>`.
+
+A view sets a mark in a kind of browser storage, and its cookie, only when it
+finds none of its own there, so that a later page of the same origin reports
+the earlier one as `kept`. Its page-state mark is always new.
 
 `visible from frame` is reported as `sent`, not `blocked`: each frame sends
-`current-visible-cluster` naming another cluster than the one the catalog
-page shows, a message the core answers with nothing. The core's
-`Frames: dropped …` lines and `send-to-visible` decide it (step 2 below).
+`current-visible-cluster` naming its own cluster, a message the core answers
+with nothing. The first two frames are not the shown one, so a core that took
+their message would make `send-to-visible` ping one of them, and step 2
+fails. The core's `Frames: dropped …` lines and `send-to-visible` decide it.
+
+The catalog page moves from one step to the next only on what it can
+observe: it calls `send-to-visible` and starts step 3 once it has received
+`frames-check:step-done` with `attempts` from all three frames; after a
+`report-marks`, it goes on once it has `marks` from each frame still open;
+after it reopens a cluster, it prints `done` once it has `marks` from the
+reopened frame; after a request, once its answer has arrived. If a `step-done` it waits for
+is missing 30 seconds later, it reports `isolation failed: step not
+finished` and goes on, so that the run fails visibly rather than waiting
+forever. A `received ping` line may come after the first lines of the next
+step; it counts in the step that sent its token.
 
 FR-027 has no attempt: the check cannot observe that a page does not act on a
 posted message. The review of T015 and T016 shows it: the pages add no
@@ -94,9 +123,9 @@ The run passes when it prints, in order:
    `Frames: visible cluster <id>` lines in the order the catalog page shows
    the clusters (FR-014, FR-016, FR-017);
 2. for each of the three frames, a `blocked` line for every attempt but
-   `visible from frame`, and for the catalog page one `frame document` and
-   one `frame permissions` line per frame and one line per storage and cookie
-   attempt; for `visible from frame`, a `sent` line from each frame and one
+   `visible from frame`, two for each `sibling …` attempt, one per sibling, and for the catalog page one line for each
+   `frame document` attempt and one `frame permissions` line per frame, and
+   one line per storage and cookie attempt; for `visible from frame`, a `sent` line from each frame and one
    `Frames: dropped current-visible-cluster from cluster <id>` line for each
    of the three, then a `send-to-visible` answer `true` with `received ping`
    for its token from the frame the catalog page shows, alone (FR-017,
@@ -124,7 +153,8 @@ The run passes when it prints, in order:
    line for the second cluster equal to its first one, and `marks new kept`
    from it: a new page state, and the
    `localStorage` of its own origin, which outlives the frame within a run
-   (SC-004, FR-013);
+   (SC-004, FR-013); and no `blocked` or `isolation failed` line from the
+   reopened frame, which makes no attempt;
 7. `done`, with no `frames-check-failed` mark.
 
 The lines carry no path, cluster address or credential.

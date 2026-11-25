@@ -307,7 +307,8 @@ Inspector.
   page included, records its origin, a page-state mark (a random value held in
   memory), a mark in each kind of browser storage (local storage, session
   storage, an IndexedDB database, a cache of the Cache API) and a cookie, each
-  named after the view: `main` or its cluster id; the catalog page looks for
+  named after the view, `main` or its cluster id, and each set only when the
+  view finds none of its own; the catalog page looks for
   the frames' marks in its own storage and cookie, as each frame looks for the
   other views';
 - each frame then tries to cross into the main window and the other two
@@ -327,10 +328,15 @@ Inspector.
   the frame element, and reports, for each frame, whether it carries exactly
   the `sandbox` of R12 and no `allow` attribute, the evidence of FR-026 that
   a refused clipboard write would not give; each frame sends
-  `current-visible-cluster` naming another cluster, and the catalog page then
+  `current-visible-cluster` naming its own cluster, and the catalog page then
   asks the core, through a check-only request `frames-check:send-to-visible`,
   to send to the visible frame, so the log shows the core kept the cluster the
   catalog page named;
+- the catalog page passes each frame the ids of the other two clusters in the
+  query `siblings`, the frame's only way to learn them; each frame broadcasts
+  `frames-check:step-done` when it has made its attempts or reported its
+  marks, and the catalog page waits for those messages, and for the answers
+  of its own requests, before each next step;
 - a check-only request `frames-check:send-to` makes the core call
   `Frames::send_to` with a check-only message for the cluster it names, and
   answers whether that cluster had a frame; every view reports each check-only
@@ -339,8 +345,9 @@ Inspector.
   closes it, so that no frame is shown, sends to the second one, has the first
   and third frames report their marks again, waits 65 seconds with both
   hidden, asks the core whether the second cluster still has a frame, has the
-  first and third report again, and reopens the second cluster, whose new frame
-  reports its origin, a new page-state mark and its local-storage mark.
+  first and third report again, and reopens the second cluster with `reopened`
+  in the query, whose new frame makes no attempt and only reports its origin,
+  a new page-state mark and its local-storage mark.
 
 The pass condition is in `contracts/frames-log.md` and quickstart.md.
 

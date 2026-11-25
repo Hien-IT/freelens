@@ -32,7 +32,9 @@ In this specification:
   removing it from the catalog.
 - **Browser storage** is what a page keeps in the browser engine under its
   origin: local storage, session storage, IndexedDB databases and the caches
-  of the Cache API. It outlives the page within a run. **Page state** is what a
+  of the Cache API. It outlives the page within a run. Service workers are out
+  of scope: no page of the Tauri build registers one, and a service worker one
+  view registered would control only its own origin. **Page state** is what a
   page holds in memory while it is loaded; it ends with the page.
 - **The channel list** is
   `specs/002-messaging-for-tauri/contracts/channel-list.md`. **The channels of
