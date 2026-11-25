@@ -433,11 +433,11 @@ whole catalog in both builds with the same syncs.
   the catalog the Tauri build sends a view equals, entity for entity and value
   for value, the one the Electron build sends.
 - **SC-002**: For each change of Story 2 (a context added to a synced file or
-  removed from it, a file added to a synced folder or removed from it, a sync
-  added in the settings), the median of five times from the end of the write,
-  or from a view's change of the setting, to the change in a view's catalog
-  is no longer in the Tauri build than in the Electron build, measured with
-  the same steps on the same machine and recorded in `specs/baseline.md`.
+  removed from it, a file added to a synced folder or removed from it), the
+  median of five times from the end of the write to the change in a view's
+  catalog is no longer in the Tauri build than in the Electron build,
+  measured with the same steps on the same machine and recorded in
+  `specs/baseline.md`.
 - **SC-003**: Over 100 rewrites of a synced file, half in place and half by
   replacing it, no cluster that the file holds before and after a rewrite is
   missing from any catalog a view receives.

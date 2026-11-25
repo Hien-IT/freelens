@@ -127,7 +127,7 @@ freelens-tauri/src-tauri/
 ├── Cargo.toml                    # + notify; serde-saphyr becomes direct
 ├── src/
 │   ├── lib.rs                    # stores, then the catalog; Core gains `catalog`
-│   ├── options.rs                # --kubeconfig: an extra file sync for the run
+│   ├── options.rs                # --kubeconfig: an extra file sync; --catalog-dump=<path>
 │   ├── catalog/                  # replaces src/catalog.rs
 │   │   ├── mod.rs                # Catalog: sources, order, dedupe, categories, on_change
 │   │   ├── kubeconfig.rs         # size, encoding, YAML, Joi and client-node rules, split

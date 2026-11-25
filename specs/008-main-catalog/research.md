@@ -399,13 +399,20 @@ renderer's CDP port; the Tauri build through its standard output and the
 builds with the same steps on a temporary data directory and temporary
 kubeconfig files:
 
-- **SC-002**: for each change of Story 2, five times, the time from the
-  script's write returning, or from its change of the setting, to the
-  catalog showing it: for the Electron build, the send of `catalog:items`
-  from main, hooked through the inspector (its IPC to a view is under 1 ms at
-  these sizes, by the channel list's "Answer times"); for the Tauri build, the
-  spike page's mark, which includes the channel. The Tauri figure is thus
-  the stricter one.
+- **SC-002**: for each change of a synced file in SC-002, five times, the
+  time from the script's write returning to the catalog showing it: for the
+  Electron build, the send of `catalog:items` from main, hooked through the
+  inspector (its IPC to a view is under 1 ms at these sizes, by the channel
+  list's "Answer times"); for the Tauri build, the spike page's mark, which
+  includes the channel. The Tauri figure is thus the stricter one. A change
+  of the sync setting is not timed: the input asks about the files, and
+  neither build takes a setting from outside a view; the cargo tests cover it
+  (FR-011).
+- **The catalog sent**: the main hook writes each `catalog:items` payload of
+  the Electron build to a file, and the core's launch option
+  `--catalog-dump=<path>` writes each catalog it sends, so that the script
+  compares them (SC-001) and searches them for credentials (SC-008). The
+  option is for measurements and tests, like `--data-dir`.
 - **SC-007**: the time from a view's `catalog:init` to the whole large
   catalog, three times, by the same two marks.
 - **SC-006**: `measure.sh spike` with `MEASURE_DATA_DIR` holding the five

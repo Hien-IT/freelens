@@ -22,7 +22,7 @@ cd freelens-tauri/src-tauri && cargo fmt --check && cargo clippy --all-targets -
 ```
 
 ```bash
-pnpm --filter @freelensapp/core exec vitest run src/main/catalog-sources/tauri-parity.test.ts
+TZ=UTC pnpm exec vitest run -c vitest.config.ts packages/core/src/main/catalog-sources/tauri-parity.test.ts
 ```
 
 Expected: every test passes. The Vitest test and `tests/catalog.rs` assert the
@@ -31,7 +31,7 @@ same `expected/` files of `freelens-tauri/src-tauri/tests/fixtures/catalog/`
 after a reviewed change of a case:
 
 ```bash
-UPDATE_TAURI_PARITY=1 pnpm --filter @freelensapp/core exec vitest run src/main/catalog-sources/tauri-parity.test.ts
+UPDATE_TAURI_PARITY=1 TZ=UTC pnpm exec vitest run -c vitest.config.ts packages/core/src/main/catalog-sources/tauri-parity.test.ts
 ```
 
 ## 2. The same catalog in both builds (SC-001, Story 1)
@@ -45,7 +45,8 @@ icons, labels and web links, and syncs of a file and of a folder holding
 valid and invalid contexts, an ignored name, a file over 2 MiB, a UTF-16
 file, a symbolic link and a subfolder. It starts each build on a copy, waits
 until the catalog has been quiet for 2 seconds, and writes the last catalog
-each sent to `electron.json` and `tauri.json`.
+each sent to `electron.json` (through its hook in main) and `tauri.json`
+(through `--catalog-dump`).
 
 Expected: the two files are equal as JSON values; the script prints
 `equal`. Repeat with the Electron build of `main`: the same.
@@ -56,10 +57,10 @@ Expected: the two files are equal as JSON values; the script prints
 node specs/008-main-catalog/measure-catalog.mjs changes
 ```
 
-For each change of Story 2, five times per build: a context added to a synced
-file, a context removed, a file added to the synced folder, a file removed,
-a sync added in the settings. Then 100 rewrites of a synced file, half in
-place and half by replacing it.
+For each change of SC-002, five times per build: a context added to a synced
+file, a context removed, a file added to the synced folder, a file removed.
+Then 100 rewrites of a synced file, half in place and half by replacing it.
+A change of the sync setting is covered by `tests/catalog.rs`, not timed.
 
 Expected: for each change the Tauri median is no higher than the Electron
 median; the script prints both. No catalog received during the rewrites lacks
