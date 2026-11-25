@@ -21,8 +21,10 @@ No answer or message carries a credential or the text of a kubeconfig file
 The whole catalog, never a part, coalesced as the Electron build's
 broadcaster coalesces it: a change while no timer runs is sent at once, every
 change restarts a 100 ms timer, and when the timer ends the entities as they
-are then are sent, if anything changed after the send made at once. Each send
-logs `Catalog: sent <n> entities`.
+are then are sent, if anything changed after the send made at once. It is
+also sent, through the same coalescing, when a cluster frame records its
+frame id, as `main/cluster/set-frame-id-listener.injectable.ts` of the
+Electron build sends it. Each send logs `Catalog: sent <n> entities`.
 
 ## `ClusterInfo`
 

@@ -125,7 +125,7 @@ file is being written.
 later than in the Electron build. It depends on Story 1.
 
 **Independent Test**: With the Tauri build running and a view open, make each
-change of the story five times and measure the time from the end of the write
+change of a synced file five times and measure the time from the end of the write
 to the view's catalog showing it; repeat the same steps on the Electron build.
 Rewrite a synced file many times, in place and by replacing it, and check that
 no cluster present before and after a write leaves the catalog in between.

@@ -278,10 +278,13 @@ call restarts a 100 ms timer, and when the timer ends without being
 restarted, the last call since the one sent at once is sent. A steady stream
 of changes less than 100 ms apart therefore sends nothing after the first
 until it pauses. The registry keeps only the entities whose category main has
-registered.
+registered. `main/cluster/set-frame-id-listener.injectable.ts` also sends the
+catalog through the broadcaster when a cluster frame records its frame id
+(`pushCatalogToRenderer`).
 
 **Decision**: the same coalescing in `src/catalog/channels.rs`, sending the
-whole catalog to every view on `catalog:items`. The core sends from startup;
+whole catalog to every view on `catalog:items`, and sending it the same way
+on each `FrameEvent::Announced` of the frame record. The core sends from startup;
 a view that is not open has no queue, and every view sends `catalog:init`
 when it starts. A log line `Catalog: sent <n> entities` marks each send for
 the measurements of R12.
@@ -373,6 +376,12 @@ every client from that one file.
 - The spike page renders its list from `catalog:items`, opens the cluster of
   `--open-cluster` once it appears, and with `?catalog-marks` posts the mark
   `catalog-<n>` when it receives `n` entities.
+- `/api/clusters` keeps its answer, so `tests/scheme.rs` keeps its
+  assertions: it waits for the first scan, and answers the launch file as
+  `source`, the spike's notice for that file when it is missing or not a
+  kubeconfig as `message`, and the id of the `--open-cluster` context in it
+  as `openOnLoad`. The Electron build has no such notice, but its renderer
+  does not read this route, so the parity of SC-001 is not affected.
 - `specs/001-tauri-shell-spike/measure.sh` seeds the user store of each run
   with the syncs the mode needs: none for `spike`, so that no run reads the
   user's `~/.kube`, as the Electron baseline did.
@@ -472,6 +481,14 @@ check the same behaviour:
 
 `features/weblinks` has no test of its own; R9 is covered by
 `src/catalog/weblinks.rs` with a local server.
+
+Three cases have no counterpart in the core. `removeSource` of the registry
+test serves the extension API, which the Tauri build does not have; a
+stopped sync's clusters leaving the catalog is the core's case of a source
+going away (`tests/catalog.rs`). "preserves the same map identity" of the
+kubeconfig sync test checks a MobX detail. "reads a file in UTF-16 LE split
+inside a character" tests the chunks of a read stream, and the core reads a
+file whole.
 
 ## R15. What this feature does not port
 

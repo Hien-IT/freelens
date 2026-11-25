@@ -41,10 +41,30 @@ impl Catalog {
 
     /// Calls `listener` after every change of a cluster, outside the lock.
     pub fn subscribe(&self, listener: impl Fn(&CatalogEvent) + Send + Sync + 'static);
+
+    /// Resolves once every sync has had its first scan.
+    pub async fn scanned(&self);
+
+    /// The file of `--kubeconfig` and what its last read found, for the spike
+    /// page's `/api/clusters` only.
+    pub fn launch_file(&self) -> Option<LaunchFile>;
 }
 
-/// Registers the eight channels of main-catalog.
-pub fn register(channels: &mut Channels, catalog: &Catalog) -> Result<(), DuplicateChannel>;
+pub struct LaunchFile {
+    pub path: PathBuf,
+    pub state: LaunchFileState,
+}
+
+pub enum LaunchFileState { Read, Missing, Invalid }
+
+/// Registers the eight channels of main-catalog. `frames` is the record of
+/// spec 004, whose `Announced` events send the catalog again, so it is called
+/// after `frames::register`.
+pub fn register(
+    channels: &mut Channels,
+    catalog: &Catalog,
+    frames: &Frames,
+) -> Result<(), DuplicateChannel>;
 ```
 
 Rules:
