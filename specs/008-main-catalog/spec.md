@@ -40,7 +40,10 @@ In this specification:
   main-catalog** are the rows of its section "main-catalog": `catalog:init`,
   `catalog:items`, `get-all-clusters`, `get-cluster-by-id`,
   `discover-kubeconfig-sync-kind`, `parse-kubeconfig-text` and
-  `add-kubeconfig-text`.
+  `add-kubeconfig-text`; and `cluster-visibility`, which the list gives to
+  main-cluster-connection but which the Electron build's main side reads only
+  for the active flag of FR-005, so this feature moves its row to
+  main-catalog.
 - **The existing tests of this area** are the unit tests of the Electron build
   under the directories R9 of `specs/001-tauri-shell-spike/research.md` gives
   main-catalog (`main/catalog`, `main/catalog-sources`,
@@ -342,7 +345,8 @@ whole catalog in both builds with the same syncs.
   `catalog:items` when a view sends `catalog:init`, and on every change of the
   catalog, each entity in the shape and with the values the Electron build
   sends. Changes that come close together MUST be sent as the Electron build
-  sends them: the first at once, then the latest state at most every 100 ms.
+  sends them: the first at once, and the later ones once, with the latest
+  state, when 100 ms have passed without a change.
 - **FR-014**: No message or answer of the channels of main-catalog MUST carry a
   credential or the contents of a kubeconfig file: an entity names its file
   and its context, and nothing more of them.
