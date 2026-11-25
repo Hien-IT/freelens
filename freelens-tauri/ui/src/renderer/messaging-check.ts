@@ -8,19 +8,14 @@
 // messaging-for-tauri, reported to the core, which prints them
 // (contracts/check-log.md).
 
-import { registerFeature } from "@freelensapp/feature-core";
 import {
   enlistMessageChannelListenerInjectionToken,
   getMessageChannel,
   getRequestChannel,
-  listeningOfChannelsInjectionToken,
   requestFromChannelInjectionToken,
   sendMessageToChannelInjectionToken,
 } from "@freelensapp/messaging";
-import { messagingFeatureForTauri } from "@freelensapp/messaging-for-tauri";
-import { createContainer } from "@ogre-tools/injectable";
-import { registerMobX } from "@ogre-tools/injectable-extension-for-mobx";
-import { runInAction } from "mobx";
+import { frameCommunicationAdminChannel, startMessaging } from "./messaging";
 
 type Step = "request" | "message to view";
 
@@ -35,7 +30,6 @@ type Report =
 // Existing channels of the Electron build, declared by id: the spike does not
 // depend on packages/core, where they are defined.
 const buildVersionChannel = getRequestChannel<void, string>("build-version");
-const frameCommunicationAdminChannel = getMessageChannel<undefined>("frame-communication-admin-channel");
 const broadcastToViewsChannel = getRequestChannel<{ channel: string; message: string }, void>("broadcast-to-views");
 const appNavigationChannel = getMessageChannel<string>("renderer:navigate");
 
@@ -80,23 +74,10 @@ export async function runMessagingCheck(): Promise<void> {
 }
 
 async function run(): Promise<void> {
-  const di = createContainer("messaging-check");
-
-  di.permitSideEffects();
-  runInAction(() => {
-    registerMobX(di);
-    registerFeature(di, messagingFeatureForTauri);
-  });
-
-  // What the application's start does for messaging: listen, then announce.
-  // The start itself runs @freelensapp/run-many, which needs Node's
-  // EventEmitter until spec 003 makes the renderer run without Node.
-  await di.inject(listeningOfChannelsInjectionToken).start();
-
+  const di = await startMessaging("messaging-check");
   const request = di.inject(requestFromChannelInjectionToken);
   const send = di.inject(sendMessageToChannelInjectionToken);
 
-  send(frameCommunicationAdminChannel, undefined);
   const report = (value: Report) => send(reportChannel, value);
   const tag = location.hostname === "renderer.freelens.app" ? "main" : location.hostname.split(".")[0];
 

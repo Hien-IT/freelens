@@ -24,6 +24,7 @@ use serde::de::DeserializeOwned;
 use serde_json::Value;
 
 use crate::clusters::BoxFuture;
+pub use queues::QueueEvent;
 use queues::Queues;
 
 /// Prints one log line of `contracts/check-log.md`.
@@ -177,6 +178,34 @@ impl Sender {
     pub(crate) fn send_raw(&self, channel_id: &str, payload: Option<Value>) {
         self.queues.push(channel_id, payload);
     }
+
+    /// Sends to the queue of `view` alone; dropped if it has no open queue
+    /// (`specs/004-cluster-frames/contracts/frames-api.md`).
+    pub fn send_to<M: Serialize + 'static>(
+        &self,
+        view: &View,
+        channel: MessageChannel<M>,
+        message: &M,
+    ) {
+        match to_payload(message) {
+            Ok(payload) => self.queues.push_to(view, channel.id, payload),
+            Err(error) => (self.queues.log)(&format!(
+                "Messaging: cannot send on \"{}\": {error}",
+                channel.id
+            )),
+        }
+    }
+
+    /// Closes the queues of the views that are gone (research R5 of spec 004).
+    pub fn sweep(&self) {
+        self.queues.sweep();
+    }
+
+    /// Calls `listener` with every later queue event, outside the queues'
+    /// lock; usable before `Channels::build`.
+    pub fn on_queue_event(&self, listener: impl Fn(&QueueEvent) + Send + Sync + 'static) {
+        self.queues.on_event(listener);
+    }
 }
 
 /// Collects the registrations of every area at startup.
@@ -295,6 +324,12 @@ impl Messaging {
 
     pub fn sender(&self) -> Sender {
         self.inner.sender.clone()
+    }
+
+    /// Closes the queues of the views that are gone; the core calls it once a
+    /// second, so that no view has to poll for that to happen.
+    pub fn sweep(&self) {
+        self.inner.sender.sweep();
     }
 
     /// Answers a request; an absent payload reaches the handler as `null`.
@@ -430,6 +465,30 @@ mod tests {
         assert_eq!(
             *received.lock().unwrap(),
             ["first hi cluster abc", "second hi cluster abc"]
+        );
+    }
+
+    #[tokio::test(start_paused = true)]
+    async fn send_to_reaches_one_of_two_open_views() {
+        let channels = quiet();
+        let sender = channels.sender();
+        let messaging = channels.build();
+        let one = View::Cluster("one".into());
+        messaging.queues().poll(View::Main, "s1", 0).await;
+        messaging.queues().poll(one.clone(), "s2", 0).await;
+
+        sender.send_to(&one, NOTE, &"hi".to_string());
+
+        let polled = messaging.queues().poll(one, "s2", 0).await;
+        assert_eq!(polled.len(), 1);
+        assert_eq!(polled[0].channel, "note");
+        assert_eq!(polled[0].payload, Some(Value::from("hi")));
+        assert!(
+            messaging
+                .queues()
+                .poll(View::Main, "s1", 0)
+                .await
+                .is_empty()
         );
     }
 

@@ -374,11 +374,11 @@ switched, one closed and reopened) runs on the branch and on `main`.
   `messaging-for-tauri/src/polling.injectable.ts`); suspension of a hidden
   frame is **Unverified**. The check keeps the second and third frames hidden
   for more than 60 seconds before they report their marks again (R9).
-- **wry dropping a cancelled poll.** R5 relies on wry keeping the task of a
-  cancelled poll until its hold ends. If a later wry dropped it, the pending
-  poll would stay and the queue would never idle; a cargo test of `Queues`
-  pins the behaviour the record relies on, and the check's forgetting step
-  shows it in the running application.
+- **wry dropping a cancelled poll.** A waiting poll whose request has been
+  dropped no longer keeps its queue open, so the queue closes 60 seconds after
+  its last poll started whether wry keeps the task of a cancelled poll or drops
+  it; cargo tests of `Queues` cover both, and the check's forgetting step shows
+  it in the running application.
 - **Removing a frame without blanking it** crashed Chromium; whether WKWebView
   has a problem with it is **Unverified**. The check closes and reopens a
   frame.

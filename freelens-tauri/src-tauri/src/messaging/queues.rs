@@ -7,7 +7,7 @@
 //! (`specs/002-messaging-for-tauri/data-model.md`, Queue).
 
 use std::collections::{HashMap, VecDeque};
-use std::sync::Mutex;
+use std::sync::{Arc, Mutex};
 use std::time::Duration;
 
 use serde::Serialize;
@@ -65,8 +65,22 @@ struct State {
     next_poll: u64,
 }
 
+/// A change of a queue that other parts of the core follow
+/// (`specs/004-cluster-frames/data-model.md`, Queue events).
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum QueueEvent {
+    /// The queue closed: no poll and none waiting for 60 seconds, or more
+    /// than the message limit.
+    Closed(View),
+    /// A poll named a new session for an open queue, which started afresh.
+    Restarted(View),
+}
+
+type Subscriber = Arc<dyn Fn(&QueueEvent) + Send + Sync>;
+
 pub struct Queues {
     state: Mutex<State>,
+    subscribers: Mutex<Vec<Subscriber>>,
     pub(crate) log: Log,
 }
 
@@ -74,7 +88,33 @@ impl Queues {
     pub fn new(log: Log) -> Self {
         Self {
             state: Mutex::new(State::default()),
+            subscribers: Mutex::new(Vec::new()),
             log,
+        }
+    }
+
+    /// Calls `subscriber` with every later queue event, in order, outside the
+    /// lock of the queues, so that it may read them or send.
+    pub fn on_event(&self, subscriber: impl Fn(&QueueEvent) + Send + Sync + 'static) {
+        self.subscribers
+            .lock()
+            .expect("the subscribers lock")
+            .push(Arc::new(subscriber));
+    }
+
+    fn report(&self, events: Vec<QueueEvent>) {
+        if events.is_empty() {
+            return;
+        }
+        let subscribers = self
+            .subscribers
+            .lock()
+            .expect("the subscribers lock")
+            .clone();
+        for event in &events {
+            for subscriber in &subscribers {
+                subscriber(event);
+            }
         }
     }
 
@@ -82,10 +122,11 @@ impl Queues {
     /// `POLL_HOLD` for one. The first poll opens the queue; a new `session`
     /// starts it afresh, as a reloaded page.
     pub async fn poll(&self, view: View, session: &str, after: u64) -> Vec<Polled> {
-        let (id, receiver) = {
+        let mut events = Vec::new();
+        let waiting = {
             let now = Instant::now();
             let mut state = self.state.lock().expect("the queues lock");
-            self.close_idle(&mut state, now);
+            self.close_idle(&mut state, now, &mut events);
             state.next_poll += 1;
             let id = state.next_poll;
             let queue = state
@@ -94,18 +135,25 @@ impl Queues {
                 .or_insert_with(|| Queue::new(session, now));
             if queue.session != session {
                 *queue = Queue::new(session, now);
+                events.push(QueueEvent::Restarted(view.clone()));
             }
             if let Some(older) = queue.pending.take() {
                 let _ = older.answer.send(Vec::new());
             }
             queue.messages.retain(|message| message.seq > after);
             queue.last_poll = now;
-            if !queue.messages.is_empty() {
-                return queue.messages.iter().cloned().collect();
+            if queue.messages.is_empty() {
+                let (answer, receiver) = oneshot::channel();
+                queue.pending = Some(Pending { id, after, answer });
+                Ok((id, receiver))
+            } else {
+                Err(queue.messages.iter().cloned().collect())
             }
-            let (answer, receiver) = oneshot::channel();
-            queue.pending = Some(Pending { id, after, answer });
-            (id, receiver)
+        };
+        self.report(events);
+        let (id, receiver) = match waiting {
+            Ok(waiting) => waiting,
+            Err(messages) => return messages,
         };
 
         match tokio::time::timeout(POLL_HOLD, receiver).await {
@@ -127,49 +175,90 @@ impl Queues {
 
     /// Appends a message to every open queue and answers the polls waiting.
     pub fn push(&self, channel: &str, payload: Option<Value>) {
-        let now = Instant::now();
-        let mut state = self.state.lock().expect("the queues lock");
-        self.close_idle(&mut state, now);
-        let mut over = Vec::new();
-
-        for (view, queue) in &mut state.queues {
-            let seq = queue.next_seq;
-            queue.next_seq += 1;
-            queue.messages.push_back(Polled {
-                seq,
-                channel: channel.to_string(),
-                payload: payload.clone(),
-            });
-            if queue.messages.len() > MESSAGE_LIMIT {
-                over.push(view.clone());
-                continue;
-            }
-            if let Some(pending) = queue.pending.take() {
-                let messages: Vec<Polled> = queue
-                    .messages
-                    .iter()
-                    .filter(|message| message.seq > pending.after)
-                    .cloned()
-                    .collect();
-                // A dropped poll leaves its messages queued for the next one.
-                let _ = pending.answer.send(messages);
+        let mut events = Vec::new();
+        {
+            let mut state = self.state.lock().expect("the queues lock");
+            self.close_idle(&mut state, Instant::now(), &mut events);
+            let views: Vec<View> = state.queues.keys().cloned().collect();
+            for view in views {
+                self.append(&mut state, &view, channel, payload.clone(), &mut events);
             }
         }
+        self.report(events);
+    }
 
-        for view in over {
-            state.queues.remove(&view);
+    /// Appends a message to the queue of `view` alone and answers its poll;
+    /// does nothing if `view` has no open queue.
+    pub fn push_to(&self, view: &View, channel: &str, payload: Option<Value>) {
+        let mut events = Vec::new();
+        {
+            let mut state = self.state.lock().expect("the queues lock");
+            self.close_idle(&mut state, Instant::now(), &mut events);
+            self.append(&mut state, view, channel, payload, &mut events);
+        }
+        self.report(events);
+    }
+
+    /// Closes the queues that have been idle too long, as a poll or a send
+    /// would, so that their views are known to be gone without either.
+    pub fn sweep(&self) {
+        let mut events = Vec::new();
+        {
+            let mut state = self.state.lock().expect("the queues lock");
+            self.close_idle(&mut state, Instant::now(), &mut events);
+        }
+        self.report(events);
+    }
+
+    fn append(
+        &self,
+        state: &mut State,
+        view: &View,
+        channel: &str,
+        payload: Option<Value>,
+        events: &mut Vec<QueueEvent>,
+    ) {
+        let Some(queue) = state.queues.get_mut(view) else {
+            return;
+        };
+        let seq = queue.next_seq;
+        queue.next_seq += 1;
+        queue.messages.push_back(Polled {
+            seq,
+            channel: channel.to_string(),
+            payload,
+        });
+        if queue.messages.len() > MESSAGE_LIMIT {
+            state.queues.remove(view);
             (self.log)(&format!(
                 "Messaging: closed the queue of {view}: over {MESSAGE_LIMIT} messages"
             ));
+            events.push(QueueEvent::Closed(view.clone()));
+            return;
+        }
+        if let Some(pending) = queue.pending.take() {
+            let messages: Vec<Polled> = queue
+                .messages
+                .iter()
+                .filter(|message| message.seq > pending.after)
+                .cloned()
+                .collect();
+            // A dropped poll leaves its messages queued for the next one.
+            let _ = pending.answer.send(messages);
         }
     }
 
-    fn close_idle(&self, state: &mut State, now: Instant) {
+    fn close_idle(&self, state: &mut State, now: Instant, events: &mut Vec<QueueEvent>) {
         let idle: Vec<View> = state
             .queues
             .iter()
             .filter(|(_, queue)| {
-                queue.pending.is_none() && now.duration_since(queue.last_poll) >= IDLE_LIMIT
+                // A poll whose request has been dropped waits for nobody.
+                let waiting = queue
+                    .pending
+                    .as_ref()
+                    .is_some_and(|pending| !pending.answer.is_closed());
+                !waiting && now.duration_since(queue.last_poll) >= IDLE_LIMIT
             })
             .map(|(view, _)| view.clone())
             .collect();
@@ -178,6 +267,7 @@ impl Queues {
             (self.log)(&format!(
                 "Messaging: closed the queue of {view}: no poll for 60 s"
             ));
+            events.push(QueueEvent::Closed(view));
         }
     }
 
@@ -344,5 +434,168 @@ mod tests {
         assert_eq!(seqs(&queues.poll(View::Main, "s1", 0).await), [1]);
         assert_eq!(seqs(&queues.poll(one, "s2", 0).await), [1]);
         assert!(!queues.is_open(&View::Cluster("two".into())));
+    }
+
+    /// Records every queue event, and checks that each one is reported
+    /// outside the lock: the subscriber reads the queues while it runs.
+    fn events(queues: &Arc<Queues>) -> Arc<Mutex<Vec<QueueEvent>>> {
+        let events = Arc::new(Mutex::new(Vec::new()));
+        let sink = Arc::clone(&events);
+        let reader = Arc::clone(queues);
+        queues.on_event(move |event| {
+            let _ = reader.is_open(&View::Main);
+            sink.lock().unwrap().push(event.clone());
+        });
+        events
+    }
+
+    #[tokio::test(start_paused = true)]
+    async fn an_idle_queue_is_reported_closed_once() {
+        let (queues, _) = queues();
+        let events = events(&queues);
+        queues.poll(View::Main, "s1", 0).await;
+        tokio::time::advance(IDLE_LIMIT - POLL_HOLD).await;
+
+        queues.sweep();
+        queues.sweep();
+
+        assert_eq!(*events.lock().unwrap(), [QueueEvent::Closed(View::Main)]);
+    }
+
+    #[tokio::test(start_paused = true)]
+    async fn a_queue_over_the_limit_is_reported_closed_once() {
+        let (queues, _) = queues();
+        let events = events(&queues);
+        queues.poll(View::Main, "s1", 0).await;
+
+        for _ in 0..=MESSAGE_LIMIT {
+            queues.push("note", None);
+        }
+        queues.push("note", None);
+
+        assert_eq!(*events.lock().unwrap(), [QueueEvent::Closed(View::Main)]);
+    }
+
+    #[tokio::test(start_paused = true)]
+    async fn a_new_session_is_reported_restarted_but_the_first_poll_is_not() {
+        let (queues, _) = queues();
+        let events = events(&queues);
+
+        queues.poll(View::Main, "s1", 0).await;
+        assert!(events.lock().unwrap().is_empty());
+        queues.poll(View::Main, "s1", 0).await;
+        assert!(events.lock().unwrap().is_empty());
+
+        queues.poll(View::Main, "s2", 0).await;
+        assert_eq!(*events.lock().unwrap(), [QueueEvent::Restarted(View::Main)]);
+    }
+
+    #[tokio::test(start_paused = true)]
+    async fn sweep_closes_an_idle_queue_without_any_poll_or_send() {
+        let (queues, lines) = queues();
+        queues.poll(View::Main, "s1", 0).await;
+        tokio::time::advance(IDLE_LIMIT - POLL_HOLD).await;
+        assert!(queues.is_open(&View::Main));
+
+        queues.sweep();
+
+        assert!(!queues.is_open(&View::Main));
+        assert_eq!(
+            *lines.lock().unwrap(),
+            ["Messaging: closed the queue of main: no poll for 60 s"]
+        );
+    }
+
+    /// A frame goes away while its poll waits: the poll runs to the end of
+    /// its hold, and the queue closes 60 seconds after that poll started
+    /// (research R5 of spec 004).
+    #[tokio::test(start_paused = true)]
+    async fn a_queue_whose_last_poll_still_waits_closes_60_seconds_after_it_started() {
+        let (queues, _) = queues();
+        let events = events(&queues);
+        let started = Instant::now();
+        let poll = tokio::spawn({
+            let queues = Arc::clone(&queues);
+            async move { queues.poll(View::Main, "s1", 0).await }
+        });
+        settle().await;
+
+        tokio::time::advance(POLL_HOLD - Duration::from_secs(1)).await;
+        queues.sweep();
+        assert!(queues.is_open(&View::Main));
+
+        tokio::time::advance(Duration::from_secs(1)).await;
+        assert!(poll.await.unwrap().is_empty());
+        tokio::time::advance(IDLE_LIMIT - started.elapsed() - Duration::from_secs(1)).await;
+        queues.sweep();
+        assert!(queues.is_open(&View::Main));
+
+        tokio::time::advance(Duration::from_secs(1)).await;
+        queues.sweep();
+        assert!(!queues.is_open(&View::Main));
+        assert_eq!(started.elapsed(), IDLE_LIMIT);
+        assert_eq!(*events.lock().unwrap(), [QueueEvent::Closed(View::Main)]);
+    }
+
+    /// The same, when the task of the poll is dropped instead of running to
+    /// the end of its hold: the queue still closes 60 seconds after the poll
+    /// started, whatever the web view does with a cancelled request.
+    #[tokio::test(start_paused = true)]
+    async fn a_queue_whose_last_poll_was_dropped_closes_60_seconds_after_it_started() {
+        let (queues, _) = queues();
+        let poll = tokio::spawn({
+            let queues = Arc::clone(&queues);
+            async move { queues.poll(View::Main, "s1", 0).await }
+        });
+        settle().await;
+        poll.abort();
+        settle().await;
+
+        tokio::time::advance(IDLE_LIMIT - Duration::from_secs(1)).await;
+        queues.sweep();
+        assert!(queues.is_open(&View::Main));
+
+        tokio::time::advance(Duration::from_secs(1)).await;
+        queues.sweep();
+        assert!(!queues.is_open(&View::Main));
+    }
+
+    #[tokio::test(start_paused = true)]
+    async fn push_to_reaches_one_view_with_its_own_sequence_and_answers_its_poll() {
+        let (queues, _) = queues();
+        let one = View::Cluster("one".into());
+        queues.poll(View::Main, "s1", 0).await;
+        queues.poll(one.clone(), "s2", 0).await;
+        queues.push("note", None);
+        assert!(queues.poll(one.clone(), "s2", 1).await.is_empty());
+
+        let waiting = tokio::spawn({
+            let queues = Arc::clone(&queues);
+            let one = one.clone();
+            async move { queues.poll(one, "s2", 1).await }
+        });
+        settle().await;
+        queues.push_to(&one, "only", Some(Value::from(7)));
+
+        assert_eq!(
+            waiting.await.unwrap(),
+            [Polled {
+                seq: 2,
+                channel: "only".into(),
+                payload: Some(Value::from(7))
+            }]
+        );
+        assert!(queues.poll(View::Main, "s1", 1).await.is_empty());
+    }
+
+    #[tokio::test(start_paused = true)]
+    async fn push_to_a_view_without_a_queue_does_nothing() {
+        let (queues, lines) = queues();
+        let two = View::Cluster("two".into());
+
+        queues.push_to(&two, "only", None);
+
+        assert!(!queues.is_open(&two));
+        assert!(lines.lock().unwrap().is_empty());
     }
 }

@@ -5,33 +5,74 @@
 
 pub mod catalog;
 pub mod clusters;
+pub mod frames;
 pub mod messaging;
 pub mod options;
 pub mod scheme;
 pub mod version;
 
+use std::collections::HashSet;
 use std::path::PathBuf;
 use std::sync::Arc;
 use std::sync::atomic::{AtomicBool, Ordering};
+use std::time::Duration;
 
 use tauri::webview::PageLoadEvent;
 use tauri::{WebviewUrl, WebviewWindowBuilder};
 
+use catalog::Catalog;
+use frames::Frames;
 use messaging::{Channels, DuplicateChannel, Log, Messaging};
 
-/// Registers the channels of every core area (`contracts/core-channels.md`).
+/// What startup builds for the areas of the core to share.
+pub struct Core {
+    pub messaging: Messaging,
+    pub frames: Frames,
+}
+
+/// Registers the channels of every core area (`contracts/core-channels.md`)
+/// and builds the frame record over the clusters of `catalog`.
+pub fn register_core(
+    check: bool,
+    version: String,
+    catalog: &Catalog,
+    log: &Log,
+) -> Result<Core, DuplicateChannel> {
+    let ids = catalog
+        .entries
+        .iter()
+        .map(|entry| entry.id.clone())
+        .collect();
+    build(check, version, ids, log)
+}
+
+/// The channels alone, with no catalog behind the frame record, so that no
+/// cluster can be named visible; for callers that need only `Messaging`.
 pub fn register_channels(
     check: bool,
     version: String,
     log: &Log,
 ) -> Result<Messaging, DuplicateChannel> {
+    build(check, version, HashSet::new(), log).map(|core| core.messaging)
+}
+
+fn build(
+    check: bool,
+    version: String,
+    catalog: HashSet<String>,
+    log: &Log,
+) -> Result<Core, DuplicateChannel> {
     let mut channels = Channels::with_log(Arc::clone(log));
     let announcements = messaging::admin::register(&mut channels, Arc::clone(log))?;
     version::register(&mut channels, version)?;
+    let frames = frames::register(&mut channels, catalog, Arc::clone(log))?;
     if check {
         messaging::check::register(&mut channels, announcements, Arc::clone(log))?;
     }
-    Ok(channels.build())
+    Ok(Core {
+        messaging: channels.build(),
+        frames,
+    })
 }
 
 pub fn run() {
@@ -46,19 +87,31 @@ pub fn run() {
     let context = tauri::generate_context!();
     let log: Log = Arc::new(|line| println!("{line}"));
     let messaging_check = options.messaging_check;
-    let messaging = match register_channels(
+    let home = std::env::var_os("HOME").map(PathBuf::from);
+    let catalog = Catalog::load(&options.kubeconfig, home.as_deref());
+    let Core { messaging, .. } = match register_core(
         messaging_check,
         context.package_info().version.to_string(),
+        &catalog,
         &log,
     ) {
-        Ok(messaging) => messaging,
+        Ok(core) => core,
         Err(error) => {
             eprintln!("{error}");
             std::process::exit(1);
         }
     };
-    let home = std::env::var_os("HOME").map(PathBuf::from);
-    let catalog = catalog::Catalog::load(&options.kubeconfig, home.as_deref());
+    // Closes the queues of the views that are gone without waiting for a
+    // poll or a send, so that the frame record forgets a closed frame within
+    // a second of its queue closing (research R5 of spec 004).
+    let sweeping = messaging.clone();
+    tauri::async_runtime::spawn(async move {
+        let mut tick = tokio::time::interval(Duration::from_secs(1));
+        loop {
+            tick.tick().await;
+            sweeping.sweep();
+        }
+    });
     let clusters = clusters::KubeClusters::new(catalog.kubeconfig().cloned());
     let state = Arc::new(scheme::State {
         catalog,
