@@ -14,7 +14,6 @@ import registerMonacoYamlFoldingInjectable from "./register-monaco-yaml-folding.
 import setupAutoCrdApiCreationsInjectable from "./setup-auto-crd-api-creations.injectable";
 import setupAutoRegistrationInjectable from "./setup-auto-registration.injectable";
 import setupCurrentClusterBroadcastInjectable from "./setup-current-cluster-broadcast.injectable";
-import setupFreelensProxyCertificateInjectable from "./setup-freelens-proxy-certificate.injectable";
 import setupKubernetesClusterCatalogAddMenuListenerInjectable from "./setup-kubernetes-cluster-catalog-add-menu.injectable";
 import setupKubernetesClusterContextMenuOpenInjectable from "./setup-kubernetes-cluster-context-menu-open.injectable";
 import setupRootMacClassnameInjectable from "./setup-root-mac-class.injectable";
@@ -60,11 +59,6 @@ export function registerInjectables(di: DiContainerForInjection): void {
   }
   try {
     di.register(setupCurrentClusterBroadcastInjectable);
-  } catch (e) {
-    /* Ignore duplicate registration */
-  }
-  try {
-    di.register(setupFreelensProxyCertificateInjectable);
   } catch (e) {
     /* Ignore duplicate registration */
   }

@@ -8,7 +8,6 @@
 
 import closeFreelensProxyOnQuitInjectable from "./close-on-quit.injectable";
 import freelensProxyInjectable from "./freelens-proxy.injectable";
-import freelensProxyCertificateRequestHandlerInjectable from "./freelens-proxy-certificate-request-handler.injectable";
 import freelensProxyPortInjectable from "./freelens-proxy-port.injectable";
 import freelensProxyTokenInjectable from "./freelens-proxy-token.injectable";
 import getClusterForRequestInjectable from "./get-cluster-for-request.injectable";
@@ -20,11 +19,6 @@ import type { DiContainerForInjection } from "@ogre-tools/injectable";
 export function registerInjectables(di: DiContainerForInjection): void {
   try {
     di.register(closeFreelensProxyOnQuitInjectable);
-  } catch (e) {
-    /* Ignore duplicate registration */
-  }
-  try {
-    di.register(freelensProxyCertificateRequestHandlerInjectable);
   } catch (e) {
     /* Ignore duplicate registration */
   }

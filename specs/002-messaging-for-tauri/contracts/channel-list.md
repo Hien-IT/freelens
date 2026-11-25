@@ -25,7 +25,7 @@ renames or moves a channel updates its row.
 
 | Channel                             | Kind | Dir   | Electron                                                                                              | Values                                          | Note                                                                                                                                                                             |
 | ----------------------------------- | ---- | ----- | ----------------------------------------------------------------------------------------------------- | ----------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `frame-communication-admin-channel` | msg  | v→m   | `messaging/messaging-for-main/src/send-message-to-channel/allow-communication-listener.injectable.ts` | none; main reads the sender                     | answered by the core in 002 (research R7); used by the check                                                                                                                     |
+| `frame-communication-admin-channel` | msg  | v→m   | `messaging/messaging-for-main/src/send-message-to-channel/allow-communication-listener.injectable.ts` | none; main reads the sender                     | answered by the core in 002 (research R7); used by the check; the pages of the Tauri build also listen on it, which only keeps them polling (research R7 of spec 004)            |
 | `broadcast-to-views`                | req  | v→m   | `main/ipc/broadcast-to-views-listener.injectable.ts`                                                  | `{ channel, message }` → none; `message` is any | the relay of a view's broadcast, added by 002 in place of `ipc:broadcast-main` for the core's own code; answered by the core in 002 (research R7); used by the check             |
 | `hotbar:too-many-items`             | msg  | relay | `renderer/ipc/register-ipc-listeners.injectable.ts`                                                   | none                                            | sent only by views: `features/hotbar/storage/common/hotbar.ts`, reached from the renderer callers of `addEntity` and `toggleEntity`                                              |
 | `catalog-entity:run`                | msg  | relay | `renderer/api/catalog/entity/registry.ts`, root frame                                                 | entity id `string`                              | sent by `renderer/components/clusters/search-command.tsx`                                                                                                                        |
@@ -149,11 +149,10 @@ waits for a port to be free after a stop.
 
 ## cluster-frames (004)
 
-| Channel                              | Kind | Dir | Electron                                                                               | Values                             | Note                                                                                                                                                                                 |
-| ------------------------------------ | ---- | --- | -------------------------------------------------------------------------------------- | ---------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `cluster:set-frame-id`               | req  | v→m | `main/cluster/set-frame-id-listener.injectable.ts`                                     | `ClusterId` → none                 | needs the sender (research R11); in the Tauri build the host already names the frame                                                                                                 |
-| `current-visible-cluster`            | msg  | v→m | `main/start-main-application/lens-window/current-cluster-frame/listener.injectable.ts` | `ClusterId`                        |                                                                                                                                                                                      |
-| `request-freelens-proxy-certificate` | req  | v→m | `main/freelens-proxy/freelens-proxy-certificate-request-handler.injectable.ts`         | none → `{ private, public, cert }` | the private key of the local proxy crosses to the view; the Tauri build has no local TLS proxy (R4 of spec 001), so 004 decides whether the core answers it or the views stop asking |
+| Channel                   | Kind | Dir | Electron                                                                               | Values                                    | Note                                                                                                                                                                                                                                 |
+| ------------------------- | ---- | --- | -------------------------------------------------------------------------------------- | ----------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `cluster:set-frame-id`    | req  | v→m | `main/cluster/set-frame-id-listener.injectable.ts`                                     | `ClusterId` → none                        | needs the sender (research R11); answered by the core in 004 (`freelens-tauri/src-tauri/src/frames.rs`) only from a cluster frame that names its own cluster, which its host names; any other request is refused and records nothing |
+| `current-visible-cluster` | msg  | v→m | `main/start-main-application/lens-window/current-cluster-frame/listener.injectable.ts` | `ClusterId`, or none when none is visible | listened to by the core in 004 (`freelens-tauri/src-tauri/src/frames.rs`) from the main window only; a cluster frame's message is dropped                                                                                            |
 
 ## desktop-integration (006)
 
@@ -224,11 +223,12 @@ of the constitution).
 
 ## Removed by this feature
 
-| Channel                                                   | Why                                                                                                            |
-| --------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------- |
-| `cluster:states`                                          | its handler has no caller: `requestInitialClusterStates` is never used (research R11)                          |
-| `request-license-content` and its `license-content` reply | the injectable that listens is never injected; the typed `license-content` serves the licenses                 |
-| `invalid-kubeconfig`                                      | defined but used by nothing; its module became unreachable once the legacy helpers moved, and knip reported it |
+| Channel                                                   | Why                                                                                                                                                                                                   |
+| --------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `cluster:states`                                          | its handler has no caller: `requestInitialClusterStates` is never used (research R11)                                                                                                                 |
+| `request-license-content` and its `license-content` reply | the injectable that listens is never injected; the typed `license-content` serves the licenses                                                                                                        |
+| `invalid-kubeconfig`                                      | defined but used by nothing; its module became unreachable once the legacy helpers moved, and knip reported it                                                                                        |
+| `request-freelens-proxy-certificate`                      | removed from both builds by FR-019 of `specs/004-cluster-frames/spec.md`: nothing in the views read the certificate it handed over, whose private key it already left empty (research R8 of spec 004) |
 
 Defined in the sources but registered by nothing, so not channels of the
 build: `computed-channel-administration-channel` (the feature is not
@@ -242,6 +242,16 @@ The `--messaging-check` run of research R9 uses `build-version`,
 Electron build does not have: `messaging-check:report` (msg, v→m) and
 `messaging-check:echo` (req, v→m, `{ text }` → the same `text`, so the size
 crosses both ways).
+
+The `--frames-check` run of `specs/004-cluster-frames` uses
+`cluster:set-frame-id`, `current-visible-cluster` and `broadcast-to-views`
+from the rows above, and check-only channels the Electron build does not
+have: `frames-check:report` (msg, v→m), `frames-check:send-to` (req, v→m,
+`{ cluster, token }` → `boolean`, whether the cluster had a frame),
+`frames-check:send-to-visible` (req, v→m, `{ token }` → `boolean`),
+`frames-check:ping` (msg, m→v, the token, sent to one frame), and two that
+only views send through the relay, `frames-check:report-marks` and
+`frames-check:step-done` (`contracts/frames-log.md` of spec 004).
 
 ## Answer times
 

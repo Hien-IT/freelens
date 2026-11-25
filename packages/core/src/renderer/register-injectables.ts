@@ -11,7 +11,6 @@ import { registerInjectables as registerAppPathsInjectables } from "./app-paths/
 import { registerInjectables as registerBeforeFrameStartsInjectables } from "./before-frame-starts/register-injectables";
 import bootstrapInjectable from "./bootstrap.injectable";
 import { registerInjectables as registerCatalogInjectables } from "./catalog/register-injectables";
-import { registerInjectables as registerCertificateInjectables } from "./certificate/register-injectables";
 import { registerInjectables as registerClusterInjectables } from "./cluster/register-injectables";
 import { registerInjectables as registerClusterEnumerationInjectables } from "./cluster-enumeration/register-injectables";
 import { registerInjectables as registerClusterFrameContextInjectables } from "./cluster-frame-context/register-injectables";
@@ -70,11 +69,6 @@ export function registerInjectables(di: DiContainerForInjection): void {
   }
   try {
     registerCatalogInjectables(di);
-  } catch (e) {
-    /* Ignore duplicate registration */
-  }
-  try {
-    registerCertificateInjectables(di);
   } catch (e) {
     /* Ignore duplicate registration */
   }
