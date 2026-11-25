@@ -29,6 +29,13 @@ pass unchanged, and the new ones cover each rule of
 
 - an unknown host, an unknown cluster id, a foreign `Origin`, a route of the
   other audience, an unknown path and a wrong method;
+- a host in upper case (served), and a host with a trailing dot, a port or a
+  user name (no view);
+- the policies of the two pages, `frame-ancestors` included;
+- the navigation rule of the main window: a URL of the scheme whose host
+  names a view, `about:blank` and `about:srcdoc` are allowed; `https:`,
+  `file:`, `data:`, any other `about:` URL, and a scheme URL whose host names
+  no view are refused;
 - a duplicate route at startup;
 - `cluster:set-frame-id` from the frame of its own cluster, from another
   cluster's frame and from the main window; `current-visible-cluster` from the

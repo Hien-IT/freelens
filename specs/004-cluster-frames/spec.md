@@ -26,10 +26,14 @@ In this specification:
   window.
 - **An open cluster** is a cluster that has a frame, whether the frame is the
   one shown or is hidden behind another. **Closing a cluster** is what removes
-  its frame: disconnecting the cluster, or removing it from the catalog.
+  its frame. In the Tauri build of this feature, that is the Close of the
+  catalog page; in the Electron build, and in the Tauri build once the area
+  that connects clusters is ported, it is disconnecting the cluster or
+  removing it from the catalog.
 - **Browser storage** is what a page keeps in the browser engine under its
-  origin: local and session storage, databases, caches. **Page state** is what
-  a page holds in memory while it is loaded.
+  origin: local storage, session storage, IndexedDB databases and the caches
+  of the Cache API. It outlives the page within a run. **Page state** is what a
+  page holds in memory while it is loaded; it ends with the page.
 - **The channel list** is
   `specs/002-messaging-for-tauri/contracts/channel-list.md`. **The channels of
   cluster-frames** are the rows of its section "cluster-frames (004)":
@@ -63,8 +67,11 @@ A user of the Tauri build opens three clusters, one after another, and switches
 between them. Each cluster is shown in its own frame, on its own origin.
 Nothing one frame holds can be read or changed from another frame or, beyond
 what the channels carry, from the main window: not its document, not its page
-state, not its browser storage, not a cookie. A request for one cluster's data
-from another cluster's frame is refused.
+state, not its browser storage, not a cookie. A frame cannot move the main
+window or another frame to another page, nor open a window. A request on
+another cluster's origin, or for what only the main window may use, is
+refused. The channels stay open to every view and answer for the cluster a
+request names, as in the Electron build (Assumptions).
 
 **Why this priority**: A cluster frame shows content that comes from the
 cluster, which is not trusted, next to frames that hold other clusters,
@@ -75,8 +82,8 @@ Without it, no other part of this feature has a point.
 **Independent Test**: Start the Tauri build with a kubeconfig of three
 contexts, open the three clusters, and from each frame try to reach the other
 two and the main window: their documents, their browser storage, a cookie,
-their cluster's data. Every attempt fails, and each frame shows its own
-cluster.
+their cluster's data, moving them to another page, opening a window. Every
+attempt fails, and each frame shows its own cluster.
 
 **Acceptance Scenarios**:
 
@@ -99,6 +106,10 @@ cluster.
 6. **Given** three open clusters, **When** the user switches from one to
    another and back, **Then** each frame still shows its own cluster, with the
    page state it had when the user left it.
+7. **Given** three open clusters, **When** a page in one frame tries to move
+   the main window or another frame to another page, to open a window, or to
+   show the main window's page or another cluster's page in a frame of its
+   own, **Then** nothing moves, no window opens and nothing is shown.
 
 ---
 
@@ -197,9 +208,13 @@ build finds no sender.
 - A cluster is removed from the catalog, or its kubeconfig file changes so
   that it no longer exists, while its frame is open: its frame closes as in
   the Electron build, its origin stops being served, and the other frames are
-  not affected.
-- A cluster frame is reloaded: only that frame reloads, and it announces
-  itself again; the core does not keep it recorded twice.
+  not affected. In this feature the catalog of the Tauri build is read once at
+  startup and does not change during a run, so FR-005 holds for that catalog;
+  the case applies once the catalog can change, with the area that watches the
+  kubeconfig files.
+- A cluster frame is reloaded: only that frame reloads, on the same origin,
+  with its browser storage and new page state, and it announces itself again;
+  the core does not keep it recorded twice.
 - The main window is reloaded while clusters are open: the frames go with it,
   as in the Electron build, and the core forgets them at once, so that it does
   not send to frames that no longer exist.
@@ -217,7 +232,18 @@ build finds no sender.
 - More than three clusters are open: every rule holds for each pair of them;
   three is the number the check uses, not a limit.
 - The Tauri build is started again: a cluster opened again has the origin it
-  had in the earlier run, as in the Electron build.
+  had in the earlier run, as in the Electron build. Its browser storage need
+  not have outlived the earlier run (FR-001).
+- A page asks for a cluster's origin spelled another way: in other letter
+  case, with a trailing dot, a port or a user name. Letter case does not
+  matter; every other spelling names no view (FR-005), so no cluster has two
+  origins.
+- A frame posts a message to another view with the engine's cross-origin
+  messaging: the engine delivers it, as it does in the Electron build, and no
+  page of the Tauri build acts on it (FR-027).
+- The content of one frame crashes or hangs: not covered by this feature
+  (Assumptions); FR-011 is about closing a cluster, not about a failure of
+  its content.
 
 ## Requirements _(mandatory)_
 
@@ -228,17 +254,23 @@ build finds no sender.
 - **FR-001**: In the Tauri build, each open cluster MUST be shown in a frame of
   its own, on the cluster's origin: different from the origin of every other
   cluster and from the main window's, and the same each time that cluster is
-  opened, across restarts of the application.
+  opened, across restarts of the application. Browser storage need not
+  outlive a run.
 - **FR-002**: A page in a cluster frame MUST NOT be able to read or change the
-  document or the page state of another cluster frame or of the main window.
-- **FR-003**: Browser storage written in one view MUST NOT be readable or
-  writable from another view.
+  document or the page state of another cluster frame or of the main window,
+  and the main window's page MUST NOT be able to read or change those of a
+  cluster frame.
+- **FR-003**: Browser storage written in one view, of every kind the
+  definition names, MUST NOT be readable or writable from another view.
 - **FR-004**: A cookie set in one view MUST NOT be visible to another view,
-  nor sent with another view's requests. The Tauri build MUST NOT depend on a
-  cookie shared between views.
+  nor sent with another view's requests. Whether a view sees a cookie it set
+  itself is not required either way. The Tauri build MUST NOT depend on a
+  cookie, shared or not.
 - **FR-005**: The core MUST serve a cluster's origin only while that cluster is
   in the catalog, and MUST give no content for any other host than the main
-  window's and those cluster origins.
+  window's and those cluster origins. A host is compared without regard to
+  letter case; a host with a trailing dot, a port or a user name names no
+  view.
 - **FR-006**: What the core serves on a cluster's origin for that cluster's
   data MUST come from that cluster alone. A request that reaches the core from
   one origin for another origin's routes MUST be refused, and the core MUST NOT
@@ -246,12 +278,35 @@ build finds no sender.
 - **FR-007**: Each route the core serves, such as a page, an asset or a
   cluster's data, MUST state which views may use it: the main window, the
   cluster frames, or both. A request from a view of the other kind MUST be
-  refused. The later core areas add their routes under the same rule. The
-  channels are not routes in this sense: every channel stays open to every
-  view, as spec 003 decided, except the two of FR-016 and FR-017.
+  refused. The later core areas add their routes under the same rule, and a
+  later page is served only through such a route. The channels are not routes
+  in this sense: every channel stays open to every view, as spec 003 decided,
+  except the two of FR-016 and FR-017. In this specification, a **refused**
+  request, like one for a host that names no view, gets an error and none of
+  the route's content.
 - **FR-008**: The core MUST take the identity of a view, the main window or the
-  frame of which cluster, from where its request comes from, never from what
-  the request says (FR-006 of `specs/002-messaging-for-tauri/spec.md`).
+  frame of which cluster, from the host the request is sent to, and MUST
+  refuse a request whose `Origin`, when it has one, is not that host's
+  origin; never from what the request says (FR-006 of
+  `specs/002-messaging-for-tauri/spec.md`). A request without an `Origin` has
+  the identity of its host.
+- **FR-024**: In the Tauri build, a cluster frame MUST NOT be able to move the
+  main window or another cluster frame to another page, and no view MUST be
+  able to open a window of the application. The main window MUST stay on the
+  main window's origin.
+- **FR-025**: In the Tauri build, a cluster's page MUST be shown only as a
+  frame of the main window's page, and the main window's page only as the page
+  of the main window, never as a frame.
+- **FR-026**: In the Tauri build, the pages of this feature MUST load from and
+  send to their own origin only, apart from the main window showing the
+  cluster frames, and a cluster frame MUST get no browser permission, such as
+  the clipboard, which the Electron build grants its frames. A later spec
+  whose page needs a permission or another address grants it for that page.
+- **FR-027**: A message one view posts to another with the engine's
+  cross-origin messaging is not blocked, as in the Electron build. No page of
+  the Tauri build MUST act on such a message.
+- **FR-028**: A cluster frame MUST stay recorded for as long as it is open,
+  shown or hidden: hiding a frame MUST NOT make the core forget it.
 
 #### Opening, switching and closing
 
@@ -267,9 +322,8 @@ build finds no sender.
 - **FR-012**: After a cluster is closed, the core MUST drop the answers and
   messages meant for its frame, so that nothing meant for it reaches another
   view or a later frame of the same cluster. The core MUST stop counting it as
-  a frame no later than 60 seconds after the frame stops listening for the
-  core's messages, and MUST forget every frame at once when the main window
-  is reloaded. This feature adds no channel for closing; removing a frame at
+  a frame no later than 60 seconds after the frame is removed, and MUST forget
+  every frame at once when the main window is reloaded. This feature adds no channel for closing; removing a frame at
   once when its cluster is disconnected or deleted belongs to the area that
   disconnects and deletes clusters, through FR-018.
 - **FR-013**: A cluster opened again after being closed MUST get a new frame
@@ -327,7 +381,8 @@ build finds no sender.
   NOT be removed or weakened to make it pass.
 - **FR-023**: Each rule of FR-005 to FR-008 and of FR-012, and each answer of
   FR-016 to FR-018, MUST be covered by tests of the core, including the
-  refusals.
+  refusals. FR-024 to FR-028 depend on the browser engine and are shown by
+  the check of SC-002 and SC-003.
 
 ### Key Entities
 
@@ -352,22 +407,34 @@ build finds no sender.
 - **SC-001**: In the Tauri build, with three clusters open at the same time,
   each of the three frames and the main window reports an origin that differs
   from the other three.
-- **SC-002**: With three clusters open, every attempt from each frame to reach
-  the main window or another frame fails: reading its document, reading or
-  writing its browser storage, seeing a cookie it set, and getting its
-  cluster's data. The check runs every attempt from every frame and finds no
-  attempt that succeeds.
-- **SC-003**: With three clusters open and a mark in the page state and the
-  browser storage of each, closing one leaves both marks in each of the other
-  two frames, neither of them reloads, and each still gets an answer from the
-  core afterwards.
-- **SC-004**: A cluster closed and opened again loads without the mark its
-  earlier page state held, and reports the same origin as before.
+- **SC-002**: With three clusters open, every attempt from each frame to cross
+  into the main window or another frame fails, and the check runs every
+  attempt from every frame and finds none that succeeds:
+  - reading or changing the document of the main window or of another frame,
+    and the main window reading or changing a frame's;
+  - reading or writing their browser storage, in each kind the definition
+    names: local storage, session storage, IndexedDB, the Cache API;
+  - seeing a cookie another view set, or sending one with a request;
+  - fetching another cluster's data on its origin, or a route only the main
+    window may use;
+  - moving the main window or another frame to another page, and opening a
+    window;
+  - showing the main window's page or another cluster's page in a frame;
+  - announcing itself as another cluster, and naming the visible cluster.
+- **SC-003**: With three clusters open and a mark in the page state and in the
+  local storage of each, closing one leaves both marks unchanged in each of
+  the other two frames, and each still gets an answer from the core
+  afterwards. A frame reloaded meanwhile would show a new page-state mark, so
+  an unchanged mark shows that it did not reload. The two stay recorded after
+  being hidden for more than 60 seconds (FR-028).
+- **SC-004**: A cluster closed and opened again reports the same origin as
+  before, a new page-state mark, and the local-storage mark of its earlier
+  frame (FR-013).
 - **SC-005**: A message the core sends to the frame of one of three open
   clusters arrives in that frame once and in no other view; a message for a
   closed cluster arrives nowhere. The core no longer counts a closed cluster's
-  frame 60 seconds after the close, and counts no frame right after the main
-  window is reloaded.
+  frame 60 seconds after its frame is removed, and counts no frame right after
+  the main window is reloaded.
 - **SC-006**: A review of the section "cluster-frames (004)" of the channel
   list finds, for each of its channels, a test of the core that shows its
   answer, or no sender in the views of the Tauri build; and no channel of
@@ -387,6 +454,22 @@ build finds no sender.
   (Clarifications of `specs/003-renderer-without-node/spec.md`). The two
   channels of cluster-frames are the exception (FR-016, FR-017), because they
   tell the core what the frames themselves are.
+- The browser engine enforces FR-002 to FR-004, FR-024 to FR-026 and the
+  refusal of a page reading another origin's response; the core enforces
+  FR-005 to FR-008 by itself, as a second line that does not rely on the
+  engine. The check of SC-002 shows the engine's part in the running
+  application.
+- The isolation covers what a view holds, not what the core chooses to send.
+  A message the core broadcasts reaches every view, as in the Electron build,
+  even when it is about another cluster, such as the catalog or a cluster's
+  state.
+- The cluster's origin is derived from the path of the kubeconfig file and the
+  name of the context, as in the Electron build. It carries no credential and
+  is not meant to hide either of them.
+- Browser storage of the Tauri build need not outlive a run, where the
+  Electron build's does: the renderer keeps what it stores across runs on the
+  main side (`specs/003-renderer-without-node/spec.md`), not in browser
+  storage.
 - The Electron build shares one cookie between its views on purpose, the token
   of its local proxy. The Tauri build has no such cookie; the core knows each
   view by where its requests come from (FR-008).
@@ -394,8 +477,11 @@ build finds no sender.
   Tauri build at the end of this feature: the areas that answer their channels
   come later in the order of R9 of `specs/001-tauri-shell-spike/research.md`.
   The rules are shown with the catalog page and the frame page, and hold for
-  the pages a later spec serves, because they are rules of the origin and of
-  the core, not of the page.
+  the pages a later spec serves as long as it serves them through the routes
+  of FR-007 on the same hosts, because they are rules of the origin and of the
+  core. FR-024 to FR-026 are the exception: they depend on what the page and
+  its frames allow, so the spec that serves the renderer's own pages in the
+  Tauri build carries them over.
 - Until `main-catalog` sends the catalog through the frame record (FR-018), a
   frame of the Tauri build gets no catalog after it announces itself. The
   frame page does not need one: it learns its cluster from its own origin.
@@ -413,9 +499,14 @@ build finds no sender.
   given to the Tauri build with its launch option, not from the user's own
   kubeconfig. Showing a frame as isolated does not need three different
   clusters behind the three contexts.
-- A cluster frame that crashes or hangs is not covered: whether the browser
-  engine keeps the frames of different origins in different processes is not
-  something this feature can require.
+- A cluster frame whose content crashes or hangs is not covered: whether the
+  browser engine keeps the frames of different origins in different processes
+  is not something this feature can require. "Closing one does not affect the
+  others" is about closing a cluster (FR-011), not about such a failure.
+- Some behaviour of the engine that the isolation relies on is not yet
+  verified: that a hidden frame keeps running, that a frame can be removed
+  without first being emptied, and what happens to a cookie on the scheme of
+  the Tauri build. The check of SC-002 and SC-003 runs each of them.
 - The feature sets no target for memory or for the time to open a frame; the
   targets of the port are those of `specs/baseline.md` and of spec 001.
 - The Tauri build runs on macOS on Apple Silicon only (Principle VII of the

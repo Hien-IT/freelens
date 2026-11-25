@@ -93,7 +93,15 @@ shape as `Channels`:
   expects; every `403` the tests expect is for an existing route and method;
 - the routes of today become rows of the table, `/ipc/…` included, with the
   audiences they have now, so behaviour does not change; `contracts/routes.md`
-  lists them.
+  lists them;
+- a request whose URI carries a port or a user name names no view (`404`).
+  `http::Uri::host()` leaves both out (**Verified**, the documentation of
+  `http` 1.5.0), so today `freelens-app://<id>.renderer.freelens.app:1/` would
+  be served as the frame of `<id>`, although its origin, which includes the
+  port, is another one: one cluster would have two origins (FR-005). Letter
+  case is already folded (`to_ascii_lowercase` in `src/scheme.rs` and
+  `src/messaging/routes.rs`), and a trailing dot already fails the match on
+  `renderer.freelens.app` (**Verified**, the same code).
 
 `404` for a route of the other audience keeps what the contract of spec 001
 answers today for `/api/clusters` on a cluster host and `/api-kube` on the
@@ -231,7 +239,13 @@ no such crash is known for WKWebView (**Unverified**).
 - the catalog page always starts messaging and sends `current-visible-cluster`
   with the id of the shown frame when it opens or shows one, and `null` when
   it closes the shown frame;
-- Close keeps removing the section; the page does not blank the frame first.
+- Close keeps removing the section; the page does not blank the frame first;
+- each frame gets the `sandbox` attribute and no `allow` attribute (R12);
+- neither page listens to `message` events of the window, so neither acts on
+  a message another view posts (FR-027). The renderer of the Electron build
+  listens to none either (**Verified**, a search for `message` listeners and
+  `postMessage` under `packages/` and `freelens/src` finds only the WebSocket
+  of `renderer/api/websocket-api.ts`).
 
 The renderer's own `ClusterFrameHandler` stays as it is; it runs in the Tauri
 build once its root frame does (clarification of 2026-11-25).
@@ -287,23 +301,32 @@ Inspector.
   prints each request that reaches it with a `Cookie` header;
 - the catalog page opens the first three clusters of the catalog; each frame
   records its origin, a page-state mark (a random value held in memory), a
-  `localStorage` mark and a cookie, then tries to read the main window and the
-  other two frames: their documents through `window.parent` and
-  `window.parent.frames`, their `localStorage` and cookie values, the main
-  host's `/api/clusters`, another cluster's `/api-kube/api/v1/namespaces`,
-  `cluster:set-frame-id` with another cluster's id, and
-  `current-visible-cluster` from the frame; each attempt is reported as
-  blocked or not;
+  mark in each kind of browser storage (local storage, session storage, an
+  IndexedDB database, a cache of the Cache API) and a cookie, each named after
+  its own cluster;
+- each frame then tries to cross into the main window and the other two
+  frames, and reports each attempt as blocked or not: reading and changing
+  their documents through `window.parent` and `window.parent.frames`; finding
+  another view's mark in any kind of its own browser storage, or another
+  view's cookie; fetching the main host's `/api/clusters` and another
+  cluster's `/api-kube/api/v1/namespaces`; requesting `cluster:set-frame-id`
+  with another cluster's id and sending `current-visible-cluster`; showing the
+  main window's page and another cluster's page in an iframe of its own;
+  opening a window; and, last, because a success ends the run, moving another
+  frame and the main window to another page, both to a page of the scheme and
+  to an outside address;
+- the catalog page tries to read and change each frame's document through
+  the frame element, and reports the same way;
 - a check-only request `frames-check:send-to` makes the core call
   `Frames::send_to` with a check-only message for the cluster it names, and
   answers whether that cluster had a frame; every view reports each check-only
   message it receives, so the log shows who got it;
-- the catalog page then sends to the first cluster, closes the second one,
-  sends to the second one, has the first and third frames report their marks
-  again, waits 65 seconds with both hidden, asks the core whether the second
-  cluster still has a frame, has the first and third report again, and reopens
-  the second cluster, whose new frame reports its origin and a new page-state
-  mark.
+- the catalog page then sends to the first cluster, shows the second one and
+  closes it, so that no frame is shown, sends to the second one, has the first
+  and third frames report their marks again, waits 65 seconds with both
+  hidden, asks the core whether the second cluster still has a frame, has the
+  first and third report again, and reopens the second cluster, whose new frame
+  reports its origin, a new page-state mark and its local-storage mark.
 
 The pass condition is in `contracts/frames-log.md` and quickstart.md.
 
@@ -338,3 +361,67 @@ switched, one closed and reopened) runs on the branch and on `main`.
 - **Removing a frame without blanking it** crashed Chromium; whether WKWebView
   has a problem with it is **Unverified**. The check closes and reopens a
   frame.
+- **The `sandbox` attribute on a frame of the custom scheme** (R12): that
+  WebKit applies it to such a frame as to an `https` one is **Unverified**;
+  the check's attempts to move the main window, move another frame and open a
+  window show it.
+
+## R12. Navigation, windows, framing, permissions and outside addresses (FR-024 to FR-027)
+
+**Finding**:
+
+- The Electron build denies every `window.open` and hands an outside URL to
+  the system browser (`setWindowOpenHandler` in
+  `main/start-main-application/lens-window/application-window/create-electron-window.injectable.ts`),
+  and sets no handler for navigations or permissions (**Verified**, search of
+  `packages/core/src`). Its policy, in `freelens/package.json`, has no
+  `default-src`, so its pages may fetch any address (**Verified**). Its frames
+  get `allow="clipboard-read; clipboard-write"` (`cluster-frame-handler.ts`).
+- The core serves the catalog page with `default-src 'self'; frame-src
+  freelens-app:` and the frame page with `default-src 'self';
+  frame-ancestors freelens-app://renderer.freelens.app` (**Verified**,
+  `src/scheme.rs`). The catalog page has no `frame-ancestors`, so another page
+  of the scheme could show it in a frame.
+- wry 0.57.3 asks the navigation handler that Tauri's `on_navigation` sets
+  about every navigation of the webview, frames included, with the URL alone
+  and nothing about which frame navigates (**Verified**, `src/wkwebview/navigation.rs`
+  and `class/wry_navigation_delegate.rs` of wry). The handler therefore cannot
+  tell the main window moving to a cluster's page from a frame loading it.
+- Tauri 2.12.7 sets no new-window handler unless `on_new_window` is called,
+  and without one wry answers WebKit's request for a new web view with none,
+  so `window.open` opens nothing (**Verified**, `src/webview/mod.rs` of Tauri,
+  `class/wry_web_view_ui_delegate.rs` of wry).
+- An iframe with the `sandbox` attribute and no `allow-top-navigation`,
+  `allow-popups` or `allow-modals` token cannot move the top page, open a
+  window or show a dialog; `allow-same-origin` keeps the frame on its own
+  origin, which is safe for a frame of another origin than its parent; a
+  frame cannot move a sibling of another origin in any case (the HTML
+  standard as remembered, not read for this plan: **Unverified**, and
+  **Unverified** for WebKit on the custom scheme, R11).
+
+**Decision**:
+
+- the catalog page creates each frame with
+  `sandbox="allow-scripts allow-same-origin allow-forms"` and no `allow`
+  attribute: no top navigation, no window, no dialog, no permission (FR-024,
+  FR-026);
+- the main window gets an `on_navigation` handler that allows only URLs of
+  the scheme whose host names a view, plus `about:blank` and `about:srcdoc`,
+  which a frame may load before its page, and logs and refuses every other,
+  so that even if the sandbox failed, the main window cannot leave the scheme
+  (FR-024). Whether WebKit asks the handler about an empty frame at all is
+  **Unverified**; allowing the two costs nothing either way;
+- no `on_new_window` handler: the default opens nothing (FR-024);
+- the catalog page's policy gains `frame-ancestors 'none'`, and the frame
+  page keeps `frame-ancestors` limited to the main window's origin (FR-025);
+- both policies keep `default-src 'self'`, so the pages load from and send to
+  their own origin only, the catalog page also framing `freelens-app:`
+  (FR-026);
+- the Electron build is not changed.
+
+**Alternatives considered**: an `on_navigation` rule that refuses a cluster
+host for the main window (the handler cannot tell the main window from a
+frame, so it would refuse the frames as well); a stricter `frame-src` on the
+catalog page listing the cluster hosts (the list changes with the catalog, and
+the sandbox and `frame-ancestors` already keep a page from being framed where
+it does not belong).

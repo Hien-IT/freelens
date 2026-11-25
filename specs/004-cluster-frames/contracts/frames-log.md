@@ -7,13 +7,14 @@ The core prints these lines on standard output, in addition to those of
 
 ## Always
 
-| Line                                                                | When                                                                      |
-| ------------------------------------------------------------------- | ------------------------------------------------------------------------- |
-| `Frames: cluster <id> announced`                                    | the frame of `<id>` goes from Absent to Recorded                          |
-| `Frames: cluster <id> forgotten: <reason>`                          | `<reason>` is `its queue closed`, `the main window reloaded` or `removed` |
-| `Frames: visible cluster <id>` / `Frames: no visible cluster`       | the main window names a visible cluster, or none                          |
-| `Frames: refused cluster:set-frame-id from <view> for cluster <id>` | the sender is the main window, or another cluster's frame                 |
-| `Frames: dropped current-visible-cluster from <view>`               | a cluster frame sent it                                                   |
+| Line                                                                | When                                                                                                               |
+| ------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------ |
+| `Frames: cluster <id> announced`                                    | the frame of `<id>` goes from Absent to Recorded                                                                   |
+| `Frames: cluster <id> forgotten: <reason>`                          | `<reason>` is `its queue closed`, `the main window reloaded` or `removed`                                          |
+| `Frames: visible cluster <id>` / `Frames: no visible cluster`       | the main window names a visible cluster, or none                                                                   |
+| `Frames: refused cluster:set-frame-id from <view> for cluster <id>` | the sender is the main window, or another cluster's frame                                                          |
+| `Frames: dropped current-visible-cluster from <view>`               | a cluster frame sent it                                                                                            |
+| `Frames: refused a navigation of the main window to <scheme>`       | the main window's navigation handler refused a URL; `<scheme>` is the URL's scheme alone, so no address is printed |
 
 On standard error, at startup: `Route <method> <path> is added twice`,
 followed by exit status 1.
@@ -34,29 +35,45 @@ the steps of research R9.
 
 The core prints each report:
 
-| Line                                                            | When                                                                                                                                                                                                                     |
-| --------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `Frames check: <view> origin <origin>`                          | a view reports `window.origin`                                                                                                                                                                                           |
-| `Frames check: <view> blocked <attempt>`                        | an attempt of R9 failed, as it must                                                                                                                                                                                      |
-| `Frames check: <view> isolation failed: <attempt>`              | an attempt of R9 succeeded                                                                                                                                                                                               |
-| `Frames check: <view> marks <state> <storage>`                  | a view reports the page-state mark it holds in memory and the mark it finds in `localStorage`; each is `kept` when it equals the one the same view reported before, `new` when it does not, `missing` when there is none |
-| `Frames check: <view> received ping <token>`                    | a view received `frames-check:ping`                                                                                                                                                                                      |
-| `Frames check: send-to cluster <id> token <token>: <had frame>` | the core answered `frames-check:send-to`; `<had frame>` is `true` or `false`                                                                                                                                             |
-| `Frames check: cookie on a request from <view>: <value>`        | a request reached the core with a `Cookie` header; `<value>` is that of the check's cookie, which each frame sets to its own cluster id                                                                                  |
-| `Frames check: done`                                            | the catalog page has run every step                                                                                                                                                                                      |
+| Line                                                            | When                                                                                                                                                                                                               |
+| --------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `Frames check: <view> origin <origin>`                          | a view reports `window.origin`                                                                                                                                                                                     |
+| `Frames check: <view> blocked <attempt>`                        | an attempt of R9 failed, as it must                                                                                                                                                                                |
+| `Frames check: <view> isolation failed: <attempt>`              | an attempt of R9 succeeded                                                                                                                                                                                         |
+| `Frames check: <view> marks <state> <storage>`                  | a view reports the page-state mark it holds in memory and its own mark in local storage; each is `kept` when it equals the one the same view reported before, `new` when it does not, `missing` when there is none |
+| `Frames check: <view> received ping <token>`                    | a view received `frames-check:ping`                                                                                                                                                                                |
+| `Frames check: send-to cluster <id> token <token>: <had frame>` | the core answered `frames-check:send-to`; `<had frame>` is `true` or `false`                                                                                                                                       |
+| `Frames check: cookie on a request from <view>: <value>`        | a request reached the core with a `Cookie` header; `<value>` is that of the check's cookie, which each frame sets to its own cluster id                                                                            |
+| `Frames check: done`                                            | the catalog page has run every step                                                                                                                                                                                |
 
-The attempts are named `parent document`, `sibling document`,
-`parent storage`, `sibling storage`, `sibling cookie`, `main catalog`,
-`sibling kube`, `set-frame-id for sibling`, `visible from frame`.
+The attempts are named:
+
+| Attempt                                                                    | From                                              |
+| -------------------------------------------------------------------------- | ------------------------------------------------- |
+| `parent document`, `sibling document`                                      | each frame, read and change                       |
+| `frame document`                                                           | the catalog page, for each frame, read and change |
+| `local storage`, `session storage`, `indexeddb`, `cache storage`, `cookie` | each frame: another view's mark found in its own  |
+| `main catalog`, `sibling kube`                                             | each frame                                        |
+| `set-frame-id for sibling`, `visible from frame`                           | each frame                                        |
+| `frame main page`, `frame sibling page`                                    | each frame                                        |
+| `open window`                                                              | each frame                                        |
+| `move sibling`, `move main to scheme`, `move main outside`                 | each frame, last                                  |
+
+A frame reports `blocked` for a `move` attempt once the attempt has thrown or
+has left the target where it was after a second; a move that worked shows up
+as `marks new …` from the sibling, or as a run that never prints `done`.
 
 A view that cannot send its report calls `GET /api/mark?name=frames-check-failed`.
 
 The run passes when it prints, in order:
 
 1. four `origin` lines with four different origins (SC-001);
-2. for each of the three frames, a `blocked` line for every attempt, no
-   `isolation failed` line, and no `cookie` line whose value names another
-   view than the one the request came from (SC-002);
+2. for each of the three frames, a `blocked` line for every attempt, and for
+   the catalog page one per frame; no `isolation failed` line; no `cookie`
+   line whose value names another view than the one the request came from
+   (SC-002). A `refused a navigation` line is not a failure: it shows the
+   navigation handler stopping a move the sandbox let through, which the
+   cargo tests of the handler cover on their own;
 3. `received ping` for the token sent to the first cluster from that frame
    alone (SC-005);
 4. after the second cluster's close, `marks kept kept` from the first and the

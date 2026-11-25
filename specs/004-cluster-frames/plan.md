@@ -15,7 +15,12 @@ several frames at once need from the core:
 
 - a route table in which every route states its audience, the main window,
   the cluster frames or both, so that the later areas add routes under one
-  rule (R3);
+  rule, and in which a host with a port or a user name names no view (R3);
+- frames that cannot move the main window or each other, open a window, get a
+  permission or reach outside their origin, and pages that cannot be framed
+  where they do not belong: the `sandbox` attribute on each frame, a
+  navigation handler on the main window, and the pages' content security
+  policies (R12);
 - a frame record shared with the later areas: which clusters have a frame,
   which one is visible, events when a frame is announced or forgotten, and a
   send to one frame (R4), with frames forgotten when messaging closes their
@@ -60,8 +65,9 @@ and changes to the pages of the Tauri build.
 **Performance Goals**: none with a threshold (Assumptions of the spec). A
 closed frame is forgotten within 60 seconds of its close (SC-005).
 
-**Constraints**: no Tauri command or capability; no change to the WKWebView
-settings; the Electron build changes only by the deletions of R8; no
+**Constraints**: no Tauri command or capability; no change to the website
+data store; the only new WebView setting is the main window's navigation
+handler (R12); the Electron build changes only by the deletions of R8; no
 existing test is removed or weakened; no new dependency.
 
 **Scale/Scope**: three frames in the check; no upper limit (FR-009). The
@@ -72,17 +78,17 @@ builds.
 
 _GATE: Must pass before Phase 0 research. Re-check after Phase 1 design._
 
-| Principle                    | Answer for this plan                                                                                                                                                                                                                                                                                                                                    | Status               |
-| ---------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------- |
-| VII. Tauri build             | Targets both builds. The Tauri build gains the route table, the frame record, the two channels, the page changes and the check. The Electron build changes only by deleting four files that send, answer and store a value nothing reads (FR-019, FR-021); its build, type check, unit tests, integration tests and `knip:check` run after that change. | Pass                 |
-| VIII. Rust core              | `freelens-tauri/src-tauri/src/routes.rs` and `src/frames.rs`, changes to `src/scheme.rs`, `src/lib.rs`, `src/options.rs` and `src/messaging/`; no new crate; `cargo fmt --check`, `cargo clippy --all-targets -- -D warnings`, `cargo test`; `Cargo.lock` stays committed.                                                                              | Pass                 |
-| II. Environments             | New TypeScript is renderer code of the Tauri pages under `freelens-tauri/ui/src/renderer/`, which already have no Node. The Electron deletions are in `main/`, `renderer/` and `common/` directories and leave no file on a legacy list; none is added. The core is reached only over the scheme and the channels.                                      | Pass                 |
-| I. Dependency injection      | Removes three injectables of the Electron build (the listener, the renderer request and the renderer runnable); `pnpm build:di` regenerates the registrations, and the empty `renderer/certificate/` aggregator goes with them. No injectable is added. The Tauri pages use the messaging container of spec 002.                                        | Pass                 |
-| III. Extension API           | Nothing the `Common`, `Main` and `Renderer` namespaces reach changes: none of the deleted files is reached by them (R8). Checked against C1 to C15, C3 and C14 in particular.                                                                                                                                                                           | Pass                 |
-| IV. Styling                  | No stylesheet or `className` changes; the pages of the Tauri build have no stylesheet.                                                                                                                                                                                                                                                                  | Pass                 |
-| V. Verified changes          | Cargo tests for every rule of FR-005 to FR-008, FR-012 and FR-016 to FR-018, refusals included (FR-023); the Electron suites after R8; the `--frames-check` run and the manual check of SC-007 on the branch and on `main`. The check's page module has no unit tests.                                                                                  | Deviation, see below |
-| VI. Secrets and supply chain | No binary, pin or secrets file is touched. The check and the tests use the fixture kubeconfigs of spec 001, which hold fake credentials.                                                                                                                                                                                                                | Pass                 |
-| Conventions                  | New Rust and TypeScript files get the single-line header; the Electron files are deleted, not edited. No JSON file gets comments. Scratch output goes to `$TMPDIR`. Nothing is added to `docs/`. The channel list is updated as FR-020 asks.                                                                                                            | Pass                 |
+| Principle                    | Answer for this plan                                                                                                                                                                                                                                                                                                                                                          | Status               |
+| ---------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------- |
+| VII. Tauri build             | Targets both builds. The Tauri build gains the route table, the frame record, the two channels, the page changes and the check. The Electron build changes only by deleting four files that send, answer and store a value nothing reads (FR-019, FR-021); its build, type check, unit tests, integration tests and `knip:check` run after that change.                       | Pass                 |
+| VIII. Rust core              | `freelens-tauri/src-tauri/src/routes.rs` and `src/frames.rs`, changes to `src/scheme.rs`, `src/lib.rs`, `src/options.rs` and `src/messaging/`; no new crate; `cargo fmt --check`, `cargo clippy --all-targets -- -D warnings`, `cargo test`; `Cargo.lock` stays committed.                                                                                                    | Pass                 |
+| II. Environments             | New TypeScript is renderer code of the Tauri pages under `freelens-tauri/ui/src/renderer/`, which already have no Node. The Electron deletions are in `main/`, `renderer/` and `common/` directories and leave no file on a legacy list; none is added. The core is reached only over the scheme and the channels.                                                            | Pass                 |
+| I. Dependency injection      | Removes three injectables of the Electron build (the listener, the renderer request and the renderer runnable); `pnpm build:di` regenerates the registrations, and the empty `renderer/certificate/` aggregator goes with them. No injectable is added. The Tauri pages use the messaging container of spec 002.                                                              | Pass                 |
+| III. Extension API           | Nothing the `Common`, `Main` and `Renderer` namespaces reach changes: none of the deleted files is reached by them (R8). Checked against C1 to C15, C3 and C14 in particular.                                                                                                                                                                                                 | Pass                 |
+| IV. Styling                  | No stylesheet or `className` changes; the pages of the Tauri build have no stylesheet.                                                                                                                                                                                                                                                                                        | Pass                 |
+| V. Verified changes          | Cargo tests for every rule of FR-005 to FR-008, FR-012 and FR-016 to FR-018, refusals included, and for the navigation rule and the policies (FR-023); the Electron suites after R8; the `--frames-check` run for what the engine enforces, FR-024 to FR-028 included, and the manual check of SC-007 on the branch and on `main`. The check's page module has no unit tests. | Deviation, see below |
+| VI. Secrets and supply chain | No binary, pin or secrets file is touched. The check and the tests use the fixture kubeconfigs of spec 001, which hold fake credentials.                                                                                                                                                                                                                                      | Pass                 |
+| Conventions                  | New Rust and TypeScript files get the single-line header; the Electron files are deleted, not edited. No JSON file gets comments. Scratch output goes to `$TMPDIR`. Nothing is added to `docs/`. The channel list is updated as FR-020 asks.                                                                                                                                  | Pass                 |
 
 Re-check after Phase 1 design: unchanged. The contracts add no Tauri command,
 no capability, no Node use in a view and no extension surface.
@@ -115,21 +121,21 @@ freelens-tauri/
 │   ├── messaging.ts           # new: the messaging container, taken out of messaging-check.ts
 │   ├── messaging-check.ts     # uses messaging.ts
 │   ├── frames-check.ts        # new: the --frames-check run of R9, in both pages
-│   ├── catalog.ts             # sends current-visible-cluster; opens three clusters in the check
+│   ├── catalog.ts             # sends current-visible-cluster; sandboxed frames; opens three clusters in the check
 │   └── cluster.ts             # requests cluster:set-frame-id once loaded
 └── src-tauri/
     ├── src/
     │   ├── routes.rs          # new: Routes, Route, Audience (contracts/routes.md)
     │   ├── frames.rs          # new: Frames, FrameEvent, the two channels (contracts/frames-api.md)
     │   ├── frames_check.rs    # new: check-only channels of --frames-check
-    │   ├── scheme.rs          # dispatches through Routes; today's routes become rows
+    │   ├── scheme.rs          # dispatches through Routes; today's routes become rows; frame-ancestors 'none' on the catalog page
     │   ├── options.rs         # + --frames-check
-    │   ├── lib.rs             # builds Routes and Frames, wires queue events, the 1-second sweep
+    │   ├── lib.rs             # builds Routes and Frames, wires queue events, the 1-second sweep, the navigation handler
     │   └── messaging/
     │       ├── mod.rs         # Sender::send_to
     │       └── queues.rs      # push_to, sweep, Closed and Restarted events
     └── tests/
-        ├── scheme.rs          # + audiences, Origin, duplicates, the /ipc/ rows
+        ├── scheme.rs          # + audiences, Origin, duplicates, the /ipc/ rows, hosts with a port or user name, the navigation rule
         └── frames.rs          # new: record, events, forgetting, sending, the two channels
 
 packages/core/src/                                   # Electron build, R8: deleted
@@ -156,9 +162,12 @@ Risk first:
 2. **Frame record and the two channels** (Tauri): `Frames`, its events and
    sends, the sender checks, cargo tests.
 3. **Route table** (Tauri): `Routes`, today's routes as rows, the audiences,
-   `tests/scheme.rs` passing unchanged and extended.
-4. **Pages and the check** (Tauri): `messaging.ts`, the lifecycle of R7, the
-   `--frames-check` run on macOS with three frames.
+   hosts with a port or a user name, `tests/scheme.rs` passing unchanged and
+   extended.
+4. **Pages, navigation and the check** (Tauri): `messaging.ts`, the lifecycle
+   of R7, the sandboxed frames, the policies and the navigation handler of
+   R12, the `--frames-check` run on macOS with three frames. A frame that the
+   sandbox does not stop reopens R12.
 5. **Certificate removal** (Electron): the deletions of R8, `pnpm build:di`,
    the Electron suites, the manual check of SC-007.
 6. **Channel list** (both): the rows of cluster-frames (FR-015, FR-020).
