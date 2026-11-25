@@ -46,14 +46,14 @@ it (research R5).
 
 One per open view.
 
-| Field        | Rule                                                               |
-| ------------ | ------------------------------------------------------------------ |
-| host         | the view's host                                                    |
-| `session`    | the page load that owns it; a different one restarts the queue     |
-| next `seq`   | starts at 1, grows by 1 per message                                |
-| messages     | `(seq, channel id, envelope)` not yet acknowledged, at most 10 000 |
-| pending poll | at most one; a new poll answers the old one empty                  |
-| last poll    | time of the last poll; 60 seconds without one closes the queue     |
+| Field        | Rule                                                                                                                                                         |
+| ------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| host         | the view's host                                                                                                                                              |
+| `session`    | the page load that owns it; a different one restarts the queue                                                                                               |
+| next `seq`   | starts at 1, grows by 1 per message; a queue that a poll of the same `session` opens after its view's queue closed goes on from where the closed one stopped |
+| messages     | `(seq, channel id, envelope)` not yet acknowledged, at most 10 000                                                                                           |
+| pending poll | at most one; a new poll answers the old one empty                                                                                                            |
+| last poll    | time of the last poll; 60 seconds without one closes the queue                                                                                               |
 
 States:
 

@@ -69,13 +69,13 @@ Answer: `200` with `{"messages":[{"seq":<number>,"channel":"<id>", …envelope},
 in sequence order, as soon as the view's queue holds a message with a sequence
 number above `after`, or with an empty list after 25 seconds.
 
-| Situation                                            | What the core does                                                   |
-| ---------------------------------------------------- | -------------------------------------------------------------------- |
-| first poll of a host                                 | opens the queue of that view; sequence numbers start at 1            |
-| `session` differs from the queue's                   | starts the queue afresh for the new page load, then answers as above |
-| messages up to `after` are in the queue              | drops them; they are handled                                         |
-| another poll of the same host is pending             | answers the pending one with an empty list, then serves the new one  |
-| no poll for 60 seconds, or more than 10 000 messages | closes the queue and logs it; the next poll opens a new one          |
+| Situation                                            | What the core does                                                                                                            |
+| ---------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
+| first poll of a host                                 | opens the queue of that view; sequence numbers start at 1                                                                     |
+| `session` differs from the queue's                   | starts the queue afresh for the new page load, then answers as above                                                          |
+| messages up to `after` are in the queue              | drops them; they are handled                                                                                                  |
+| another poll of the same host is pending             | answers the pending one with an empty list, then serves the new one                                                           |
+| no poll for 60 seconds, or more than 10 000 messages | closes the queue and logs it; the next poll opens a new one, numbered on from the closed one when it names the same `session` |
 
 The view hands each message to its listeners in sequence order, ignores a
 sequence number it has already handled, and polls again at once. After a

@@ -59,10 +59,32 @@ impl Queue {
     }
 }
 
+/// What a closed queue leaves behind for its view.
+struct ClosedQueue {
+    session: String,
+    next_seq: u64,
+}
+
 #[derive(Default)]
 struct State {
     queues: HashMap<View, Queue>,
+    /// The session and next number of each view whose queue closed, so that a
+    /// view still open that polls again keeps its numbers growing: its `after`
+    /// would drop a new queue's messages numbered from 1.
+    closed: HashMap<View, ClosedQueue>,
     next_poll: u64,
+}
+
+impl State {
+    fn close(&mut self, view: &View) {
+        if let Some(queue) = self.queues.remove(view) {
+            let closed = ClosedQueue {
+                session: queue.session,
+                next_seq: queue.next_seq,
+            };
+            self.closed.insert(view.clone(), closed);
+        }
+    }
 }
 
 /// A change of a queue that other parts of the core follow
@@ -129,10 +151,15 @@ impl Queues {
             self.close_idle(&mut state, now, &mut events);
             state.next_poll += 1;
             let id = state.next_poll;
-            let queue = state
-                .queues
-                .entry(view.clone())
-                .or_insert_with(|| Queue::new(session, now));
+            let next_seq = state
+                .closed
+                .remove(&view)
+                .filter(|closed| closed.session == session)
+                .map_or(1, |closed| closed.next_seq);
+            let queue = state.queues.entry(view.clone()).or_insert_with(|| Queue {
+                next_seq,
+                ..Queue::new(session, now)
+            });
             if queue.session != session {
                 *queue = Queue::new(session, now);
                 events.push(QueueEvent::Restarted(view.clone()));
@@ -229,7 +256,7 @@ impl Queues {
             payload,
         });
         if queue.messages.len() > MESSAGE_LIMIT {
-            state.queues.remove(view);
+            state.close(view);
             (self.log)(&format!(
                 "Messaging: closed the queue of {view}: over {MESSAGE_LIMIT} messages"
             ));
@@ -263,7 +290,7 @@ impl Queues {
             .map(|(view, _)| view.clone())
             .collect();
         for view in idle {
-            state.queues.remove(&view);
+            state.close(&view);
             (self.log)(&format!(
                 "Messaging: closed the queue of {view}: no poll for 60 s"
             ));
@@ -363,6 +390,49 @@ mod tests {
         assert!(queues.poll(View::Main, "s2", 0).await.is_empty());
         queues.push("note", None);
         assert_eq!(seqs(&queues.poll(View::Main, "s2", 0).await), [1]);
+    }
+
+    /// Opens the queue of the main window with session `s1`, has it handle
+    /// two messages, then closes it for no poll in 60 seconds.
+    async fn closed_after_two_messages(queues: &Arc<Queues>) {
+        queues.poll(View::Main, "s1", 0).await;
+        queues.push("note", None);
+        queues.push("note", None);
+        assert_eq!(seqs(&queues.poll(View::Main, "s1", 0).await), [1, 2]);
+        tokio::time::advance(IDLE_LIMIT).await;
+        queues.sweep();
+        assert!(!queues.is_open(&View::Main));
+    }
+
+    #[tokio::test(start_paused = true)]
+    async fn a_queue_closed_while_its_view_lives_numbers_on_for_the_same_session() {
+        let (queues, _) = queues();
+        closed_after_two_messages(&queues).await;
+
+        // The view polls again with its session and the last number it handled.
+        let poll = tokio::spawn({
+            let queues = Arc::clone(&queues);
+            async move { queues.poll(View::Main, "s1", 2).await }
+        });
+        settle().await;
+        queues.push("note", None);
+
+        assert_eq!(seqs(&poll.await.unwrap()), [3]);
+    }
+
+    #[tokio::test(start_paused = true)]
+    async fn a_queue_closed_then_opened_by_a_new_page_load_numbers_from_1() {
+        let (queues, _) = queues();
+        closed_after_two_messages(&queues).await;
+
+        let poll = tokio::spawn({
+            let queues = Arc::clone(&queues);
+            async move { queues.poll(View::Main, "s2", 0).await }
+        });
+        settle().await;
+        queues.push("note", None);
+
+        assert_eq!(seqs(&poll.await.unwrap()), [1]);
     }
 
     #[tokio::test(start_paused = true)]

@@ -390,8 +390,8 @@ switched, one closed and reopened) runs on the branch and on `main`.
   the record forgot frames that were still open. A main window covered for 80
   seconds on an idle machine kept every queue open, so the cause is
   **Unverified**. A frame forgotten that way is not recorded again when it
-  polls again: its queue opens afresh with no `Restarted` event, and only an
-  announcement records a frame.
+  polls again: its queue opens again, numbered on from the closed one, with no
+  `Restarted` event, and only an announcement records a frame.
 - **wry dropping a cancelled poll.** A waiting poll whose request has been
   dropped no longer keeps its queue open, so the queue closes 60 seconds after
   its last poll started whether wry keeps the task of a cancelled poll or drops
