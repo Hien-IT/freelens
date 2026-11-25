@@ -318,13 +318,19 @@ Inspector.
   cluster's `/api-kube/api/v1/namespaces`; requesting `cluster:set-frame-id`
   with another cluster's id and sending `current-visible-cluster`; showing the
   main window's page and another cluster's page in an iframe of its own;
-  opening a window; writing to the clipboard; loading from an outside address,
+  opening a window; loading from an outside address,
   blocked only if the page receives a `securitypolicyviolation` event for it;
   and, last, because a success ends the run, moving another
   frame and the main window to another page, both to a page of the scheme and
   to an outside address;
 - the catalog page tries to read and change each frame's document through
-  the frame element, and reports the same way;
+  the frame element, and reports, for each frame, whether it carries exactly
+  the `sandbox` of R12 and no `allow` attribute, the evidence of FR-026 that
+  a refused clipboard write would not give; each frame sends
+  `current-visible-cluster` naming another cluster, and the catalog page then
+  asks the core, through a check-only request `frames-check:send-to-visible`,
+  to send to the visible frame, so the log shows the core kept the cluster the
+  catalog page named;
 - a check-only request `frames-check:send-to` makes the core call
   `Frames::send_to` with a check-only message for the cluster it names, and
   answers whether that cluster had a frame; every view reports each check-only

@@ -423,8 +423,8 @@ build finds no sender.
   - moving the main window or another frame to another page, and opening a
     window;
   - showing the main window's page or another cluster's page in a frame;
-  - writing to the clipboard, and loading from or sending to an address
-    outside its origin;
+  - being granted a browser permission, such as the clipboard, and loading
+    from or sending to an address outside its origin;
   - announcing itself as another cluster, and naming the visible cluster.
 - **SC-003**: With three clusters open and a mark in the page state and in the
   local storage of each, closing one leaves both marks unchanged in each of

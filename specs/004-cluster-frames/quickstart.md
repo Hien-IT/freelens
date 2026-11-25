@@ -110,8 +110,9 @@ Expected for each: `Frames check: not run: the catalog has 0 clusters, three
 are needed`, no frame opened, the catalog page showing its message, and no
 `isolation failed` line.
 
-The missing field, a host whose cluster id is not in the catalog, is a cargo
-test of `core/tests/scheme.rs` (T010).
+The missing field, a host whose cluster id is not in the catalog, is the
+existing cargo test `unknown_hosts_and_unknown_cluster_ids_get_404_everywhere`
+of `core/tests/scheme.rs`.
 
 On `main` as the control, with the spike's pages and `three-contexts.yaml`:
 open the three clusters, switch between them, close one and open it again.
