@@ -39,7 +39,8 @@ cd freelens-tauri/src-tauri && cargo fmt --check && cargo clippy --all-targets -
 ```
 
 Expected: the tests of `tests/scheme.rs` that existed before this feature
-pass unchanged, and the new ones cover each rule of
+pass, one assertion updated for the catalog page's `frame-ancestors 'none'`,
+and the new ones cover each rule of
 [contracts/routes.md](./contracts/routes.md) and
 [contracts/frames-api.md](./contracts/frames-api.md):
 

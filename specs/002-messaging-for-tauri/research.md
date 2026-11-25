@@ -435,7 +435,11 @@ the renderer (**Verified**), so `hotbar:too-many-items` is one of them.
   WebKit: its queue grows until the 60-second or 10 000-message limit closes
   it, and it then misses messages. The check run leaves the application in
   the background and runs a late round 130 seconds later; it passed in both
-  views of the T027 run.
+  views of the T027 run. A view whose queue closed while it was still open,
+  and that polls again with the same session, gets a new queue numbered from
+  1 while its `after` keeps the old number, so the core and the view drop
+  every message until the numbers pass it (`src/messaging/queues.rs`,
+  `messaging-for-tauri/src/polling.injectable.ts`).
 - **Large request bodies.** wry reads `HTTPBodyStream` while bytes are
   available. A 10 MB body arrived whole in each echo of the T027 runs, which
   is evidence, not a guarantee; the core refuses a body whose JSON does not

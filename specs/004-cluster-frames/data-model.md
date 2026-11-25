@@ -36,12 +36,12 @@ Which views may use a route (FR-007).
 
 One thing the core serves on the scheme.
 
-| Field      | Type                                        | Rule                                                                     |
-| ---------- | ------------------------------------------- | ------------------------------------------------------------------------ |
-| `method`   | HTTP method                                 | one per route; a known path with another method answers `405`            |
-| `path`     | exact path, or a prefix that ends in `/`    | a prefix matches every path under it; the longest match wins             |
-| `audience` | `Audience`                                  | a request from a view outside it answers `404`                           |
-| `handler`  | request and `View` → response, asynchronous | gets the view the host names; never reads a view from the request's body |
+| Field      | Type                                                          | Rule                                                                                                                                                          |
+| ---------- | ------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `method`   | HTTP method                                                   | one per route; a known path with another method answers `405`                                                                                                 |
+| `path`     | exact path, or a prefix that ends in `/`; `/` itself is exact | a prefix matches every path under it; the longest match wins                                                                                                  |
+| `audience` | `Audience`                                                    | a request from a view outside it answers `404`                                                                                                                |
+| `handler`  | request, `View` and `Env` → boxed future of a response        | gets the view the host names; never reads a view from the request's body; `Env` holds the core's state and the built UI's files for the length of the request |
 
 - A second route with the same `method`, the same `path` and an overlapping
   `audience` stops the core at startup with an error naming the method and
@@ -78,6 +78,8 @@ cluster it shows before its frame has loaded, as in the Electron build.
   frame is not recorded twice.
 - `Restarted(Cluster(id))`, the frame of `id` reloading, leaves the record as
   it is; the reloaded frame announces itself again.
+- A frame forgotten while it is still open, because its page stopped polling
+  (research R11), stays Absent until it announces itself again.
 - Forgetting an absent id changes nothing and emits nothing.
 - Forgetting the visible cluster's frame leaves `visible` as it is: the main
   window names the next one (Edge Cases of the spec).

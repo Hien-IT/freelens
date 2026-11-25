@@ -164,8 +164,8 @@ Risk first:
 2. **Frame record and the two channels** (Tauri): `Frames`, its events and
    sends, the sender checks, cargo tests.
 3. **Route table** (Tauri): `Routes`, today's routes as rows, the audiences,
-   hosts with a port or a user name, `tests/scheme.rs` passing unchanged and
-   extended.
+   hosts with a port or a user name, `tests/scheme.rs` passing, with the
+   catalog page's policy assertion updated, and extended.
 4. **Pages, navigation and the check** (Tauri): `messaging.ts`, the lifecycle
    of R7, the sandboxed frames, the policies and the navigation handler of
    R12, the `--frames-check` run on macOS with three frames. A frame that the

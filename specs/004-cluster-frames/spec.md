@@ -247,6 +247,13 @@ build finds no sender.
 - The content of one frame crashes or hangs: not covered by this feature
   (Assumptions); FR-011 is about closing a cluster, not about a failure of
   its content.
+- Every page of the application stops polling for more than 60 seconds while
+  its frames are open, as happened once with the application left in the
+  background on a loaded machine: the core forgets those frames (FR-012), and
+  a frame forgotten that way stays unrecorded until it announces itself again,
+  so what the core sends to it is dropped. This feature does not prevent it;
+  `main-catalog`, the first area that sends to a frame through the record,
+  decides how such a frame is recorded again (research R11).
 
 ## Requirements _(mandatory)_
 
@@ -309,7 +316,10 @@ build finds no sender.
   cross-origin messaging is not blocked, as in the Electron build. No page of
   the Tauri build MUST act on such a message.
 - **FR-028**: A cluster frame MUST stay recorded for as long as it is open,
-  shown or hidden: hiding a frame MUST NOT make the core forget it.
+  shown or hidden: hiding a frame MUST NOT make the core forget it. A frame
+  whose page stops polling for 60 seconds is forgotten like a removed one
+  (FR-012); recording it again once it polls again belongs to the first area
+  that sends to a frame through the frame record (Edge Cases).
 
 #### Opening, switching and closing
 
@@ -510,13 +520,13 @@ build finds no sender.
   browser engine keeps the frames of different origins in different processes
   is not something this feature can require. "Closing one does not affect the
   others" is about closing a cluster (FR-011), not about such a failure.
-- Some behaviour of the engine that the isolation relies on is not yet
-  verified: that a hidden frame keeps running, that a frame can be removed
-  without first being emptied, what happens to a cookie on the scheme of the
-  Tauri build, and that WebKit applies the `sandbox` attribute to a frame of
-  the scheme as it does to one of `https`. The check of SC-002 and SC-003 runs
-  each of them; the attempts to move a view and to open a window show the
-  last.
+- The isolation relies on behaviour of the engine that the check of SC-002
+  and SC-003 shows: a hidden frame keeps running, a frame can be removed
+  without first being emptied, and WebKit applies the `sandbox` attribute to
+  a frame of the scheme, as the attempts to move the main window show. No
+  request that reaches the core carries a cookie; whether `document.cookie`
+  keeps a value within one page is not known, and nothing relies on it
+  (FR-004).
 - The feature sets no target for memory or for the time to open a frame; the
   targets of the port are those of `specs/baseline.md` and of spec 001.
 - The Tauri build runs on macOS on Apple Silicon only (Principle VII of the

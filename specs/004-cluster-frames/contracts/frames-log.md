@@ -62,8 +62,8 @@ The attempts are named:
 | Attempt                                                                                              | From                                                                  |
 | ---------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------- |
 | `parent document read`, `parent document change`, `sibling document read`, `sibling document change` | each frame                                                            |
-| `frame document read`, `frame document change`                                                       | the catalog page, for each frame                                      |
-| `frame permissions`                                                                                  | the catalog page, for each frame                                      |
+| `frame document read <id>`, `frame document change <id>`                                             | the catalog page, for each frame, with the frame's cluster id         |
+| `frame permissions <id>`                                                                             | the catalog page, for each frame, with the frame's cluster id         |
 | `local storage`, `session storage`, `indexeddb`, `cache storage`, `cookie`                           | each frame and the catalog page: another view's mark found in its own |
 | `main catalog`, `sibling kube`                                                                       | each frame                                                            |
 | `set-frame-id for sibling`, `visible from frame`                                                     | each frame                                                            |
@@ -74,7 +74,8 @@ The attempts are named:
 
 A frame reports `blocked` for a `move` attempt once the attempt has thrown or
 has left the target where it was after a second; a move that worked shows up
-as `marks new …` from the sibling, or as a run that never prints `done`.
+as the moved page's `isolation failed: moved by <view>`, below, or as a run
+that never prints `done`.
 `outside address` counts as `blocked` only when the page receives a
 `securitypolicyviolation` event for it, so that a failure of the network is
 not taken for the policy. `frame permissions` counts as `blocked` when the
@@ -88,6 +89,16 @@ attempts.
 An attempt named `sibling …` runs against each of the two other frames and
 reports one line per sibling, with the sibling's cluster id after the
 attempt's name: `Frames check: <view> blocked sibling kube <id>`.
+
+A `move` attempt points the page it moves at `?frames-check&moved-by=<view>`.
+A page loaded with `moved-by` reports `isolation failed: moved by <view>` and
+does nothing else, so a move that works fails the run by name.
+
+Before its attempts, a frame waits for `frames-check:step-done` with `marks`
+from both siblings, and broadcasts its own again on the first one it receives
+from each, so that its storage attempts run once every view has set its
+marks; after 30 seconds it reports `isolation failed: step not finished` and
+goes on.
 
 A view sets a mark in a kind of browser storage, and its cookie, only when it
 finds none of its own there, so that a later page of the same origin reports

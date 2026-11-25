@@ -68,11 +68,15 @@ cluster's page; the frames' `sandbox` attribute does that (research R12).
 A later area adds its routes at startup, as it registers its channels:
 
 ```rust
-routes.add(Method::GET, "/api/metrics", Audience::Clusters, handler)?;
+routes.add(Method::GET, "/api/metrics", Audience::Clusters, |request, view, env| {
+    Box::pin(async move { /* … */ })
+})?;
 ```
 
-- The handler receives the request and the `View`; for a `Clusters` route the
-  view is always `View::Cluster(id)`, with `id` in the catalog.
+- The handler receives the request, the `View` and an `Env`, the core's state
+  and the files of the built UI for the length of the request, and returns a
+  boxed future, which may borrow from `Env`. For a `Clusters` route the view
+  is always `View::Cluster(id)`, with `id` in the catalog.
 - A route reads the cluster from the view, never from the path or the body,
   so a route of one cluster's frame cannot act for another cluster (FR-006).
 - `add` fails with the method and path when it overlaps a route already
