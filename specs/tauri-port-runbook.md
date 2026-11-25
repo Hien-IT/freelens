@@ -315,7 +315,10 @@ Phụ thuộc: 001 qua cổng.
 
 ### 005 `terminal-pty`: terminal
 
-Phụ thuộc: 002.
+Phụ thuộc: 002, 004, và bốn mảng `main-foundation`, `main-cluster-connection`,
+`main-kube-tools`, `main-shell-env` theo thứ tự R9 của
+`specs/001-tauri-shell-spike/research.md`. Spec viết trước được; `/speckit-plan`
+chỉ chạy khi bốn mảng đó đã port xong (Clarifications của spec 005).
 
 ```text
 /speckit-specify SPECIFY_FEATURE_DIRECTORY=specs/005-terminal-pty The terminal dock works in the macOS build with the same shells, environment and behaviour as in the Electron build. Success: the shell starts with the environment the host gives kubectl and helm (contract C15 in docs/extensions/api.md describes it); resize, copy and paste, and several tabs work; every channel that specs/002-messaging-for-tauri/contracts/channel-list.md gives to terminal-pty is answered by the new core.
