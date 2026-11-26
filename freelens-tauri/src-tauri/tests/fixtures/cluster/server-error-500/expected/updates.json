@@ -1,0 +1,14 @@
+[
+  {
+    "level": "info",
+    "message": "Starting connection ..."
+  },
+  {
+    "level": "info",
+    "message": "Refreshing connection status ..."
+  },
+  {
+    "level": "error",
+    "message": "etcdserver: request timed out"
+  }
+]

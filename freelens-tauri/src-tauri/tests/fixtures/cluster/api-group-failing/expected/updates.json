@@ -1,0 +1,22 @@
+[
+  {
+    "level": "info",
+    "message": "Starting connection ..."
+  },
+  {
+    "level": "info",
+    "message": "Refreshing connection status ..."
+  },
+  {
+    "level": "info",
+    "message": "Refreshing cluster accessibility ..."
+  },
+  {
+    "level": "warning",
+    "message": "Kube APIs under \"/apis/batch/v1\" may not be displayed"
+  },
+  {
+    "level": "info",
+    "message": "Connected, waiting for view to load ..."
+  }
+]

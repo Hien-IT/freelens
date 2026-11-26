@@ -1,0 +1,18 @@
+[
+  {
+    "level": "info",
+    "message": "Starting connection ..."
+  },
+  {
+    "level": "info",
+    "message": "Refreshing connection status ..."
+  },
+  {
+    "level": "info",
+    "message": "Refreshing cluster accessibility ..."
+  },
+  {
+    "level": "info",
+    "message": "Connected, waiting for view to load ..."
+  }
+]

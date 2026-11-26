@@ -1,0 +1,39 @@
+[
+  {
+    "online": false,
+    "ready": false,
+    "disconnected": false,
+    "accessible": false,
+    "isAdmin": false,
+    "allowedNamespaces": [],
+    "resourcesToShow": [],
+    "knownResources": [],
+    "isGlobalWatchEnabled": false
+  },
+  {
+    "online": true,
+    "ready": false,
+    "disconnected": false,
+    "accessible": true,
+    "isAdmin": false,
+    "allowedNamespaces": [],
+    "resourcesToShow": [],
+    "knownResources": [],
+    "isGlobalWatchEnabled": false
+  },
+  {
+    "online": true,
+    "ready": false,
+    "disconnected": false,
+    "accessible": true,
+    "isAdmin": true,
+    "allowedNamespaces": [
+      "default",
+      "kube-system",
+      "load"
+    ],
+    "resourcesToShow": [],
+    "knownResources": [],
+    "isGlobalWatchEnabled": true
+  }
+]

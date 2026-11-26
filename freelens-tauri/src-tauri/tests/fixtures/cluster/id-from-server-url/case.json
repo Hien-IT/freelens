@@ -1,0 +1,10 @@
+{
+  "cluster": {
+    "contextName": "kind-freelens",
+    "server": "HTTPS://Kube.Example.COM:443",
+    "exec": false
+  },
+  "steps": [
+    "detectMetadata"
+  ]
+}

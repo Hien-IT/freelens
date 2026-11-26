@@ -1,0 +1,10 @@
+{
+  "cluster": {
+    "contextName": "microk8s-cluster",
+    "server": "https://127.0.0.1:6443",
+    "exec": false
+  },
+  "steps": [
+    "detectMetadata"
+  ]
+}

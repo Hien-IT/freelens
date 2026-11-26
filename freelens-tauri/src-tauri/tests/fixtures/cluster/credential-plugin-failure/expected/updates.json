@@ -1,0 +1,14 @@
+[
+  {
+    "level": "info",
+    "message": "Starting connection ..."
+  },
+  {
+    "level": "info",
+    "message": "Refreshing connection status ..."
+  },
+  {
+    "level": "error",
+    "message": "Failed to fetch credentials: getting credentials: exec: executable kubelogin failed with exit code 1"
+  }
+]

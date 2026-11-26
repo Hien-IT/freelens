@@ -1,0 +1,14 @@
+[
+  {
+    "level": "info",
+    "message": "Starting connection ..."
+  },
+  {
+    "level": "info",
+    "message": "Refreshing connection status ..."
+  },
+  {
+    "level": "error",
+    "message": "dial tcp 127.0.0.1:1: connect: connection refused"
+  }
+]

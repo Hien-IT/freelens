@@ -1,0 +1,10 @@
+{
+  "cluster": {
+    "contextName": "kind-freelens",
+    "server": "https://rancher.example.com/k8s/clusters/c-m-abc123",
+    "exec": false
+  },
+  "steps": [
+    "detectMetadata"
+  ]
+}

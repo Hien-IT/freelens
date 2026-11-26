@@ -242,6 +242,12 @@ impl Sender {
         self.queues.sweep();
     }
 
+    /// With `--messages-dump`: appends every message sent from now on to
+    /// `path`, one JSON line each.
+    pub fn dump_to(&self, path: std::path::PathBuf) {
+        self.queues.dump_to(path);
+    }
+
     /// Calls `listener` with a view whose first poll opens its queue: its page
     /// has loaded; usable before `Channels::build`.
     pub fn on_queue_opened(&self, listener: impl Fn(&View) + Send + Sync + 'static) {

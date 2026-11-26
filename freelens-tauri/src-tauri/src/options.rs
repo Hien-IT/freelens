@@ -37,6 +37,11 @@ pub struct LaunchOptions {
     /// themselves and mark each step with the wall clock, for measurements
     /// (`specs/009-main-cluster-connection`, research R15).
     pub scenario: Option<Scenario>,
+    /// `--messages-dump=<path>`: appends every message the core sends to this
+    /// file, one JSON line each, resolved against the working directory; for
+    /// measurements and tests (`specs/009-main-cluster-connection`, research
+    /// R17).
+    pub messages_dump: Option<PathBuf>,
 }
 
 /// A scenario the pages run for measurements.
@@ -73,6 +78,7 @@ where
     let mut data_dir = None;
     let mut catalog_dump = None;
     let mut scenario = None;
+    let mut messages_dump = None;
 
     for arg in args {
         match arg.split_once('=') {
@@ -86,6 +92,8 @@ where
             Some(("--catalog-dump", "")) => return Err(OptionsError::MissingValue(arg)),
             Some(("--catalog-dump", path)) => catalog_dump = Some(cwd.join(path)),
             Some(("--scenario", "lists")) => scenario = Some(Scenario::Lists),
+            Some(("--messages-dump", "")) => return Err(OptionsError::MissingValue(arg)),
+            Some(("--messages-dump", path)) => messages_dump = Some(cwd.join(path)),
             None if arg == "--messaging-check" => messaging_check = true,
             None if arg == "--frames-check" => frames_check = true,
             None if [
@@ -94,6 +102,7 @@ where
                 "--data-dir",
                 "--catalog-dump",
                 "--scenario",
+                "--messages-dump",
             ]
             .contains(&arg.as_str()) =>
             {
@@ -111,6 +120,7 @@ where
         data_dir,
         catalog_dump,
         scenario,
+        messages_dump,
     })
 }
 
@@ -218,6 +228,23 @@ mod tests {
             Some(PathBuf::from("/tmp/seed"))
         );
         for arg in ["--data-dir", "--data-dir="] {
+            assert_eq!(
+                parse_args(&[arg]),
+                Err(OptionsError::MissingValue(arg.into()))
+            );
+        }
+    }
+
+    #[test]
+    fn messages_dump_is_resolved_against_the_working_directory() {
+        assert_eq!(parse_args(&[]).unwrap().messages_dump, None);
+        assert_eq!(
+            parse_args(&["--messages-dump=out/messages.jsonl"])
+                .unwrap()
+                .messages_dump,
+            Some(PathBuf::from("/work/out/messages.jsonl"))
+        );
+        for arg in ["--messages-dump", "--messages-dump="] {
             assert_eq!(
                 parse_args(&[arg]),
                 Err(OptionsError::MissingValue(arg.into()))

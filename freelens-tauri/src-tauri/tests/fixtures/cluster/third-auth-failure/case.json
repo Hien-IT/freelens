@@ -1,0 +1,16 @@
+{
+  "cluster": {
+    "contextName": "kind-freelens",
+    "server": "https://127.0.0.1:6443",
+    "exec": false
+  },
+  "steps": [
+    "activate",
+    {
+      "advance": 360000
+    },
+    {
+      "advance": 600000
+    }
+  ]
+}

@@ -1,0 +1,361 @@
+[
+  {
+    "method": "GET",
+    "path": "/version",
+    "answers": [
+      {
+        "status": 200,
+        "body": {
+          "major": "1",
+          "minor": "33",
+          "gitVersion": "v1.27.11-mirantis-1",
+          "gitCommit": "8adc0f041b8e7ad1d30e29cc59c6ae7a15e19828",
+          "gitTreeState": "clean",
+          "buildDate": "2025-05-21T08:38:49Z",
+          "goVersion": "go1.24.2",
+          "compiler": "gc",
+          "platform": "linux/arm64"
+        }
+      }
+    ]
+  },
+  {
+    "method": "POST",
+    "path": "/apis/authorization.k8s.io/v1/selfsubjectaccessreviews",
+    "body": {
+      "spec": {
+        "resourceAttributes": {
+          "verb": "create"
+        }
+      }
+    },
+    "answers": [
+      {
+        "status": 200,
+        "body": {
+          "status": {
+            "allowed": true
+          }
+        }
+      }
+    ]
+  },
+  {
+    "method": "POST",
+    "path": "/apis/authorization.k8s.io/v1/selfsubjectaccessreviews",
+    "body": {
+      "spec": {
+        "resourceAttributes": {
+          "verb": "watch"
+        }
+      }
+    },
+    "answers": [
+      {
+        "status": 200,
+        "body": {
+          "status": {
+            "allowed": true
+          }
+        }
+      }
+    ]
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/namespaces",
+    "answers": [
+      {
+        "status": 200,
+        "body": {
+          "kind": "NamespaceList",
+          "apiVersion": "v1",
+          "metadata": {},
+          "items": [
+            {
+              "metadata": {
+                "name": "default",
+                "uid": "uid-of-default"
+              }
+            },
+            {
+              "metadata": {
+                "name": "kube-system",
+                "uid": "uid-of-kube-system"
+              }
+            },
+            {
+              "metadata": {
+                "name": "load",
+                "uid": "uid-of-load"
+              }
+            }
+          ]
+        }
+      }
+    ]
+  },
+  {
+    "method": "GET",
+    "path": "/api",
+    "answers": [
+      {
+        "status": 200,
+        "body": {
+          "kind": "APIVersions",
+          "versions": [
+            "v1"
+          ]
+        }
+      }
+    ]
+  },
+  {
+    "method": "GET",
+    "path": "/apis",
+    "answers": [
+      {
+        "status": 200,
+        "body": {
+          "kind": "APIGroupList",
+          "apiVersion": "v1",
+          "groups": [
+            {
+              "name": "apps",
+              "versions": [
+                {
+                  "groupVersion": "apps/v1",
+                  "version": "v1"
+                }
+              ],
+              "preferredVersion": {
+                "groupVersion": "apps/v1",
+                "version": "v1"
+              }
+            },
+            {
+              "name": "batch",
+              "versions": [
+                {
+                  "groupVersion": "batch/v1",
+                  "version": "v1"
+                }
+              ],
+              "preferredVersion": {
+                "groupVersion": "batch/v1",
+                "version": "v1"
+              }
+            }
+          ]
+        }
+      }
+    ]
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1",
+    "answers": [
+      {
+        "status": 200,
+        "body": {
+          "kind": "APIResourceList",
+          "groupVersion": "v1",
+          "resources": [
+            {
+              "name": "configmaps",
+              "singularName": "",
+              "namespaced": true,
+              "kind": "ConfigMap",
+              "verbs": [
+                "get",
+                "list",
+                "watch"
+              ]
+            },
+            {
+              "name": "namespaces",
+              "singularName": "",
+              "namespaced": false,
+              "kind": "Namespace",
+              "verbs": [
+                "get",
+                "list",
+                "watch"
+              ]
+            },
+            {
+              "name": "nodes",
+              "singularName": "",
+              "namespaced": false,
+              "kind": "Node",
+              "verbs": [
+                "get",
+                "list",
+                "watch"
+              ]
+            },
+            {
+              "name": "pods",
+              "singularName": "",
+              "namespaced": true,
+              "kind": "Pod",
+              "verbs": [
+                "get",
+                "list",
+                "watch"
+              ]
+            },
+            {
+              "name": "pods/log",
+              "singularName": "",
+              "namespaced": true,
+              "kind": "Pod",
+              "verbs": [
+                "get",
+                "list",
+                "watch"
+              ]
+            }
+          ]
+        }
+      }
+    ]
+  },
+  {
+    "method": "GET",
+    "path": "/apis/apps/v1",
+    "answers": [
+      {
+        "status": 200,
+        "body": {
+          "kind": "APIResourceList",
+          "groupVersion": "apps/v1",
+          "resources": [
+            {
+              "name": "deployments",
+              "singularName": "",
+              "namespaced": true,
+              "kind": "Deployment",
+              "verbs": [
+                "get",
+                "list",
+                "watch"
+              ]
+            },
+            {
+              "name": "statefulsets",
+              "singularName": "",
+              "namespaced": true,
+              "kind": "StatefulSet",
+              "verbs": [
+                "get",
+                "list",
+                "watch"
+              ]
+            }
+          ]
+        }
+      }
+    ]
+  },
+  {
+    "method": "GET",
+    "path": "/apis/batch/v1",
+    "answers": [
+      {
+        "status": 200,
+        "body": {
+          "kind": "APIResourceList",
+          "groupVersion": "batch/v1",
+          "resources": [
+            {
+              "name": "cronjobs",
+              "singularName": "",
+              "namespaced": true,
+              "kind": "CronJob",
+              "verbs": [
+                "get",
+                "list",
+                "watch"
+              ]
+            },
+            {
+              "name": "jobs",
+              "singularName": "",
+              "namespaced": true,
+              "kind": "Job",
+              "verbs": [
+                "get",
+                "list",
+                "watch"
+              ]
+            }
+          ]
+        }
+      }
+    ]
+  },
+  {
+    "method": "POST",
+    "path": "/apis/authorization.k8s.io/v1/selfsubjectrulesreviews",
+    "answers": [
+      {
+        "status": 200,
+        "body": {
+          "status": {
+            "resourceRules": [
+              {
+                "verbs": [
+                  "*"
+                ],
+                "apiGroups": [
+                  "*"
+                ],
+                "resources": [
+                  "*"
+                ]
+              }
+            ],
+            "nonResourceRules": [],
+            "incomplete": false
+          }
+        }
+      }
+    ]
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/namespaces/default",
+    "answers": [
+      {
+        "status": 200,
+        "body": {
+          "metadata": {
+            "name": "default",
+            "uid": "6f1c0c9e-3b0d-4d7e-9a2b-1c3d5e7f9a0b"
+          }
+        }
+      }
+    ]
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/nodes?limit=1",
+    "answers": [
+      {
+        "status": 200,
+        "body": {
+          "kind": "NodeList",
+          "metadata": {},
+          "items": [
+            {
+              "metadata": {
+                "name": "freelens-profile-control-plane"
+              }
+            }
+          ]
+        }
+      }
+    ]
+  }
+]

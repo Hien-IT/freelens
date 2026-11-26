@@ -101,6 +101,10 @@ struct State {
     visible: Option<String>,
     /// The clusters whose `null` icon was cleared, which keep no icon.
     icon_cleared: HashSet<String>,
+    /// The phase and `enabled` of a cluster entity, set by the connection
+    /// (`specs/009-main-cluster-connection/data-model.md`, Phase of a cluster
+    /// entity); a cluster without one is `disconnected` and enabled.
+    cluster_phases: HashMap<String, (String, bool)>,
     version: u64,
     launch_file: Option<LaunchFile>,
     /// The paths of the running syncs, in the order they started.
@@ -178,7 +182,10 @@ impl Catalog {
             }
             StoreName::Cluster => {
                 following.bump();
-                following.ensure_entries();
+                // A change of the store alone adds no entry, as the Electron
+                // build adds them only when its catalog changes, so that a
+                // deleted cluster stays deleted until its context goes.
+                following.ensure_entries(false);
             }
             StoreName::User => {
                 if let Some(events) = following
@@ -400,13 +407,18 @@ impl Catalog {
         let entries = self.store_entries();
         let state = self.state();
         let clusters = state.clusters.iter().map(|cluster| {
-            entities::cluster_with(
+            let mut entity = entities::cluster_with(
                 cluster,
                 entries.get(&cluster.id),
                 state.visible.as_deref() == Some(cluster.id.as_str()),
                 &self.inner.labels,
                 state.icon_cleared.contains(&cluster.id),
-            )
+            );
+            if let Some((phase, enabled)) = state.cluster_phases.get(&cluster.id) {
+                entity["status"]["phase"] = Value::from(phase.as_str());
+                entity["status"]["enabled"] = Value::from(*enabled);
+            }
+            entity
         });
         state
             .weblinks
@@ -553,7 +565,7 @@ impl Catalog {
             events
         };
         self.changed(&events);
-        self.ensure_entries();
+        self.ensure_entries(true);
     }
 
     /// Names the visible cluster, whose entity is marked active.
@@ -597,6 +609,69 @@ impl Catalog {
             })
     }
 
+    /// Sets the phase and `enabled` of the entity of cluster `id`, and sends
+    /// the catalog when they change.
+    pub fn set_cluster_phase(&self, id: &str, phase: &str, enabled: bool) {
+        let changed = {
+            let mut state = self.state();
+            let next = (phase.to_string(), enabled);
+            let changed = state.cluster_phases.get(id) != Some(&next);
+            state.cluster_phases.insert(id.to_string(), next);
+            changed
+        };
+        if changed {
+            self.bump();
+        }
+    }
+
+    /// Changes the cluster store entry of `id` with `update`, through
+    /// `Stores::update`; nothing when it has none.
+    pub fn update_store_entry(&self, id: &str, update: impl FnOnce(&mut Map<String, Value>)) {
+        let Some(stores) = &self.inner.stores else {
+            return;
+        };
+        let model = stores.model(StoreName::Cluster);
+        let mut list: Vec<Value> = model
+            .get("clusters")
+            .and_then(Value::as_array)
+            .cloned()
+            .unwrap_or_default();
+        let Some(entry) = list
+            .iter_mut()
+            .filter_map(Value::as_object_mut)
+            .find(|entry| entry.get("id").and_then(Value::as_str) == Some(id))
+        else {
+            return;
+        };
+        update(entry);
+        let mut model = model.as_object().cloned().unwrap_or_default();
+        model.insert("clusters".into(), Value::Array(list));
+        stores.update(StoreName::Cluster, Value::Object(model));
+    }
+
+    /// Removes the cluster store entry of `id`, as `delete-cluster` does.
+    pub fn remove_store_entry(&self, id: &str) {
+        let Some(stores) = &self.inner.stores else {
+            return;
+        };
+        let model = stores.model(StoreName::Cluster);
+        let list: Vec<Value> = model
+            .get("clusters")
+            .and_then(Value::as_array)
+            .cloned()
+            .unwrap_or_default();
+        let kept: Vec<Value> = list
+            .iter()
+            .filter(|entry| entry.get("id").and_then(Value::as_str) != Some(id))
+            .cloned()
+            .collect();
+        if kept.len() != list.len() {
+            let mut model = model.as_object().cloned().unwrap_or_default();
+            model.insert("clusters".into(), Value::Array(kept));
+            stores.update(StoreName::Cluster, Value::Object(model));
+        }
+    }
+
     /// The valid entry of the cluster store for `id`, if any: what the user
     /// set for the cluster, such as its HTTPS proxy and accessible namespaces.
     pub fn store_entry(&self, id: &str) -> Option<Map<String, Value>> {
@@ -605,8 +680,9 @@ impl Catalog {
 
     /// What the cluster manager does with the store for the clusters of the
     /// catalog: adds an entry for a context that has none, and clears a
-    /// `null` icon and short name, in one update (research R6).
-    fn ensure_entries(&self) {
+    /// `null` icon and short name, in one update (research R6); `add_missing`
+    /// is false for a change of the store alone.
+    fn ensure_entries(&self, add_missing: bool) {
         let Some(stores) = &self.inner.stores else {
             return;
         };
@@ -642,7 +718,7 @@ impl Catalog {
                 changed = true;
             }
         }
-        for cluster in &clusters {
+        for cluster in clusters.iter().filter(|_| add_missing) {
             if !entries.contains_key(&cluster.id) {
                 list.push(entities::new_entry(cluster));
                 changed = true;

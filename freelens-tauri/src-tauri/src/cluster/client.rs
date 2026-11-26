@@ -113,6 +113,8 @@ pub struct ClusterClient {
     server: String,
     /// The limit of the core's own requests; shorter in tests.
     limit: Duration,
+    /// Changes when the cluster disconnects.
+    closed: tokio::sync::watch::Receiver<()>,
 }
 
 impl ClusterClient {
@@ -131,14 +133,23 @@ impl ClusterClient {
         self
     }
 
+    /// Resolves once the cluster disconnects, which ends every request of
+    /// its clients in flight (FR-019).
+    pub async fn closed(&self) {
+        // A close sends; a sender dropped with its `Clients` closes nothing.
+        if self.closed.clone().changed().await.is_err() {
+            std::future::pending::<()>().await;
+        }
+    }
+
     /// Sends a request as the `/api-kube/` route sends it: the context's
     /// credentials added, no retry; the caller applies its own limits.
     pub async fn send(&self, request: Request<Vec<u8>>) -> Result<Response<Body>, ClientError> {
-        let response = self
-            .client
-            .send(request.map(Body::from))
-            .await
-            .map_err(|error| ClientError::Connect(describe(&error)))?;
+        let response = tokio::select! {
+            () = self.closed() => return Err(ClientError::Disconnected),
+            response = self.client.send(request.map(Body::from)) => response,
+        }
+        .map_err(|error| ClientError::Connect(describe(&error)))?;
         if response.status() == http::StatusCode::UNAUTHORIZED
             && let Some(renew) = &self.on_unauthorized
         {
@@ -217,6 +228,8 @@ pub struct Clients {
     catalog: Catalog,
     clients: Arc<Mutex<HashMap<String, Built>>>,
     runner: Runner,
+    /// Sent by a disconnect, which the clients of the cluster see.
+    closers: Mutex<HashMap<String, tokio::sync::watch::Sender<()>>>,
 }
 
 impl Clients {
@@ -231,6 +244,7 @@ impl Clients {
             catalog: catalog.clone(),
             clients,
             runner: Runner::default(),
+            closers: Mutex::default(),
         }
     }
 
@@ -242,6 +256,13 @@ impl Clients {
     /// Drops the client of `id`, so that the next request builds it again.
     pub fn drop_client(&self, id: &str) {
         self.clients.lock().expect("the clients lock").remove(id);
+    }
+
+    /// Ends every request in flight of the clients of `id`.
+    pub fn close(&self, id: &str) {
+        if let Some(closer) = self.closers.lock().expect("the closers lock").remove(id) {
+            closer.send_replace(());
+        }
     }
 
     fn handle(&self, id: &str, built: Built) -> ClusterClient {
@@ -260,6 +281,13 @@ impl Clients {
             on_unauthorized,
             server: built.server,
             limit: REQUEST_LIMIT,
+            closed: self
+                .closers
+                .lock()
+                .expect("the closers lock")
+                .entry(id.to_string())
+                .or_insert_with(|| tokio::sync::watch::channel(()).0)
+                .subscribe(),
         }
     }
 
@@ -440,6 +468,51 @@ fn base64(bytes: &[u8]) -> String {
         }
     }
     out
+}
+
+/// What the connection reads of a cluster's context: whether its user runs a
+/// credential plugin, its namespace and the URL of its server.
+#[derive(Debug, Clone, Default, PartialEq, Eq)]
+pub struct ContextFacts {
+    pub uses_exec: bool,
+    pub namespace: Option<String>,
+    pub server: Option<String>,
+}
+
+/// The facts of `cluster`'s context, read from its file now; the default
+/// when the file or the context cannot be read.
+pub fn context_facts(cluster: &ClusterSource) -> ContextFacts {
+    let Ok(kubeconfig) = Kubeconfig::read_from(&cluster.kubeconfig_path) else {
+        return ContextFacts::default();
+    };
+    let Some(entry) = kubeconfig
+        .contexts
+        .iter()
+        .find(|named| named.name == cluster.context_name)
+        .and_then(|named| named.context.as_ref())
+    else {
+        return ContextFacts::default();
+    };
+    let uses_exec = entry.user.as_ref().is_some_and(|user| {
+        kubeconfig.auth_infos.iter().any(|named| {
+            named.name == *user
+                && named
+                    .auth_info
+                    .as_ref()
+                    .is_some_and(|info| info.exec.is_some())
+        })
+    });
+    let server = kubeconfig
+        .clusters
+        .iter()
+        .find(|named| named.name == entry.cluster)
+        .and_then(|named| named.cluster.as_ref())
+        .and_then(|cluster| cluster.server.clone());
+    ContextFacts {
+        uses_exec,
+        namespace: entry.namespace.clone(),
+        server,
+    }
 }
 
 /// The `httpsProxy` of a cluster store entry's preferences, if set.

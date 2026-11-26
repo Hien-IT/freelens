@@ -461,6 +461,23 @@ mod tests {
         assert_eq!(entity["spec"]["icon"], json!({ "background": "#ff0000" }));
     }
 
+    // The switches of pc/main/cluster/update-entity-spec.test.ts: the entity
+    // is built from the entry each time, so the other field never stays.
+    #[test]
+    fn switching_between_an_image_and_a_colour_drops_the_other_field() {
+        let image = with(json!({ "preferences": { "icon": "data:image/png;base64,AAAA" } }));
+        assert!(image["spec"]["icon"].get("background").is_none());
+        let colour = with(json!({ "preferences": { "icon": "#00ff00" } }));
+        assert!(colour["spec"]["icon"].get("src").is_none());
+        assert_eq!(colour["spec"]["icon"]["background"], "#00ff00");
+    }
+
+    #[test]
+    fn without_metrics_settings_the_source_is_local() {
+        let entity = with(json!({ "preferences": {} }));
+        assert_eq!(entity["spec"]["metrics"]["source"], "local");
+    }
+
     #[test]
     fn the_metrics_settings_reach_the_spec() {
         let entity = with(json!({ "preferences": {

@@ -1,0 +1,10 @@
+{
+  "cluster": {
+    "contextName": "kind-freelens",
+    "server": "https://0a1b2c3d.k8s.ondigitalocean.com",
+    "exec": false
+  },
+  "steps": [
+    "detectMetadata"
+  ]
+}

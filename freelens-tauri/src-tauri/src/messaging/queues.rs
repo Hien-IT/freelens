@@ -126,6 +126,9 @@ pub struct Queues {
     subscribers: Mutex<Vec<Subscriber>>,
     /// Called when the first poll of a view opens its queue, its page loaded.
     open_listeners: Mutex<Vec<OpenListener>>,
+    /// With `--messages-dump`, every message sent is appended there, one JSON
+    /// line each (`specs/009-main-cluster-connection/research.md`, R17).
+    dump: Mutex<Option<std::path::PathBuf>>,
     pub(crate) log: Log,
 }
 
@@ -135,6 +138,7 @@ impl Queues {
             state: Mutex::new(State::default()),
             subscribers: Mutex::new(Vec::new()),
             open_listeners: Mutex::new(Vec::new()),
+            dump: Mutex::new(None),
             log,
         }
     }
@@ -146,6 +150,30 @@ impl Queues {
             .lock()
             .expect("the subscribers lock")
             .push(Arc::new(subscriber));
+    }
+
+    /// Appends every message sent from now on to `path`, one JSON line each.
+    pub fn dump_to(&self, path: std::path::PathBuf) {
+        *self.dump.lock().expect("the dump lock") = Some(path);
+    }
+
+    fn record(&self, view: Option<&View>, channel: &str, payload: &Option<Value>) {
+        let Some(path) = self.dump.lock().expect("the dump lock").clone() else {
+            return;
+        };
+        let line = serde_json::json!({
+            "view": view.map(ToString::to_string),
+            "channel": channel,
+            "payload": payload,
+        });
+        if let Ok(mut file) = std::fs::OpenOptions::new()
+            .create(true)
+            .append(true)
+            .open(path)
+        {
+            use std::io::Write;
+            let _ = writeln!(file, "{line}");
+        }
     }
 
     /// Calls `listener` with the view whose first poll opens its queue, which
@@ -254,6 +282,7 @@ impl Queues {
 
     /// Appends a message to every open queue and answers the polls waiting.
     pub fn push(&self, channel: &str, payload: Option<Value>) {
+        self.record(None, channel, &payload);
         let mut events = Vec::new();
         {
             let mut state = self.state.lock().expect("the queues lock");
@@ -269,6 +298,7 @@ impl Queues {
     /// Appends a message to the queue of `view` alone and answers its poll;
     /// does nothing if `view` has no open queue.
     pub fn push_to(&self, view: &View, channel: &str, payload: Option<Value>) {
+        self.record(Some(view), channel, &payload);
         let mut events = Vec::new();
         {
             let mut state = self.state.lock().expect("the queues lock");
@@ -284,6 +314,7 @@ impl Queues {
     /// message's instead, so that a view holds at most one waiting message per
     /// key (`specs/009-main-cluster-connection/contracts/kube-watch.md`).
     pub fn push_appending(&self, view: &View, channel: &str, key: &str, payload: Value) {
+        self.record(Some(view), channel, &Some(payload.clone()));
         let mut events = Vec::new();
         {
             let mut state = self.state.lock().expect("the queues lock");

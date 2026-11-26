@@ -1,0 +1,10 @@
+{
+  "cluster": {
+    "contextName": "kind-freelens",
+    "server": "https://my-aks-dns-abc123.hcp.westeurope.azmk8s.io:443",
+    "exec": false
+  },
+  "steps": [
+    "detectMetadata"
+  ]
+}

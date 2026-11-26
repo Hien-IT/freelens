@@ -1,0 +1,24 @@
+[
+  {
+    "online": false,
+    "ready": false,
+    "disconnected": false,
+    "accessible": false,
+    "isAdmin": false,
+    "allowedNamespaces": [],
+    "resourcesToShow": [],
+    "knownResources": [],
+    "isGlobalWatchEnabled": false
+  },
+  {
+    "online": true,
+    "ready": false,
+    "disconnected": false,
+    "accessible": false,
+    "isAdmin": false,
+    "allowedNamespaces": [],
+    "resourcesToShow": [],
+    "knownResources": [],
+    "isGlobalWatchEnabled": false
+  }
+]

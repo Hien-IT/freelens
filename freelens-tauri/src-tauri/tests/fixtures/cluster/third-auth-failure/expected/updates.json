@@ -1,0 +1,26 @@
+[
+  {
+    "level": "info",
+    "message": "Starting connection ..."
+  },
+  {
+    "level": "info",
+    "message": "Refreshing connection status ..."
+  },
+  {
+    "level": "error",
+    "message": "Invalid credentials"
+  },
+  {
+    "level": "error",
+    "message": "Invalid credentials"
+  },
+  {
+    "level": "error",
+    "message": "Invalid credentials"
+  },
+  {
+    "level": "error",
+    "message": "Authentication failed 3 times, automatic reconnection paused: reconnect to try again"
+  }
+]

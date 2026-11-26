@@ -101,8 +101,10 @@ fn build(
             .log()
             .unwrap_or_else(|| catalog::CatalogLog::new(Arc::clone(log), false)),
     )?;
-    let clusters = cluster::Clusters::new(&catalog);
-    cluster::watch::register(&mut channels, &clusters, &frames, &catalog)?;
+    let clusters = cluster::Clusters::new(&catalog, channels.sender(), Arc::clone(log));
+    let watches = cluster::watch::register(&mut channels, &clusters, &frames, &catalog)?;
+    clusters.set_watches(watches);
+    cluster::channels::register(&mut channels, &clusters, &frames, stores.data_dir())?;
     if checks.messaging {
         messaging::check::register(&mut channels, announcements, Arc::clone(log))?;
     }
@@ -195,7 +197,11 @@ pub fn run() {
         )
     });
     shell.deliver_failures(&messaging.sender());
+    if let Some(path) = &options.messages_dump {
+        messaging.sender().dump_to(path.clone());
+    }
     clusters.set_shell(shell.clone());
+    let quitting = clusters.clone();
     // Closes the queues of the views that are gone without waiting for a
     // poll or a send, so that the frame record forgets a closed frame within
     // a second of its queue closing (research R5 of spec 004).
@@ -348,6 +354,9 @@ pub fn run() {
             // `run`, so the lock is released here.
             if let tauri::RunEvent::Exit = event {
                 stopping.stop();
+                // Every cluster disconnected and every credential plugin
+                // killed (FR-024).
+                quitting.disconnect_all();
                 shell.stop();
                 drop(instance_lock.lock().ok().and_then(|mut lock| lock.take()));
             }

@@ -1,0 +1,42 @@
+[
+  {
+    "level": "info",
+    "message": "Starting connection ..."
+  },
+  {
+    "level": "info",
+    "message": "Refreshing connection status ..."
+  },
+  {
+    "level": "info",
+    "message": "Refreshing cluster accessibility ..."
+  },
+  {
+    "level": "warning",
+    "message": "Failed to list kube API resource kinds, attempt 1: Error: Failed to get /apis for clusterId=parity-cluster: Internal error occurred: etcd cluster is unavailable"
+  },
+  {
+    "level": "warning",
+    "message": "Failed to list kube API resource kinds, attempt 2: Error: Failed to get /apis for clusterId=parity-cluster: Internal error occurred: etcd cluster is unavailable"
+  },
+  {
+    "level": "warning",
+    "message": "Failed to list kube API resource kinds, attempt 3: Error: Failed to get /apis for clusterId=parity-cluster: Internal error occurred: etcd cluster is unavailable"
+  },
+  {
+    "level": "warning",
+    "message": "Failed to list kube API resource kinds, attempt 4: Error: Failed to get /apis for clusterId=parity-cluster: Internal error occurred: etcd cluster is unavailable"
+  },
+  {
+    "level": "warning",
+    "message": "Failed to list kube API resource kinds, attempt 5: Error: Failed to get /apis for clusterId=parity-cluster: Internal error occurred: etcd cluster is unavailable"
+  },
+  {
+    "level": "error",
+    "message": "Failed to list kube API resources, please reconnect..."
+  },
+  {
+    "level": "info",
+    "message": "Connected, waiting for view to load ..."
+  }
+]

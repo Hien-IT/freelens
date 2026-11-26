@@ -231,7 +231,7 @@ pub fn check_text(text: &str) -> Value {
 /// js-yaml 5.5.0's `load` of the default schema: blank text, or text of comments
 /// alone, is no document; a parse error is `invalid YAML: <reason> at line
 /// <n>`, whose reason is the core's own and never quotes the text.
-fn parse_yaml(text: &str) -> Result<Option<Value>, String> {
+pub fn parse_yaml(text: &str) -> Result<Option<Value>, String> {
     if text.trim().is_empty() || is_only_comments(text) {
         return Ok(None);
     }

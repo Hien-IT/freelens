@@ -351,7 +351,14 @@ async fn answer(
     // after the head ends with what came, as a response cut early.
     let mut body = response.into_body();
     let mut bytes = Vec::new();
-    while let Ok(Some(Ok(frame))) = tokio::time::timeout(limit, body.frame()).await {
+    loop {
+        let frame = tokio::select! {
+            () = client.closed() => break,
+            frame = tokio::time::timeout(limit, body.frame()) => frame,
+        };
+        let Ok(Some(Ok(frame))) = frame else {
+            break;
+        };
         if let Ok(data) = frame.into_data() {
             bytes.extend_from_slice(&data);
         }

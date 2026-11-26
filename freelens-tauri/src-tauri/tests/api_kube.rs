@@ -34,6 +34,7 @@ struct Core {
     messaging: Messaging,
     frames: Frames,
     watches: Watches,
+    clusters: Clusters,
     lines: Arc<Mutex<Vec<String>>>,
 }
 
@@ -62,7 +63,7 @@ async fn core_with_limit(limit: Duration) -> Core {
     let log: Log = Arc::new(move |line| sink.lock().unwrap().push(line.to_string()));
     let mut channels = Channels::with_log(Arc::clone(&log));
     let frames = frames::register(&mut channels, catalog.clone(), Arc::clone(&log)).unwrap();
-    let clusters = Clusters::new(&catalog);
+    let clusters = Clusters::new(&catalog, channels.sender(), Arc::clone(&log));
     let watches = watch::register_with(&mut channels, &clusters, &frames, &catalog, limit).unwrap();
     let mut routes = Routes::default();
     api_kube::register_with(&mut routes, &clusters, limit).unwrap();
@@ -71,7 +72,7 @@ async fn core_with_limit(limit: Duration) -> Core {
         open_cluster: None,
         log: Box::new(|_| {}),
     };
-    Core {
+    let core = Core {
         api,
         dir,
         routes,
@@ -80,8 +81,20 @@ async fn core_with_limit(limit: Duration) -> Core {
         messaging: channels.build(),
         frames,
         watches,
+        clusters,
         lines,
-    }
+    };
+    connect(&core.api, &core.clusters, &core.cluster()).await;
+    core
+}
+
+/// Connects the cluster `id`, the fake API server answering as a cluster
+/// does, and forgets the requests of the connection.
+async fn connect(api: &FakeApi, clusters: &Clusters, id: &str) {
+    api.serve_a_cluster();
+    clusters.connection(id).unwrap().activate(false).await;
+    assert!(!clusters.state(id).unwrap().disconnected);
+    api.clear_requests();
 }
 
 async fn core() -> Core {
@@ -156,7 +169,10 @@ impl Inbox {
                     )
                     .unwrap();
                 let response = routes::handle(request, &catalog, &messaging).await;
-                let body: Value = serde_json::from_slice(response.body()).unwrap();
+                // A frame whose cluster left the catalog polls no more.
+                let Ok(body) = serde_json::from_slice::<Value>(response.body()) else {
+                    return;
+                };
                 for message in body["messages"].as_array().unwrap() {
                     after = message["seq"].as_u64().unwrap();
                     collected.lock().unwrap().push(message.clone());
@@ -396,11 +412,11 @@ async fn close_drops_the_request_and_sends_nothing_more() {
         json!({"id": "w1", "path": "/api/v1/pods?watch=1"}),
     )
     .await;
-    assert_eq!(core.api.open_connections(), 1);
+    assert_eq!(stream.active(), 1);
 
     send_message(&core, &host, "kube-watch:close", json!({"id": "w1"})).await;
 
-    core.api.wait_open_at_most(0).await;
+    stream.wait_active_at_most(0).await;
     assert_eq!(core.watches.count(), 0);
     stream.send("late\n");
     tokio::time::sleep(Duration::from_millis(50)).await;
@@ -412,7 +428,7 @@ async fn close_drops_the_request_and_sends_nothing_more() {
 async fn a_new_page_load_of_the_frame_ends_its_watches() {
     let core = core().await;
     let host = core.host();
-    core.api.stream("/api/v1/pods");
+    let stream = core.api.stream("/api/v1/pods");
     let _inbox = Inbox::open(&core, &host, "s1").await;
     open(
         &core,
@@ -425,7 +441,7 @@ async fn a_new_page_load_of_the_frame_ends_its_watches() {
     // The page reloads: its next poll names a new session.
     let _reloaded = Inbox::open(&core, &host, "s2").await;
 
-    core.api.wait_open_at_most(0).await;
+    stream.wait_active_at_most(0).await;
     assert_eq!(core.watches.count(), 0);
 }
 
@@ -433,7 +449,7 @@ async fn a_new_page_load_of_the_frame_ends_its_watches() {
 async fn a_forgotten_frame_ends_its_watches() {
     let core = core().await;
     let host = core.host();
-    core.api.stream("/api/v1/pods");
+    let stream = core.api.stream("/api/v1/pods");
     let _inbox = Inbox::open(&core, &host, "s1").await;
     let (status, _) = post(
         &core,
@@ -452,34 +468,29 @@ async fn a_forgotten_frame_ends_its_watches() {
 
     core.frames.forget(&core.cluster());
 
-    core.api.wait_open_at_most(0).await;
+    stream.wait_active_at_most(0).await;
     assert_eq!(core.watches.count(), 0);
 }
 
 #[tokio::test]
-async fn a_cluster_leaving_the_catalog_ends_its_watches_with_an_error() {
+async fn a_cluster_leaving_the_catalog_ends_its_watches() {
     let core = core().await;
     let host = core.host();
-    core.api.stream("/api/v1/pods");
-    let inbox = Inbox::open(&core, &host, "s1").await;
+    let stream = core.api.stream("/api/v1/pods");
+    let _inbox = Inbox::open(&core, &host, "s1").await;
     open(
         &core,
         &host,
         json!({"id": "w1", "path": "/api/v1/pods?watch=1"}),
     )
     .await;
-    let cluster = core.cluster();
 
     core.catalog.set_clusters(Vec::new(), &Default::default());
 
-    core.api.wait_open_at_most(0).await;
-    // The queue of a cluster no longer in the catalog still holds the end.
-    let ended = inbox.of("kube-watch:end");
-    assert_eq!(ended.len(), 1);
-    assert_eq!(
-        ended[0]["error"],
-        format!("Cluster {cluster} left the catalog")
-    );
+    stream.wait_active_at_most(0).await;
+    // The frame of a cluster no longer in the catalog can poll no more; its
+    // watch has ended at the API server.
+    assert_eq!(core.watches.count(), 0);
 }
 
 #[tokio::test]
@@ -502,7 +513,7 @@ async fn a_watch_without_a_chunk_for_its_limit_ends_with_an_error() {
     assert_eq!(inbox.text("w1"), "{}\n");
     let end = &inbox.of("kube-watch:end")[0];
     assert!(end["error"].as_str().unwrap().starts_with("no data for"));
-    core.api.wait_open_at_most(0).await;
+    stream.wait_active_at_most(0).await;
 }
 
 #[tokio::test]
@@ -624,7 +635,13 @@ async fn twenty_open_watches_leave_a_request_unblocked() {
     assert_eq!(response.status(), StatusCode::OK);
     assert_eq!(response.body(), br#"{"items":[]}"#);
     assert_eq!(core.watches.count(), 20);
-    assert!(core.lines.lock().unwrap().is_empty());
+    assert!(
+        core.lines
+            .lock()
+            .unwrap()
+            .iter()
+            .all(|line| !line.contains("closed the queue"))
+    );
 }
 
 // The route (contracts/api-kube.md)
@@ -853,7 +870,18 @@ async fn a_refused_target_answers_500_without_retry() {
     context.server = format!("http://127.0.0.1:{port}");
     write_kubeconfig(&file, None, &[context]);
     let catalog = Catalog::from_kubeconfig_file(&file);
-    let clusters = Clusters::new(&catalog);
+    let clusters = Clusters::new(
+        &catalog,
+        Channels::with_log(Arc::new(|_| {})).sender(),
+        Arc::new(|_| {}),
+    );
+    // The client builds, so the cluster is no longer disconnected, but nothing
+    // answers it.
+    clusters
+        .connection(&catalog.cluster_ids()[0])
+        .unwrap()
+        .activate(false)
+        .await;
     let mut routes = Routes::default();
     api_kube::register(&mut routes, &clusters).unwrap();
     let state = State {
@@ -885,7 +913,6 @@ async fn a_refused_target_answers_500_without_retry() {
 #[tokio::test]
 async fn a_client_that_cannot_be_built_answers_503_with_the_reason() {
     let core = core().await;
-    // The file goes away after the catalog read it.
     let file = core.dir.join("gone");
     write_kubeconfig(
         &file,
@@ -893,8 +920,16 @@ async fn a_client_that_cannot_be_built_answers_503_with_the_reason() {
         &[Context::new("gone", &core.api, User::None)],
     );
     let catalog = Catalog::from_kubeconfig_file(&file);
+    let clusters = Clusters::new(
+        &catalog,
+        Channels::with_log(Arc::new(|_| {})).sender(),
+        Arc::new(|_| {}),
+    );
+    // Connected first, then the file goes away and the catalog reads it again.
+    connect(&core.api, &clusters, &catalog.cluster_ids()[0]).await;
     std::fs::remove_file(&file).unwrap();
-    let clusters = Clusters::new(&catalog);
+    let reread = catalog.cluster_ids().into_iter().collect();
+    catalog.set_clusters(catalog.clusters(), &reread);
     let mut routes = Routes::default();
     api_kube::register(&mut routes, &clusters).unwrap();
     let id = catalog.cluster_ids()[0].clone();
@@ -960,7 +995,7 @@ async fn no_head_within_the_limit_answers_500_and_a_quiet_body_ends_at_it() {
     });
     assert_eq!(response.status(), StatusCode::OK);
     assert_eq!(response.body(), b"{\"items\":");
-    core.api.wait_open_at_most(0).await;
+    stream.wait_active_at_most(0).await;
 }
 
 #[tokio::test]
@@ -979,7 +1014,12 @@ async fn the_request_goes_to_the_cluster_of_the_host_whatever_it_says() {
     );
     let catalog = Catalog::from_kubeconfig_file(&file);
     let ids = catalog.cluster_ids();
-    let clusters = Clusters::new(&catalog);
+    let clusters = Clusters::new(
+        &catalog,
+        Channels::with_log(Arc::new(|_| {})).sender(),
+        Arc::new(|_| {}),
+    );
+    connect(&other, &clusters, &ids[1]).await;
     let mut routes = Routes::default();
     api_kube::register(&mut routes, &clusters).unwrap();
     let state = State {
@@ -1036,4 +1076,31 @@ async fn a_redirect_inside_the_api_server_stays_on_the_route() {
         response.headers()[header::LOCATION],
         "https://some-login-page/sign-in"
     );
+}
+
+#[tokio::test]
+async fn a_cluster_not_connected_is_answered_503() {
+    let core = core().await;
+    core.clusters.disconnect(&core.cluster());
+    for method in [Method::GET, Method::POST] {
+        let response = kube(&core, method, "/api-kube/api/v1/namespaces").await;
+        assert_eq!(response.status(), StatusCode::SERVICE_UNAVAILABLE);
+        assert_eq!(response.headers()[header::CACHE_CONTROL], "no-store");
+        assert_eq!(
+            text(&response),
+            format!(
+                r#"{{"kind":"Status","apiVersion":"v1","metadata":{{}},"status":"Failure","message":"Cluster {} is not connected","reason":"ServiceUnavailable","code":503}}"#,
+                core.cluster()
+            )
+        );
+    }
+    let _inbox = Inbox::open(&core, &core.host(), "s1").await;
+    let (_, answer) = open(
+        &core,
+        &core.host(),
+        json!({"id": "w1", "path": "/api/v1/pods?watch=1"}),
+    )
+    .await;
+    assert_eq!(answer["payload"]["status"], 503);
+    assert!(core.api.requests().is_empty());
 }

@@ -252,6 +252,7 @@ impl Recorded {
 pub struct Stream {
     sender: broadcast::Sender<StreamEvent>,
     opened: Arc<AtomicUsize>,
+    active: Arc<AtomicUsize>,
 }
 
 #[derive(Clone, Debug)]
@@ -266,6 +267,7 @@ impl Stream {
         Self {
             sender: broadcast::channel(4096).0,
             opened: Arc::default(),
+            active: Arc::default(),
         }
     }
 
@@ -286,6 +288,25 @@ impl Stream {
     /// How many requests of this route have received its head so far.
     pub fn opened(&self) -> usize {
         self.opened.load(Ordering::SeqCst)
+    }
+
+    /// How many requests of this route stream now.
+    pub fn active(&self) -> usize {
+        self.active.load(Ordering::SeqCst)
+    }
+
+    /// Waits until at most `count` requests of this route stream.
+    pub async fn wait_active_at_most(&self, count: usize) {
+        for _ in 0..500 {
+            if self.active() <= count {
+                return;
+            }
+            tokio::time::sleep(Duration::from_millis(10)).await;
+        }
+        panic!(
+            "{} requests still stream, expected at most {count}",
+            self.active()
+        );
     }
 
     /// Waits until at least `count` requests have received the head.
@@ -738,6 +759,11 @@ impl FakeApi {
                     return false;
                 }
                 source.opened.fetch_add(1, Ordering::SeqCst);
+                source.active.fetch_add(1, Ordering::SeqCst);
+                let active = Arc::clone(&source.active);
+                let _streaming = scopeguard(move || {
+                    active.fetch_sub(1, Ordering::SeqCst);
+                });
                 let mut probe = [0u8; 1];
                 loop {
                     tokio::select! {
@@ -792,6 +818,19 @@ impl FakeApi {
             }
         }
     }
+}
+
+/// Runs `f` when dropped.
+struct Guard<F: FnMut()>(F);
+
+impl<F: FnMut()> Drop for Guard<F> {
+    fn drop(&mut self) {
+        (self.0)();
+    }
+}
+
+fn scopeguard<F: FnMut()>(f: F) -> Guard<F> {
+    Guard(f)
 }
 
 fn reason(status: u16) -> &'static str {
