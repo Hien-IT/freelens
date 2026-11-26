@@ -22,6 +22,7 @@ The cluster is the one the frame's host names, never the path or the body.
 | the client cannot be built                                                                     | `503`, the same `Status` with `Failed to start the proxy of cluster <id>: <reason>`                                                                                                  |
 | the API server's connection fails before the head                                              | `500`, `text/plain`, `Oops, something went wrong.\n<reason>`                                                                                                                         |
 | no head within 30 s, or 30 s without a chunk of the body                                       | the request to the API server is dropped; `500` as above if no head was sent                                                                                                         |
+| the API server's connection fails, or 30 s pass, after the head                                | the head and the body received so far, as the Electron build's client sees a response that ends early                                                                                |
 | otherwise                                                                                      | the API server's status, headers and body, as below                                                                                                                                  |
 
 Every answer carries `Cache-Control: no-store`.
