@@ -186,6 +186,16 @@ pub fn run() {
             std::process::exit(1);
         }
     };
+    // The login shell's environment, for the credential plugins; it does not
+    // hold the window back (specs/009-main-cluster-connection, FR-033).
+    let shell = tauri::async_runtime::block_on(async {
+        foundation::shell_env::ShellEnv::start(
+            stores.preferences().shell.as_deref(),
+            Arc::clone(&log),
+        )
+    });
+    shell.deliver_failures(&messaging.sender());
+    clusters.set_shell(shell.clone());
     // Closes the queues of the views that are gone without waiting for a
     // poll or a send, so that the frame record forgets a closed frame within
     // a second of its queue closing (research R5 of spec 004).
@@ -338,6 +348,7 @@ pub fn run() {
             // `run`, so the lock is released here.
             if let tauri::RunEvent::Exit = event {
                 stopping.stop();
+                shell.stop();
                 drop(instance_lock.lock().ok().and_then(|mut lock| lock.take()));
             }
         });

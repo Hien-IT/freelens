@@ -59,6 +59,9 @@ uuid = { version = "1.29.3", features = ["v4"] }
 
 [target.'cfg(target_os = "macos")'.dependencies]
 objc2-foundation = { version = "0.3.2", default-features = false, features = [
+  "NSArray",
+  "NSEnumerator",
+  "NSLocale",
   "NSObject",
   "NSProcessInfo",
   "NSString",

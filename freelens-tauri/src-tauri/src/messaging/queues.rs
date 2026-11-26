@@ -119,10 +119,13 @@ pub enum QueueEvent {
 }
 
 type Subscriber = Arc<dyn Fn(&QueueEvent) + Send + Sync>;
+type OpenListener = Arc<dyn Fn(&View) + Send + Sync>;
 
 pub struct Queues {
     state: Mutex<State>,
     subscribers: Mutex<Vec<Subscriber>>,
+    /// Called when the first poll of a view opens its queue, its page loaded.
+    open_listeners: Mutex<Vec<OpenListener>>,
     pub(crate) log: Log,
 }
 
@@ -131,6 +134,7 @@ impl Queues {
         Self {
             state: Mutex::new(State::default()),
             subscribers: Mutex::new(Vec::new()),
+            open_listeners: Mutex::new(Vec::new()),
             log,
         }
     }
@@ -142,6 +146,15 @@ impl Queues {
             .lock()
             .expect("the subscribers lock")
             .push(Arc::new(subscriber));
+    }
+
+    /// Calls `listener` with the view whose first poll opens its queue, which
+    /// no `QueueEvent` reports, outside the lock of the queues.
+    pub fn on_opened(&self, listener: impl Fn(&View) + Send + Sync + 'static) {
+        self.open_listeners
+            .lock()
+            .expect("the listeners lock")
+            .push(Arc::new(listener));
     }
 
     fn report(&self, events: Vec<QueueEvent>) {
@@ -165,10 +178,12 @@ impl Queues {
     /// starts it afresh, as a reloaded page.
     pub async fn poll(&self, view: View, session: &str, after: u64) -> Vec<Polled> {
         let mut events = Vec::new();
+        let opened;
         let waiting = {
             let now = Instant::now();
             let mut state = self.state.lock().expect("the queues lock");
             self.close_idle(&mut state, now, &mut events);
+            opened = !state.queues.contains_key(&view) && !state.closed.contains_key(&view);
             state.next_poll += 1;
             let id = state.next_poll;
             // Only a view with no queue has a closed one behind it.
@@ -205,6 +220,16 @@ impl Queues {
             }
         };
         self.report(events);
+        if opened {
+            let listeners = self
+                .open_listeners
+                .lock()
+                .expect("the listeners lock")
+                .clone();
+            for listener in &listeners {
+                listener(&view);
+            }
+        }
         let (id, receiver) = match waiting {
             Ok(waiting) => waiting,
             Err(messages) => return messages,

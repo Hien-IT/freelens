@@ -19,11 +19,10 @@ use kube::config::{KubeConfigOptions, Kubeconfig};
 use kube::{Client, Config};
 use serde_json::{Map, Value};
 
+use super::exec::{Credential, Plugin, Runner};
 use crate::catalog::{Catalog, CatalogEvent, ClusterSource};
-
-#[cfg(test)]
-#[path = "../../tests/fake_api/mod.rs"]
-mod fake_api;
+use crate::foundation::shell_env::ShellEnv;
+use k8s_openapi::jiff::Timestamp;
 
 /// The limit of the core's own requests, as `k8sRequest` of the Electron
 /// build has it (`main/k8s-request.injectable.ts`).
@@ -108,6 +107,8 @@ pub fn describe(error: &(dyn std::error::Error + 'static)) -> String {
 pub struct ClusterClient {
     id: String,
     client: Client,
+    /// Drops the credential of a plugin after a `401` (research R3).
+    on_unauthorized: Option<Arc<dyn Fn() + Send + Sync>>,
     /// The URL of the API server, as kube reads it from the kubeconfig.
     server: String,
     /// The limit of the core's own requests; shorter in tests.
@@ -133,10 +134,17 @@ impl ClusterClient {
     /// Sends a request as the `/api-kube/` route sends it: the context's
     /// credentials added, no retry; the caller applies its own limits.
     pub async fn send(&self, request: Request<Vec<u8>>) -> Result<Response<Body>, ClientError> {
-        self.client
+        let response = self
+            .client
             .send(request.map(Body::from))
             .await
-            .map_err(|error| ClientError::Connect(describe(&error)))
+            .map_err(|error| ClientError::Connect(describe(&error)))?;
+        if response.status() == http::StatusCode::UNAUTHORIZED
+            && let Some(renew) = &self.on_unauthorized
+        {
+            renew();
+        }
+        Ok(response)
     }
 
     /// A request of the core's own with a JSON answer, within
@@ -192,17 +200,28 @@ impl ClusterClient {
     }
 }
 
+/// A client built, with the URL of its API server and the expiry of the
+/// plugin's credential it holds, if any.
+#[derive(Clone)]
+struct Built {
+    client: Client,
+    server: String,
+    expires_at: Option<Timestamp>,
+    exec: bool,
+}
+
 /// The clients of the clusters, one per cluster id, built on first use from
 /// the cluster's own kubeconfig file and context, and dropped when the
-/// cluster changes or leaves the catalog.
+/// cluster changes or leaves the catalog, or its plugin's credential renews.
 pub struct Clients {
     catalog: Catalog,
-    clients: Arc<Mutex<HashMap<String, (Client, String)>>>,
+    clients: Arc<Mutex<HashMap<String, Built>>>,
+    runner: Runner,
 }
 
 impl Clients {
     pub fn new(catalog: &Catalog) -> Self {
-        let clients: Arc<Mutex<HashMap<String, (Client, String)>>> = Arc::default();
+        let clients: Arc<Mutex<HashMap<String, Built>>> = Arc::default();
         let dropping = Arc::clone(&clients);
         catalog.subscribe(move |event| {
             let (CatalogEvent::ClusterChanged(id) | CatalogEvent::ClusterRemoved(id)) = event;
@@ -211,7 +230,13 @@ impl Clients {
         Self {
             catalog: catalog.clone(),
             clients,
+            runner: Runner::default(),
         }
+    }
+
+    /// The runs of the credential plugins.
+    pub fn runner(&self) -> &Runner {
+        &self.runner
     }
 
     /// Drops the client of `id`, so that the next request builds it again.
@@ -219,36 +244,202 @@ impl Clients {
         self.clients.lock().expect("the clients lock").remove(id);
     }
 
-    /// The client of the cluster `id` of the catalog.
-    pub async fn client(&self, id: &str) -> Result<ClusterClient, ClientError> {
+    fn handle(&self, id: &str, built: Built) -> ClusterClient {
+        let on_unauthorized: Option<Arc<dyn Fn() + Send + Sync>> = built.exec.then(|| {
+            let clients = Arc::clone(&self.clients);
+            let runner = self.runner.clone();
+            let id = id.to_string();
+            Arc::new(move || {
+                clients.lock().expect("the clients lock").remove(&id);
+                runner.invalidate(&id);
+            }) as Arc<dyn Fn() + Send + Sync>
+        });
+        ClusterClient {
+            id: id.to_string(),
+            client: built.client,
+            on_unauthorized,
+            server: built.server,
+            limit: REQUEST_LIMIT,
+        }
+    }
+
+    /// The client of the cluster `id` of the catalog; a context with `exec`
+    /// gets its credential from the plugin, run with `shell`'s environment.
+    pub async fn client(&self, id: &str, shell: &ShellEnv) -> Result<ClusterClient, ClientError> {
         let cluster = self.catalog.cluster(id).ok_or(ClientError::NotInCatalog)?;
-        if let Some((client, server)) = self.clients.lock().expect("the clients lock").get(id) {
-            return Ok(ClusterClient {
-                id: id.to_string(),
-                client: client.clone(),
-                server: server.clone(),
-                limit: REQUEST_LIMIT,
+        let cached = self
+            .clients
+            .lock()
+            .expect("the clients lock")
+            .get(id)
+            .cloned();
+        if let Some(built) = cached {
+            let fresh = built.expires_at.is_none_or(|expiry| {
+                Credential {
+                    token: None,
+                    client_tls: None,
+                    expires_at: Some(expiry),
+                }
+                .is_fresh(Timestamp::now())
             });
+            if fresh {
+                return Ok(self.handle(id, built));
+            }
+            self.drop_client(id);
         }
         let https_proxy = self
             .catalog
             .store_entry(id)
             .and_then(|entry| https_proxy_setting(&entry));
-        let config = config(&cluster, https_proxy.as_deref()).await?;
+        // The file holds credentials; the parser's text, which can quote it,
+        // goes to no view.
+        let kubeconfig = Kubeconfig::read_from(&cluster.kubeconfig_path).map_err(|error| {
+            ClientError::Build(format!("cannot read the kubeconfig file: {error}"))
+        })?;
+        let (kubeconfig, credential) = match exec_of(&kubeconfig, &cluster) {
+            Some(plugin) => {
+                let credential = self
+                    .runner
+                    .credential(id, &plugin, shell)
+                    .await
+                    .map_err(ClientError::Credential)?;
+                (
+                    with_credential(kubeconfig, &cluster.context_name, &credential)?,
+                    Some(credential),
+                )
+            }
+            None => (kubeconfig, None),
+        };
+        let config = config_from(kubeconfig, &cluster.context_name, https_proxy.as_deref()).await?;
         let server = config.cluster_url.to_string();
         let client =
             Client::try_from(config).map_err(|error| ClientError::Build(describe(&error)))?;
+        let built = Built {
+            client,
+            server,
+            expires_at: credential
+                .as_ref()
+                .and_then(|credential| credential.expires_at),
+            exec: credential.is_some(),
+        };
         self.clients
             .lock()
             .expect("the clients lock")
-            .insert(id.to_string(), (client.clone(), server.clone()));
-        Ok(ClusterClient {
-            id: id.to_string(),
-            client,
-            server,
-            limit: REQUEST_LIMIT,
-        })
+            .insert(id.to_string(), built.clone());
+        Ok(self.handle(id, built))
     }
+}
+
+/// The named user and cluster of `context`, as JSON.
+fn context_entries(kubeconfig: &Kubeconfig, context: &str) -> Option<(Value, Value, String)> {
+    let named = kubeconfig
+        .contexts
+        .iter()
+        .find(|named| named.name == context)?;
+    let entry = named.context.as_ref()?;
+    let user_name = entry.user.clone()?;
+    let user = kubeconfig
+        .auth_infos
+        .iter()
+        .find(|named| named.name == user_name)?
+        .auth_info
+        .as_ref()
+        .and_then(|info| serde_json::to_value(info).ok())?;
+    let cluster = kubeconfig
+        .clusters
+        .iter()
+        .find(|named| named.name == entry.cluster)
+        .and_then(|named| named.cluster.as_ref())
+        .and_then(|cluster| serde_json::to_value(cluster).ok())
+        .unwrap_or(Value::Null);
+    Some((user, cluster, user_name))
+}
+
+/// The plugin of the context's user, if it has `exec`.
+fn exec_of(kubeconfig: &Kubeconfig, cluster: &ClusterSource) -> Option<Plugin> {
+    let (user, cluster_entry, _) = context_entries(kubeconfig, &cluster.context_name)?;
+    let exec = user.get("exec")?;
+    let base_dir = cluster
+        .kubeconfig_path
+        .parent()
+        .map(std::path::Path::to_path_buf)
+        .unwrap_or_default();
+    let mut info = serde_json::json!({});
+    for (from, to) in [
+        ("server", "server"),
+        ("tls-server-name", "tls-server-name"),
+        ("insecure-skip-tls-verify", "insecure-skip-tls-verify"),
+        ("certificate-authority-data", "certificate-authority-data"),
+        ("proxy-url", "proxy-url"),
+    ] {
+        if let Some(value) = cluster_entry.get(from) {
+            info[to] = value.clone();
+        }
+    }
+    Plugin::from_kubeconfig(exec, &info, &base_dir)
+}
+
+/// `kubeconfig` with the plugin's credential in place of the `exec` of the
+/// context's user: a client certificate and key, else a token.
+fn with_credential(
+    kubeconfig: Kubeconfig,
+    context: &str,
+    credential: &Credential,
+) -> Result<Kubeconfig, ClientError> {
+    let Some((_, _, user_name)) = context_entries(&kubeconfig, context) else {
+        return Ok(kubeconfig);
+    };
+    let mut json =
+        serde_json::to_value(&kubeconfig).map_err(|error| ClientError::Build(error.to_string()))?;
+    if let Some(users) = json.get_mut("users").and_then(Value::as_array_mut) {
+        for named in users
+            .iter_mut()
+            .filter(|named| named["name"] == user_name.as_str())
+        {
+            let mut user = serde_json::Map::new();
+            match &credential.client_tls {
+                Some((cert, key)) => {
+                    user.insert(
+                        "client-certificate-data".into(),
+                        Value::from(base64(cert.as_bytes())),
+                    );
+                    user.insert(
+                        "client-key-data".into(),
+                        Value::from(base64(key.as_bytes())),
+                    );
+                }
+                None => {
+                    if let Some(token) = &credential.token {
+                        user.insert("token".into(), Value::from(token.clone()));
+                    }
+                }
+            }
+            named["user"] = Value::Object(user);
+        }
+    }
+    serde_json::from_value(json).map_err(|error| ClientError::Build(error.to_string()))
+}
+
+/// Standard base64 with padding, for the `-data` fields.
+fn base64(bytes: &[u8]) -> String {
+    const TABLE: &[u8; 64] = b"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+    let mut out = String::with_capacity(bytes.len().div_ceil(3) * 4);
+    for chunk in bytes.chunks(3) {
+        let b = [
+            chunk[0],
+            *chunk.get(1).unwrap_or(&0),
+            *chunk.get(2).unwrap_or(&0),
+        ];
+        let n = (u32::from(b[0]) << 16) | (u32::from(b[1]) << 8) | u32::from(b[2]);
+        for i in 0..4 {
+            out.push(if i <= chunk.len() {
+                TABLE[(n >> (18 - 6 * i) & 63) as usize] as char
+            } else {
+                '='
+            });
+        }
+    }
+    out
 }
 
 /// The `httpsProxy` of a cluster store entry's preferences, if set.
@@ -272,9 +463,18 @@ pub async fn config(
     // to no view.
     let kubeconfig = Kubeconfig::read_from(&cluster.kubeconfig_path)
         .map_err(|error| ClientError::Build(format!("cannot read the kubeconfig file: {error}")))?;
-    let has_proxy_url = kubeconfig_proxy_url(&kubeconfig, &cluster.context_name).is_some();
+    config_from(kubeconfig, &cluster.context_name, https_proxy).await
+}
+
+/// `config` from a kubeconfig already read.
+async fn config_from(
+    kubeconfig: Kubeconfig,
+    context: &str,
+    https_proxy: Option<&str>,
+) -> Result<Config, ClientError> {
+    let has_proxy_url = kubeconfig_proxy_url(&kubeconfig, context).is_some();
     let options = KubeConfigOptions {
-        context: Some(cluster.context_name.clone()),
+        context: Some(context.to_string()),
         ..KubeConfigOptions::default()
     };
     let mut config = Config::from_custom_kubeconfig(kubeconfig, &options)
@@ -317,11 +517,15 @@ fn kubeconfig_proxy_url(kubeconfig: &Kubeconfig, context: &str) -> Option<String
 
 #[cfg(test)]
 mod tests {
-    use super::fake_api::{
-        Answer, ConnectProxy, Context, FakeApi, Tls, User, temp_dir, write_kubeconfig,
-    };
     use super::*;
+    use crate::cluster::fake_api::{
+        self, Answer, ConnectProxy, Context, FakeApi, Tls, User, temp_dir, write_kubeconfig,
+    };
     use serde_json::json;
+
+    fn shell() -> ShellEnv {
+        ShellEnv::ready(crate::foundation::shell_env::process_env())
+    }
 
     /// A catalog of the contexts of `file`.
     fn catalog(file: &std::path::Path) -> Catalog {
@@ -330,7 +534,7 @@ mod tests {
 
     async fn client_of(catalog: &Catalog, index: usize) -> ClusterClient {
         Clients::new(catalog)
-            .client(&catalog.cluster_ids()[index])
+            .client(&catalog.cluster_ids()[index], &shell())
             .await
             .unwrap()
     }
@@ -437,14 +641,14 @@ mod tests {
         let clients = Clients::new(&catalog);
 
         clients
-            .client(&id)
+            .client(&id, &shell())
             .await
             .unwrap()
             .get_json("/version")
             .await
             .unwrap();
         clients
-            .client(&id)
+            .client(&id, &shell())
             .await
             .unwrap()
             .get_json("/version")
@@ -455,7 +659,7 @@ mod tests {
         write_kubeconfig(&file, Some(&new), &[Context::new("a", &new, User::None)]);
         // Unchanged as long as the catalog reports nothing.
         clients
-            .client(&id)
+            .client(&id, &shell())
             .await
             .unwrap()
             .get_json("/version")
@@ -465,7 +669,7 @@ mod tests {
 
         clients.drop_client(&id);
         clients
-            .client(&id)
+            .client(&id, &shell())
             .await
             .unwrap()
             .get_json("/version")
@@ -600,14 +804,14 @@ mod tests {
         let catalog = catalog(&file);
         let id = catalog.cluster_ids()[0].clone();
         let clients = Clients::new(&catalog);
-        clients.client(&id).await.unwrap();
+        clients.client(&id, &shell()).await.unwrap();
         assert!(clients.clients.lock().unwrap().contains_key(&id));
 
         catalog.set_clusters(Vec::new(), &Default::default());
 
         assert!(!clients.clients.lock().unwrap().contains_key(&id));
         assert_eq!(
-            clients.client(&id).await.err(),
+            clients.client(&id, &shell()).await.err(),
             Some(ClientError::NotInCatalog)
         );
     }
@@ -698,5 +902,101 @@ mod tests {
             )
         );
         assert_eq!(request.header("authorization"), None);
+    }
+
+    // A context with exec (research R3)
+
+    #[tokio::test]
+    async fn a_401_drops_the_plugin_s_credential_and_the_next_client_runs_it_again() {
+        use crate::cluster::fake_api::{Exec, Plugin as Script, plugin_runs, write_plugin};
+        let dir = temp_dir("client-exec-401");
+        let api = FakeApi::start(Tls::None, &dir).await;
+        api.answer(
+            "GET",
+            "/version",
+            Answer::status(401, "Unauthorized", "expired"),
+        );
+        api.answer(
+            "GET",
+            "/version",
+            Answer::json(200, json!({"gitVersion": "v1"})),
+        );
+        let plugin = write_plugin(
+            &dir,
+            "login",
+            &Script::Token {
+                token: crate::cluster::fake_api::EXEC_TOKEN.into(),
+                expires: None,
+            },
+            None,
+        );
+        let file = dir.join("config");
+        write_kubeconfig(
+            &file,
+            Some(&api),
+            &[Context::new(
+                "a",
+                &api,
+                User::Exec(Exec::new(plugin.to_string_lossy())),
+            )],
+        );
+        let catalog = catalog(&file);
+        let id = catalog.cluster_ids()[0].clone();
+        let clients = Clients::new(&catalog);
+
+        let client = clients.client(&id, &shell()).await.unwrap();
+        assert_eq!(
+            client.get_json("/version").await.unwrap_err().status_code(),
+            Some(401)
+        );
+        assert_eq!(
+            api.requests_of("/version")[0].header("authorization"),
+            Some(format!("Bearer {}", crate::cluster::fake_api::EXEC_TOKEN).as_str())
+        );
+        assert_eq!(plugin_runs(&dir, "login"), 1);
+
+        let client = clients.client(&id, &shell()).await.unwrap();
+        client.get_json("/version").await.unwrap();
+        assert_eq!(plugin_runs(&dir, "login"), 2);
+    }
+
+    #[tokio::test]
+    async fn a_failing_plugin_is_a_credential_error_of_the_client() {
+        use crate::cluster::fake_api::{Exec, Plugin as Script, write_plugin};
+        let dir = temp_dir("client-exec-fails");
+        let api = FakeApi::start(Tls::None, &dir).await;
+        let plugin = write_plugin(
+            &dir,
+            "login",
+            &Script::Fail {
+                code: 2,
+                message: "no".into(),
+            },
+            None,
+        );
+        let file = dir.join("config");
+        write_kubeconfig(
+            &file,
+            Some(&api),
+            &[Context::new(
+                "a",
+                &api,
+                User::Exec(Exec::new(plugin.to_string_lossy())),
+            )],
+        );
+        let catalog = catalog(&file);
+        let error = Clients::new(&catalog)
+            .client(&catalog.cluster_ids()[0], &shell())
+            .await
+            .err()
+            .unwrap();
+        assert_eq!(
+            error,
+            ClientError::Credential(format!(
+                "getting credentials: exec: executable {} failed with exit code 2",
+                plugin.display()
+            ))
+        );
+        assert!(api.requests().is_empty());
     }
 }

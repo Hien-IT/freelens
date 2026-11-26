@@ -12,6 +12,7 @@ pub mod download;
 pub mod local_storage;
 pub mod log_file;
 pub mod paths;
+pub mod shell_env;
 pub mod sync_box;
 pub mod templates;
 

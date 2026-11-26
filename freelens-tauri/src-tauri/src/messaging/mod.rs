@@ -242,6 +242,12 @@ impl Sender {
         self.queues.sweep();
     }
 
+    /// Calls `listener` with a view whose first poll opens its queue: its page
+    /// has loaded; usable before `Channels::build`.
+    pub fn on_queue_opened(&self, listener: impl Fn(&View) + Send + Sync + 'static) {
+        self.queues.on_opened(listener);
+    }
+
     /// Calls `listener` with every later queue event, outside the queues'
     /// lock; usable before `Channels::build`.
     pub fn on_queue_event(&self, listener: impl Fn(&QueueEvent) + Send + Sync + 'static) {
