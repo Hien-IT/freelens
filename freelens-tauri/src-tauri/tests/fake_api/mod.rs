@@ -914,7 +914,11 @@ impl ConnectProxy {
                         .unwrap_or_default()
                         .to_string();
                     recording.lock().unwrap().push(target.clone());
-                    let Ok(mut upstream) = tokio::net::TcpStream::connect(&target).await else {
+                    // `fake-api.test` is the fake server for a client that
+                    // would not send a loopback address through a proxy.
+                    let upstream_target = target.replace("fake-api.test", "127.0.0.1");
+                    let Ok(mut upstream) = tokio::net::TcpStream::connect(&upstream_target).await
+                    else {
                         let _ = client.write_all(b"HTTP/1.1 502 Bad Gateway\r\n\r\n").await;
                         return;
                     };

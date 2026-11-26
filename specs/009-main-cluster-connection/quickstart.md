@@ -82,15 +82,17 @@ opens it again. Repeat on the Electron build of `main`.
 By hand, with made-up contexts in the run's kubeconfig:
 
 - an `httpsProxy` in the cluster's settings that points at a local CONNECT
-  proxy (any test proxy on `127.0.0.1`): the proxy logs the tunnel to the kind
-  API server in both builds;
+  proxy (any test proxy on `127.0.0.1`), for a context whose server names the
+  kind API server by the machine's LAN address: the proxy logs the tunnel in
+  both builds. Neither build sends a request for `localhost` or a loopback
+  address through a proxy, so the kind context as `kind` writes it goes direct;
 - `proxy-url` in the kubeconfig and an `httpsProxy` setting together: both
   builds use the kubeconfig's;
 - an `HTTPS_PROXY` in the environment of `open -n --env`: both builds use it
   when neither of the above is set; `NO_PROXY=127.0.0.1` makes both go direct.
 
-Record any difference in the pull request; research R2 marks the client-go
-order Unverified.
+Record any difference in the pull request; research R2 gives the order the
+core follows and marks client-go's own Unverified.
 
 ## 5. Disconnecting and deleting (SC-011, Story 3)
 

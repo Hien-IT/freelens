@@ -368,3 +368,120 @@ MEASURE_DATA_DIR="${TMPDIR%/}/catalog-seed" specs/001-tauri-shell-spike/measure.
 ```
 
 Script in `workdir=` của mỗi lần chạy; xoá thư mục đó sau khi đọc xong.
+
+## Kết nối cluster (spec 009)
+
+Số đo cho SC-002 đến SC-006, SC-001, SC-009 đến SC-011 và SC-013 của
+`specs/009-main-cluster-connection`. Đo ngày 2026-11-26 trên cùng máy với phần
+Kết quả, bằng `specs/009-main-cluster-connection/measure-connection.mjs`.
+
+### Kết quả
+
+Mỗi lần chạy, hai bản làm cùng các bước: bấm cluster của context kind, chờ
+sidebar, vào Config Maps, chọn All Namespaces, vào Pods, rồi để app yên đến hết
+60 s tính từ lúc bấm cluster. Mỗi ô là trung vị, trong ngoặc là các lần đo.
+
+| Chỉ số                                                              | Bản Electron                       | Bản Tauri                                           | Cổng       |
+| ------------------------------------------------------------------- | ---------------------------------- | --------------------------------------------------- | ---------- |
+| Kết nối cluster: từ lúc bấm đến khi sidebar hiện (ms)               | 478 (496 / 468 / 478)              | 903 (794 / 903 / 929), bấm khi shell sync chưa xong | ≤ Electron |
+| Từ lúc môi trường của shell sync sẵn sàng đến khi sidebar hiện (ms) |                                    | 48 (56 / 34 / 48)                                   | ≤ Electron |
+| Hàng ConfigMap đầu tiên, sau khi chọn All Namespaces (ms)           | 96 (83 / 96 / 103)                 | 62 (58 / 71 / 62)                                   | ≤ Electron |
+| Hàng Pod đầu tiên, sau khi bấm Pods (ms)                            | 29 (31 / 29 / 28)                  | 4 (4 / 5 / 4)                                       | ≤ Electron |
+| CPU của main (Electron) hoặc lõi (Tauri) trong 60 s (s)             | 0.75 (0.75 / 0.65 / 0.78)          | 0.11 (0.33 / 0.10 / 0.11)                           | ≤ Electron |
+| Pod mới hiện trong bảng, sau khi `kubectl run` trả về, 5 lần (ms)   | 423 (1039 / 420 / 423 / 401 / 439) | 0 (0 / −2 / 5 / −2 / 0)                             |            |
+| Pod biến khỏi bảng, sau khi `kubectl delete` trả về, 5 lần (ms)     | 931 (921 / 925 / 931 / 935 / 937)  | −1 (−2 / −2 / 52 / −1 / 39)                         |            |
+
+- **Sidebar và shell sync (SC-002):** lõi chọn proxy từ môi trường của shell
+  sync, như client-go của bản Electron đọc nó sau shell sync (research R2), nên
+  một cluster bấm khi shell sync chưa xong chỉ kết nối khi nó xong. Kịch bản
+  bấm 0,34–0,87 s sau khi app khởi động, còn shell sync của máy này mất
+  1,2–1,6 s, nên dòng "từ lúc bấm" gồm phần shell sync còn lại; tính từ lúc
+  shell sync xong, sidebar hiện sau 34–56 ms. Bản Electron mở cửa sổ sau shell
+  sync [Inference, research R4], nên ở đó không bấm được trước lúc ấy; con số
+  478 ms của nó là từ một lần bấm khi shell sync đã xong. Tính từ lúc khởi
+  động, sidebar của bản Tauri hiện lúc 1,24–1,67 s. Với một lần bấm sau shell
+  sync, bản Tauri đạt cổng; với một lần bấm trong lúc shell sync chạy thì
+  không.
+- **Bản đo:** các số của bản Tauri ở bảng trên là của dmg cuối của nhánh này.
+  Ba lần đo trước, với dmg chưa chờ shell sync để chọn proxy, cho sidebar 46
+  (46 / 37 / 55) ms, ConfigMap 69 ms, Pod 6 ms, CPU 0,09 s. Các số của
+  `watch`, `ports` và `messages` là của dmg trước dmg cuối, khác ở cách chọn
+  proxy, cách báo plugin lỗi và cách ghi `--messages-dump`; context kind dùng
+  chứng chỉ client trên `127.0.0.1`, không đi qua proxy hay plugin.
+- **Watch (SC-005):** ở bản Tauri, hàng của pod hiện hay biến gần như cùng lúc
+  với lúc `kubectl` trả về; số âm là hàng đổi trước khi tiến trình `kubectl`
+  thoát, trong sai số đọc đồng hồ của hai tiến trình. Bản Electron chậm hơn
+  khoảng 0,4 s và 0,9 s; research R10 không tìm vì sao.
+- **CPU:** `ps -o time` của tiến trình main bản Electron (không tính
+  renderer, helper và freelens-k8s-proxy) và của tiến trình app bản Tauri,
+  nơi lõi chạy (không tính các tiến trình WebContent của WebKit), từ lúc bấm
+  cluster đến hết 60 s.
+- **Cổng, tiến trình và watch (SC-010, SC-011):** trong lúc chạy kịch bản,
+  tiến trình của bản Tauri không lắng nghe cổng TCP nào và không có tiến trình
+  con (`lsof`, `pgrep -P`). API server có thêm 3 request `WATCH` đang mở
+  (`apiserver_longrunning_requests`) so với trước khi app chạy; 3 s sau khi
+  trang disconnect cluster (70 s sau khi bấm), số đó về 0, và vẫn không có
+  cổng hay tiến trình con.
+
+- **Tin nhắn (SC-001, SC-009, SC-013):** với context kind và bốn context làm
+  ra (cổng bị từ chối, token bị từ chối, plugin lỗi, plugin chỉ có trên `PATH`
+  của shell thử mà setting `shell` chỉ tới), hai bản gửi cùng dãy state, và
+  cùng các cập nhật kết nối trừ ba chỗ, đều do bản Tauri không có
+  freelens-k8s-proxy:
+  - bản Electron gửi thêm `Authentication proxy started`;
+  - bản Electron gửi các dòng log của chính proxy, như `E1126 … proxy_server.go:147]
+    Error while proxying request: …`;
+  - với cổng bị từ chối, câu lỗi là của lõi (`ServiceError: client error
+    (Connect): tcp connect error: Connection refused (os error 61)`) thay vì của
+    client-go (`dial tcp 127.0.0.1:1: connect: connection refused`), như FR-002
+    cho phép.
+
+  Context có plugin trên `PATH` của shell thử kết nối được ở cả hai bản. Không
+  gói nào chứa token hay key (`credentials: none found`). Lần đo đầu tìm ra hai
+  lỗi của lõi, đã sửa trước lần đo này: `--messages-dump` ghi xen các dòng của
+  hai tin nhắn gửi cùng lúc, và plugin lỗi làm hỏng bước khởi động kết nối thay
+  vì bước kiểm tra trạng thái, không kèm stderr của plugin.
+
+### Điều kiện
+
+- **Bản build:** bản Electron là `freelens/dist/mac-arm64/Freelens.app`,
+  phiên bản 2.1.0-0, đóng gói ngày 2026-11-26; spec 009 không đổi mã
+  production của nó. Bản Tauri là dmg của nhánh này, build bằng
+  `pnpm --filter @freelensapp/freelens-tauri tauri:build`.
+- **Cluster:** kind v0.33.0, Kubernetes v1.37.0, một node arm64, 9 pod hệ
+  thống, namespace `load` có 3000 ConfigMap (3014 tính cả các namespace khác).
+- **Trạng thái app:** mỗi lần chạy dùng một thư mục dữ liệu mới, chỉ đồng bộ
+  file kubeconfig của kind (với `lists`, `watch`, `ports`) hoặc file của
+  `messages`.
+- **Điều khiển:** bản Electron chạy với `--remote-debugging-port`, không có
+  inspector của main và không có profiler; Playwright bấm qua CDP, và một
+  script cài vào trang ghi mốc bằng `MutationObserver`. Bản Tauri tự chạy kịch
+  bản với `--scenario=lists` và ghi mốc qua `/api/mark`. Cả hai lấy mốc bằng
+  đồng hồ của trang (`performance.timeOrigin + performance.now()`), không hỏi
+  vòng.
+- **So với phần Hiệu năng main:** thời gian tới sidebar của bản Electron ở đây
+  (478 ms) thấp hơn số 882 ms ở đó, vì mốc lấy trong trang thay vì lúc
+  Playwright thấy phần tử, và main không mở inspector.
+
+### Đo lại
+
+Với cluster kind và 3000 ConfigMap như mục 0.4 của
+`specs/tauri-port-runbook.md`, chạy từ thư mục gốc của repo:
+
+```bash
+node specs/009-main-cluster-connection/measure-connection.mjs lists "${TMPDIR%/}/kind-freelens-profile.yaml"
+```
+
+```bash
+node specs/009-main-cluster-connection/measure-connection.mjs watch "${TMPDIR%/}/kind-freelens-profile.yaml"
+```
+
+```bash
+node specs/009-main-cluster-connection/measure-connection.mjs messages "${TMPDIR%/}/kind-freelens-profile.yaml"
+```
+
+```bash
+BUILDS=tauri node specs/009-main-cluster-connection/measure-connection.mjs ports "${TMPDIR%/}/kind-freelens-profile.yaml"
+```
+
+Script in `workdir=` của mỗi lần chạy; xoá thư mục đó sau khi đọc xong.

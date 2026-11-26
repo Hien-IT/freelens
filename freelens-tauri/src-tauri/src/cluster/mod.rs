@@ -82,6 +82,16 @@ impl Clusters {
                 watches: Mutex::new(None),
             }),
         };
+        // What a plugin writes to stderr, as an error update of its cluster.
+        let reporting = Arc::downgrade(&clusters.inner);
+        clusters.plugins().on_stderr(Arc::new(move |id, chunk| {
+            if let Some(inner) = reporting.upgrade() {
+                inner.sender.send_named(
+                    &format!("cluster:{id}:connection-update"),
+                    &ConnectionUpdate::error(chunk),
+                );
+            }
+        }));
         let weak = Arc::downgrade(&clusters.inner);
         catalog.subscribe(move |event| {
             if let CatalogEvent::ClusterRemoved(id) = event
@@ -414,6 +424,11 @@ impl Backend for ClusterBackend {
         Box::pin(async move {
             let clusters = self.clusters().ok_or(ClientError::NotInCatalog)?;
             clusters.inner.clients.drop_client(&self.id);
+            // The Electron build's proxy starts without running the plugin,
+            // whose failure the status check then reports; so does the core.
+            if self.uses_exec() {
+                return Ok(());
+            }
             clusters.own_client(&self.id).await.map(|_| ())
         })
     }

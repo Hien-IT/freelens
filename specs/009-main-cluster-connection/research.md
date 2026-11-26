@@ -91,7 +91,15 @@ freelens-k8s-proxy per cluster with `--kubeconfig <file>`, the context in
 freelens-k8s-proxy is client-go; its source is not in this repository
 (`freelens/package.json`, `k8sProxyVersion` 2.0.1). That client-go takes the
 kubeconfig's `proxy-url` before `HTTPS_PROXY`, and honours `NO_PROXY` for the
-latter, is **Unverified** here.
+latter, is **Unverified** here. [Inference, from client-go's `rest` transport
+and `golang.org/x/net/http/httpproxy` as published, not from the version the
+proxy pins:] `proxy-url` becomes the transport's proxy as it is; without it,
+`HTTPS_PROXY` or `https_proxy` of the proxy's environment applies, read as
+`http://` without a scheme, and `NO_PROXY` or `no_proxy` sends a host direct,
+as does `localhost` or a loopback address whatever `NO_PROXY` says. The
+proxy's environment is the main process's after the shell sync, so a proxy set
+in the shell's files reaches it, and the `httpsProxy` setting takes the place
+of `HTTPS_PROXY`.
 
 **Decision**:
 
@@ -104,9 +112,14 @@ latter, is **Unverified** here.
   added to `Cargo.lock` (Verified when added: the lock gains only the edges
   from kube-client to `form_urlencoded` and `ipnet`, and from the crate to
   `sha2` 0.10.9, all three packages already locked). The proxy is the kubeconfig's `proxy-url`, else the
-  cluster's `httpsProxy` setting, else kube's own reading of `HTTPS_PROXY`, the
-  order the Electron build's environment gives client-go (Unverified for
-  client-go, checked by quickstart section 4).
+  cluster's `httpsProxy` setting, else `HTTPS_PROXY` or `https_proxy` of the
+  shell sync's environment, not kube's own reading of the core's environment;
+  `NO_PROXY` or `no_proxy` of that environment, `localhost` and loopback
+  addresses go direct, as client-go decides for the Electron build. The client
+  waits for that environment, up to the shell sync's limit, so a cluster
+  clicked while the shell sync runs connects when it ends; the Electron build
+  opens no window before it. Deciding without it would send the first
+  requests of a proxy set only in the shell's files direct.
 - A context with `exec` gets its credential from R3; the client is built with
   that credential in place of `exec` and built again when it renews.
 - The client is dropped on `ClusterChanged` and `ClusterRemoved` of the

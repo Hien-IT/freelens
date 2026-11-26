@@ -696,6 +696,63 @@ async fn a_list_rule_on_pods_shows_pods_and_not_namespaces() {
     );
 }
 
+#[tokio::test]
+async fn a_failing_plugin_is_reported_by_the_status_check_with_its_stderr() {
+    let dir = temp_dir("cluster-failing-plugin");
+    let api = FakeApi::start(Tls::None, &dir).await;
+    a_cluster(&api);
+    let plugin = fake_api::write_plugin(
+        &dir,
+        "failing",
+        &fake_api::Plugin::Fail {
+            code: 1,
+            message: "credential plugin exploded".into(),
+        },
+        None,
+    );
+    let command = plugin.display().to_string();
+    let context = Context::new("kind-a", &api, User::Exec(fake_api::Exec::new(&command)));
+    let core = cluster_core(api, &dir, vec![context]).await;
+    let id = core.id(0);
+    let received = Received::listen(&core).await;
+
+    request(&core, "activate-cluster", json!({"clusterId": id})).await;
+
+    let channel = format!("cluster:{id}:connection-update");
+    received
+        .wait_for("the failure", |r| r.of(&channel).len() == 4)
+        .await;
+    let updates: Vec<(String, String)> = received
+        .of(&channel)
+        .iter()
+        .map(|u| {
+            (
+                u["message"].as_str().unwrap().into(),
+                u["level"].as_str().unwrap().into(),
+            )
+        })
+        .collect();
+    // As the Electron build: its proxy starts without the plugin, whose
+    // stderr it shows, and the status check reports the failure.
+    assert_eq!(
+        updates,
+        [
+            ("Starting connection ...".into(), "info".into()),
+            ("Refreshing connection status ...".into(), "info".into()),
+            ("credential plugin exploded\n".into(), "error".into()),
+            (
+                format!(
+                    "Failed to fetch credentials: getting credentials: exec: executable {command} failed with exit code 1"
+                ),
+                "error".into()
+            ),
+        ]
+    );
+    let state = core.clusters.state(&id).unwrap();
+    assert!(state.online && !state.accessible && !state.disconnected);
+    assert_eq!(fake_api::plugin_runs(&dir, "failing"), 1);
+}
+
 // Disconnecting and deleting (contracts/cluster-channels.md, FR-019 to FR-024)
 
 /// The status of a `GET` of the cluster frame of `id` through the scheme's

@@ -52,6 +52,6 @@ Every answer carries `Cache-Control: no-store`.
 ## Cancellation
 
 The scheme does not tell the core that the page cancelled a request; such a
-request runs to its answer or its 30 s limit. The core drops every request in
-flight of a cluster when it is disconnected or deleted, and of a frame when
-the frame is forgotten or its page reloads.
+request runs to its answer or its 30 s limit, and so does one of a frame that
+is forgotten or whose page reloads. The core drops every request in flight of
+a cluster when it is disconnected or deleted.

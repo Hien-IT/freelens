@@ -21,7 +21,7 @@ use serde_json::{Map, Value};
 
 use super::exec::{Credential, Plugin, Runner};
 use crate::catalog::{Catalog, CatalogEvent, ClusterSource};
-use crate::foundation::shell_env::ShellEnv;
+use crate::foundation::shell_env::{Env, ShellEnv};
 use k8s_openapi::jiff::Timestamp;
 
 /// The limit of the core's own requests, as `k8sRequest` of the Electron
@@ -338,7 +338,14 @@ impl Clients {
             }
             None => (kubeconfig, None),
         };
-        let config = config_from(kubeconfig, &cluster.context_name, https_proxy.as_deref()).await?;
+        let env = shell.vars().await;
+        let config = config_from(
+            kubeconfig,
+            &cluster.context_name,
+            https_proxy.as_deref(),
+            &env,
+        )
+        .await?;
         let server = config.cluster_url.to_string();
         let client =
             Client::try_from(config).map_err(|error| ClientError::Build(describe(&error)))?;
@@ -526,17 +533,92 @@ fn https_proxy_setting(entry: &Map<String, Value>) -> Option<String> {
 }
 
 /// The kube configuration of a cluster's context (research R2): no retry, a
-/// connect limit and no read limit, and the proxy of the kubeconfig, else the
-/// cluster's `httpsProxy` setting, else kube's own reading of `HTTPS_PROXY`.
+/// connect limit and no read limit, and the proxy client-go of the Electron
+/// build's freelens-k8s-proxy takes: the kubeconfig's `proxy-url`, else
+/// `HTTPS_PROXY` of its environment, which is the shell sync's with the
+/// cluster's `httpsProxy` setting in its place, `NO_PROXY` honoured.
 pub async fn config(
     cluster: &ClusterSource,
     https_proxy: Option<&str>,
+    env: &Env,
 ) -> Result<Config, ClientError> {
     // The file holds credentials; the parser's text, which can quote it, goes
     // to no view.
     let kubeconfig = Kubeconfig::read_from(&cluster.kubeconfig_path)
         .map_err(|error| ClientError::Build(format!("cannot read the kubeconfig file: {error}")))?;
-    config_from(kubeconfig, &cluster.context_name, https_proxy).await
+    config_from(kubeconfig, &cluster.context_name, https_proxy, env).await
+}
+
+/// The first of `names` set in `env` and not empty.
+fn env_value<'a>(env: &'a Env, names: [&str; 2]) -> Option<&'a str> {
+    names.into_iter().find_map(|name| {
+        env.get(name)
+            .map(String::as_str)
+            .filter(|value| !value.is_empty())
+    })
+}
+
+/// Whether `NO_PROXY` sends `host:port` direct, as `useProxy` of
+/// `golang.org/x/net/http/httpproxy` decides: `localhost` and loopback
+/// addresses always; `*`; an IP or a CIDR; a domain, which matches itself and
+/// its subdomains, or its subdomains only with a leading `.` or `*.`; each
+/// optionally with a port.
+pub fn no_proxy_skips(no_proxy: &str, host: &str, port: u16) -> bool {
+    let host = host
+        .trim_start_matches('[')
+        .trim_end_matches(']')
+        .to_ascii_lowercase();
+    let ip = host.parse::<std::net::IpAddr>().ok();
+    if host == "localhost" || ip.is_some_and(|ip| ip.is_loopback()) {
+        return true;
+    }
+    no_proxy
+        .split(',')
+        .map(str::trim)
+        .filter(|entry| !entry.is_empty())
+        .any(|entry| {
+            let entry = entry.to_ascii_lowercase();
+            if entry == "*" {
+                return true;
+            }
+            if let Some((net, bits)) = entry.split_once('/')
+                && let (Ok(net), Ok(bits)) = (net.parse::<std::net::IpAddr>(), bits.parse::<u32>())
+            {
+                return ip.is_some_and(|ip| in_cidr(ip, net, bits));
+            }
+            let (name, entry_port) = match entry.rsplit_once(':') {
+                Some((name, entry_port)) if !name.contains(':') || name.ends_with(']') => (
+                    name.trim_start_matches('[').trim_end_matches(']'),
+                    entry_port.parse::<u16>().ok(),
+                ),
+                _ => (entry.as_str(), None),
+            };
+            if entry_port.is_some_and(|entry_port| entry_port != port) {
+                return false;
+            }
+            if let Ok(entry_ip) = name.parse::<std::net::IpAddr>() {
+                return ip == Some(entry_ip);
+            }
+            let name = name.strip_prefix('*').unwrap_or(name);
+            match name.strip_prefix('.') {
+                Some(_) => host.ends_with(name),
+                None => host == name || host.ends_with(&format!(".{name}")),
+            }
+        })
+}
+
+fn in_cidr(ip: std::net::IpAddr, net: std::net::IpAddr, bits: u32) -> bool {
+    match (ip, net) {
+        (std::net::IpAddr::V4(ip), std::net::IpAddr::V4(net)) if bits <= 32 => {
+            let mask = u32::MAX.checked_shl(32 - bits).unwrap_or(0);
+            u32::from(ip) & mask == u32::from(net) & mask
+        }
+        (std::net::IpAddr::V6(ip), std::net::IpAddr::V6(net)) if bits <= 128 => {
+            let mask = u128::MAX.checked_shl(128 - bits).unwrap_or(0);
+            u128::from(ip) & mask == u128::from(net) & mask
+        }
+        _ => false,
+    }
 }
 
 /// `config` from a kubeconfig already read.
@@ -544,6 +626,7 @@ async fn config_from(
     kubeconfig: Kubeconfig,
     context: &str,
     https_proxy: Option<&str>,
+    env: &Env,
 ) -> Result<Config, ClientError> {
     let has_proxy_url = kubeconfig_proxy_url(&kubeconfig, context).is_some();
     let options = KubeConfigOptions {
@@ -557,12 +640,29 @@ async fn config_from(
     config.connect_timeout = Some(CONNECT_LIMIT);
     config.read_timeout = None;
     config.write_timeout = None;
-    if !has_proxy_url && let Some(proxy) = https_proxy {
-        config.proxy_url = Some(
-            proxy
-                .parse()
-                .map_err(|_| ClientError::Build("the HTTPS proxy setting is not a URL".into()))?,
-        );
+    if !has_proxy_url {
+        // Not kube's own reading of the core's environment, which a launch
+        // from the Finder leaves without the shell's variables.
+        config.proxy_url = None;
+        let proxy = https_proxy.or_else(|| env_value(env, ["HTTPS_PROXY", "https_proxy"]));
+        let no_proxy = env_value(env, ["NO_PROXY", "no_proxy"]).unwrap_or_default();
+        let host = config.cluster_url.host().unwrap_or_default();
+        let port = config.cluster_url.port_u16().unwrap_or(443);
+        if let Some(proxy) = proxy
+            && !no_proxy_skips(no_proxy, host, port)
+        {
+            // client-go reads a proxy without a scheme as `http://`.
+            let proxy = if proxy.contains("://") {
+                proxy.to_string()
+            } else {
+                format!("http://{proxy}")
+            };
+            config.proxy_url = Some(
+                proxy
+                    .parse()
+                    .map_err(|_| ClientError::Build("the HTTPS proxy is not a URL".into()))?,
+            );
+        }
     }
     Ok(config)
 }
@@ -793,7 +893,7 @@ mod tests {
         let file = dir.join("config");
         write_kubeconfig(&file, Some(&api), &[Context::new("a", &api, User::None)]);
         let cluster = catalog(&file).clusters()[0].clone();
-        let config = config(&cluster, None).await.unwrap();
+        let config = config(&cluster, None, &Env::new()).await.unwrap();
         assert!(!config.default_retry);
         assert_eq!(config.read_timeout, None);
         assert_eq!(config.write_timeout, None);
@@ -817,7 +917,9 @@ mod tests {
         write_kubeconfig(&file, Some(&api), &[context]);
         let cluster = catalog(&file).clusters()[0].clone();
 
-        let config = config(&cluster, Some(&setting_proxy.url())).await.unwrap();
+        let config = config(&cluster, Some(&setting_proxy.url()), &Env::new())
+            .await
+            .unwrap();
         let client = Client::try_from(config).unwrap();
         client.apiserver_version().await.unwrap();
 
@@ -839,14 +941,101 @@ mod tests {
         );
         let setting_proxy = ConnectProxy::start().await;
         let file = dir.join("config");
-        write_kubeconfig(&file, Some(&api), &[Context::new("a", &api, User::None)]);
+        let mut context = Context::new("a", &api, User::None);
+        context.server = format!("http://fake-api.test:{}", api.port);
+        write_kubeconfig(&file, Some(&api), &[context]);
         let cluster = catalog(&file).clusters()[0].clone();
+        // The setting takes the place of the shell's own proxy.
+        let env = Env::from([("HTTPS_PROXY".to_string(), "http://127.0.0.1:1".to_string())]);
 
-        let config = config(&cluster, Some(&setting_proxy.url())).await.unwrap();
+        let config = config(&cluster, Some(&setting_proxy.url()), &env)
+            .await
+            .unwrap();
         let client = Client::try_from(config).unwrap();
         client.apiserver_version().await.unwrap();
 
-        assert_eq!(setting_proxy.targets(), [format!("127.0.0.1:{}", api.port)]);
+        assert_eq!(
+            setting_proxy.targets(),
+            [format!("fake-api.test:{}", api.port)]
+        );
+    }
+
+    #[tokio::test]
+    async fn the_shell_s_https_proxy_is_used_unless_no_proxy_or_a_loopback_server_says_direct() {
+        let dir = temp_dir("client-proxy-env");
+        let api = FakeApi::start(Tls::None, &dir).await;
+        api.set(
+            "GET",
+            "/version",
+            Answer::json(200, json!({"gitVersion": "v1"})),
+        );
+        let proxy = ConnectProxy::start().await;
+        let file = dir.join("config");
+        let mut named = Context::new("named", &api, User::None);
+        named.server = format!("http://fake-api.test:{}", api.port);
+        let loopback = Context::new("loopback", &api, User::None);
+        write_kubeconfig(&file, Some(&api), &[named, loopback]);
+        let clusters = catalog(&file).clusters();
+        let version = |cluster: crate::catalog::ClusterSource, env: Env| async move {
+            let config = config(&cluster, None, &env).await.unwrap();
+            Client::try_from(config)
+                .unwrap()
+                .apiserver_version()
+                .await
+                .is_ok()
+        };
+        let env = |pairs: &[(&str, &str)]| -> Env {
+            pairs
+                .iter()
+                .map(|(key, value)| (key.to_string(), value.to_string()))
+                .collect()
+        };
+        let proxy_address = proxy.url().replace("http://", "");
+
+        assert!(version(clusters[0].clone(), env(&[("https_proxy", &proxy_address)])).await);
+        // Direct, where the name does not resolve.
+        assert!(
+            !version(
+                clusters[0].clone(),
+                env(&[("HTTPS_PROXY", &proxy.url()), ("NO_PROXY", ".test")])
+            )
+            .await
+        );
+        assert!(version(clusters[1].clone(), env(&[("HTTPS_PROXY", &proxy.url())])).await);
+
+        // Only the first went through the proxy, the scheme-less value read as
+        // `http://`.
+        assert_eq!(proxy.targets(), [format!("fake-api.test:{}", api.port)]);
+    }
+
+    #[test]
+    fn no_proxy_matches_as_go_s_httpproxy_does() {
+        for (no_proxy, host, port, direct) in [
+            ("", "localhost", 443, true),
+            ("", "127.0.0.1", 6443, true),
+            ("", "::1", 6443, true),
+            ("", "example.com", 443, false),
+            ("*", "example.com", 443, true),
+            ("example.com", "example.com", 443, true),
+            ("example.com", "api.example.com", 443, true),
+            ("example.com", "badexample.com", 443, false),
+            (".example.com", "example.com", 443, false),
+            (".example.com", "api.example.com", 443, true),
+            ("*.example.com", "api.example.com", 443, true),
+            ("Example.COM:6443", "api.example.com", 6443, true),
+            ("example.com:6443", "api.example.com", 443, false),
+            ("10.0.0.0/8", "10.1.2.3", 443, true),
+            ("10.0.0.0/8", "11.1.2.3", 443, false),
+            ("10.1.2.3", "10.1.2.3", 443, true),
+            ("fd00::/8", "fd12::1", 443, true),
+            (" a.com , b.com ", "x.b.com", 443, true),
+        ] {
+            assert_eq!(
+                no_proxy_skips(no_proxy, host, port),
+                direct,
+                "{no_proxy:?} {host}:{port}"
+            );
+        }
     }
 
     #[test]

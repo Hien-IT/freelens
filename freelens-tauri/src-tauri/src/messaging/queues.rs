@@ -158,21 +158,26 @@ impl Queues {
     }
 
     fn record(&self, view: Option<&View>, channel: &str, payload: &Option<Value>) {
-        let Some(path) = self.dump.lock().expect("the dump lock").clone() else {
+        // The lock is held through the write, and the line written in one
+        // call, so that the lines of messages sent at once do not interleave.
+        let dump = self.dump.lock().expect("the dump lock");
+        let Some(path) = dump.as_ref() else {
             return;
         };
-        let line = serde_json::json!({
+        let mut line = serde_json::json!({
             "view": view.map(ToString::to_string),
             "channel": channel,
             "payload": payload,
-        });
+        })
+        .to_string();
+        line.push('\n');
         if let Ok(mut file) = std::fs::OpenOptions::new()
             .create(true)
             .append(true)
             .open(path)
         {
             use std::io::Write;
-            let _ = writeln!(file, "{line}");
+            let _ = file.write_all(line.as_bytes());
         }
     }
 

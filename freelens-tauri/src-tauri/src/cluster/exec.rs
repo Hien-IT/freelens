@@ -117,10 +117,14 @@ struct Run {
     group: Arc<Mutex<Option<i32>>>,
 }
 
+/// Called with the cluster id and each chunk a plugin writes to stderr.
+pub type StderrListener = Arc<dyn Fn(&str, &str) + Send + Sync>;
+
 #[derive(Default)]
 struct State {
     credentials: HashMap<String, Credential>,
     runs: HashMap<String, Run>,
+    on_stderr: Option<StderrListener>,
 }
 
 /// The runs and credentials of the plugins, by cluster id.
@@ -132,6 +136,13 @@ pub struct Runner {
 impl Runner {
     fn state(&self) -> std::sync::MutexGuard<'_, State> {
         self.state.lock().expect("the plugins lock")
+    }
+
+    /// Gets what the plugins write to stderr from now on, as the Electron
+    /// build shows its proxy's stderr, where client-go passes it through: a
+    /// login prompt of the plugin, say.
+    pub fn on_stderr(&self, listener: StderrListener) {
+        self.state().on_stderr = Some(listener);
     }
 
     /// The credential of `cluster`: the one kept while fresh, else the result
@@ -160,8 +171,14 @@ impl Runner {
                     let plugin = plugin.clone();
                     let shell = shell.clone();
                     let running_group = Arc::clone(&group);
+                    let on_stderr = state.on_stderr.clone();
                     let task = tokio::spawn(async move {
-                        let result = run(&plugin, &shell, &running_group).await;
+                        let report = |chunk: &str| {
+                            if let Some(listener) = &on_stderr {
+                                listener(&id, chunk);
+                            }
+                        };
+                        let result = run(&plugin, &shell, &running_group, &report).await;
                         let mut state = runner.state();
                         state.runs.remove(&id);
                         if let Ok(credential) = &result {
@@ -310,6 +327,7 @@ async fn run(
     plugin: &Plugin,
     shell: &ShellEnv,
     group: &Mutex<Option<i32>>,
+    report: &(dyn Fn(&str) + Send + Sync),
 ) -> Result<Credential, String> {
     if plugin.interactive_mode.as_deref() == Some("Always") {
         return Err(
@@ -358,13 +376,19 @@ async fn run(
     *group.lock().expect("the group lock") = child.id().map(|pid| pid as i32);
     let mut stdout = child.stdout.take().expect("a piped stdout");
     let mut stderr = child.stderr.take().expect("a piped stderr");
-    let (mut out, mut err) = (Vec::new(), Vec::new());
-    let (read_out, read_err, status) = tokio::join!(
-        stdout.read_to_end(&mut out),
-        stderr.read_to_end(&mut err),
-        child.wait()
-    );
-    let _ = (read_out, read_err);
+    let mut out = Vec::new();
+    // Each chunk as it comes, for a prompt the plugin waits on.
+    let read_err = async {
+        let mut chunk = [0u8; 4096];
+        while let Ok(read) = stderr.read(&mut chunk).await {
+            if read == 0 {
+                break;
+            }
+            report(&String::from_utf8_lossy(&chunk[..read]));
+        }
+    };
+    let (read_out, (), status) = tokio::join!(stdout.read_to_end(&mut out), read_err, child.wait());
+    let _ = read_out;
     *group.lock().expect("the group lock") = None;
     let status = status.map_err(|error| format!("getting credentials: exec: {error}"))?;
     if !status.success() {

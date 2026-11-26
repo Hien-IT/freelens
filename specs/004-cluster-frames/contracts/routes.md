@@ -35,15 +35,15 @@ page the response of another origin even where a request reaches the core.
 
 ## The table when this feature ends
 
-| Method | Path                  | Audience   | Answer                                                                                                                     |
-| ------ | --------------------- | ---------- | -------------------------------------------------------------------------------------------------------------------------- |
-| GET    | `/`                   | `Main`     | `index.html`, the catalog page, with the policy `default-src 'self'; frame-src freelens-app:; frame-ancestors 'none'`      |
-| GET    | `/`                   | `Clusters` | `cluster.html`, the frame page, with the policy `default-src 'self'; frame-ancestors freelens-app://renderer.freelens.app` |
-| GET    | `/assets/` (prefix)   | `Both`     | the built file; `404` for a path with `..` or an unknown file                                                              |
-| GET    | `/api/clusters`       | `Main`     | the catalog, as in spec 001                                                                                                |
-| GET    | `/api/mark`           | `Both`     | `204`, and the core prints the mark                                                                                        |
-| GET    | `/api-kube/` (prefix) | `Clusters` | the cluster of the host, as in spec 001; `400` for a watch                                                                 |
-| POST   | `/ipc/` (prefix)      | `Both`     | the routes of `ipc-routes.md` of spec 002                                                                                  |
+| Method                              | Path                  | Audience   | Answer                                                                                                                                                                                                                      |
+| ----------------------------------- | --------------------- | ---------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| GET                                 | `/`                   | `Main`     | `index.html`, the catalog page, with the policy `default-src 'self'; frame-src freelens-app:; frame-ancestors 'none'`                                                                                                       |
+| GET                                 | `/`                   | `Clusters` | `cluster.html`, the frame page, with the policy `default-src 'self'; frame-ancestors freelens-app://renderer.freelens.app`                                                                                                  |
+| GET                                 | `/assets/` (prefix)   | `Both`     | the built file; `404` for a path with `..` or an unknown file                                                                                                                                                               |
+| GET                                 | `/api/clusters`       | `Main`     | the catalog, as in spec 001                                                                                                                                                                                                 |
+| GET                                 | `/api/mark`           | `Both`     | `204`, and the core prints the mark                                                                                                                                                                                         |
+| GET, HEAD, POST, PUT, PATCH, DELETE | `/api-kube/` (prefix) | `Clusters` | the API server of the host's cluster, by the rules of `specs/009-main-cluster-connection/contracts/api-kube.md`; a watch is refused with `400` and goes through `specs/009-main-cluster-connection/contracts/kube-watch.md` |
+| POST                                | `/ipc/` (prefix)      | `Both`     | the routes of `ipc-routes.md` of spec 002                                                                                                                                                                                   |
 
 `/` is the one path with two routes of the same method: one per audience. The
 table allows that, and only that: two routes with the same method, path and

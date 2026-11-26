@@ -3,16 +3,19 @@
  * Licensed under MIT License. See LICENSE in root directory for more information.
  */
 
-// The page of a cluster frame. It lists the namespaces once, through the core,
-// which holds the credentials (specs/001-tauri-shell-spike/contracts/scheme-routes.md),
-// lists Config Maps and Pods kept current by watches
-// (specs/009-main-cluster-connection, research R15), and announces itself to
-// the core (specs/004-cluster-frames, research R7).
+// The page of a cluster frame (specs/009-main-cluster-connection, research
+// R15). It follows the cluster's state from the core, shows a sidebar once the
+// cluster is ready, and lists Config Maps and Pods kept current by watches
+// through the core, which holds the credentials; it announces itself to the
+// core (specs/004-cluster-frames, research R7).
 
-import { requestFromChannelInjectionToken } from "@freelensapp/messaging";
+import { enlistMessageChannelListenerInjectionToken, requestFromChannelInjectionToken } from "@freelensapp/messaging";
+import { clusterStateSyncChannel, initialClusterStatesChannel } from "./cluster-channels";
 import { createKubeFetch } from "./kube-fetch";
 import { LiveList, markNow } from "./kube-list";
 import { setClusterFrameIdChannel, startMessaging, viewOfPage } from "./messaging";
+
+import type { ClusterState } from "./cluster-channels";
 
 const query = new URLSearchParams(location.search);
 // Only a check run loads the check and its dependencies.
@@ -20,10 +23,7 @@ const messagingCheck = query.has("messaging-check");
 const framesCheck = query.has("frames-check");
 // With `--scenario=lists`, the page runs the scenario of specs/baseline.md.
 const scenario = query.get("scenario");
-
-interface NamespaceList {
-  items: { metadata: { name: string } }[];
-}
+const clusterId = viewOfPage();
 
 function alert(text: string): void {
   const element = document.createElement("p");
@@ -32,42 +32,6 @@ function alert(text: string): void {
   document.body.append(element);
 }
 
-async function showNamespaces(): Promise<void> {
-  // The Loading state of the data model, until the core answers.
-  const loading = document.createElement("p");
-  loading.setAttribute("role", "status");
-  loading.textContent = "Loading namespaces…";
-  document.body.append(loading);
-  const response = await fetch("/api-kube/api/v1/namespaces").finally(() => loading.remove());
-
-  if (response.status === 502) {
-    alert("The cluster cannot be reached.");
-    return;
-  }
-  if (response.status === 403) {
-    alert("You do not have permission to list namespaces.");
-    return;
-  }
-  if (!response.ok) {
-    alert(`Cannot list namespaces: HTTP ${response.status}.`);
-    return;
-  }
-
-  const namespaces = (await response.json()) as NamespaceList;
-  const list = document.createElement("ul");
-  list.setAttribute("aria-label", "Namespaces");
-  for (const namespace of namespaces.items) {
-    const item = document.createElement("li");
-    item.textContent = namespace.metadata.name;
-    list.append(item);
-  }
-  document.body.append(list);
-
-  await fetch("/api/mark?name=namespaces-shown");
-}
-
-showNamespaces().catch((error: unknown) => alert(`Cannot list namespaces: ${String(error)}`));
-
 // One messaging container per page: a second one would poll with a session of
 // its own and restart this view's queue (spec 002, research R3).
 const messaging = startMessaging("cluster-frame");
@@ -75,16 +39,25 @@ const messaging = startMessaging("cluster-frame");
 // The frame announces its own cluster, as init-cluster-frame does in the
 // Electron build (FR-014, FR-016).
 void messaging
-  .then((di) => di.inject(requestFromChannelInjectionToken)(setClusterFrameIdChannel, viewOfPage()))
+  .then((di) => di.inject(requestFromChannelInjectionToken)(setClusterFrameIdChannel, clusterId))
   .catch((error: unknown) => console.error("[CLUSTER-FRAME]: cannot announce the frame:", error));
 
-// The lists, each kept current by watches through the core.
 const kubeFetch = messaging.then(createKubeFetch);
-const listsNav = document.createElement("nav");
-listsNav.setAttribute("aria-label", "Resources");
+
+// Until the cluster is ready: its status.
+const status = document.createElement("p");
+status.setAttribute("role", "status");
+status.textContent = "Connecting…";
+
+// The sidebar: the namespace choice and the lists the cluster lets the user see.
+const sidebar = document.createElement("nav");
+sidebar.setAttribute("aria-label", "Sidebar");
+sidebar.hidden = true;
+const namespaceChoice = document.createElement("select");
+namespaceChoice.setAttribute("aria-label", "Namespace");
 const listArea = document.createElement("section");
 listArea.setAttribute("aria-label", "List");
-document.body.append(listsNav, listArea);
+document.body.append(status, sidebar, listArea);
 
 interface Kind {
   title: string;
@@ -99,55 +72,161 @@ const kinds: Kind[] = [
   { title: "Pods", apiBase: "/api/v1", resource: "pods", mark: "pods" },
 ];
 
+let state: ClusterState | undefined;
+let shownKind: Kind | undefined;
 let shown: LiveList | undefined;
+let sidebarMarked = false;
+let namespacesMarked = false;
+/** Called with the first row of the next list, for the scenario. */
+let nextFirstRow: (() => void) | undefined;
+/** Called once the sidebar is in the document, for the scenario. */
+let onSidebar: (() => void) | undefined;
 
-/** Shows the list of `kind` for all namespaces; resolves with its first row. */
+/** The namespaces of the choice: none for All Namespaces. */
+const chosenNamespaces = (): string[] | undefined => (namespaceChoice.value ? [namespaceChoice.value] : undefined);
+
+/** Shows the list of `kind` for the chosen namespaces, stopping the one shown. */
 async function showList(kind: Kind): Promise<void> {
-  markNow(`${kind.mark}-clicked`);
+  shownKind = kind;
   shown?.stop();
+  shown = undefined;
+  if (!state) {
+    return;
+  }
   const fetchWithWatches = await kubeFetch;
-  return new Promise<void>((firstRow) => {
-    const list = new LiveList({
-      apiBase: kind.apiBase,
-      resource: kind.resource,
-      namespaces: undefined,
-      globalWatch: true,
-      allNamespaces: [],
-      fetch: fetchWithWatches,
-      onFirstRow: () => {
-        markNow(`${kind.mark}-first-row`);
-        firstRow();
-      },
-      onError: alert,
-      // The rows of the pods `measure-connection.mjs` creates and deletes (SC-005).
-      onRow: (name, present) => {
-        if (/^measure-\d{1,6}$/.test(name)) {
-          markNow(`row-${present ? "in" : "out"}-${name}`);
-        }
-      },
-    });
-    shown = list;
-    const heading = document.createElement("h2");
-    heading.textContent = kind.title;
-    listArea.replaceChildren(heading, list.table);
-    list.start();
+  const firstRow = nextFirstRow;
+  nextFirstRow = undefined;
+  const list = new LiveList({
+    apiBase: kind.apiBase,
+    resource: kind.resource,
+    namespaces: chosenNamespaces(),
+    globalWatch: state.isGlobalWatchEnabled,
+    allNamespaces: state.allowedNamespaces,
+    fetch: fetchWithWatches,
+    onFirstRow: () => firstRow?.(),
+    onError: alert,
+    // The rows of the pods `measure-connection.mjs` creates and deletes (SC-005).
+    onRow: (name, present) => {
+      if (/^measure-\d{1,6}$/.test(name)) {
+        markNow(`row-${present ? "in" : "out"}-${name}`);
+      }
+    },
   });
+  shown = list;
+  const heading = document.createElement("h2");
+  heading.textContent = kind.title;
+  listArea.replaceChildren(heading, list.table);
+  list.start();
 }
 
-for (const kind of kinds) {
-  const button = document.createElement("button");
-  button.type = "button";
-  button.textContent = kind.title;
-  button.addEventListener("click", () => void showList(kind));
-  listsNav.append(button);
+/** The choice of the allowed namespaces or All Namespaces, kept for both lists. */
+function renderNamespaces(allowed: string[]): void {
+  const current = namespaceChoice.value;
+  const options = [new Option("All Namespaces", ""), ...allowed.map((name) => new Option(name, name))];
+  namespaceChoice.replaceChildren(...options);
+  // At first the default namespace when it is allowed, as the renderer starts.
+  const keep = current !== "" || namespacesMarked ? current : allowed.includes("default") ? "default" : "";
+  namespaceChoice.value = allowed.includes(keep) ? keep : "";
+  if (!namespacesMarked && allowed.length > 0) {
+    namespacesMarked = true;
+    // The mark of spec 001's namespace list, which measure.sh waits for.
+    void fetch("/api/mark?name=namespaces-shown");
+  }
 }
+
+/** Shows what the state allows: the sidebar once ready, else the status. */
+function applyState(next: ClusterState): void {
+  const before = state;
+  state = next;
+  if (!next.ready) {
+    status.textContent = next.disconnected ? "Disconnected." : "Connecting…";
+    status.hidden = false;
+    sidebar.hidden = true;
+    shown?.stop();
+    shown = undefined;
+    listArea.replaceChildren();
+    return;
+  }
+  status.hidden = true;
+  renderNamespaces(next.allowedNamespaces);
+  const buttons = kinds
+    .filter((kind) => next.resourcesToShow.includes(kind.resource))
+    .map((kind) => {
+      const button = document.createElement("button");
+      button.type = "button";
+      button.textContent = kind.title;
+      button.addEventListener("click", () => {
+        markNow(`${kind.mark}-clicked`);
+        void showList(kind);
+      });
+      return button;
+    });
+  sidebar.replaceChildren(namespaceChoice, ...buttons);
+  sidebar.hidden = false;
+  if (!sidebarMarked) {
+    sidebarMarked = true;
+    markNow("sidebar-shown");
+    onSidebar?.();
+  }
+  const changed =
+    !before?.ready ||
+    before.isGlobalWatchEnabled !== next.isGlobalWatchEnabled ||
+    before.allowedNamespaces.join() !== next.allowedNamespaces.join();
+  if (shownKind && changed) {
+    void showList(shownKind);
+  }
+}
+
+namespaceChoice.addEventListener("change", () => {
+  if (shownKind) {
+    void showList(shownKind);
+  }
+});
+
+// The state of this cluster: every change the core sends, and the one it has
+// now (contracts/connection.md, "State and phase").
+void messaging.then(async (di) => {
+  di.inject(enlistMessageChannelListenerInjectionToken)({
+    id: "cluster-state-sync",
+    channel: clusterStateSyncChannel,
+    handler: (sync) => {
+      if (sync.clusterId === clusterId) {
+        applyState(sync.state);
+      }
+    },
+  });
+  const states = await di.inject(requestFromChannelInjectionToken)(initialClusterStatesChannel);
+  const own = states.find((sync) => sync.clusterId === clusterId);
+  if (own && !state) {
+    applyState(own.state);
+  }
+});
+
+/** Resolves with the first row of the list shown next. */
+const firstRowOfNext = () => new Promise<void>((resolve) => (nextFirstRow = resolve));
 
 if (scenario === "lists") {
-  // Config Maps of all namespaces, then Pods, as specs/baseline.md opens them.
-  void (async () => {
-    await showList(kinds[0]);
-    await showList(kinds[1]);
-  })();
+  // specs/baseline.md: the sidebar, Config Maps, All Namespaces, then Pods,
+  // each step marked with the wall clock (research R15, R17).
+  onSidebar = () =>
+    void (async () => {
+      const [configMaps, pods] = kinds;
+      let row = firstRowOfNext();
+      markNow(`${configMaps.mark}-clicked`);
+      await showList(configMaps);
+      await row;
+      row = firstRowOfNext();
+      markNow("all-namespaces-chosen");
+      namespaceChoice.value = "";
+      await showList(configMaps);
+      await row;
+      markNow(`${configMaps.mark}-first-row`);
+      row = firstRowOfNext();
+      markNow(`${pods.mark}-clicked`);
+      await showList(pods);
+      await row;
+      markNow(`${pods.mark}-first-row`);
+    })();
 }
 
 if (messagingCheck) {
