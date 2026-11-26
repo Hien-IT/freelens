@@ -19,7 +19,6 @@ use kube::config::{KubeConfigOptions, Kubeconfig};
 use kube::{Client, Config};
 use serde_json::{Map, Value};
 
-use super::BoxFuture;
 use crate::catalog::{Catalog, CatalogEvent, ClusterSource};
 
 #[cfg(test)]
@@ -39,6 +38,8 @@ const CONNECT_LIMIT: Duration = Duration::from_secs(30);
 pub enum ClientError {
     /// The cluster is not in the catalog.
     NotInCatalog,
+    /// The cluster is not connected.
+    Disconnected,
     /// The client could not be built: the file or the context.
     Build(String),
     /// A credential plugin failed, in client-go's words (research R3).
@@ -57,6 +58,7 @@ impl fmt::Display for ClientError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             Self::NotInCatalog => f.write_str("the cluster is not in the catalog"),
+            Self::Disconnected => f.write_str("the cluster is not connected"),
             Self::Build(reason) | Self::Credential(reason) | Self::Connect(reason) => {
                 f.write_str(reason)
             }
@@ -106,6 +108,8 @@ pub fn describe(error: &(dyn std::error::Error + 'static)) -> String {
 pub struct ClusterClient {
     id: String,
     client: Client,
+    /// The URL of the API server, as kube reads it from the kubeconfig.
+    server: String,
     /// The limit of the core's own requests; shorter in tests.
     limit: Duration,
 }
@@ -113,6 +117,11 @@ pub struct ClusterClient {
 impl ClusterClient {
     pub fn id(&self) -> &str {
         &self.id
+    }
+
+    /// The URL of the API server, which a redirect of it is read against.
+    pub fn server(&self) -> &str {
+        &self.server
     }
 
     #[cfg(test)]
@@ -188,12 +197,12 @@ impl ClusterClient {
 /// cluster changes or leaves the catalog.
 pub struct Clients {
     catalog: Catalog,
-    clients: Arc<Mutex<HashMap<String, Client>>>,
+    clients: Arc<Mutex<HashMap<String, (Client, String)>>>,
 }
 
 impl Clients {
     pub fn new(catalog: &Catalog) -> Self {
-        let clients: Arc<Mutex<HashMap<String, Client>>> = Arc::default();
+        let clients: Arc<Mutex<HashMap<String, (Client, String)>>> = Arc::default();
         let dropping = Arc::clone(&clients);
         catalog.subscribe(move |event| {
             let (CatalogEvent::ClusterChanged(id) | CatalogEvent::ClusterRemoved(id)) = event;
@@ -213,10 +222,11 @@ impl Clients {
     /// The client of the cluster `id` of the catalog.
     pub async fn client(&self, id: &str) -> Result<ClusterClient, ClientError> {
         let cluster = self.catalog.cluster(id).ok_or(ClientError::NotInCatalog)?;
-        if let Some(client) = self.clients.lock().expect("the clients lock").get(id) {
+        if let Some((client, server)) = self.clients.lock().expect("the clients lock").get(id) {
             return Ok(ClusterClient {
                 id: id.to_string(),
                 client: client.clone(),
+                server: server.clone(),
                 limit: REQUEST_LIMIT,
             });
         }
@@ -225,15 +235,17 @@ impl Clients {
             .store_entry(id)
             .and_then(|entry| https_proxy_setting(&entry));
         let config = config(&cluster, https_proxy.as_deref()).await?;
+        let server = config.cluster_url.to_string();
         let client =
             Client::try_from(config).map_err(|error| ClientError::Build(describe(&error)))?;
         self.clients
             .lock()
             .expect("the clients lock")
-            .insert(id.to_string(), client.clone());
+            .insert(id.to_string(), (client.clone(), server.clone()));
         Ok(ClusterClient {
             id: id.to_string(),
             client,
+            server,
             limit: REQUEST_LIMIT,
         })
     }
@@ -301,60 +313,6 @@ fn kubeconfig_proxy_url(kubeconfig: &Kubeconfig, context: &str) -> Option<String
         .proxy_url
         .clone()
         .filter(|proxy| !proxy.is_empty())
-}
-
-/// What a GET request to a cluster's API server gave, for the spike's GET
-/// route of `src/scheme.rs`, which T020 of spec 009 replaces.
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub enum ApiOutcome {
-    Response {
-        status: u16,
-        body: Vec<u8>,
-    },
-    /// No answer: the connection failed or timed out.
-    Unreachable,
-}
-
-/// The spike's interface to the clients, kept for the GET route of
-/// `src/scheme.rs` until T020 of spec 009 replaces both.
-pub trait ClusterApi: Send + Sync {
-    /// Sends `GET <path_and_query>` to the API server of `cluster`'s context.
-    fn get<'a>(
-        &'a self,
-        cluster: &'a ClusterSource,
-        path_and_query: &'a str,
-    ) -> BoxFuture<'a, ApiOutcome>;
-}
-
-impl ClusterApi for super::Clusters {
-    fn get<'a>(
-        &'a self,
-        cluster: &'a ClusterSource,
-        path_and_query: &'a str,
-    ) -> BoxFuture<'a, ApiOutcome> {
-        Box::pin(async move {
-            let Ok(client) = self.client(&cluster.id).await else {
-                return ApiOutcome::Unreachable;
-            };
-            let request = Request::get(path_and_query)
-                .body(Vec::new())
-                .expect("a valid request");
-            let answer = async {
-                let response = client.send(request).await.ok()?;
-                let status = response.status().as_u16();
-                let body = response.into_body().collect().await.ok()?.to_bytes();
-                Some(ApiOutcome::Response {
-                    status,
-                    body: body.to_vec(),
-                })
-            };
-            tokio::time::timeout(REQUEST_LIMIT, answer)
-                .await
-                .ok()
-                .flatten()
-                .unwrap_or(ApiOutcome::Unreachable)
-        })
-    }
 }
 
 #[cfg(test)]

@@ -33,6 +33,17 @@ pub struct LaunchOptions {
     /// file, one JSON line each, resolved against the working directory; for
     /// measurements and tests (`specs/008-main-catalog`, research R12).
     pub catalog_dump: Option<PathBuf>,
+    /// `--scenario=lists`: the pages run the scenario of `specs/baseline.md`
+    /// themselves and mark each step with the wall clock, for measurements
+    /// (`specs/009-main-cluster-connection`, research R15).
+    pub scenario: Option<Scenario>,
+}
+
+/// A scenario the pages run for measurements.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Scenario {
+    /// Open the cluster, Config Maps with All Namespaces, then Pods.
+    Lists,
 }
 
 #[derive(Debug, PartialEq, Eq)]
@@ -61,6 +72,7 @@ where
     let mut frames_check = false;
     let mut data_dir = None;
     let mut catalog_dump = None;
+    let mut scenario = None;
 
     for arg in args {
         match arg.split_once('=') {
@@ -73,6 +85,7 @@ where
             Some(("--data-dir", path)) => data_dir = Some(cwd.join(path)),
             Some(("--catalog-dump", "")) => return Err(OptionsError::MissingValue(arg)),
             Some(("--catalog-dump", path)) => catalog_dump = Some(cwd.join(path)),
+            Some(("--scenario", "lists")) => scenario = Some(Scenario::Lists),
             None if arg == "--messaging-check" => messaging_check = true,
             None if arg == "--frames-check" => frames_check = true,
             None if [
@@ -80,6 +93,7 @@ where
                 "--open-cluster",
                 "--data-dir",
                 "--catalog-dump",
+                "--scenario",
             ]
             .contains(&arg.as_str()) =>
             {
@@ -96,6 +110,7 @@ where
         frames_check,
         data_dir,
         catalog_dump,
+        scenario,
     })
 }
 
@@ -208,6 +223,23 @@ mod tests {
                 Err(OptionsError::MissingValue(arg.into()))
             );
         }
+    }
+
+    #[test]
+    fn scenario_names_lists_only() {
+        assert_eq!(parse_args(&[]).unwrap().scenario, None);
+        assert_eq!(
+            parse_args(&["--scenario=lists"]).unwrap().scenario,
+            Some(Scenario::Lists)
+        );
+        assert_eq!(
+            parse_args(&["--scenario=other"]),
+            Err(OptionsError::Unknown("--scenario=other".into()))
+        );
+        assert_eq!(
+            parse_args(&["--scenario"]),
+            Err(OptionsError::MissingValue("--scenario".into()))
+        );
     }
 
     #[test]

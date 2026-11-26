@@ -12,9 +12,7 @@ use std::sync::LazyLock;
 use http::{Method, Request, Response, StatusCode, header};
 use serde_json::json;
 
-use crate::catalog::{Catalog, ClusterSource, LaunchFile, LaunchFileState};
-use crate::cluster::client::{ApiOutcome, ClusterApi};
-use crate::messaging::View;
+use crate::catalog::{Catalog, LaunchFile, LaunchFileState};
 use crate::routes::{Audience, Env, Routes};
 
 pub const SCHEME: &str = "freelens-app";
@@ -34,8 +32,6 @@ pub struct Asset {
 
 pub struct State {
     pub catalog: Catalog,
-    /// Sends the `/api-kube` requests of the cluster frames.
-    pub clusters: Box<dyn ClusterApi>,
     /// The context of `--open-cluster`, opened once the catalog is shown.
     pub open_cluster: Option<String>,
     /// Prints a log line of `contracts/log-lines.md`.
@@ -82,25 +78,6 @@ pub fn routes() -> Routes {
             Audience::Both,
             |request, _, env| Box::pin(async move { mark(request.uri().query(), env.state) }),
         ),
-        routes.add(
-            Method::GET,
-            "/api-kube/",
-            Audience::Clusters,
-            |request, view, env| {
-                Box::pin(async move {
-                    // The cluster comes from the view, never from the path (FR-006).
-                    let cluster = match &view {
-                        View::Cluster(id) => env.state.catalog.cluster(id),
-                        View::Main => None,
-                    };
-                    let Some(cluster) = cluster else {
-                        return empty(StatusCode::NOT_FOUND);
-                    };
-                    let path = &request.uri().path()["/api-kube".len()..];
-                    kube(&cluster, path, request.uri().query(), env.state).await
-                })
-            },
-        ),
     ];
     for row in rows {
         row.expect("the scheme's own routes are distinct");
@@ -117,48 +94,6 @@ pub async fn handle(
 ) -> Response<Vec<u8>> {
     static ROUTES: LazyLock<Routes> = LazyLock::new(routes);
     ROUTES.handle(request, Env { state, assets }).await
-}
-
-/// `GET /api-kube/<api path>`, sent to the cluster by the core, which adds the
-/// credentials; the view's own headers are not forwarded.
-async fn kube(
-    cluster: &ClusterSource,
-    api_path: &str,
-    query: Option<&str>,
-    state: &State,
-) -> Response<Vec<u8>> {
-    let api = api_path.starts_with("/api/") || api_path.starts_with("/apis/");
-    if !api || api_path.contains("..") {
-        return empty(StatusCode::NOT_FOUND);
-    }
-    // The scheme answers in one piece, so it cannot carry a watch (research R4).
-    let watch = query
-        .unwrap_or_default()
-        .split('&')
-        .any(|pair| pair.split('=').next() == Some("watch"));
-    if watch {
-        return empty(StatusCode::BAD_REQUEST);
-    }
-    let path_and_query = match query {
-        Some(query) => format!("{api_path}?{query}"),
-        None => api_path.to_string(),
-    };
-    match state.clusters.get(cluster, &path_and_query).await {
-        ApiOutcome::Response { status, body } => with_body(
-            StatusCode::from_u16(status).unwrap_or(StatusCode::BAD_GATEWAY),
-            "application/json",
-            body,
-        ),
-        ApiOutcome::Unreachable => {
-            let body =
-                json!({ "error": "unreachable", "message": "The cluster cannot be reached." });
-            with_body(
-                StatusCode::BAD_GATEWAY,
-                "application/json",
-                body.to_string().into_bytes(),
-            )
-        }
-    }
 }
 
 fn page(

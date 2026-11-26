@@ -101,13 +101,14 @@ fn build(
             .log()
             .unwrap_or_else(|| catalog::CatalogLog::new(Arc::clone(log), false)),
     )?;
+    let clusters = cluster::Clusters::new(&catalog);
+    cluster::watch::register(&mut channels, &clusters, &frames, &catalog)?;
     if checks.messaging {
         messaging::check::register(&mut channels, announcements, Arc::clone(log))?;
     }
     if checks.frames {
         frames_check::register(&mut channels, frames.clone(), Arc::clone(log))?;
     }
-    let clusters = cluster::Clusters::new(&catalog);
     Ok(Core {
         messaging: channels.build(),
         frames,
@@ -202,9 +203,9 @@ pub fn run() {
     let starting = catalog.clone();
     let stopping = catalog.clone();
     let catalog_marks = options.catalog_dump.is_some();
+    let scenario_lists = options.scenario == Some(options::Scenario::Lists);
     let state = Arc::new(scheme::State {
         catalog,
-        clusters: Box::new(clusters),
         open_cluster: options.open_cluster,
         log: Box::new({
             let log = Arc::clone(&log);
@@ -228,6 +229,8 @@ pub fn run() {
             })
         },
     );
+    // The /api-kube/ routes of the cluster frames (specs/009-main-cluster-connection).
+    let added = added.and_then(|()| cluster::api_kube::register(&mut routes, &clusters));
     if let Err(error) = added {
         eprintln!("{error}");
         std::process::exit(1);
@@ -279,6 +282,7 @@ pub fn run() {
                     (checks.messaging, "messaging-check"),
                     (checks.frames, "frames-check"),
                     (catalog_marks, "catalog-marks"),
+                    (scenario_lists, "scenario=lists"),
                 ]
                 .into_iter()
                 .filter_map(|(on, name)| on.then_some(name))

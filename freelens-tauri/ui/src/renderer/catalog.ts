@@ -22,6 +22,9 @@ const framesCheck = query.has("frames-check");
 // With `--catalog-dump`, the page marks each catalog it receives, for the
 // measurements of specs/008-main-catalog (research R12).
 const catalogMarks = query.has("catalog-marks");
+// With `--scenario=lists`, the frame runs the scenario of specs/baseline.md
+// itself (specs/009-main-cluster-connection, research R15).
+const scenario = query.get("scenario");
 
 // The channels of main-catalog the page uses, declared by id
 // (specs/008-main-catalog/contracts/catalog-channels.md).
@@ -133,6 +136,9 @@ function closeCluster(id: string): void {
 // The frame runs the check the main window runs; cluster ids are hexadecimal.
 function frameSearch(frameQuery: FrameQuery | undefined): string {
   const flags: string[] = [];
+  if (scenario === "lists") {
+    flags.push("scenario=lists");
+  }
   if (messagingCheck) {
     flags.push("messaging-check");
   }

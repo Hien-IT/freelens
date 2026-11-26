@@ -982,6 +982,7 @@ dependencies = [
  "tauri-build",
  "tokio",
  "tokio-rustls",
+ "url",
  "uuid",
 ]
 

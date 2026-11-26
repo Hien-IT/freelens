@@ -8,7 +8,9 @@
 //! channels and routes of main-cluster-connection
 //! (`contracts/clusters-api.md`).
 
+pub mod api_kube;
 pub mod client;
+pub mod watch;
 
 use std::future::Future;
 use std::pin::Pin;

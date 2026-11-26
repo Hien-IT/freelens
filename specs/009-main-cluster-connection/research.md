@@ -472,6 +472,19 @@ above 10 000 waiting messages.
 above; a long poll route per watch, which duplicates the queue and adds a poll
 per watch; a WebSocket on a local port, which FR-018 forbids.
 
+**First measurement** (T015, on the kind cluster of `specs/baseline.md`, the
+branch's packaged Electron build against the Tauri release build, medians of
+three runs, five for the pods): the first Config Map row of All Namespaces
+105 ms in the Electron build, 35 ms in the Tauri build; the first Pod row
+29 ms and 3 ms; a pod's row after `kubectl` returns, 427 ms and under 1 ms to
+appear, 953 ms and under 1 ms to leave (the Tauri page marks a row before
+`kubectl` has exited, hence times at or below zero); CPU of the main process
+over 60 s, 0.73 s and 0.06 s, the Electron figure counted from before the
+cluster is opened and the Tauri one from the click of Config Maps, since the
+Tauri pages had no connection yet. The Tauri pages render each event at once,
+where the renderer's object store batches them; T064 measures the pages of
+FR-029. The figures leave R10 and R2 as decided.
+
 ## R11. Disconnecting, deleting, frames and quitting
 
 **Finding** (Verified, `features/cluster/activation/main/request-deactivation.injectable.ts`,
