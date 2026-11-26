@@ -159,8 +159,8 @@ connected cluster, and it depends on Story 1.
 requests through the /api-kube proxy (list, get, create, update, patch with
 each patch type, delete, and a watch), and compare the status, the headers
 the view reads and the body of each answer. With a watch of the pods open,
-create and remove a pod with `kubectl` and measure when each event reaches
-the view.
+create and remove a pod with `kubectl` and measure when each pod's row
+appears in and leaves the list.
 
 **Acceptance Scenarios**:
 
@@ -307,8 +307,9 @@ those of the Electron build.
 - A watch whose API server ends the answer, or whose resource version is too
   old: the frame gets the end or the error the API server sends, as in the
   Electron build, and restarts the watch itself.
-- The API server answers a request with a redirect: the frame is led back to
-  the /api-kube proxy of the same cluster, never to the API server's address.
+- The API server answers a request with a redirect inside its base path: the
+  frame is led back to the /api-kube proxy of the same cluster; a redirect
+  elsewhere is passed on as it is (FR-016).
 - A request with a path outside `/api/` and `/apis/`, or with `..`: answered as
   the spec 004 route answers it.
 - A frame is closed with requests in flight: the core stops them.
@@ -317,7 +318,9 @@ those of the Electron build.
 - The kubeconfig file of a cluster cannot be read or written when its context
   is removed: the view gets the error, and the file is left as it was.
 - Two views ask for different changes of the same kubeconfig file at once: the
-  file lock orders them, and neither change is lost.
+  first holds the file's lock, the second fails at once with "Lock file is
+  already being held", as in the Electron build, and the file has the first
+  change whole.
 - The network goes away while watches are open: they end, and the clusters
   follow the `network:offline` message as in the Electron build.
 - The user's login shell fails, prints an error, or takes longer than 30 s to
@@ -403,8 +406,9 @@ those of the Electron build.
   every method the Electron build's proxy forwards to the API server of the
   frame's own cluster, which the core reads from the frame's host and never
   from the request (FR-006 of spec 004), with the credentials of the context
-  added by the core. It MUST answer a watch as a watch rather than with the
-  `400` spec 004 gives.
+  added by the core. A request that is a watch MUST be refused there with a
+  `Status` that names the watch channel, since an answer in one piece cannot
+  carry it; its stream reaches the frame as FR-014 says.
 - **FR-013**: The API server MUST get the method, path, query and body of the
   frame's request, and the headers that reach it in the Electron build for the
   same request, such as the content type of a patch and the formats the frame
@@ -422,9 +426,10 @@ those of the Electron build.
   when its frame is removed or reloaded, and when its cluster is disconnected
   or deleted. Any other request MUST end at the latest when the Electron
   build's proxy would end it for inactivity.
-- **FR-016**: A redirect the API server answers MUST lead the frame back to the
-  /api-kube proxy of the same cluster, as the Electron build's proxy does, and
-  never to the API server's own address.
+- **FR-016**: A redirect the API server answers to a location inside its own
+  base path MUST lead the frame back to the /api-kube proxy of the same
+  cluster, as the Electron build's proxy does; any other location MUST be
+  passed on as the API server gives it, as the Electron build passes it.
 - **FR-017**: A request for a cluster that is not connected, or whose API server
   does not answer, MUST be answered as the Electron build answers it, and MUST
   NOT stay open longer than the Electron build lets it.
@@ -569,8 +574,9 @@ those of the Electron build.
   process, measured without a profiler, as the "Không profile" column of
   `specs/baseline.md` measures it, and recorded there.
 - **SC-005**: With a watch of the pods of a namespace open, the median of five
-  times from `kubectl` creating or deleting a pod to the frame getting its
-  event is no longer in the Tauri build than in the Electron build, recorded in
+  times from `kubectl` creating or deleting a pod to its row appearing in or
+  leaving the frame's Pods list is no longer in the Tauri build than in the
+  Electron build, recorded in
   `specs/baseline.md`.
 - **SC-006**: The time from choosing All Namespaces in Config Maps to its first
   row, with the 3000 ConfigMaps of the kind cluster, is recorded for both
