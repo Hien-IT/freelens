@@ -4,7 +4,7 @@
  */
 
 pub mod catalog;
-pub mod clusters;
+pub mod cluster;
 pub mod foundation;
 pub mod frames;
 pub mod frames_check;
@@ -37,6 +37,7 @@ pub struct Core {
     pub frames: Frames,
     pub stores: Stores,
     pub catalog: Catalog,
+    pub clusters: cluster::Clusters,
 }
 
 /// The check runs whose channels the core registers.
@@ -106,11 +107,13 @@ fn build(
     if checks.frames {
         frames_check::register(&mut channels, frames.clone(), Arc::clone(log))?;
     }
+    let clusters = cluster::Clusters::new(&catalog);
     Ok(Core {
         messaging: channels.build(),
         frames,
         stores: stores.clone(),
         catalog,
+        clusters,
     })
 }
 
@@ -165,7 +168,11 @@ pub fn run() {
         options.kubeconfig.clone(),
         catalog::CatalogLog::new(Arc::clone(&log), debugging),
     );
-    let Core { messaging, .. } = match register_core(
+    let Core {
+        messaging,
+        clusters,
+        ..
+    } = match register_core(
         checks,
         context.package_info().version.to_string(),
         &catalog,
@@ -189,7 +196,6 @@ pub fn run() {
             sweeping.sweep();
         }
     });
-    let clusters = clusters::KubeClusters::new(&catalog);
     if let Some(path) = &options.catalog_dump {
         catalog.dump_to(path.clone());
     }

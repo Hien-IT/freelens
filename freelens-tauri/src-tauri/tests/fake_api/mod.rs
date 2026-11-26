@@ -843,13 +843,76 @@ async fn read_chunked(stream: &mut (impl AsyncRead + Unpin)) -> Option<Vec<u8>> 
 }
 
 // ---------------------------------------------------------------------------
+// A CONNECT proxy
+
+/// An HTTP proxy that opens the tunnels it is asked for and records each
+/// `CONNECT` target.
+#[derive(Clone)]
+pub struct ConnectProxy {
+    pub port: u16,
+    targets: Arc<Mutex<Vec<String>>>,
+}
+
+impl ConnectProxy {
+    pub async fn start() -> Self {
+        let listener = TcpListener::bind("127.0.0.1:0").await.unwrap();
+        let port = listener.local_addr().unwrap().port();
+        let targets: Arc<Mutex<Vec<String>>> = Arc::default();
+        let recording = Arc::clone(&targets);
+        tokio::spawn(async move {
+            loop {
+                let Ok((mut client, _)) = listener.accept().await else {
+                    return;
+                };
+                let recording = Arc::clone(&recording);
+                tokio::spawn(async move {
+                    let Some(head) = read_head(&mut client).await else {
+                        return;
+                    };
+                    let target = head
+                        .split_whitespace()
+                        .nth(1)
+                        .unwrap_or_default()
+                        .to_string();
+                    recording.lock().unwrap().push(target.clone());
+                    let Ok(mut upstream) = tokio::net::TcpStream::connect(&target).await else {
+                        let _ = client.write_all(b"HTTP/1.1 502 Bad Gateway\r\n\r\n").await;
+                        return;
+                    };
+                    if client
+                        .write_all(b"HTTP/1.1 200 Connection Established\r\n\r\n")
+                        .await
+                        .is_err()
+                    {
+                        return;
+                    }
+                    let _ = tokio::io::copy_bidirectional(&mut client, &mut upstream).await;
+                });
+            }
+        });
+        Self { port, targets }
+    }
+
+    pub fn url(&self) -> String {
+        format!("http://127.0.0.1:{}", self.port)
+    }
+
+    /// The `CONNECT` targets asked so far.
+    pub fn targets(&self) -> Vec<String> {
+        self.targets.lock().unwrap().clone()
+    }
+}
+
+// ---------------------------------------------------------------------------
 // Kubeconfig files
 
 /// The placeholder credentials the kubeconfig files hold; every test of the
 /// area searches what the core sends for them (SC-009).
 pub const TOKEN: &str = "placeholder-token-0f3b9c";
 pub const FILE_TOKEN: &str = "placeholder-file-token-7a21d4";
-pub const ID_TOKEN: &str = "placeholder-id-token-55e8aa";
+/// A JWT whose `exp` is in 2100, as kube's OIDC provider reads it, its
+/// subject the placeholder.
+pub const ID_TOKEN: &str = "eyJhbGciOiJub25lIn0.eyJleHAiOjQxMDI0NDQ4MDAsInN1YiI6InBsYWNlaG9sZGVyLWlkLXRva2VuLTU1ZThhYSJ9.c2ln";
 pub const PASSWORD: &str = "placeholder-password-c19e02";
 pub const EXEC_TOKEN: &str = "placeholder-exec-token-93b7f1";
 

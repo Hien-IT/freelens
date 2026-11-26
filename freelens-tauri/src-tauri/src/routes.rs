@@ -12,7 +12,7 @@ use std::fmt;
 use http::{Method, Request, Response, StatusCode, Uri, header};
 
 use crate::catalog::Catalog;
-use crate::clusters::BoxFuture;
+use crate::cluster::BoxFuture;
 use crate::messaging::routes::view_of;
 use crate::messaging::{Log, View};
 use crate::scheme::{Asset, SCHEME, State};

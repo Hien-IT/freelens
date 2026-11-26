@@ -10,7 +10,8 @@ use std::path::{Path, PathBuf};
 use std::sync::{Arc, Mutex};
 
 use freelens_tauri::catalog::{Catalog, ClusterSource};
-use freelens_tauri::clusters::{ApiOutcome, BoxFuture, ClusterApi};
+use freelens_tauri::cluster::BoxFuture;
+use freelens_tauri::cluster::client::{ApiOutcome, ClusterApi};
 use freelens_tauri::messaging::{Log, View};
 use freelens_tauri::routes::{Audience, Env};
 use freelens_tauri::scheme;

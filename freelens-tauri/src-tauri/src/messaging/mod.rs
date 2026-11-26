@@ -23,7 +23,7 @@ use serde::Serialize;
 use serde::de::DeserializeOwned;
 use serde_json::Value;
 
-use crate::clusters::BoxFuture;
+use crate::cluster::BoxFuture;
 pub use queues::QueueEvent;
 use queues::Queues;
 
@@ -198,6 +198,38 @@ impl Sender {
     ) {
         match to_payload(message) {
             Ok(payload) => self.queues.push_to(view, channel.id, payload),
+            Err(error) => (self.queues.log)(&format!(
+                "Messaging: cannot send on \"{}\": {error}",
+                channel.id
+            )),
+        }
+    }
+
+    /// Sends to every open view on a channel whose name is built at run time,
+    /// such as `cluster:<clusterId>:connection-update`
+    /// (`specs/009-main-cluster-connection/research.md`, R14).
+    pub fn send_named<M: Serialize + 'static>(&self, name: &str, message: &M) {
+        match to_payload(message) {
+            Ok(payload) => self.queues.push(name, payload),
+            Err(error) => {
+                (self.queues.log)(&format!("Messaging: cannot send on \"{name}\": {error}"))
+            }
+        }
+    }
+
+    /// Sends to the queue of `view` alone a message whose `text` a later one of
+    /// the same `key` is appended to while it waits unanswered
+    /// (`specs/009-main-cluster-connection/contracts/kube-watch.md`).
+    pub fn send_appending_to<M: Serialize + 'static>(
+        &self,
+        view: &View,
+        channel: MessageChannel<M>,
+        key: &str,
+        message: &M,
+    ) {
+        match to_payload(message) {
+            Ok(Some(payload)) => self.queues.push_appending(view, channel.id, key, payload),
+            Ok(None) => self.queues.push_to(view, channel.id, None),
             Err(error) => (self.queues.log)(&format!(
                 "Messaging: cannot send on \"{}\": {error}",
                 channel.id
@@ -515,5 +547,58 @@ mod tests {
 
         assert_eq!(lines.lock().unwrap().len(), 1);
         assert!(lines.lock().unwrap()[0].starts_with("Messaging: dropped a message on \"note\""));
+    }
+
+    #[tokio::test(start_paused = true)]
+    async fn send_named_reaches_every_open_view_on_a_name_built_at_run_time() {
+        let channels = quiet();
+        let sender = channels.sender();
+        let messaging = channels.build();
+        let one = View::Cluster("one".into());
+        messaging.queues().poll(View::Main, "s1", 0).await;
+        messaging.queues().poll(one.clone(), "s2", 0).await;
+
+        let name = format!("cluster:{}:connection-update", "abc");
+        sender.send_named(&name, &serde_json::json!({"message": "m", "level": "info"}));
+
+        for (view, session) in [(View::Main, "s1"), (one, "s2")] {
+            let polled = messaging.queues().poll(view, session, 0).await;
+            assert_eq!(polled.len(), 1);
+            assert_eq!(polled[0].channel, "cluster:abc:connection-update");
+            assert_eq!(
+                polled[0].payload,
+                Some(serde_json::json!({"message": "m", "level": "info"}))
+            );
+        }
+    }
+
+    #[tokio::test(start_paused = true)]
+    async fn send_appending_to_appends_the_text_of_one_key() {
+        const DATA: MessageChannel<serde_json::Value> = MessageChannel::new("data");
+        let channels = quiet();
+        let sender = channels.sender();
+        let messaging = channels.build();
+        let one = View::Cluster("one".into());
+        messaging.queues().poll(one.clone(), "s1", 0).await;
+
+        sender.send_appending_to(
+            &one,
+            DATA,
+            "w",
+            &serde_json::json!({"id": "w", "text": "a"}),
+        );
+        sender.send_appending_to(
+            &one,
+            DATA,
+            "w",
+            &serde_json::json!({"id": "w", "text": "b"}),
+        );
+
+        let polled = messaging.queues().poll(one, "s1", 0).await;
+        assert_eq!(polled.len(), 1);
+        assert_eq!(
+            polled[0].payload,
+            Some(serde_json::json!({"id": "w", "text": "ab"}))
+        );
     }
 }

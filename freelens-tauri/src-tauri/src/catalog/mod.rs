@@ -597,6 +597,12 @@ impl Catalog {
             })
     }
 
+    /// The valid entry of the cluster store for `id`, if any: what the user
+    /// set for the cluster, such as its HTTPS proxy and accessible namespaces.
+    pub fn store_entry(&self, id: &str) -> Option<Map<String, Value>> {
+        self.store_entries().remove(id)
+    }
+
     /// What the cluster manager does with the store for the clusters of the
     /// catalog: adds an entry for a context that has none, and clears a
     /// `null` icon and short name, in one update (research R6).

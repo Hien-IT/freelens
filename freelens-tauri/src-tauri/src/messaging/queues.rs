@@ -45,6 +45,10 @@ struct Queue {
     messages: VecDeque<Polled>,
     pending: Option<Pending>,
     last_poll: Instant,
+    /// The keyed messages no poll has answered yet, by key, with their
+    /// sequence numbers: a later message of the same key is appended to it
+    /// (`specs/009-main-cluster-connection/research.md`, R10).
+    unsent: HashMap<String, u64>,
 }
 
 impl Queue {
@@ -55,7 +59,19 @@ impl Queue {
             messages: VecDeque::new(),
             pending: None,
             last_poll: now,
+            unsent: HashMap::new(),
         }
+    }
+
+    /// The messages after `after`, which a poll is about to answer: none of
+    /// them can take an appended text any more.
+    fn answer(&mut self, after: u64) -> Vec<Polled> {
+        self.unsent.clear();
+        self.messages
+            .iter()
+            .filter(|message| message.seq > after)
+            .cloned()
+            .collect()
     }
 }
 
@@ -185,7 +201,7 @@ impl Queues {
                 queue.pending = Some(Pending { id, after, answer });
                 Ok((id, receiver))
             } else {
-                Err(queue.messages.iter().cloned().collect())
+                Err(queue.answer(after))
             }
         };
         self.report(events);
@@ -237,6 +253,42 @@ impl Queues {
         self.report(events);
     }
 
+    /// Appends `payload`, an object with a string `text`, to the queue of
+    /// `view` alone, as `push_to` does; but while a message of the same `key`
+    /// waits there unanswered by any poll, its `text` is appended to that
+    /// message's instead, so that a view holds at most one waiting message per
+    /// key (`specs/009-main-cluster-connection/contracts/kube-watch.md`).
+    pub fn push_appending(&self, view: &View, channel: &str, key: &str, payload: Value) {
+        let mut events = Vec::new();
+        {
+            let mut state = self.state.lock().expect("the queues lock");
+            self.close_idle(&mut state, Instant::now(), &mut events);
+            let Some(queue) = state.queues.get_mut(view) else {
+                return;
+            };
+            if let Some(&seq) = queue.unsent.get(key)
+                && let Some(waiting) = queue.messages.iter_mut().find(|message| message.seq == seq)
+                && let Some(Value::String(text)) = waiting
+                    .payload
+                    .as_mut()
+                    .and_then(|payload| payload.get_mut("text"))
+            {
+                text.push_str(
+                    payload
+                        .get("text")
+                        .and_then(Value::as_str)
+                        .unwrap_or_default(),
+                );
+                return;
+            }
+            // Recorded first: a poll that `append` answers clears it.
+            let seq = queue.next_seq;
+            queue.unsent.insert(key.to_string(), seq);
+            self.append(&mut state, view, channel, Some(payload), &mut events);
+        }
+        self.report(events);
+    }
+
     /// Closes the queues that have been idle too long, as a poll or a send
     /// would, so that their views are known to be gone without either.
     pub fn sweep(&self) {
@@ -275,12 +327,7 @@ impl Queues {
             return;
         }
         if let Some(pending) = queue.pending.take() {
-            let messages: Vec<Polled> = queue
-                .messages
-                .iter()
-                .filter(|message| message.seq > pending.after)
-                .cloned()
-                .collect();
+            let messages = queue.answer(pending.after);
             // A dropped poll leaves its messages queued for the next one.
             let _ = pending.answer.send(messages);
         }
@@ -712,5 +759,81 @@ mod tests {
 
         assert!(!queues.is_open(&two));
         assert!(lines.lock().unwrap().is_empty());
+    }
+
+    fn text(id: &str, text: &str) -> Value {
+        serde_json::json!({"id": id, "text": text})
+    }
+
+    #[tokio::test(start_paused = true)]
+    async fn a_keyed_message_takes_the_text_of_later_ones_until_a_poll_answers_it() {
+        let (queues, _) = queues();
+        let one = View::Cluster("one".into());
+        queues.poll(one.clone(), "s1", 0).await;
+        queues.push_appending(&one, "data", "w1", text("w1", "a"));
+        queues.push_appending(&one, "data", "w1", text("w1", "b"));
+        queues.push_appending(&one, "data", "w2", text("w2", "x"));
+        queues.push_appending(&one, "data", "w1", text("w1", "c"));
+
+        let answered = queues.poll(one.clone(), "s1", 0).await;
+        assert_eq!(seqs(&answered), [1, 2]);
+        assert_eq!(answered[0].payload, Some(text("w1", "abc")));
+        assert_eq!(answered[1].payload, Some(text("w2", "x")));
+
+        // Answered once, it takes no more text: the next chunk is a new message,
+        // even before the view acknowledges the first.
+        queues.push_appending(&one, "data", "w1", text("w1", "d"));
+        let again = queues.poll(one.clone(), "s1", 0).await;
+        assert_eq!(seqs(&again), [1, 2, 3]);
+        assert_eq!(again[0].payload, Some(text("w1", "abc")));
+        assert_eq!(again[2].payload, Some(text("w1", "d")));
+    }
+
+    #[tokio::test(start_paused = true)]
+    async fn a_keyed_message_answers_a_waiting_poll_at_once() {
+        let (queues, _) = queues();
+        let one = View::Cluster("one".into());
+        queues.poll(one.clone(), "s1", 0).await;
+        let poll = tokio::spawn({
+            let queues = Arc::clone(&queues);
+            let one = one.clone();
+            async move { queues.poll(one, "s1", 0).await }
+        });
+        settle().await;
+
+        queues.push_appending(&one, "data", "w1", text("w1", "a"));
+        assert_eq!(poll.await.unwrap()[0].payload, Some(text("w1", "a")));
+
+        queues.push_appending(&one, "data", "w1", text("w1", "b"));
+        assert_eq!(seqs(&queues.poll(one, "s1", 1).await), [2]);
+    }
+
+    #[tokio::test(start_paused = true)]
+    async fn twenty_thousand_chunks_of_one_key_keep_the_queue_open() {
+        let (queues, _) = queues();
+        let one = View::Cluster("one".into());
+        queues.poll(one.clone(), "s1", 0).await;
+        for _ in 0..2 * MESSAGE_LIMIT {
+            queues.push_appending(&one, "data", "w1", text("w1", "x"));
+        }
+
+        assert!(queues.is_open(&one));
+        let answered = queues.poll(one, "s1", 0).await;
+        assert_eq!(answered.len(), 1);
+        assert_eq!(
+            answered[0].payload.as_ref().unwrap()["text"]
+                .as_str()
+                .unwrap()
+                .len(),
+            2 * MESSAGE_LIMIT
+        );
+    }
+
+    #[tokio::test(start_paused = true)]
+    async fn a_keyed_message_to_a_view_without_a_queue_does_nothing() {
+        let (queues, _) = queues();
+        let two = View::Cluster("two".into());
+        queues.push_appending(&two, "data", "w1", text("w1", "a"));
+        assert!(!queues.is_open(&two));
     }
 }

@@ -13,7 +13,7 @@ use http::{Method, Request, Response, StatusCode, header};
 use serde_json::json;
 
 use crate::catalog::{Catalog, ClusterSource, LaunchFile, LaunchFileState};
-use crate::clusters::{ApiOutcome, ClusterApi};
+use crate::cluster::client::{ApiOutcome, ClusterApi};
 use crate::messaging::View;
 use crate::routes::{Audience, Env, Routes};
 

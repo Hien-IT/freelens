@@ -34,8 +34,10 @@ impl Clusters {
     /// A client of the cluster's API server with the context's credentials,
     /// for the core's own requests: the status check, the accessibility, the
     /// detectors, `execute-on-cluster`, and later kubectl's and helm's routes.
-    /// `None` for a cluster not in the catalog or disconnected.
-    pub async fn client(&self, id: &str) -> Option<ClusterClient>;
+    /// `ClientError::NotInCatalog` for a cluster not in the catalog,
+    /// `ClientError::Disconnected` for one disconnected, and the reason when
+    /// the client cannot be built, which the `/api-kube/` route answers.
+    pub async fn client(&self, id: &str) -> Result<ClusterClient, ClientError>;
 
     /// The state of a cluster, as `cluster-state-sync` sends it.
     pub fn state(&self, id: &str) -> Option<ClusterState>;
@@ -57,6 +59,11 @@ impl ClusterClient {
     /// credentials added, no retry; the caller applies its own limits.
     pub async fn send(&self, request: http::Request<Vec<u8>>)
         -> Result<http::Response<kube::client::Body>, ClientError>;
+
+    /// A request of the core's own with a JSON answer within 30 s, failing as
+    /// `k8sRequest` fails: the body or the status text of a non-2xx answer.
+    pub async fn request_json(&self, method: http::Method, path: &str, body: Option<&Value>)
+        -> Result<Value, ClientError>;
 }
 
 /// Registers the channels of main-cluster-connection, the watch channels and
