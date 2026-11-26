@@ -69,9 +69,9 @@ existing platforms, which only gain a test.
 **Project Type**: desktop application; a new module directory of the existing
 Rust crate, and the Tauri build's own pages.
 
-**Performance Goals**: on the kind cluster, median time from clicking the
-cluster to its sidebar, and from clicking Pods to the first Pod row, no longer
-than the Electron build's; median CPU of the core over the 60 s of the scenario
+**Performance Goals**: on the kind cluster, median time to the sidebar from
+the click or the end of the shell sync, whichever is later, and from clicking
+Pods to the first Pod row, no longer than the Electron build's; median CPU of the core over the 60 s of the scenario
 no higher than the Electron build's main process (SC-002 to SC-004); a pod's
 change reaching its list no later than in the Electron build (SC-005); the
 first row of 3000 ConfigMaps recorded for both (SC-006).

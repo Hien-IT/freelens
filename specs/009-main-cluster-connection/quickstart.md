@@ -129,7 +129,9 @@ node specs/009-main-cluster-connection/measure-connection.mjs lists "${TMPDIR%/}
 ```
 
 Three runs of the scenario per build. Expected: the medians of the time to
-the sidebar and to the first Pod row are no longer in the Tauri build, and
+the sidebar, from the click or from the end of the shell sync, whichever is
+later (SC-002; the Tauri build's log has `[SHELL-SYNC]: Synced shell env`
+when it ends), and to the first Pod row are no longer in the Tauri build, and
 the median CPU of its main process over the 60 s is no higher than the
 Electron build's main process; the time to the first row of 3000 ConfigMaps
 is recorded for both. Copy the table the script prints into

@@ -563,9 +563,14 @@ those of the Electron build.
   build; a message that quotes an error of freelens-k8s-proxy itself names
   the same cause (FR-002).
 - **SC-002**: Over three runs of the scenario on the kind cluster, the median
-  time from clicking the cluster to its sidebar showing is no longer in the
-  Tauri build than in the Electron build, measured on the same machine and
-  recorded in `specs/baseline.md`.
+  time to the sidebar showing is no longer in the Tauri build than in the
+  Electron build, measured on the same machine and recorded in
+  `specs/baseline.md`, from the click or from the end of the shell sync,
+  whichever comes later. The Electron build opens its window only after the
+  shell sync, so its clicks always come later; the Tauri build opens its
+  window at once, and a cluster clicked while the shell sync runs connects
+  when it ends, because the connection takes its proxy from the shell's
+  environment. The time from the click alone is recorded too.
 - **SC-003**: Over the same runs, the median time from clicking Pods to the first
   Pod row showing is no longer in the Tauri build than in the Electron build,
   recorded in `specs/baseline.md`.

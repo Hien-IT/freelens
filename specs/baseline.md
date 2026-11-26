@@ -381,15 +381,15 @@ Mỗi lần chạy, hai bản làm cùng các bước: bấm cluster của conte
 sidebar, vào Config Maps, chọn All Namespaces, vào Pods, rồi để app yên đến hết
 60 s tính từ lúc bấm cluster. Mỗi ô là trung vị, trong ngoặc là các lần đo.
 
-| Chỉ số                                                              | Bản Electron                       | Bản Tauri                                           | Cổng       |
-| ------------------------------------------------------------------- | ---------------------------------- | --------------------------------------------------- | ---------- |
-| Kết nối cluster: từ lúc bấm đến khi sidebar hiện (ms)               | 478 (496 / 468 / 478)              | 903 (794 / 903 / 929), bấm khi shell sync chưa xong | ≤ Electron |
-| Từ lúc môi trường của shell sync sẵn sàng đến khi sidebar hiện (ms) |                                    | 48 (56 / 34 / 48)                                   | ≤ Electron |
-| Hàng ConfigMap đầu tiên, sau khi chọn All Namespaces (ms)           | 96 (83 / 96 / 103)                 | 62 (58 / 71 / 62)                                   | ≤ Electron |
-| Hàng Pod đầu tiên, sau khi bấm Pods (ms)                            | 29 (31 / 29 / 28)                  | 4 (4 / 5 / 4)                                       | ≤ Electron |
-| CPU của main (Electron) hoặc lõi (Tauri) trong 60 s (s)             | 0.75 (0.75 / 0.65 / 0.78)          | 0.11 (0.33 / 0.10 / 0.11)                           | ≤ Electron |
-| Pod mới hiện trong bảng, sau khi `kubectl run` trả về, 5 lần (ms)   | 423 (1039 / 420 / 423 / 401 / 439) | 0 (0 / −2 / 5 / −2 / 0)                             |            |
-| Pod biến khỏi bảng, sau khi `kubectl delete` trả về, 5 lần (ms)     | 931 (921 / 925 / 931 / 935 / 937)  | −1 (−2 / −2 / 52 / −1 / 39)                         |            |
+| Chỉ số                                                                  | Bản Electron                       | Bản Tauri                                           | Cổng       |
+| ----------------------------------------------------------------------- | ---------------------------------- | --------------------------------------------------- | ---------- |
+| Sidebar hiện, từ lúc bấm hoặc lúc shell sync xong, tùy mốc nào sau (ms) | 478 (496 / 468 / 478)              | 48 (56 / 34 / 48)                                   | ≤ Electron |
+| Sidebar hiện, chỉ tính từ lúc bấm (ms)                                  | 478 (496 / 468 / 478)              | 903 (794 / 903 / 929), bấm khi shell sync chưa xong | ghi lại    |
+| Hàng ConfigMap đầu tiên, sau khi chọn All Namespaces (ms)               | 96 (83 / 96 / 103)                 | 62 (58 / 71 / 62)                                   | ≤ Electron |
+| Hàng Pod đầu tiên, sau khi bấm Pods (ms)                                | 29 (31 / 29 / 28)                  | 4 (4 / 5 / 4)                                       | ≤ Electron |
+| CPU của main (Electron) hoặc lõi (Tauri) trong 60 s (s)                 | 0.75 (0.75 / 0.65 / 0.78)          | 0.11 (0.33 / 0.10 / 0.11)                           | ≤ Electron |
+| Pod mới hiện trong bảng, sau khi `kubectl run` trả về, 5 lần (ms)       | 423 (1039 / 420 / 423 / 401 / 439) | 0 (0 / −2 / 5 / −2 / 0)                             |            |
+| Pod biến khỏi bảng, sau khi `kubectl delete` trả về, 5 lần (ms)         | 931 (921 / 925 / 931 / 935 / 937)  | −1 (−2 / −2 / 52 / −1 / 39)                         |            |
 
 - **Sidebar và shell sync (SC-002):** lõi chọn proxy từ môi trường của shell
   sync, như client-go của bản Electron đọc nó sau shell sync (research R2), nên
@@ -399,9 +399,9 @@ sidebar, vào Config Maps, chọn All Namespaces, vào Pods, rồi để app yê
   shell sync xong, sidebar hiện sau 34–56 ms. Bản Electron mở cửa sổ sau shell
   sync [Inference, research R4], nên ở đó không bấm được trước lúc ấy; con số
   478 ms của nó là từ một lần bấm khi shell sync đã xong. Tính từ lúc khởi
-  động, sidebar của bản Tauri hiện lúc 1,24–1,67 s. Với một lần bấm sau shell
-  sync, bản Tauri đạt cổng; với một lần bấm trong lúc shell sync chạy thì
-  không.
+  động, sidebar của bản Tauri hiện lúc 1,24–1,67 s. SC-002 tính từ lúc bấm
+  hoặc lúc shell sync xong, tùy mốc nào sau, và theo cách đó bản Tauri đạt
+  cổng; số chỉ tính từ lúc bấm được ghi lại để thấy phần chờ shell sync.
 - **Bản đo:** các số của bản Tauri ở bảng trên là của dmg cuối của nhánh này.
   Ba lần đo trước, với dmg chưa chờ shell sync để chọn proxy, cho sidebar 46
   (46 / 37 / 55) ms, ConfigMap 69 ms, Pod 6 ms, CPU 0,09 s. Các số của

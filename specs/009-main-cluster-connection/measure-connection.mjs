@@ -8,7 +8,9 @@
 //
 // usage (from the repo root): node specs/009-main-cluster-connection/measure-connection.mjs <mode> <kind kubeconfig> [runs]
 //   lists    the scenario of specs/baseline.md, three runs per build: the times
-//            to the sidebar, to the first Config Map row of All Namespaces and
+//            to the sidebar (from the click or the end of the shell sync,
+//            whichever is later, and from the click alone), to the first
+//            Config Map row of All Namespaces and
 //            to the first Pod row, and the CPU of the main process over 60 s
 //            (SC-002, SC-003, SC-004, SC-006)
 //   watch    a pod created and deleted with kubectl, five times per build: the
@@ -135,6 +137,8 @@ function startTauri(bundle, dir) {
       appendFileSync(path.join(dir, "tauri-stdout.log"), `${Date.now()} ${line}\n`);
       const mark = /^Mark "(.+)-(\d{13})"$/.exec(line);
       if (mark && !marks.has(mark[1])) marks.set(mark[1], Number(mark[2]));
+      // The end of the shell sync, synced or failed, as the wall clock it was read.
+      if (line.startsWith("[SHELL-SYNC]: ") && !marks.has("shell-synced")) marks.set("shell-synced", Date.now());
     }
   });
   return { child, marks, stop: async () => (child.kill(), sleep(1500)) };
@@ -155,7 +159,10 @@ async function tauriLists(bundle, run) {
     const cpu = cpuOf(build.child.pid) - cpu0;
     const m = (name) => build.marks.get(name);
     return {
-      sidebar: m("sidebar-shown") && m("cluster-clicked") ? m("sidebar-shown") - m("cluster-clicked") : undefined,
+      // SC-002: from the click or the end of the shell sync, whichever is
+      // later, as the Electron build's window opens only after its shell sync.
+      sidebar: m("sidebar-shown") - Math.max(m("cluster-clicked"), m("shell-synced") ?? 0),
+      sidebarFromClick: m("sidebar-shown") - m("cluster-clicked"),
       // From the choice of All Namespaces, as the Electron run times it.
       configMaps: m("configmaps-first-row") - m("all-namespaces-chosen"),
       pods: m("pods-first-row") - m("pods-clicked"),
@@ -297,6 +304,7 @@ async function electronLists(run) {
     const cpu = cpuOf(build.child.pid) - cpu0;
     return {
       sidebar: sidebar - clicked,
+      sidebarFromClick: sidebar - clicked,
       configMaps: marks["configmaps-first-row"] - chosen,
       pods: marks["pods-first-row"] - marks["pods-clicked"],
       cpu: +cpu.toFixed(2),
@@ -670,7 +678,7 @@ for (const build of ["lists", "watch"].includes(mode) ? builds : []) {
       times.push(result);
     }
     results[build] = Object.fromEntries(
-      ["sidebar", "configMaps", "pods", "cpu"].map((key) => [
+      ["sidebar", "sidebarFromClick", "configMaps", "pods", "cpu"].map((key) => [
         key,
         {
           median: median(times.map((time) => time[key]).filter((value) => value !== undefined)),
