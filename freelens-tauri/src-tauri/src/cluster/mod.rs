@@ -15,6 +15,7 @@ pub mod client;
 pub mod connection;
 pub mod detect;
 pub mod exec;
+pub mod execute;
 pub mod kubeconfig_edit;
 pub mod watch;
 
@@ -221,6 +222,12 @@ impl Clusters {
                 .to_string()
         };
         Ok((text("kubeConfigPath").into(), text("contextName")))
+    }
+
+    /// The API server of the cluster's context, read from its file now.
+    pub fn server_of(&self, id: &str) -> Option<String> {
+        let source = self.inner.catalog.cluster(id)?;
+        client::context_facts(&source).server
     }
 
     /// `deactivate-cluster`: an unregistered id changes nothing; else the

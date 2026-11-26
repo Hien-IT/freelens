@@ -91,7 +91,7 @@ fn build(
         foundation::Setup::current(stores, catalog.clone(), Arc::clone(log)),
     )?;
     let announcements = messaging::admin::register(&mut channels, Arc::clone(log))?;
-    version::register(&mut channels, version)?;
+    version::register(&mut channels, version.clone())?;
     let frames = frames::register(&mut channels, catalog.clone(), Arc::clone(log))?;
     catalog::channels::register(
         &mut channels,
@@ -104,7 +104,13 @@ fn build(
     let clusters = cluster::Clusters::new(&catalog, channels.sender(), Arc::clone(log));
     let watches = cluster::watch::register(&mut channels, &clusters, &frames, &catalog)?;
     clusters.set_watches(watches);
-    cluster::channels::register(&mut channels, &clusters, &frames, stores.data_dir())?;
+    cluster::channels::register(
+        &mut channels,
+        &clusters,
+        &frames,
+        stores.data_dir(),
+        &version,
+    )?;
     if checks.messaging {
         messaging::check::register(&mut channels, announcements, Arc::clone(log))?;
     }

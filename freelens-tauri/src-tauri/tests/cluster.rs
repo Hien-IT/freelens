@@ -979,6 +979,302 @@ async fn quitting_disconnects_every_cluster_and_leaves_no_connection_open() {
     assert_eq!(core.api.open_connections(), 0);
 }
 
+// execute-on-cluster and the frame rule (contracts/cluster-channels.md,
+// FR-025 to FR-027)
+
+async fn connected_core(name: &str) -> (ClusterCore, String) {
+    let dir = temp_dir(name);
+    let api = FakeApi::start(Tls::None, &dir).await;
+    a_cluster(&api);
+    let context = Context::new("kind-a", &api, User::Token(fake_api::TOKEN.into()));
+    let core = cluster_core(api, &dir, vec![context]).await;
+    let id = core.id(0);
+    request(&core, "activate-cluster", json!({"clusterId": id})).await;
+    assert!(core.clusters.state(&id).unwrap().accessible);
+    (core, id)
+}
+
+async fn execute(core: &ClusterCore, payload: Value) -> Value {
+    request(core, "execute-on-cluster", payload).await["payload"].clone()
+}
+
+#[tokio::test]
+async fn execute_on_cluster_runs_each_operation_with_the_cluster_s_credentials() {
+    let (core, id) = connected_core("cluster-execute").await;
+    let pods = "/api/v1/namespaces/default/pods";
+    let pod = "/api/v1/namespaces/default/pods/my-pod";
+    let deployment = "/apis/apps/v1/namespaces/default/deployments/my-deploy";
+    core.api.set(
+        "GET",
+        pods,
+        Answer::json(200, json!({"kind": "PodList", "items": []})),
+    );
+    core.api.set(
+        "POST",
+        pods,
+        Answer::json(201, json!({"kind": "Pod", "created": true})),
+    );
+    core.api.set(
+        "PUT",
+        pod,
+        Answer::json(200, json!({"kind": "Pod", "updated": true})),
+    );
+    core.api.set(
+        "DELETE",
+        pod,
+        Answer::json(200, json!({"kind": "Status", "status": "Success"})),
+    );
+    core.api.set(
+        "PATCH",
+        deployment,
+        Answer::json(200, json!({"kind": "Deployment"})),
+    );
+    core.api.set(
+        "GET",
+        "/api/v1/namespaces/default/pods/not-found",
+        Answer::status(404, "NotFound", "pods \"not-found\" not found"),
+    );
+    let resource = |name: Option<&str>| {
+        let mut resource = json!({"apiVersion": "v1", "kind": "Pod", "namespace": "default"});
+        if let Some(name) = name {
+            resource["name"] = json!(name);
+        }
+        resource
+    };
+    let body = json!({"metadata": {"name": "my-pod"}});
+
+    let listed = execute(
+        &core,
+        json!({"clusterId": id, "operation": "list", "resource": {
+            "apiVersion": "v1", "kind": "Pod", "namespace": "default",
+            "labelSelector": "app=nginx", "fieldSelector": "status.phase=Running"}}),
+    )
+    .await;
+    let created = execute(
+        &core,
+        json!({"clusterId": id, "operation": "create", "resource": resource(None), "body": body}),
+    )
+    .await;
+    let updated = execute(&core, json!({"clusterId": id, "operation": "update", "resource": resource(Some("my-pod")), "body": body})).await;
+    let deleted = execute(
+        &core,
+        json!({"clusterId": id, "operation": "delete", "resource": resource(Some("my-pod"))}),
+    )
+    .await;
+    let patch = json!({"spec": {"replicas": 3}});
+    let deployment_resource = json!({"apiVersion": "apps/v1", "kind": "Deployment", "namespace": "default", "name": "my-deploy"});
+    let mut patch_types = Vec::new();
+    for patch_type in [None, Some("merge"), Some("json")] {
+        let mut payload = json!({"clusterId": id, "operation": "patch", "resource": deployment_resource, "body": patch});
+        if let Some(patch_type) = patch_type {
+            payload["patchType"] = json!(patch_type);
+        }
+        assert_eq!(execute(&core, payload).await["success"], true);
+        patch_types.push(
+            core.api
+                .requests_of(deployment)
+                .last()
+                .unwrap()
+                .header("content-type")
+                .unwrap()
+                .to_string(),
+        );
+    }
+    let missing = execute(
+        &core,
+        json!({"clusterId": id, "operation": "get", "resource": resource(Some("not-found"))}),
+    )
+    .await;
+
+    assert_eq!(
+        listed,
+        json!({"success": true, "data": {"kind": "PodList", "items": []}})
+    );
+    let list_request = core.api.requests_of(pods)[0].clone();
+    assert_eq!(list_request.method, "GET");
+    assert_eq!(
+        list_request.query.as_deref(),
+        Some("labelSelector=app%3Dnginx&fieldSelector=status.phase%3DRunning")
+    );
+    assert_eq!(list_request.header("user-agent"), Some("Freelens/0.1.0"));
+    assert_eq!(
+        list_request.header("authorization"),
+        Some(format!("Bearer {}", fake_api::TOKEN).as_str())
+    );
+    assert_eq!(
+        created,
+        json!({"success": true, "data": {"kind": "Pod", "created": true}})
+    );
+    let create_request = core
+        .api
+        .requests_of(pods)
+        .into_iter()
+        .find(|r| r.method == "POST")
+        .unwrap();
+    assert_eq!(
+        serde_json::from_slice::<Value>(&create_request.body).unwrap(),
+        body
+    );
+    assert_eq!(
+        create_request.header("content-type"),
+        Some("application/json")
+    );
+    assert_eq!(updated["data"]["updated"], true);
+    assert_eq!(deleted["success"], true);
+    assert_eq!(
+        core.api
+            .requests_of(pod)
+            .iter()
+            .map(|r| r.method.as_str())
+            .collect::<Vec<_>>(),
+        ["PUT", "DELETE"]
+    );
+    assert_eq!(
+        patch_types,
+        [
+            "application/strategic-merge-patch+json",
+            "application/merge-patch+json",
+            "application/json-patch+json"
+        ]
+    );
+    assert_eq!(
+        missing,
+        json!({"success": false, "error": {"message": "pods \"not-found\" not found", "code": 404, "reason": "NotFound"}})
+    );
+    // No answer carries the credential.
+    for answer in [&listed, &created, &updated, &deleted, &missing] {
+        assert!(!answer.to_string().contains(fake_api::TOKEN));
+    }
+}
+
+#[tokio::test]
+async fn execute_on_cluster_refuses_what_the_electron_build_refuses() {
+    let (core, id) = connected_core("cluster-execute-refusals").await;
+    let pod = json!({"apiVersion": "v1", "kind": "Pod", "namespace": "default"});
+    let not_accessible = json!({"success": false, "error": {
+        "message": "Cluster not available. Ensure cluster is connected.",
+        "code": 503, "reason": "ClusterNotAccessible"}});
+
+    let unknown = execute(
+        &core,
+        json!({"clusterId": "no-such-cluster", "operation": "list", "resource": pod}),
+    )
+    .await;
+    let operation = execute(
+        &core,
+        json!({"clusterId": id, "operation": "watch", "resource": pod}),
+    )
+    .await;
+    let escaping = execute(
+        &core,
+        json!({"clusterId": id, "operation": "get", "resource": {"apiVersion": "v1", "kind": "Pod", "namespace": "..", "name": "x"}}),
+    )
+    .await;
+    request(&core, "deactivate-cluster", json!(id)).await;
+    let disconnected = execute(
+        &core,
+        json!({"clusterId": id, "operation": "list", "resource": pod}),
+    )
+    .await;
+
+    assert_eq!(unknown, not_accessible);
+    assert_eq!(disconnected, not_accessible);
+    assert_eq!(
+        operation,
+        json!({"success": false, "error": {"message": "Unknown operation: watch", "code": 400, "reason": "BadRequest"}})
+    );
+    assert_eq!(escaping["error"]["reason"], "BadRequest");
+    assert!(
+        core.api
+            .requests_of("/api/v1/namespaces/../pods/x")
+            .is_empty()
+    );
+}
+
+#[tokio::test]
+async fn a_cluster_frame_names_only_its_own_cluster() {
+    let dir = temp_dir("cluster-frame-rule");
+    let api = FakeApi::start(Tls::None, &dir).await;
+    a_cluster(&api);
+    let contexts = vec![
+        Context::new("kind-a", &api, User::Token(fake_api::TOKEN.into())),
+        Context::new("kind-b", &api, User::Token(fake_api::TOKEN.into())),
+    ];
+    let core = cluster_core(api, &dir, contexts).await;
+    let (own, other) = (core.id(0), core.id(1));
+    let frame = format!("freelens-app://{own}.renderer.freelens.app");
+    let named = |id: &str| -> Vec<(&'static str, Value)> {
+        vec![
+            ("activate-cluster", json!({"clusterId": id})),
+            ("deactivate-cluster", json!(id)),
+            ("set-cluster-as-deleting", json!(id)),
+            ("clear-cluster-as-deleting", json!(id)),
+            ("delete-cluster", json!(id)),
+            (
+                "execute-on-cluster",
+                json!({"clusterId": id, "operation": "list", "resource": {"apiVersion": "v1", "kind": "Pod"}}),
+            ),
+            ("cluster:refresh-accessibility", json!(id)),
+            ("cluster-kubeconfig-contexts", json!(id)),
+            (
+                "remove-cluster-context-from-kubeconfig",
+                json!({"clusterId": id}),
+            ),
+        ]
+    };
+    let requests_before = core.api.requests().len();
+    let kubeconfig = std::fs::read_to_string(dir.join("kubeconfig")).unwrap();
+
+    for (channel, payload) in named(&other) {
+        let answer = post_from(
+            &core,
+            &frame,
+            "/ipc/request",
+            json!({"channel": channel, "payload": payload}),
+        )
+        .await;
+        assert_eq!(
+            answer["error"]["message"],
+            format!("{channel} is answered only for the sending frame's own cluster"),
+            "{channel}"
+        );
+        assert!(
+            core.lines.lock().unwrap().iter().any(|line| line
+                == &format!("[CLUSTER]: refused {channel} from cluster {own} for cluster {other}")),
+            "{channel}"
+        );
+    }
+
+    // Nothing changed: no request reached the cluster, the other cluster is
+    // as it was, its entry and the file are still there.
+    assert_eq!(core.api.requests().len(), requests_before);
+    assert_eq!(core.clusters.state(&other).unwrap(), Default::default());
+    assert_eq!(phase(&core, &other), ("disconnected".into(), true));
+    assert_eq!(store_entry(&core, &other)["id"], other.as_str());
+    assert_eq!(
+        std::fs::read_to_string(dir.join("kubeconfig")).unwrap(),
+        kubeconfig
+    );
+    // The frame's own cluster is answered.
+    let activated = post_from(
+        &core,
+        &frame,
+        "/ipc/request",
+        json!({"channel": "activate-cluster", "payload": {"clusterId": own}}),
+    )
+    .await;
+    assert_eq!(activated, json!({}));
+    assert!(core.clusters.state(&own).unwrap().accessible);
+    let contexts = post_from(
+        &core,
+        &frame,
+        "/ipc/request",
+        json!({"channel": "cluster-kubeconfig-contexts", "payload": own}),
+    )
+    .await;
+    assert_eq!(contexts["payload"]["contexts"], json!(["kind-a", "kind-b"]));
+}
+
 // The fixture cases shared with the Electron build (research R18): the same
 // answers of the API server go through `Connection` here and through the
 // Electron build's `ClusterConnection` in
