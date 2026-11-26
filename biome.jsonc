@@ -64,6 +64,9 @@
       // The catalog fixtures hold invalid YAML, UTF-16 files and invalid
       // UTF-8 on purpose, and the catalogs the Electron build sends for them.
       "!**/freelens-tauri/src-tauri/tests/fixtures/catalog/**",
+      // The cluster connection fixtures are the API server's answers and the
+      // messages the Electron build sends for them, written by its own test.
+      "!**/freelens-tauri/src-tauri/tests/fixtures/cluster/**",
       "!**/pnpm-lock.yaml",
       "!**/pnpm-workspace.yaml"
     ]

@@ -101,7 +101,9 @@ latter, is **Unverified** here.
   `connect_timeout` 30 s and no `read_timeout`: the inactivity limits of the
   Electron build's proxy are applied per request (R9, R10).
 - kube's `http-proxy`, `socks5` and `oidc` features are turned on; no crate is
-  added to `Cargo.lock`. The proxy is the kubeconfig's `proxy-url`, else the
+  added to `Cargo.lock` (Verified when added: the lock gains only the edges
+  from kube-client to `form_urlencoded` and `ipnet`, and from the crate to
+  `sha2` 0.10.9, all three packages already locked). The proxy is the kubeconfig's `proxy-url`, else the
   cluster's `httpsProxy` setting, else kube's own reading of `HTTPS_PROXY`, the
   order the Electron build's environment gives client-go (Unverified for
   client-go, checked by quickstart section 4).

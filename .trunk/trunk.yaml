@@ -171,6 +171,13 @@ lint:
         - ALL
       paths:
         - freelens-tauri/src-tauri/tests/fixtures/catalog/**
+    # The cluster connection fixtures of the Tauri build are the API server's
+    # answers and the messages the Electron build sends for them, written by
+    # its own test, which both builds' tests compare against.
+    - linters:
+        - ALL
+      paths:
+        - freelens-tauri/src-tauri/tests/fixtures/cluster/**
     # Vitest/testing-library snapshots are generated artifacts whose DOM
     # serializer emits whitespace-only lines (e.g. indented empty elements and
     # inline SVG <style> blocks). git-diff-check only flags such lines when they
