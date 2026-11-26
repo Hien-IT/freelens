@@ -127,10 +127,12 @@ credentials are refused, and one whose credential plugin fails.
    cluster is connected, **Then** its allowed namespaces are those the user set
    in the cluster's settings, and when there are none the views get
    `cluster:list-namespace-forbidden`, as in the Electron build.
-4. **Given** a connected cluster, **When** it is connected for the first time,
-   **Then** its distribution, version and node count are recorded in its
-   cluster store entry as the Electron build records them, and the catalog
-   shows them.
+4. **Given** a connected cluster, **When** its API server answers a status
+   check, **Then** its version and last seen time are recorded in its cluster
+   store entry; and **When** its metadata is detected, every 15 minutes or when
+   a view asks to refresh its accessibility, **Then** its distribution, node
+   count and identifier are recorded too, as the Electron build records them,
+   and the catalog shows them.
 5. **Given** a connected cluster whose credentials start to be refused, **When**
    the automatic refresh fails again and again, **Then** it waits and stops as
    the Electron build does, and tells the user that the automatic reconnection
@@ -183,8 +185,9 @@ the view.
 
 ### User Story 3 - Disconnect and delete a cluster (Priority: P3)
 
-The user disconnects a cluster, or deletes it from the catalog: removing its
-context from their kubeconfig file, or the file when the Tauri build wrote it.
+The user disconnects a cluster, or deletes it from the catalog, which removes
+its context from its kubeconfig file, whether the user's own or one the
+application wrote.
 The Tauri build does what the Electron build does: the cluster is disconnected
 and its frame closed, and a deleted cluster leaves the cluster store, its local
 storage and, with the context, the catalog.
@@ -342,15 +345,22 @@ those of the Electron build.
   failure, the message the Electron build sends (invalid credentials, a
   credential plugin that failed, a connection that timed out, with the hint
   about an interactive login when the context uses a credential plugin).
+  Where the Electron build's message quotes an error of freelens-k8s-proxy
+  itself, such as a refused connection or an untrusted certificate, the core
+  MUST send its own text naming the same cause, at the same level, with the
+  same effect on the connection status and on the backoff of FR-005.
 - **FR-003**: The core MUST learn the cluster state as the Electron build does:
   whether the user is an admin, the allowed namespaces (those the user may
   list, or those the cluster's settings name), the known API resources, the
   resources to show, whether the cluster is ready and whether a watch of all
   namespaces is possible; and send `cluster:list-namespace-forbidden` when the
   Electron build sends it.
-- **FR-004**: The core MUST detect the cluster's metadata when the Electron build
-  detects it (its distribution, version, node count, last seen time and the
-  identifier the Electron build records) and write it into the cluster's
+- **FR-004**: The core MUST record the version and last seen time at each
+  successful status check, and detect the cluster's metadata when the
+  Electron build detects it, every 15 minutes while the cluster is available
+  and on `cluster:refresh-accessibility` (its distribution, version, node
+  count, last seen time and the identifier the Electron build records), and
+  write it into the cluster's
   cluster store entry, through the stores of spec 007, in the format the
   Electron build writes, so that the catalog shows it (FR-006 of spec 008).
 - **FR-005**: While a cluster is connected, the core MUST refresh its connection
@@ -407,9 +417,11 @@ those of the Electron build.
   server sends it, no later than in the Electron build. A frame MUST be able to
   keep as many watches open as the views open, without a request waiting for
   a watch to end.
-- **FR-015**: The core MUST stop the request to the API server of a watch or of
-  any request in flight when the frame stops reading its answer, when its
-  frame is removed, and when its cluster is disconnected or deleted.
+- **FR-015**: The core MUST stop the request to the API server of a watch when
+  the frame stops reading it, and of a watch or any other request in flight
+  when its frame is removed or reloaded, and when its cluster is disconnected
+  or deleted. Any other request MUST end at the latest when the Electron
+  build's proxy would end it for inactivity.
 - **FR-016**: A redirect the API server answers MUST lead the frame back to the
   /api-kube proxy of the same cluster, as the Electron build's proxy does, and
   never to the API server's own address.
@@ -440,8 +452,8 @@ those of the Electron build.
   kubeconfig file, and never a credential; and `remove-cluster-context-from-kubeconfig`
   by removing the cluster's context from that file and setting the new
   current context the view names, holding the lock the Electron build takes on
-  the file, and keeping the rest of the file's content as the Electron build
-  keeps it. Both MUST refuse a cluster the catalog does not have.
+  the file, and keeping at least the rest of the file's content that the
+  Electron build keeps. Both MUST refuse a cluster the catalog does not have.
 - **FR-024**: When the Tauri build quits, the core MUST end every connection and
   every request in flight, and MUST leave no process it started for a cluster,
   a credential plugin included, running.
@@ -475,8 +487,8 @@ those of the Electron build.
   one namespace or All Namespaces, and see it change as the cluster changes,
   through watches of the /api-kube proxy; and disconnect a cluster and delete
   it, with the choices the Electron build's delete dialog offers (remove its
-  context from the kubeconfig file, setting a new current context, or remove
-  the file when the Tauri build wrote it). These pages use only the channels
+  context from its kubeconfig file, setting a new current context when the
+  removed one is current). These pages use only the channels
   and the /api-kube proxy the renderer uses, so that the renderer's own views
   replace them, in the spec that runs the renderer, without a change of the
   core. The times of Story 5 are measured in them.
@@ -542,7 +554,9 @@ those of the Electron build.
 - **SC-001**: Connecting the kind cluster, and contexts whose API server does
   not answer, whose credentials are refused and whose credential plugin fails,
   gives in the Tauri build the same progress and failure messages, in the same
-  order, and the same cluster state as in the Electron build.
+  order and at the same levels, and the same cluster state as in the Electron
+  build; a message that quotes an error of freelens-k8s-proxy itself names
+  the same cause (FR-002).
 - **SC-002**: Over three runs of the scenario on the kind cluster, the median
   time from clicking the cluster to its sidebar showing is no longer in the
   Tauri build than in the Electron build, measured on the same machine and

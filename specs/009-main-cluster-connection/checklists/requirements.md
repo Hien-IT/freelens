@@ -53,3 +53,11 @@
   `specs/baseline.md` does not have yet; the feature measures both builds with
   the same steps (Assumptions).
 - The readers are the maintainers of the port, as for specs 002 to 008.
+- Planning corrected the spec where the Electron build's sources differ from
+  the first draft (research R5, R7, R11, R12): metadata is detected on the
+  15-minute timer and on `cluster:refresh-accessibility`, not on connecting
+  (Story 1, FR-004); the delete dialog removes a context and never a file
+  (Story 3, FR-029); a request in one piece cannot be cancelled by the page
+  (FR-015); a message that quotes freelens-k8s-proxy's own error is worded by
+  the core (FR-002, SC-001); the kubeconfig edit keeps at least what the
+  Electron build keeps (FR-023).
