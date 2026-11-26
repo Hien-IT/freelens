@@ -7,11 +7,12 @@
 //! shared with every area of the core, and the two channels of cluster-frames
 //! (`specs/004-cluster-frames/contracts/frames-api.md`).
 
-use std::collections::{BTreeSet, HashSet};
+use std::collections::BTreeSet;
 use std::sync::{Arc, Mutex};
 
 use serde::Serialize;
 
+use crate::catalog::Catalog;
 use crate::messaging::{
     ChannelError, Channels, DuplicateChannel, Log, MessageChannel, QueueEvent, RequestChannel,
     Sender, View,
@@ -49,8 +50,8 @@ struct State {
 struct Inner {
     state: Mutex<State>,
     listeners: Mutex<Vec<Listener>>,
-    /// The ids of the catalog, the only clusters that can be visible.
-    catalog: HashSet<String>,
+    /// The catalog, whose clusters are the only ones that can be visible.
+    catalog: Catalog,
     sender: Sender,
     log: Log,
 }
@@ -185,7 +186,7 @@ impl Frames {
     }
 
     fn set_visible(&self, cluster: Option<String>) {
-        let visible = cluster.filter(|id| self.inner.catalog.contains(id));
+        let visible = cluster.filter(|id| self.inner.catalog.has_cluster(id));
         match &visible {
             Some(id) => self.log(&format!("Frames: visible cluster {id}")),
             None => self.log("Frames: no visible cluster"),
@@ -226,7 +227,7 @@ impl Frames {
 /// them all (research R5 and R11 of spec 004).
 pub fn register(
     channels: &mut Channels,
-    catalog: HashSet<String>,
+    catalog: Catalog,
     log: Log,
 ) -> Result<Frames, DuplicateChannel> {
     let frames = Frames {

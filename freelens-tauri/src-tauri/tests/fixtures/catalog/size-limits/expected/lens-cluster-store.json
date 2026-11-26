@@ -1,0 +1,20 @@
+[
+  {
+    "id": "<id>",
+    "contextName": "context-small",
+    "kubeConfigPath": "<root>/work/folder/small",
+    "preferences": {},
+    "metadata": {},
+    "accessibleNamespaces": [],
+    "labels": {}
+  },
+  {
+    "id": "<id>",
+    "contextName": "context-under-limit",
+    "kubeConfigPath": "<root>/work/folder/under-limit",
+    "preferences": {},
+    "metadata": {},
+    "accessibleNamespaces": [],
+    "labels": {}
+  }
+]

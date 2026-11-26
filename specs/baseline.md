@@ -283,3 +283,88 @@ MEASURE_DATA_DIR=<thư mục có năm store> specs/001-tauri-shell-spike/measure
 
 Không có `MEASURE_DATA_DIR`, mỗi lần chạy bắt đầu với một thư mục dữ liệu rỗng
 của riêng nó, như số đo của spec 001.
+
+## Catalog (spec 008)
+
+Số đo cho SC-001, SC-002, SC-003, SC-006 và SC-007 của
+`specs/008-main-catalog`. Đo ngày 2026-11-26 trên cùng máy với phần Kết quả,
+bằng `specs/008-main-catalog/measure-catalog.mjs` và `measure.sh`.
+
+### Kết quả
+
+| Chỉ số                                                              | Bản Electron      | Bản Tauri, trang nhận     | Bản Tauri, lõi gửi | Cổng       |
+| ------------------------------------------------------------------- | ----------------- | ------------------------- | ------------------ | ---------- |
+| Thêm một context vào file sync, trung vị 5 lần (ms)                 | 1027 (1023–1032)  | 535 (531–628)             | 533 (529–626)      | ≤ Electron |
+| Xoá một context, trung vị 5 lần (ms)                                | 1027 (1026–1030)  | 540 (536–625)             | 537 (532–622)      | ≤ Electron |
+| Thêm một file vào folder sync, trung vị 5 lần (ms)                  | 1143 (1139–1145)  | 534 (517–569)             | 530 (515–564)      | ≤ Electron |
+| Xoá một file của folder sync, trung vị 5 lần (ms)                   | 166 (165–167)     | 121 (115–190)             | 118 (113–188)      | ≤ Electron |
+| Catalog thiếu cluster trong 100 lần ghi đè file                     | 0                 | 0                         |                    | 0          |
+| `catalog:init` tới toàn bộ catalog 500 context, trung vị 3 lần (ms) | 19 (19 / 19 / 19) | 8 (8 / 8 / 11)            |                    | ≤ Electron |
+| Khởi động với catalog 500 context, trung vị 3 lần (s)               |                   | 0.48 (0.97 / 0.46 / 0.48) |                    | ≤ 2.37     |
+
+- **Catalog của hai bản (SC-001):** cùng một bộ file và store, hai bản gửi
+  catalog bằng nhau khi so như giá trị JSON, sau khi sắp xếp: trong một folder
+  sync, bản Electron liệt kê file theo thứ tự `readdir`, core theo tên. Phase
+  của web link cũng bằng nhau: `available` cho link được phục vụ,
+  `unavailable` cho cổng đóng. Không gói nào chứa token hay địa chỉ server
+  của file (SC-008).
+- **Cách đo thay đổi:** từ lúc lệnh ghi của script trả về tới lúc catalog đổi.
+  Bản Electron đo lúc main gửi `catalog:items`, qua một hook cài bằng
+  `--inspect-brk`. Bản Tauri đo ở hai mốc: lúc trang nhận (mark
+  `catalog-<n>`, đã gồm cả kênh) và lúc lõi gửi (dòng log `Catalog: sent <n>
+  entities`, cùng mốc với bản Electron). Bản Electron chờ file đứng yên 1 s,
+  core chờ 500 ms. Script không đưa cửa sổ lên trước, nên cửa sổ có thể nằm
+  sau cửa sổ khác trong lúc đo.
+- **Cửa sổ nằm sau:** ở bản chưa sửa, khoảng 8 s sau khi tải, WebKit dừng
+  trang. Một lần, trang dừng hai phút: hàng đợi của nó đóng sau 60 s và các
+  catalog gửi trong lúc đó bị mất. App Nap cũng làm lõi gửi trễ 0,5–2 s
+  (trung vị khi thêm context là 1082 ms). Bản Electron không bị cả hai.
+  Bản cuối sửa bằng ba thay đổi (research R5 và R7):
+  - lõi tắt App Nap;
+  - trang của cửa sổ ẩn chỉ bị làm chậm, không bị dừng;
+  - lõi gửi lại catalog cho view có hàng đợi mở lại.
+- **Catalog lớn:** một file 250 context và một folder 25 file × 10 context,
+  sinh ra với server và token giả. Lần đo đầu của bản Tauri là 111 ms: trang
+  của bản Tauri tải xong khoảng 100 ms sau khi khởi động, lúc timer gộp vẫn
+  chạy; từ đó core trả lời `catalog:init` ngay cho view hỏi (research R7).
+- **Khởi động:** `MEASURE_DATA_DIR` là seed của chế độ `large-seed`: năm
+  store, cluster store rỗng để core ghi 500 entry lúc khởi động, một web link
+  tới cổng đóng trên `127.0.0.1`. RAM lúc đứng yên 238 / 241 / 246 MB RSS,
+  `kube_refs=0` ở cả ba lần.
+- **Bản cài:** dmg 57,6 MB của bản Tauri, build bằng
+  `pnpm --filter @freelensapp/freelens-tauri tauri:build`; bản Electron là
+  `freelens/dist/mac-arm64/Freelens.app` đã build sẵn, mã production của nó
+  không đổi trong spec 008.
+- **Đối chứng trên `main`:** chạy lại `dump`, `changes` và `weblinks` với bản
+  Electron đóng gói từ `main`. `dump` bằng nhau với một file sync rỗng, một
+  folder sync rỗng, và với `syncKubeconfigEntries: []`, nơi không bản nào có
+  cluster. Trung vị của `changes` (ms), theo thứ tự Electron, Tauri trang
+  nhận, Tauri lõi gửi: thêm context 1028 / 535 / 532, xoá context
+  1031 / 538 / 536, thêm file 1144 / 537 / 536, xoá file 166 / 121 / 119.
+  Không catalog nào thiếu cluster. Phase của web link bằng nhau. File sinh ra
+  có thêm `certificate-authority-data`, `client-certificate-data` và
+  `client-key-data` giả, và không gói nào chứa chúng.
+
+### Đo lại
+
+```bash
+node specs/008-main-catalog/measure-catalog.mjs dump
+```
+
+```bash
+node specs/008-main-catalog/measure-catalog.mjs changes
+```
+
+```bash
+node specs/008-main-catalog/measure-catalog.mjs large
+```
+
+```bash
+node specs/008-main-catalog/measure-catalog.mjs large-seed "${TMPDIR%/}/catalog-seed"
+```
+
+```bash
+MEASURE_DATA_DIR="${TMPDIR%/}/catalog-seed" specs/001-tauri-shell-spike/measure.sh spike "$PWD/freelens-tauri/src-tauri/target/release/bundle/dmg/Freelens Spike_0.1.0_aarch64.dmg" 3 60
+```
+
+Script in `workdir=` của mỗi lần chạy; xoá thư mục đó sau khi đọc xong.

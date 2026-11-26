@@ -1,0 +1,11 @@
+{
+  "contexts": [
+    {
+      "name": "yes"
+    },
+    {
+      "name": "on"
+    }
+  ],
+  "error": "ValidationError: \"contexts[1].name\" must be a string. \"contexts[2].name\" must be a string"
+}

@@ -94,11 +94,11 @@ is [contracts/catalog-entities.md](./contracts/catalog-entities.md).
 
 ## Catalog
 
-| Field      | Meaning                                                                                    |
-| ---------- | ------------------------------------------------------------------------------------------ |
-| `entities` | web links, then general pages, then clusters; each id once                                 |
-| `visible`  | the cluster id last named on `cluster-visibility`, or none; its entity has `status.active` |
-| `version`  | raised on every change; a send carries the entities of the latest version                  |
+| Field      | Meaning                                                                                      |
+| ---------- | -------------------------------------------------------------------------------------------- |
+| `entities` | web links, then general pages, then clusters; each cluster id once, no dedupe across sources |
+| `visible`  | the cluster id last named on `cluster-visibility`, or none; its entity has `status.active`   |
+| `version`  | raised on every change; a send carries the entities of the latest version                    |
 
 Sending: a change while no timer runs is sent at once; every change restarts
 a 100 ms timer; when the timer ends, the latest entities are sent if anything

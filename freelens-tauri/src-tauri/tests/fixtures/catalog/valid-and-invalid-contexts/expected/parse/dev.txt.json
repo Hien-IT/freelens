@@ -1,0 +1,18 @@
+{
+  "contexts": [
+    {
+      "name": "context-a"
+    },
+    {
+      "name": "no-cluster",
+      "error": "Error: No valid cluster object provided in kubeconfig for context 'no-cluster'"
+    },
+    {
+      "name": "no-user",
+      "error": "Error: No valid user object provided in kubeconfig for context 'no-user'"
+    },
+    {
+      "name": "context-b"
+    }
+  ]
+}

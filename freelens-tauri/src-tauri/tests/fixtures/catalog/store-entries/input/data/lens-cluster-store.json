@@ -1,0 +1,57 @@
+{
+  "__internal__": {
+    "migrations": {
+      "version": "0.1.0"
+    }
+  },
+  "clusters": [
+    {
+      "id": "<id:work/dev.yaml:context-a>",
+      "contextName": "context-a",
+      "kubeConfigPath": "<root>/work/dev.yaml",
+      "preferences": {
+        "clusterName": "Renamed A",
+        "iconShortName": "RA",
+        "icon": "data:image/png;base64,AAAA",
+        "prometheus": {
+          "namespace": "monitoring",
+          "service": "prometheus",
+          "port": 9090,
+          "prefix": ""
+        },
+        "prometheusProvider": {
+          "type": "operator"
+        }
+      },
+      "metadata": {
+        "distribution": "kind",
+        "version": "v1.34.0",
+        "nodes": 3,
+        "lastSeen": "2026-11-20T10:00:00.000Z",
+        "id": "cluster-uid-a",
+        "prometheus": {
+          "provider": "operator",
+          "success": true
+        }
+      },
+      "accessibleNamespaces": [],
+      "labels": {
+        "team": "platform",
+        "env": "dev"
+      }
+    },
+    {
+      "id": "<id:work/dev.yaml:context-b>",
+      "contextName": "context-b",
+      "kubeConfigPath": "<root>/work/dev.yaml",
+      "preferences": {
+        "icon": "#ff0000"
+      },
+      "metadata": {},
+      "accessibleNamespaces": [],
+      "labels": {
+        "file": "custom-label"
+      }
+    }
+  ]
+}

@@ -285,7 +285,6 @@ use std::sync::{Arc, Mutex};
 use freelens_tauri::catalog::Catalog;
 use freelens_tauri::foundation::paths::BuildKind;
 use freelens_tauri::messaging::{Log, Messaging, routes};
-use freelens_tauri::options::KubeconfigChoice;
 use freelens_tauri::stores::{Machine, StoreName, Stores};
 use freelens_tauri::{Checks, register_core};
 use http::{Method, Request, header};
@@ -318,11 +317,8 @@ fn core_on(dir: &Path) -> Core {
     let lines = Arc::new(Mutex::new(Vec::new()));
     let sink = Arc::clone(&lines);
     let log: Log = Arc::new(move |line| sink.lock().unwrap().push(line.to_string()));
-    let catalog = Catalog::load(
-        &KubeconfigChoice::File(
-            Path::new(env!("CARGO_MANIFEST_DIR")).join("tests/fixtures/three-contexts.yaml"),
-        ),
-        None,
+    let catalog = Catalog::from_kubeconfig_file(
+        &Path::new(env!("CARGO_MANIFEST_DIR")).join("tests/fixtures/three-contexts.yaml"),
     );
     let stores = Stores::load(dir, machine(), Arc::clone(&log));
     let core = register_core(Checks::default(), "0.1.0".into(), &catalog, &stores, &log).unwrap();
@@ -481,7 +477,7 @@ async fn two_views_one_after_the_other_end_with_the_last_model() {
     let channel = format!("store-sync-main:{}", path.display());
     let cluster_view = format!(
         "freelens-app://{}.renderer.freelens.app",
-        core.catalog.entries[0].id
+        core.catalog.cluster_ids()[0]
     );
     send(&core, MAIN, &channel, json!({"weblinks": [{"id": "a"}]})).await;
     send(

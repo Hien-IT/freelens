@@ -37,14 +37,17 @@ script measures both builds with the same steps (R12).
 (`freelens-tauri/src-tauri/rust-toolchain.toml`); TypeScript for the spike
 page, the Vitest parity test and the measurement script
 
-**Primary Dependencies**: one new crate, `notify` 8 with its default features
+**Primary Dependencies**: one new crate, `notify` 9 with its default features
 (FSEvents on macOS) and the crates it brings into `Cargo.lock` (R5).
 `serde-saphyr`, already in `Cargo.lock` through kube, becomes a direct
-dependency for the YAML of R3. Everything else is in the crate already:
-`md-5`, `uuid`, `serde_json`, the connection code of
-`src/foundation/download.rs` for the web link checks, kube's `Kubeconfig` for
-the cluster clients. The Electron build adds no package; the measurement
-script uses the Playwright that `specs/profile-main.mjs` uses.
+dependency for the YAML of R3, and `objc2-foundation`, already in
+`Cargo.lock` through Tauri, a direct macOS-only one for the App Nap opt-out
+of R5. Everything else is in the crate already: `md-5`, `uuid`, `serde_json`,
+the connection code of `src/foundation/download.rs` for the web link checks,
+kube's `Kubeconfig` for the cluster clients. The Electron build adds no
+package; the measurement script drives it through the inspector's WebSocket
+of `--inspect-brk`, with the `WebSocket` and `fetch` of Node, and needs no
+package either.
 
 **Storage**: the synced kubeconfig files, read only; the files
 `add-kubeconfig-text` writes into `<data dir>/kubeconfigs/`; the cluster
@@ -73,7 +76,11 @@ Electron build (SC-007).
 kubeconfig file or a credential (FR-014, R3, R11); no test or measurement
 reads the user's own `~/.kube` or data directory; the Electron build changes
 only by a test; no existing test is removed or weakened; the cluster store is
-written only through `Stores`.
+written only through `Stores`. The catalog keeps its pace while the windows
+are hidden: the core opts out of App Nap at startup
+(`src/foundation/app_nap.rs`, R5), and the main window is built with the
+`Throttle` background policy, so that WebKit slows its page and does not
+stop it (R7).
 
 **Scale/Scope**: eight channels, `cluster-visibility` among them; the large catalog of 500 contexts; every
 existing test of the area mapped to a cargo test (R14).
@@ -84,8 +91,8 @@ _GATE: Must pass before Phase 0 research. Re-check after Phase 1 design._
 
 | Principle                    | Answer for this plan                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      | Status |
 | ---------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------ |
-| VII. Tauri build             | Targets the Tauri build; the Electron build gains one Vitest test and keeps every file, channel and answer (FR-023), and its build, type check, unit, integration and knip checks run after the change. The Tauri build stays macOS arm64 only and lists no extension entity.                                                                                                                                                                                                                                                                                                                                                                                             | Pass   |
-| VIII. Rust core              | A new module directory `src/catalog/` in the existing crate, replacing `src/catalog.rs`. One new crate, `notify`, with `Cargo.lock` committed (R5 records why). `cargo fmt --check`, `cargo clippy --all-targets -- -D warnings` and `cargo test` gate it. No Node ships: the Vitest test and the measurement script run on the development machine and in the Electron build's CI only.                                                                                                                                                                                                                                                                                  | Pass   |
+| VII. Tauri build             | Targets the Tauri build; the Electron build gains one Vitest test and keeps every file, channel and answer (FR-023), and its build, type check, unit, integration and knip checks run after the change. The Tauri build stays macOS arm64 only and lists no extension entity. Like the Electron build, it keeps its pace in the background: the App Nap opt-out and the `Throttle` policy of the main window match what the Electron build gets from its framework and its default `backgroundThrottling` (R5, R7).                                                                                                                                                       | Pass   |
+| VIII. Rust core              | A new module directory `src/catalog/` in the existing crate, replacing `src/catalog.rs`. One new crate, `notify`, with `Cargo.lock` committed (R5 records why); `serde-saphyr` and the macOS-only `objc2-foundation`, already in `Cargo.lock`, become direct dependencies. `cargo fmt --check`, `cargo clippy --all-targets -- -D warnings` and `cargo test` gate it. No Node ships: the Vitest test and the measurement script run on the development machine and in the Electron build's CI only.                                                                                                                                                                       | Pass   |
 | II. Environments             | Rust core: every new module. Electron build: one test file under `main/`, out of both type-check programs. The spike page is in `freelens-tauri/ui`, outside `freelens/src` and `packages/core/src`, and uses no Node. The values the views see about the files come from the core over channels.                                                                                                                                                                                                                                                                                                                                                                         | Pass   |
 | I. Dependency injection      | No injectable added, moved or renamed; `pnpm build:di` has nothing to regenerate.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         | Pass   |
 | III. Extension API           | No production file of the Electron build changes, so nothing `Common`, `Main` or `Renderer` reaches changes, `Main.Catalog` included. Checked against C1 to C15.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          | Pass   |
@@ -124,9 +131,10 @@ specs/008-main-catalog/
 
 ```text
 freelens-tauri/src-tauri/
-├── Cargo.toml                    # + notify; serde-saphyr becomes direct
+├── Cargo.toml                    # + notify; serde-saphyr and objc2-foundation become direct
 ├── src/
-│   ├── lib.rs                    # stores, then the catalog; Core gains `catalog`
+│   ├── lib.rs                    # stores, then the catalog; Core gains `catalog`; no App Nap,
+│   │                             # a hidden window's page throttled, not stopped (R5, R7)
 │   ├── options.rs                # --kubeconfig: an extra file sync; --catalog-dump=<path>
 │   ├── catalog/                  # replaces src/catalog.rs
 │   │   ├── mod.rs                # Catalog: sources, order, dedupe, categories, on_change
@@ -140,6 +148,7 @@ freelens-tauri/src-tauri/
 │   ├── frames.rs                 # asks the catalog whether a cluster exists
 │   ├── foundation/
 │   │   ├── mod.rs                # Setup takes the Catalog
+│   │   ├── app_nap.rs            # new: keeps the process out of App Nap (R5)
 │   │   └── local_storage.rs      # asks the catalog
 │   ├── messaging/routes.rs       # view of a host: asks the catalog
 │   ├── routes.rs                 # the same

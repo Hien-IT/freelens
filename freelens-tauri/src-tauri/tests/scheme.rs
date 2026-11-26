@@ -9,10 +9,9 @@
 use std::path::{Path, PathBuf};
 use std::sync::{Arc, Mutex};
 
-use freelens_tauri::catalog::{Catalog, CatalogEntry};
+use freelens_tauri::catalog::{Catalog, ClusterSource};
 use freelens_tauri::clusters::{ApiOutcome, BoxFuture, ClusterApi};
 use freelens_tauri::messaging::{Log, View};
-use freelens_tauri::options::KubeconfigChoice;
 use freelens_tauri::routes::{Audience, Env};
 use freelens_tauri::scheme;
 use freelens_tauri::scheme::{Asset, State, handle};
@@ -37,13 +36,13 @@ struct FakeClusters {
 impl ClusterApi for FakeClusters {
     fn get<'a>(
         &'a self,
-        entry: &'a CatalogEntry,
+        cluster: &'a ClusterSource,
         path_and_query: &'a str,
     ) -> BoxFuture<'a, ApiOutcome> {
         self.calls
             .lock()
             .unwrap()
-            .push((entry.id.clone(), path_and_query.to_string()));
+            .push((cluster.id.clone(), path_and_query.to_string()));
         let outcome = self.outcome.clone();
         Box::pin(async move { outcome })
     }
@@ -71,7 +70,7 @@ fn fixture_opening(outcome: ApiOutcome, open_cluster: Option<&str>) -> Fixture {
     let sink = Arc::clone(&lines);
     let calls: Calls = Arc::new(Mutex::new(Vec::new()));
     let state = State {
-        catalog: Catalog::load(&KubeconfigChoice::File(path), None),
+        catalog: Catalog::from_kubeconfig_file(&path),
         clusters: Box::new(FakeClusters {
             outcome,
             calls: Arc::clone(&calls),
@@ -101,7 +100,7 @@ fn assets(path: &str) -> Option<Asset> {
 fn cluster_host(fixture: &Fixture, index: usize) -> String {
     format!(
         "freelens-app://{}.renderer.freelens.app",
-        fixture.state.catalog.entries[index].id
+        fixture.state.catalog.cluster_ids()[index]
     )
 }
 
@@ -215,7 +214,7 @@ async fn the_catalog_is_served_on_the_main_host_only() {
     assert_eq!(names, ["context-a", "context-b", "context-c"]);
     assert_eq!(
         json["clusters"][0]["id"],
-        f.state.catalog.entries[0].id.as_str()
+        f.state.catalog.cluster_ids()[0].as_str()
     );
     assert_eq!(json["clusters"][0].as_object().unwrap().len(), 2);
 
@@ -228,7 +227,10 @@ async fn open_on_load_names_the_cluster_of_open_cluster() {
     let f = fixture_opening(namespaces(), Some("context-b"));
     let json: serde_json::Value =
         serde_json::from_slice(get(&f, &format!("{MAIN}/api/clusters")).await.body()).unwrap();
-    assert_eq!(json["openOnLoad"], f.state.catalog.entries[1].id.as_str());
+    assert_eq!(
+        json["openOnLoad"],
+        f.state.catalog.cluster_ids()[1].as_str()
+    );
 
     let f = fixture_opening(namespaces(), Some("no-such-context"));
     let json: serde_json::Value =
@@ -266,7 +268,7 @@ async fn kube_requests_pass_status_and_body_through() {
     assert_eq!(
         *f.calls.lock().unwrap(),
         [(
-            f.state.catalog.entries[1].id.clone(),
+            f.state.catalog.cluster_ids()[1].clone(),
             "/api/v1/namespaces?limit=500".to_string()
         )]
     );
@@ -573,7 +575,7 @@ async fn a_host_in_upper_case_is_served() {
     assert_eq!(response.status(), StatusCode::OK);
     assert_eq!(body(&response), "index.html");
 
-    let id = f.state.catalog.entries[2].id.to_uppercase();
+    let id = f.state.catalog.cluster_ids()[2].to_uppercase();
     let response = get(&f, &format!("freelens-app://{id}.RENDERER.FREELENS.APP/")).await;
     assert_eq!(response.status(), StatusCode::OK);
     assert_eq!(body(&response), "cluster.html");
@@ -582,7 +584,7 @@ async fn a_host_in_upper_case_is_served() {
 #[tokio::test]
 async fn a_host_with_a_trailing_dot_a_port_or_a_user_name_names_no_view() {
     let f = fixture();
-    let id = &f.state.catalog.entries[0].id;
+    let id = &f.state.catalog.cluster_ids()[0];
     let hosts = [
         "freelens-app://renderer.freelens.app.".to_string(),
         format!("freelens-app://{id}.renderer.freelens.app."),
@@ -657,7 +659,7 @@ async fn a_handler_gets_the_view_of_the_host_and_the_longest_path_wins() {
         state: &f.state,
         assets: &assets,
     };
-    let id = &f.state.catalog.entries[1].id;
+    let id = &f.state.catalog.cluster_ids()[1];
     for (host, view) in [
         (MAIN.to_string(), "main".to_string()),
         (cluster_host(&f, 1), format!("cluster {id}")),
@@ -682,7 +684,7 @@ async fn with_frames_check_a_request_with_a_cookie_prints_the_check_cookie_and_i
         state: &f.state,
         assets: &assets,
     };
-    let id = f.state.catalog.entries[0].id.clone();
+    let id = f.state.catalog.cluster_ids()[0].clone();
     for (host, cookie) in [
         (MAIN.to_string(), Some("a=b; frames-check=main".to_string())),
         (cluster_host(&f, 0), Some(format!("frames-check={id}"))),

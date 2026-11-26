@@ -8,13 +8,31 @@
 // keeps one frame per open cluster and names the visible one to the core
 // (specs/004-cluster-frames, research R7).
 
-import { sendMessageToChannelInjectionToken } from "@freelensapp/messaging";
+import {
+  enlistMessageChannelListenerInjectionToken,
+  getMessageChannel,
+  sendMessageToChannelInjectionToken,
+} from "@freelensapp/messaging";
 import { currentVisibleClusterChannel, startMessaging } from "./messaging";
 
 const query = new URLSearchParams(location.search);
 // Only a check run loads the check and its dependencies.
 const messagingCheck = query.has("messaging-check");
 const framesCheck = query.has("frames-check");
+// With `--catalog-dump`, the page marks each catalog it receives, for the
+// measurements of specs/008-main-catalog (research R12).
+const catalogMarks = query.has("catalog-marks");
+
+// The channels of main-catalog the page uses, declared by id
+// (specs/008-main-catalog/contracts/catalog-channels.md).
+const catalogInitChannel = getMessageChannel<undefined>("catalog:init");
+const catalogItemsChannel = getMessageChannel<CatalogEntity[]>("catalog:items");
+const clusterVisibilityChannel = getMessageChannel<string | null>("cluster-visibility");
+
+interface CatalogEntity {
+  kind: string;
+  metadata: { uid: string; name: string };
+}
 
 interface CatalogResponse {
   source: string | null;
@@ -42,7 +60,13 @@ messaging.catch((error: unknown) => console.error("[CATALOG]: messaging did not 
 
 /** Names the visible cluster to the core, or none (FR-014, FR-017). */
 function sendVisibleCluster(id: string | undefined): void {
-  void messaging.then((di) => di.inject(sendMessageToChannelInjectionToken)(currentVisibleClusterChannel, id));
+  void messaging.then((di) => {
+    const send = di.inject(sendMessageToChannelInjectionToken);
+    send(currentVisibleClusterChannel, id);
+    // The renderer names the visible cluster on both channels; the catalog
+    // marks it active from this one.
+    send(clusterVisibilityChannel, id ?? null);
+  });
 }
 
 // One section per open cluster, each with its frame on the cluster's own host.
@@ -130,6 +154,57 @@ function paragraph(text: string, role?: string): HTMLParagraphElement {
   return element;
 }
 
+const list = document.createElement("ul");
+list.setAttribute("aria-label", "Clusters");
+const empty = paragraph("The catalog is empty.");
+
+/** Lists the clusters, keeping the frames that are open. */
+function renderClusters(clusters: Cluster[]): void {
+  list.replaceChildren(
+    ...clusters.map((cluster) => {
+      const button = document.createElement("button");
+      button.type = "button";
+      button.textContent = cluster.name;
+      button.dataset.clusterId = cluster.id;
+      button.addEventListener("click", () => openCluster(cluster));
+      const item = document.createElement("li");
+      item.append(button);
+      return item;
+    }),
+  );
+  empty.hidden = clusters.length > 0;
+  list.hidden = clusters.length === 0;
+}
+
+let openOnLoadId: string | null = null;
+
+/** Follows the catalog the core sends, and opens `--open-cluster` once it is there. */
+function followCatalog(): void {
+  void messaging.then((di) => {
+    di.inject(enlistMessageChannelListenerInjectionToken)({
+      id: "catalog-items",
+      channel: catalogItemsChannel,
+      handler: (entities) => {
+        const clusters = entities
+          .filter((entity) => entity.kind === "KubernetesCluster")
+          .map((entity) => ({ id: entity.metadata.uid, name: entity.metadata.name }));
+        renderClusters(clusters);
+        if (catalogMarks) {
+          void fetch(`/api/mark?name=catalog-${entities.length}`);
+        }
+        const opening = clusters.find((cluster) => cluster.id === openOnLoadId);
+        if (opening) {
+          openOnLoadId = null;
+          openCluster(opening);
+        }
+      },
+    });
+    // The mark comes before the request, so that SC-007 times from it.
+    const marked = catalogMarks ? fetch("/api/mark?name=catalog-init") : Promise.resolve(undefined);
+    void marked.then(() => di.inject(sendMessageToChannelInjectionToken)(catalogInitChannel, undefined));
+  });
+}
+
 async function showCatalog(): Promise<void> {
   const response = await fetch("/api/clusters");
   const catalog = (await response.json()) as CatalogResponse;
@@ -138,30 +213,18 @@ async function showCatalog(): Promise<void> {
     document.body.append(paragraph(catalog.message, "alert"));
   }
 
-  if (catalog.clusters.length === 0) {
-    document.body.append(paragraph("The catalog is empty."));
-  } else {
-    const list = document.createElement("ul");
-    list.setAttribute("aria-label", "Clusters");
-    for (const cluster of catalog.clusters) {
-      const button = document.createElement("button");
-      button.type = "button";
-      button.textContent = cluster.name;
-      button.dataset.clusterId = cluster.id;
-      button.addEventListener("click", () => openCluster(cluster));
-      const item = document.createElement("li");
-      item.append(button);
-      list.append(item);
-    }
-    document.body.append(list, frames);
-  }
+  renderClusters(catalog.clusters);
+  document.body.append(empty, list, frames);
 
   await fetch("/api/mark?name=catalog-shown");
 
   const openOnLoad = catalog.clusters.find((cluster) => cluster.id === catalog.openOnLoad);
   if (openOnLoad) {
     openCluster(openOnLoad);
+  } else {
+    openOnLoadId = catalog.openOnLoad;
   }
+  followCatalog();
 
   if (messagingCheck) {
     void Promise.all([messaging, import("./messaging-check")]).then(

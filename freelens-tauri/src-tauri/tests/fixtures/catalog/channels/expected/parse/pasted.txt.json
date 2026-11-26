@@ -1,0 +1,11 @@
+{
+  "contexts": [
+    {
+      "name": "pasted-a"
+    },
+    {
+      "name": "no-cluster",
+      "error": "Error: No valid cluster object provided in kubeconfig for context 'no-cluster'"
+    }
+  ]
+}

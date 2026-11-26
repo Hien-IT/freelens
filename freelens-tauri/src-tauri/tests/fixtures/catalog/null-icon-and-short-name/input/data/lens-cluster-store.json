@@ -1,0 +1,22 @@
+{
+  "__internal__": {
+    "migrations": {
+      "version": "0.1.0"
+    }
+  },
+  "clusters": [
+    {
+      "id": "<id:work/dev.yaml:context-a>",
+      "contextName": "context-a",
+      "kubeConfigPath": "<root>/work/dev.yaml",
+      "preferences": {
+        "clusterName": "Kept",
+        "iconShortName": null,
+        "icon": null
+      },
+      "metadata": {},
+      "accessibleNamespaces": [],
+      "labels": {}
+    }
+  ]
+}

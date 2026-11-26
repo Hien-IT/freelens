@@ -146,10 +146,19 @@ type RequestHandler =
     Box<dyn Fn(Value, View) -> BoxFuture<'static, Result<Option<Value>, Failure>> + Send + Sync>;
 type MessageListener = Box<dyn Fn(Value, View) -> Result<(), String> + Send + Sync>;
 
-/// `()` travels as "no value", so that the view sees `undefined`.
+/// An answer that may be "no value", which the view sees as `undefined`, as
+/// the Electron build answers `undefined`; `Optional(None)` is that.
+#[derive(Debug, Clone, PartialEq, Serialize)]
+pub struct Optional(pub Option<Value>);
+
+/// `()` and `Optional(None)` travel as "no value", so that the view sees
+/// `undefined`.
 fn to_payload<T: Serialize + 'static>(value: &T) -> Result<Option<Value>, String> {
     if TypeId::of::<T>() == TypeId::of::<()>() {
         return Ok(None);
+    }
+    if let Some(Optional(optional)) = (value as &dyn std::any::Any).downcast_ref::<Optional>() {
+        return Ok(optional.clone());
     }
     serde_json::to_value(value)
         .map(Some)

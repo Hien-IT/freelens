@@ -9,13 +9,12 @@
 use std::path::Path;
 
 use freelens_tauri::catalog::Catalog;
-use freelens_tauri::options::KubeconfigChoice;
 use freelens_tauri::routes::allows_navigation;
 use tauri::Url;
 
 fn catalog() -> Catalog {
     let path = Path::new(env!("CARGO_MANIFEST_DIR")).join("tests/fixtures/three-contexts.yaml");
-    Catalog::load(&KubeconfigChoice::File(path), None)
+    Catalog::from_kubeconfig_file(&path)
 }
 
 fn allows(url: &str, catalog: &Catalog) -> bool {
@@ -25,7 +24,7 @@ fn allows(url: &str, catalog: &Catalog) -> bool {
 #[test]
 fn a_url_of_the_scheme_whose_host_names_a_view_is_allowed() {
     let catalog = catalog();
-    let id = &catalog.entries[1].id;
+    let id = &catalog.cluster_ids()[1];
     for url in [
         "freelens-app://renderer.freelens.app/".to_string(),
         "freelens-app://renderer.freelens.app/?frames-check".to_string(),
@@ -68,7 +67,7 @@ fn other_schemes_are_refused() {
 #[test]
 fn a_url_of_the_scheme_whose_host_names_no_view_is_refused() {
     let catalog = catalog();
-    let id = &catalog.entries[0].id;
+    let id = &catalog.cluster_ids()[0];
     for url in [
         "freelens-app://example.com/".to_string(),
         "freelens-app://0123456789abcdef0123456789abcdef.renderer.freelens.app/".to_string(),

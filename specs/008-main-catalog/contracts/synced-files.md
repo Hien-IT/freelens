@@ -74,11 +74,12 @@ In this order; the first that fails decides.
 
 The loader of `common/kube-helpers/main/kube-helpers.ts`:
 
-1. Blank text is no document. Other text is YAML: duplicate keys are an
-   error, merge keys are expanded, `true`/`false` are the only booleans,
-   plain scalars that js-yaml's default schema reads as timestamps are not
-   strings. A parse error throws `invalid YAML: <reason> at line <n>`, where
-   `<reason>` is the core's own text and never quotes the file.
+1. Blank text, or text of comments alone, is no document. Other text is
+   YAML: duplicate keys are an error, `<<` is an ordinary key, `true`/`false`
+   are the only booleans. A parse error throws
+   `invalid YAML: <reason> at line <n>`, where `<reason>` is the core's own
+   text and never quotes the file. A plain scalar that js-yaml reads as a
+   timestamp is a string in the core (research R3, "Limits").
 2. Schema, every unknown key allowed:
 
    | Path                                   | Rule                                                |

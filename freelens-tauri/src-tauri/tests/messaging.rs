@@ -11,7 +11,6 @@ use std::sync::{Arc, Mutex};
 
 use freelens_tauri::catalog::Catalog;
 use freelens_tauri::messaging::{Log, Messaging, routes};
-use freelens_tauri::options::KubeconfigChoice;
 use freelens_tauri::register_channels;
 use http::{Method, Request, Response, StatusCode, header};
 use serde_json::{Value, json};
@@ -33,7 +32,7 @@ fn fixture() -> Fixture {
     let sink = Arc::clone(&lines);
     let log: Log = Arc::new(move |line| sink.lock().unwrap().push(line.to_string()));
     Fixture {
-        catalog: Catalog::load(&KubeconfigChoice::File(fixture_file()), None),
+        catalog: Catalog::from_kubeconfig_file(&fixture_file()),
         messaging: register_channels(true, "0.1.0".into(), &log).unwrap(),
         lines,
     }
@@ -42,7 +41,7 @@ fn fixture() -> Fixture {
 fn cluster_origin(fixture: &Fixture, index: usize) -> String {
     format!(
         "freelens-app://{}.renderer.freelens.app",
-        fixture.catalog.entries[index].id
+        fixture.catalog.cluster_ids()[index]
     )
 }
 
@@ -310,7 +309,7 @@ async fn requests_answer_with_the_statuses_of_the_contract() {
 async fn a_batch_reaches_the_listeners_in_order_with_the_sending_view() {
     let fixture = fixture();
     let cluster = cluster_origin(&fixture, 0);
-    let id = &fixture.catalog.entries[0].id;
+    let id = &fixture.catalog.cluster_ids()[0];
 
     let response = post(
         &fixture,

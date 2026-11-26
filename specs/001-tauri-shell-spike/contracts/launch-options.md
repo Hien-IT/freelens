@@ -3,24 +3,25 @@
 The experimental build reads its options from the process arguments, once, at
 launch.
 
-| Option                          | Effect                                                                                                                 |
-| ------------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
-| (none)                          | read `$HOME/.kube/config`                                                                                              |
-| `--kubeconfig=<path>`           | read `<path>` instead; a relative path is resolved against the working directory                                       |
-| `--kubeconfig=none`             | read no kubeconfig file; the catalog is empty                                                                          |
-| `--open-cluster=<context name>` | open that cluster as soon as the catalog is shown, as a click would; for measurement runs (FR-011)                     |
-| `--data-dir=<path>`             | use `<path>` as the data directory instead of the Electron build's; for measurements and tests (spec 007, research R6) |
+| Option                          | Effect                                                                                                                                                           |
+| ------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| (none)                          | the catalog syncs what the settings name (spec 008)                                                                                                              |
+| `--kubeconfig=<path>`           | also sync `<path>` for the run, never written to the settings; a relative path is resolved against the working directory                                         |
+| `--kubeconfig=none`             | add nothing to the syncs of the settings                                                                                                                         |
+| `--open-cluster=<context name>` | open that cluster as soon as the catalog is shown, as a click would; for measurement runs (FR-011)                                                               |
+| `--data-dir=<path>`             | use `<path>` as the data directory instead of the Electron build's; for measurements and tests (spec 007, research R6)                                           |
+| `--catalog-dump=<path>`         | append each catalog the core sends to `<path>`, one JSON line each, and have the page mark what it receives; for measurements and tests (spec 008, research R12) |
 
 Rules:
 
 - The `KUBECONFIG` environment variable is ignored.
-- An unknown option, or `--kubeconfig` or `--open-cluster` without a value,
-  prints a message that names it on standard error and exits with status 2
-  before any window opens.
-- An `--open-cluster` name that is not a context of the file in effect opens
-  nothing.
-- A path that does not exist is not an error at launch: the catalog is empty
-  and shows a message that names the file.
+- An unknown option, or `--kubeconfig`, `--open-cluster`, `--data-dir` or
+  `--catalog-dump` without a value, prints a message that names it on
+  standard error and exits with status 2 before any window opens.
+- An `--open-cluster` name that is not a context of the file of
+  `--kubeconfig` opens nothing.
+- A path that does not exist is not an error at launch: the file adds no
+  cluster, and the page shows a message that names it.
 
 How to pass them:
 

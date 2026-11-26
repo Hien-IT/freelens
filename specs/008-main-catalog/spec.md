@@ -245,7 +245,8 @@ whole catalog in both builds with the same syncs.
 - A synced file is replaced by a rename, as editors and `kubectl` do: its
   clusters that stay in it do not leave the catalog in between (FR-010).
 - A synced file cannot be read, for a permission or an I/O error: it is
-  logged, and the catalog shows no cluster of it, as in the Electron build.
+  logged, and the clusters it gave when it was last read stay in the catalog;
+  a file never read gives none. The Electron build does the same.
 - A synced file is larger than the Electron build reads (FR-004): it is
   skipped and logged, and the clusters it gave before leave the catalog.
 - A synced file starts with a UTF-16 byte order mark: it is read as UTF-16; a

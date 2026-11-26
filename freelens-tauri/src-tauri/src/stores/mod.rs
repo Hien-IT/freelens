@@ -259,6 +259,11 @@ impl Stores {
         &self.inner.data_dir
     }
 
+    /// What the defaults of the preferences depend on.
+    pub fn machine(&self) -> &Machine {
+        &self.inner.machine
+    }
+
     /// The preferences as the views see them now.
     pub fn preferences(&self) -> Preferences {
         let entries = self.inner.entries.lock().expect("stores lock");

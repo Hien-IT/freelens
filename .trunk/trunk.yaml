@@ -164,6 +164,13 @@ lint:
         - ALL
       paths:
         - freelens-tauri/src-tauri/tests/fixtures/data-dir/**
+    # The catalog fixtures of the Tauri build hold invalid YAML, UTF-16 files
+    # and invalid UTF-8 on purpose, and the catalogs the Electron build sends
+    # for them, which both builds' tests compare against.
+    - linters:
+        - ALL
+      paths:
+        - freelens-tauri/src-tauri/tests/fixtures/catalog/**
     # Vitest/testing-library snapshots are generated artifacts whose DOM
     # serializer emits whitespace-only lines (e.g. indented empty elements and
     # inline SVG <style> blocks). git-diff-check only flags such lines when they

@@ -1,0 +1,8 @@
+{
+  "syncs": [
+    {
+      "path": "work/folder",
+      "kind": "folder"
+    }
+  ]
+}

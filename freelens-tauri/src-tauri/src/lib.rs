@@ -16,13 +16,12 @@ pub mod scheme;
 pub mod stores;
 pub mod version;
 
-use std::collections::HashSet;
-use std::path::PathBuf;
 use std::sync::Arc;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::time::Duration;
 
 use http::Method;
+use tauri::utils::config::BackgroundThrottlingPolicy;
 use tauri::webview::PageLoadEvent;
 use tauri::{WebviewUrl, WebviewWindowBuilder};
 
@@ -37,6 +36,7 @@ pub struct Core {
     pub messaging: Messaging,
     pub frames: Frames,
     pub stores: Stores,
+    pub catalog: Catalog,
 }
 
 /// The check runs whose channels the core registers.
@@ -58,12 +58,7 @@ pub fn register_core(
     stores: &Stores,
     log: &Log,
 ) -> Result<Core, DuplicateChannel> {
-    let ids = catalog
-        .entries
-        .iter()
-        .map(|entry| entry.id.clone())
-        .collect();
-    build(checks, version, ids, stores, log)
+    build(checks, version, catalog.clone(), stores, log)
 }
 
 /// The channels alone, with no catalog behind the frame record, so that no
@@ -78,13 +73,13 @@ pub fn register_channels(
         frames: false,
     };
     let stores = Stores::in_memory(Machine::current(), Arc::clone(log));
-    build(checks, version, HashSet::new(), &stores, log).map(|core| core.messaging)
+    build(checks, version, Catalog::empty(), &stores, log).map(|core| core.messaging)
 }
 
 fn build(
     checks: Checks,
     version: String,
-    catalog: HashSet<String>,
+    catalog: Catalog,
     stores: &Stores,
     log: &Log,
 ) -> Result<Core, DuplicateChannel> {
@@ -96,7 +91,15 @@ fn build(
     )?;
     let announcements = messaging::admin::register(&mut channels, Arc::clone(log))?;
     version::register(&mut channels, version)?;
-    let frames = frames::register(&mut channels, catalog, Arc::clone(log))?;
+    let frames = frames::register(&mut channels, catalog.clone(), Arc::clone(log))?;
+    catalog::channels::register(
+        &mut channels,
+        &catalog,
+        &frames,
+        catalog
+            .log()
+            .unwrap_or_else(|| catalog::CatalogLog::new(Arc::clone(log), false)),
+    )?;
     if checks.messaging {
         messaging::check::register(&mut channels, announcements, Arc::clone(log))?;
     }
@@ -107,10 +110,12 @@ fn build(
         messaging: channels.build(),
         frames,
         stores: stores.clone(),
+        catalog,
     })
 }
 
 pub fn run() {
+    foundation::app_nap::opt_out();
     let cwd = std::env::current_dir().unwrap_or_default();
     let options = match options::parse(std::env::args().skip(1), &cwd) {
         Ok(options) => options,
@@ -149,9 +154,17 @@ pub fn run() {
         messaging: options.messaging_check,
         frames: options.frames_check,
     };
-    let home = std::env::var_os("HOME").map(PathBuf::from);
-    let catalog = Catalog::load(&options.kubeconfig, home.as_deref());
     let stores = Stores::load(&data_dir, Machine::current(), Arc::clone(&log));
+    // Debug lines follow the debugging flag of `machine-values`.
+    let debugging =
+        foundation::paths::machine_values(&foundation::paths::Environment::current(&data_dir))
+            .is_debugging;
+    let catalog = Catalog::new(
+        &stores,
+        &data_dir,
+        options.kubeconfig.clone(),
+        catalog::CatalogLog::new(Arc::clone(&log), debugging),
+    );
     let Core { messaging, .. } = match register_core(
         checks,
         context.package_info().version.to_string(),
@@ -176,7 +189,13 @@ pub fn run() {
             sweeping.sweep();
         }
     });
-    let clusters = clusters::KubeClusters::new(catalog.kubeconfig().cloned());
+    let clusters = clusters::KubeClusters::new(&catalog);
+    if let Some(path) = &options.catalog_dump {
+        catalog.dump_to(path.clone());
+    }
+    let starting = catalog.clone();
+    let stopping = catalog.clone();
+    let catalog_marks = options.catalog_dump.is_some();
     let state = Arc::new(scheme::State {
         catalog,
         clusters: Box::new(clusters),
@@ -253,6 +272,7 @@ pub fn run() {
                 let runs: Vec<&str> = [
                     (checks.messaging, "messaging-check"),
                     (checks.frames, "frames-check"),
+                    (catalog_marks, "catalog-marks"),
                 ]
                 .into_iter()
                 .filter_map(|(on, name)| on.then_some(name))
@@ -266,6 +286,11 @@ pub fn run() {
                 WebviewWindowBuilder::new(app, "main", WebviewUrl::CustomProtocol(url))
                     .title("Freelens Spike")
                     .inner_size(1200.0, 800.0)
+                    // A hidden window's page is slowed, not stopped, as the
+                    // Electron build's is by default: a stopped page polls no
+                    // message, and its queue closes after a minute (research
+                    // R7 of spec 008).
+                    .background_throttling(BackgroundThrottlingPolicy::Throttle)
                     // A non-persistent website data store: no run leaves data behind.
                     .incognito(true)
                     // The main window stays on the scheme, whatever a frame tries
@@ -282,6 +307,17 @@ pub fn run() {
                         allowed
                     })
                     .build()?;
+                // The syncs are scanned once the window is built, so that the
+                // scan never delays it (research R12 of spec 007, SC-006).
+                starting.start();
+                catalog::weblinks::start(
+                    &starting,
+                    catalog::weblinks::checker(
+                        foundation::download::Trust::Platform,
+                        catalog::weblinks::CheckTiming::default().limit,
+                    ),
+                    catalog::weblinks::CheckTiming::default(),
+                );
                 Ok(())
             }
         })
@@ -291,6 +327,7 @@ pub fn run() {
             // The event loop ends the process without dropping the locals of
             // `run`, so the lock is released here.
             if let tauri::RunEvent::Exit = event {
+                stopping.stop();
                 drop(instance_lock.lock().ok().and_then(|mut lock| lock.take()));
             }
         });

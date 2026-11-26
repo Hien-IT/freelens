@@ -1,0 +1,4 @@
+{
+  "contexts": [],
+  "error": "Error: invalid YAML: unexpected end of the stream within a flow collection at line 4"
+}

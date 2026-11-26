@@ -1,0 +1,20 @@
+{
+  "syncs": [
+    {
+      "path": "work/folder",
+      "kind": "folder"
+    }
+  ],
+  "generate": [
+    {
+      "path": "work/folder/at-limit",
+      "from": "templates/at-limit",
+      "size": 2097152
+    },
+    {
+      "path": "work/folder/under-limit",
+      "from": "templates/under-limit",
+      "size": 2097151
+    }
+  ]
+}

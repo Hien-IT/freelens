@@ -1,0 +1,47 @@
+[
+  {
+    "id": "<id>",
+    "name": "context-a",
+    "kubeConfigPath": "<root>/work/dev.yaml",
+    "contextName": "context-a",
+    "status": "disconnected",
+    "labels": {
+      "file": "~/work/dev.yaml"
+    },
+    "isActive": false,
+    "metadata": {
+      "distribution": "unknown",
+      "kubernetesVersion": "unknown"
+    }
+  },
+  {
+    "id": "<id>",
+    "name": "context-b",
+    "kubeConfigPath": "<root>/work/dev.yaml",
+    "contextName": "context-b",
+    "status": "disconnected",
+    "labels": {
+      "file": "~/work/dev.yaml"
+    },
+    "isActive": false,
+    "metadata": {
+      "distribution": "unknown",
+      "kubernetesVersion": "unknown"
+    }
+  },
+  {
+    "id": "<id>",
+    "name": "folder-a",
+    "kubeConfigPath": "<root>/work/folder/a",
+    "contextName": "folder-a",
+    "status": "disconnected",
+    "labels": {
+      "file": "~/work/folder/a"
+    },
+    "isActive": false,
+    "metadata": {
+      "distribution": "unknown",
+      "kubernetesVersion": "unknown"
+    }
+  }
+]

@@ -12,7 +12,7 @@ use std::sync::LazyLock;
 use http::{Method, Request, Response, StatusCode, header};
 use serde_json::json;
 
-use crate::catalog::{Catalog, CatalogEntry};
+use crate::catalog::{Catalog, ClusterSource, LaunchFile, LaunchFileState};
 use crate::clusters::{ApiOutcome, ClusterApi};
 use crate::messaging::View;
 use crate::routes::{Audience, Env, Routes};
@@ -71,7 +71,10 @@ pub fn routes() -> Routes {
             },
         ),
         routes.add(Method::GET, "/api/clusters", Audience::Main, |_, _, env| {
-            Box::pin(async move { clusters(&env.state.catalog, env.state.open_cluster.as_deref()) })
+            Box::pin(async move {
+                env.state.catalog.scanned().await;
+                clusters(&env.state.catalog, env.state.open_cluster.as_deref())
+            })
         }),
         routes.add(
             Method::GET,
@@ -86,15 +89,15 @@ pub fn routes() -> Routes {
             |request, view, env| {
                 Box::pin(async move {
                     // The cluster comes from the view, never from the path (FR-006).
-                    let entry = match &view {
-                        View::Cluster(id) => env.state.catalog.entry(id),
+                    let cluster = match &view {
+                        View::Cluster(id) => env.state.catalog.cluster(id),
                         View::Main => None,
                     };
-                    let Some(entry) = entry else {
+                    let Some(cluster) = cluster else {
                         return empty(StatusCode::NOT_FOUND);
                     };
                     let path = &request.uri().path()["/api-kube".len()..];
-                    kube(entry, path, request.uri().query(), env.state).await
+                    kube(&cluster, path, request.uri().query(), env.state).await
                 })
             },
         ),
@@ -119,7 +122,7 @@ pub async fn handle(
 /// `GET /api-kube/<api path>`, sent to the cluster by the core, which adds the
 /// credentials; the view's own headers are not forwarded.
 async fn kube(
-    entry: &CatalogEntry,
+    cluster: &ClusterSource,
     api_path: &str,
     query: Option<&str>,
     state: &State,
@@ -140,7 +143,7 @@ async fn kube(
         Some(query) => format!("{api_path}?{query}"),
         None => api_path.to_string(),
     };
-    match state.clusters.get(entry, &path_and_query).await {
+    match state.clusters.get(cluster, &path_and_query).await {
         ApiOutcome::Response { status, body } => with_body(
             StatusCode::from_u16(status).unwrap_or(StatusCode::BAD_GATEWAY),
             "application/json",
@@ -174,25 +177,52 @@ fn page(
     response
 }
 
+/// The spike page's list (`specs/001-tauri-shell-spike/contracts/scheme-routes.md`):
+/// the file of `--kubeconfig` as `source`, the notice about it, and the id of
+/// the context `--open-cluster` names in it.
 fn clusters(catalog: &Catalog, open_cluster: Option<&str>) -> Response<Vec<u8>> {
-    let open_on_load = open_cluster
-        .and_then(|name| catalog.entries.iter().find(|entry| entry.name == name))
-        .map(|entry| entry.id.as_str());
+    let launch_file = catalog.launch_file();
+    let clusters = catalog.clusters();
+    let open_on_load = open_cluster.and_then(|name| {
+        clusters.iter().find(|cluster| {
+            cluster.context_name == name
+                && launch_file
+                    .as_ref()
+                    .is_some_and(|file| file.path == cluster.kubeconfig_path)
+        })
+    });
+    let names = catalog
+        .entities()
+        .into_iter()
+        .filter(|entity| entity["kind"] == "KubernetesCluster")
+        .map(
+            |entity| json!({ "id": entity["metadata"]["uid"], "name": entity["metadata"]["name"] }),
+        )
+        .collect::<Vec<_>>();
     let body = json!({
-        "source": catalog.source.path.as_ref().map(|path| path.display().to_string()),
-        "message": catalog.message(),
-        "clusters": catalog
-            .entries
-            .iter()
-            .map(|entry| json!({ "id": entry.id, "name": entry.name }))
-            .collect::<Vec<_>>(),
-        "openOnLoad": open_on_load,
+        "source": launch_file.as_ref().map(|file| file.path.display().to_string()),
+        "message": launch_file.as_ref().and_then(notice),
+        "clusters": names,
+        "openOnLoad": open_on_load.map(|cluster| cluster.id.as_str()),
     });
     with_body(
         StatusCode::OK,
         "application/json",
         body.to_string().into_bytes(),
     )
+}
+
+/// The spike page's notice about the file of `--kubeconfig`; the Electron
+/// build has none, and its renderer does not read this route.
+fn notice(file: &LaunchFile) -> Option<String> {
+    let path = file.path.display();
+    match file.state {
+        LaunchFileState::Read => None,
+        LaunchFileState::Missing => Some(format!("Kubeconfig file not found: {path}")),
+        LaunchFileState::Invalid => Some(format!(
+            "Cannot read kubeconfig file {path}: it is not a valid kubeconfig"
+        )),
+    }
 }
 
 fn mark(query: Option<&str>, state: &State) -> Response<Vec<u8>> {
@@ -225,4 +255,28 @@ fn empty(status: StatusCode) -> Response<Vec<u8>> {
         .status(status)
         .body(Vec::new())
         .expect("a valid response")
+}
+
+#[cfg(test)]
+mod tests {
+    use std::path::PathBuf;
+
+    use super::*;
+
+    #[test]
+    fn the_notice_names_the_file_without_quoting_it() {
+        let file = |state| LaunchFile {
+            path: PathBuf::from("/work/invalid.yaml"),
+            state,
+        };
+        assert_eq!(notice(&file(LaunchFileState::Read)), None);
+        assert_eq!(
+            notice(&file(LaunchFileState::Missing)).as_deref(),
+            Some("Kubeconfig file not found: /work/invalid.yaml")
+        );
+        assert_eq!(
+            notice(&file(LaunchFileState::Invalid)).as_deref(),
+            Some("Cannot read kubeconfig file /work/invalid.yaml: it is not a valid kubeconfig")
+        );
+    }
 }

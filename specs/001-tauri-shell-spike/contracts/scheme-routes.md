@@ -37,12 +37,15 @@ gets `404` for every path.
 }
 ```
 
-- `source` is the path of the kubeconfig file in effect, or `null` when none
-  is chosen.
-- `openOnLoad` is the id of the cluster that `--open-cluster` names, or
-  `null`; the main window opens that cluster once the catalog is shown.
-- `message` is `null`, or the text to show for a missing chosen file or a file
-  that cannot be parsed.
+- The route answers once the first scan of the syncs has ended (spec 008).
+- `clusters` lists the clusters of the catalog; the page then follows
+  `catalog:items` for every later change.
+- `source` is the path of the file of `--kubeconfig`, or `null` without one.
+- `openOnLoad` is the id of the cluster that `--open-cluster` names in that
+  file, or `null`; the main window opens that cluster once it is in the
+  catalog.
+- `message` is `null`, or the text to show for a missing file of
+  `--kubeconfig` or one that holds no kubeconfig.
 - No field holds a server address, user name, certificate, key or token.
 
 ### `GET /api-kube/<api path>`

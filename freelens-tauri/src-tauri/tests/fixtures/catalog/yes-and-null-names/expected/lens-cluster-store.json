@@ -1,0 +1,20 @@
+[
+  {
+    "id": "<id>",
+    "contextName": "on",
+    "kubeConfigPath": "<root>/work/dev.yaml",
+    "preferences": {},
+    "metadata": {},
+    "accessibleNamespaces": [],
+    "labels": {}
+  },
+  {
+    "id": "<id>",
+    "contextName": "yes",
+    "kubeConfigPath": "<root>/work/dev.yaml",
+    "preferences": {},
+    "metadata": {},
+    "accessibleNamespaces": [],
+    "labels": {}
+  }
+]

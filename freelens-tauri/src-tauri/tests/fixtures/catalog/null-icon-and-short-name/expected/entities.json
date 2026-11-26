@@ -1,0 +1,111 @@
+[
+  {
+    "metadata": {
+      "uid": "catalog-entity",
+      "name": "Catalog",
+      "source": "app",
+      "labels": {}
+    },
+    "status": {
+      "phase": "active"
+    },
+    "spec": {
+      "path": "/catalog",
+      "icon": {
+        "material": "view_list",
+        "background": "var(--primary)"
+      }
+    },
+    "apiVersion": "entity.k8slens.dev/v1alpha1",
+    "kind": "General"
+  },
+  {
+    "metadata": {
+      "uid": "terminal-page-entity",
+      "name": "Terminal",
+      "source": "app",
+      "labels": {}
+    },
+    "status": {
+      "phase": "active"
+    },
+    "spec": {
+      "path": "/terminal",
+      "icon": {
+        "material": "terminal",
+        "background": "var(--primary)"
+      }
+    },
+    "apiVersion": "entity.k8slens.dev/v1alpha1",
+    "kind": "General"
+  },
+  {
+    "metadata": {
+      "uid": "welcome-page-entity",
+      "name": "Welcome Page",
+      "source": "app",
+      "labels": {}
+    },
+    "status": {
+      "phase": "active"
+    },
+    "spec": {
+      "path": "/welcome",
+      "icon": {
+        "material": "home",
+        "background": "var(--primary)"
+      }
+    },
+    "apiVersion": "entity.k8slens.dev/v1alpha1",
+    "kind": "General"
+  },
+  {
+    "metadata": {
+      "uid": "preferences-entity",
+      "name": "Preferences",
+      "source": "app",
+      "labels": {}
+    },
+    "status": {
+      "phase": "active"
+    },
+    "spec": {
+      "path": "/preferences",
+      "icon": {
+        "material": "settings",
+        "background": "var(--primary)"
+      }
+    },
+    "apiVersion": "entity.k8slens.dev/v1alpha1",
+    "kind": "General"
+  },
+  {
+    "metadata": {
+      "uid": "<id>",
+      "name": "Kept",
+      "source": "local",
+      "labels": {
+        "file": "~/work/dev.yaml"
+      },
+      "distro": "unknown",
+      "kubeVersion": "unknown"
+    },
+    "status": {
+      "phase": "disconnected",
+      "reason": "",
+      "message": "",
+      "active": false,
+      "enabled": true
+    },
+    "spec": {
+      "kubeconfigPath": "<root>/work/dev.yaml",
+      "kubeconfigContext": "context-a",
+      "metrics": {
+        "source": "local",
+        "prometheus": {}
+      }
+    },
+    "apiVersion": "entity.k8slens.dev/v1alpha1",
+    "kind": "KubernetesCluster"
+  }
+]

@@ -40,16 +40,21 @@ UPDATE_TAURI_PARITY=1 TZ=UTC pnpm exec vitest run -c vitest.config.ts packages/c
 node specs/008-main-catalog/measure-catalog.mjs dump
 ```
 
-The script builds one data directory with the five stores, renamed clusters,
-icons, labels and web links, and syncs of a file and of a folder holding
-valid and invalid contexts, an ignored name, a file over 2 MiB, a UTF-16
-file, a symbolic link and a subfolder. It starts each build on a copy, waits
-until the catalog has been quiet for 2 seconds, and writes the last catalog
-each sent to `electron.json` (through its hook in main) and `tauri.json`
-(through `--catalog-dump`).
+The script runs twice. The first run, `files`, builds one data directory with
+the five stores, renamed clusters, icons, labels and web links, and syncs of
+a file and of a folder holding valid and invalid contexts, an ignored name, a
+file over 2 MiB, a UTF-16 file, a symbolic link and a subfolder, beside an
+empty synced file and an empty synced folder. The second, `empty-setting`,
+has `syncKubeconfigEntries: []`, so only the application's directory, which
+is empty, is synced. Each run starts each build on a copy, waits until the
+catalog has been quiet for 2 seconds, and writes the last catalog each sent to
+`electron.json` (through its hook in main) and `tauri.json` (through
+`--catalog-dump`), in a directory named after the run.
 
-Expected: the two files are equal as JSON values; the script prints
-`equal`. Repeat with the Electron build of `main`: the same.
+Expected: in each run the two files are equal as JSON values; the script
+prints `files: equal` and `empty-setting: equal`, and neither build lists a
+cluster in `empty-setting`. Repeat with the Electron build of `main`, set as
+`ELECTRON_APP`: the same.
 
 ## 3. Changes reach the catalog (SC-002, SC-003, Story 2)
 
@@ -72,8 +77,11 @@ a cluster the file holds before and after. Record the medians in
 `tests/catalog.rs` sends each channel through the `/ipc/` routes, as
 `tests/foundation.rs` does for spec 007, and checks the answers of
 [contracts/catalog-channels.md](./contracts/catalog-channels.md). The answers
-of `parse-kubeconfig-text` are also the Electron build's own, through the
-fixtures of section 1. Among the cases:
+are also the Electron build's own, through the fixtures of section 1: those of
+`parse-kubeconfig-text` for every case with texts, and in the `channels` case
+those of `get-all-clusters`, `get-cluster-by-id`,
+`discover-kubeconfig-sync-kind` and `add-kubeconfig-text`, and the clusters
+marked active after each `cluster-visibility`. Among the cases:
 
 1. `parse-kubeconfig-text` with each fixture text: the names and errors of the
    contract, and no value of the text in the answer.
@@ -119,8 +127,9 @@ Expected: median startup at most 2.37 s. Record it in `specs/baseline.md`.
 node specs/008-main-catalog/measure-catalog.mjs large
 ```
 
-Expected: three runs per build; the Tauri median from a view's `catalog:init`
-to the whole catalog is no higher than the Electron median. Record both in
+Expected: three runs per build; the Tauri median from a view's first
+`catalog:init` to the whole catalog, which includes the scan of the syncs at
+startup, is no higher than the Electron median. Record both in
 `specs/baseline.md`.
 
 ## 8. Credentials (SC-008)

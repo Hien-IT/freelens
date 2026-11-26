@@ -1,0 +1,11 @@
+[
+  {
+    "id": "<id>",
+    "contextName": "context-a",
+    "kubeConfigPath": "<root>/work/folder/good",
+    "preferences": {},
+    "metadata": {},
+    "accessibleNamespaces": [],
+    "labels": {}
+  }
+]

@@ -1,0 +1,20 @@
+[
+  {
+    "id": "<id>",
+    "contextName": "context-a",
+    "kubeConfigPath": "<root>/work/dev.yaml",
+    "preferences": {},
+    "metadata": {},
+    "accessibleNamespaces": [],
+    "labels": {}
+  },
+  {
+    "id": "<id>",
+    "contextName": "pasted",
+    "kubeConfigPath": "<root>/data/kubeconfigs/pasted-1",
+    "preferences": {},
+    "metadata": {},
+    "accessibleNamespaces": [],
+    "labels": {}
+  }
+]

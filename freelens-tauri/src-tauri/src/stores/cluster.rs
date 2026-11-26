@@ -145,7 +145,7 @@ pub fn normalize(
 /// `clusterModelIdChecker` and `updateClusterModelChecker` of
 /// `packages/core/src/common/cluster-types.ts`, with Joi's rule that a string
 /// is not empty.
-fn is_valid(model: &Map<String, Value>) -> bool {
+pub fn is_valid(model: &Map<String, Value>) -> bool {
     let text = |value: Option<&Value>| {
         value
             .and_then(Value::as_str)

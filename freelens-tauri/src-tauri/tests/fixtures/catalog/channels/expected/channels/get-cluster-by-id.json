@@ -1,0 +1,19 @@
+[
+  {
+    "id": "<id>",
+    "name": "context-b",
+    "kubeConfigPath": "<root>/work/dev.yaml",
+    "contextName": "context-b",
+    "status": "disconnected",
+    "labels": {
+      "file": "~/work/dev.yaml"
+    },
+    "isActive": false,
+    "metadata": {
+      "distribution": "unknown",
+      "kubernetesVersion": "unknown"
+    }
+  },
+  null,
+  null
+]

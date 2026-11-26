@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: Config
+base: &base
+  cluster: cluster-a
+  user: user-a
+clusters:
+- name: cluster-a
+  cluster:
+    server: https://cluster-a.example.invalid:6443
+users:
+- name: user-a
+  user:
+    token: placeholder-token-a1
+contexts:
+- name: merged
+  context:
+    <<: *base

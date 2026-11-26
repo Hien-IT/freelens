@@ -301,6 +301,7 @@ async fn get(
     url: &Url,
     proxy: Option<&Proxy>,
     config: &Arc<ClientConfig>,
+    read_body: bool,
 ) -> Result<Answer, Box<dyn std::error::Error + Send + Sync>> {
     let stream = connect(url, proxy, config).await?;
     let (mut sender, connection) =
@@ -329,7 +330,11 @@ async fn get(
         .get(LOCATION)
         .and_then(|value| value.to_str().ok())
         .map(str::to_string);
-    let body = response.into_body().collect().await?.to_bytes();
+    let body = if read_body {
+        response.into_body().collect().await?.to_bytes()
+    } else {
+        Bytes::new()
+    };
     Ok(Answer {
         status,
         reason,
@@ -346,7 +351,7 @@ async fn fetch_json(
 ) -> Result<Value, String> {
     let mut url = Url::parse(address).map_err(|_| format!("Failed to parse URL from {address}"))?;
     for _ in 0..=MAX_REDIRECTS {
-        let answer = get(&url, proxy, config)
+        let answer = get(&url, proxy, config, true)
             .await
             .map_err(|error| format!("fetch failed: {error}"))?;
         let redirects = matches!(answer.status.as_u16(), 301 | 302 | 303 | 307 | 308);
@@ -367,6 +372,28 @@ async fn fetch_json(
         let text = String::from_utf8_lossy(&answer.body);
         let text = text.strip_prefix('\u{feff}').unwrap_or(&text);
         return serde_json::from_str(text).map_err(|error| error.to_string());
+    }
+    Err("fetch failed: redirect count exceeded".into())
+}
+
+/// The status a GET of `address` ends with, redirects followed as `fetch`
+/// follows them, without a proxy and without reading the body: the request of
+/// a web link's check (`specs/008-main-catalog`, research R9).
+pub async fn status_of(address: &str, trust: &Trust) -> Result<u16, String> {
+    let config = Arc::new(tls_config(trust, false).map_err(|error| error.to_string())?);
+    let mut url = Url::parse(address).map_err(|_| format!("Failed to parse URL from {address}"))?;
+    for _ in 0..=MAX_REDIRECTS {
+        let answer = get(&url, None, &config, false)
+            .await
+            .map_err(|error| format!("fetch failed: {error}"))?;
+        let redirects = matches!(answer.status.as_u16(), 301 | 302 | 303 | 307 | 308);
+        if let (true, Some(location)) = (redirects, &answer.location) {
+            url = url
+                .join(location)
+                .map_err(|error| format!("fetch failed: {error}"))?;
+            continue;
+        }
+        return Ok(answer.status.as_u16());
     }
     Err("fetch failed: redirect count exceeded".into())
 }

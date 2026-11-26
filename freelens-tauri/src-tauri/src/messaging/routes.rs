@@ -17,15 +17,15 @@ use crate::scheme::{MAIN_HOST, SCHEME};
 pub const BODY_LIMIT: usize = 64 * 1024 * 1024;
 
 /// The view a host names: the main window, or the frame of a cluster of the
-/// catalog (research R7).
+/// catalog at the time of the request (research R7; research R10 of spec 008).
 pub fn view_of(host: &str, catalog: &Catalog) -> Option<View> {
     if host == MAIN_HOST {
         return Some(View::Main);
     }
     host.strip_suffix(MAIN_HOST)
         .and_then(|prefix| prefix.strip_suffix('.'))
-        .and_then(|id| catalog.entry(id))
-        .map(|entry| View::Cluster(entry.id.clone()))
+        .filter(|id| catalog.has_cluster(id))
+        .map(|id| View::Cluster(id.to_string()))
 }
 
 /// Answers one request under `/ipc/`, with the checks of the contract in order.

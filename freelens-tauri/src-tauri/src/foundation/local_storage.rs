@@ -7,7 +7,6 @@
 //! across runs, one file for the main window and one per cluster
 //! (`specs/007-main-foundation/contracts/foundation-channels.md`, "Local storage").
 
-use std::collections::HashSet;
 use std::fs;
 use std::os::unix::fs::PermissionsExt;
 use std::path::{Path, PathBuf};
@@ -15,6 +14,7 @@ use std::sync::Arc;
 
 use serde_json::{Map, Value};
 
+use crate::catalog::Catalog;
 use crate::messaging::{ChannelError, Channels, DuplicateChannel, RequestChannel};
 use crate::stores::file::write_atomically;
 use crate::stores::js_json::to_js_string_indented;
@@ -24,16 +24,17 @@ pub const WRITE: RequestChannel<Value, ()> = RequestChannel::new("lens-local-sto
 
 struct LocalStorage {
     directory: PathBuf,
-    clusters: HashSet<String>,
+    catalog: Catalog,
 }
 
 impl LocalStorage {
     /// The file of a view: `app.json` without a cluster, `<clusterId>.json` for
-    /// a cluster of the catalog; any other cluster id is refused.
+    /// a cluster of the catalog at the time of the request; any other cluster
+    /// id is refused.
     fn file(&self, request: &Value) -> Result<PathBuf, ChannelError> {
         match request.get("clusterId") {
             None => Ok(self.directory.join("app.json")),
-            Some(Value::String(id)) if self.clusters.contains(id) => {
+            Some(Value::String(id)) if self.catalog.has_cluster(id) => {
                 Ok(self.directory.join(format!("{id}.json")))
             }
             Some(id) => {
@@ -77,11 +78,11 @@ fn write(path: &Path, state: &Value) -> std::io::Result<()> {
 pub fn register(
     channels: &mut Channels,
     data_dir: &Path,
-    clusters: HashSet<String>,
+    catalog: Catalog,
 ) -> Result<(), DuplicateChannel> {
     let storage = Arc::new(LocalStorage {
         directory: data_dir.join("lens-local-storage"),
-        clusters,
+        catalog,
     });
     let reading = Arc::clone(&storage);
     channels.answer(READ, move |request, _| {

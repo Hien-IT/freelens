@@ -1,0 +1,21 @@
+{
+  "syncs": [
+    {
+      "path": "work/dev.yaml",
+      "kind": "file"
+    },
+    {
+      "path": "work/folder",
+      "kind": "folder"
+    }
+  ],
+  "channels": {
+    "links": {
+      "work/file-link": "dev.yaml",
+      "work/folder-link": "folder"
+    },
+    "discover": ["work/dev.yaml", "work/folder", "work/file-link", "work/folder-link", "work/missing"],
+    "byId": ["<id:work/dev.yaml:context-b>", "no-such-id", ""],
+    "visible": ["<id:work/dev.yaml:context-b>", "no-such-id", "<id:work/folder/a:folder-a>", null]
+  }
+}

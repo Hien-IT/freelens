@@ -1,0 +1,22 @@
+apiVersion: v1
+kind: Config
+clusters:
+- name: cluster-a
+  cluster:
+    server: https://cluster-a.example.invalid:6443
+    certificate-authority-data: cGxhY2Vob2xkZXItYXV0aG9yaXR5LWEx
+users:
+- name: user-a
+  user:
+    token: placeholder-token-a1
+    client-certificate-data: cGxhY2Vob2xkZXItY2xpZW50LWNlcnRpZmljYXRlLWEx
+    client-key-data: cGxhY2Vob2xkZXItY2xpZW50LWtleS1hMQ==
+contexts:
+- name: context-a
+  context:
+    cluster: cluster-a
+    user: user-a
+- name: context-b
+  context:
+    cluster: cluster-a
+    user: user-a

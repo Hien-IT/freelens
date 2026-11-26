@@ -6,6 +6,7 @@
 //! The channels of main-foundation besides the stores
 //! (`specs/007-main-foundation/contracts/foundation-channels.md`).
 
+pub mod app_nap;
 pub mod directories;
 pub mod download;
 pub mod local_storage;
@@ -14,9 +15,9 @@ pub mod paths;
 pub mod sync_box;
 pub mod templates;
 
-use std::collections::HashSet;
 use std::time::Duration;
 
+use crate::catalog::Catalog;
 use crate::messaging::{Channels, DuplicateChannel, Log, RequestChannel};
 use crate::stores::Stores;
 use paths::{Environment, MachineValues};
@@ -28,8 +29,8 @@ pub const MACHINE_VALUES: RequestChannel<(), MachineValues> = RequestChannel::ne
 /// What the channels of main-foundation answer from.
 pub struct Setup {
     pub env: Environment,
-    /// The clusters of the catalog, whose local storage files may be used.
-    pub clusters: HashSet<String>,
+    /// The catalog, whose clusters' local storage files may be used.
+    pub catalog: Catalog,
     pub stores: Stores,
     /// How often the templates folder is looked at.
     pub templates_interval: Duration,
@@ -39,10 +40,10 @@ pub struct Setup {
 
 impl Setup {
     /// The setup of this process, for the data directory of `stores`.
-    pub fn current(stores: &Stores, clusters: HashSet<String>, log: Log) -> Self {
+    pub fn current(stores: &Stores, catalog: Catalog, log: Log) -> Self {
         Self {
             env: Environment::current(stores.data_dir()),
-            clusters,
+            catalog,
             stores: stores.clone(),
             templates_interval: Duration::from_secs(1),
             trust: download::Trust::Platform,
@@ -63,7 +64,7 @@ pub fn register(channels: &mut Channels, setup: Setup) -> Result<(), DuplicateCh
         let machine_values = machine_values.clone();
         async move { Ok(machine_values) }
     })?;
-    local_storage::register(channels, &setup.env.data_dir, setup.clusters)?;
+    local_storage::register(channels, &setup.env.data_dir, setup.catalog)?;
     directories::register(channels, home.clone())?;
     templates::register(channels, &home, setup.templates_interval, setup.log)?;
     download::register(channels, setup.stores, setup.trust)?;

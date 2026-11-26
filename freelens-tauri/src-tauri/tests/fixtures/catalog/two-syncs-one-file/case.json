@@ -1,0 +1,12 @@
+{
+  "syncs": [
+    {
+      "path": "work/folder/config",
+      "kind": "file"
+    },
+    {
+      "path": "work/folder",
+      "kind": "folder"
+    }
+  ]
+}

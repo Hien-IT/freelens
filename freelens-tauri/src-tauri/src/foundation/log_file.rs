@@ -46,10 +46,13 @@ impl LogFile {
         self.directory.join(name)
     }
 
-    /// `<level>: <message>`: a line that already starts with `error: ` or
-    /// `warn: ` keeps it, any other is `info`.
+    /// `<level>: <message>`: a line that already starts with `error: `,
+    /// `warn: ` or `debug: ` keeps it, any other is `info`.
     pub fn format(line: &str) -> String {
-        if line.starts_with("error: ") || line.starts_with("warn: ") {
+        if ["error: ", "warn: ", "debug: "]
+            .iter()
+            .any(|level| line.starts_with(level))
+        {
             format!("{line}\n")
         } else {
             format!("info: {line}\n")
@@ -124,6 +127,7 @@ mod tests {
             "info: Messaging: main announced\n"
         );
         assert_eq!(LogFile::format("error: Stores: x"), "error: Stores: x\n");
+        assert_eq!(LogFile::format("debug: Catalog: x"), "debug: Catalog: x\n");
         assert_eq!(
             LogFile::format("warn: Templates: y"),
             "warn: Templates: y\n"

@@ -1,0 +1,8 @@
+{
+  "syncs": [
+    {
+      "path": "work/dev.yaml",
+      "kind": "file"
+    }
+  ]
+}

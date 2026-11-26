@@ -1,0 +1,13 @@
+[
+  {
+    "id": "<id>",
+    "contextName": "context-a",
+    "kubeConfigPath": "<root>/work/dev.yaml",
+    "preferences": {
+      "clusterName": "Kept"
+    },
+    "metadata": {},
+    "accessibleNamespaces": [],
+    "labels": {}
+  }
+]

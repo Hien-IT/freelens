@@ -1,0 +1,4 @@
+{
+  "contexts": [],
+  "error": "ValidationError: \"contexts[0].context.cluster\" is required. \"contexts[0].context.user\" is required"
+}

@@ -7,7 +7,7 @@ No answer or message carries a credential or the text of a kubeconfig file
 
 | Channel                         | Kind | Dir | Request             | Answer or message                                                                                      |
 | ------------------------------- | ---- | --- | ------------------- | ------------------------------------------------------------------------------------------------------ |
-| `catalog:init`                  | msg  | v→m | none                | sends `catalog:items` to every view, coalesced                                                         |
+| `catalog:init`                  | msg  | v→m | none                | sends `catalog:items` to the asking view at once, and to every view, coalesced                         |
 | `catalog:items`                 | msg  | m→v | —                   | the entities of contracts/catalog-entities.md                                                          |
 | `cluster-visibility`            | msg  | v→m | `ClusterId \| null` | sets the visible cluster of `status.active`; an unknown id is kept, and marks nothing until it appears |
 | `get-all-clusters`              | req  | v→m | none                | `ClusterInfo[]`, the clusters in catalog order                                                         |
@@ -21,10 +21,16 @@ No answer or message carries a credential or the text of a kubeconfig file
 The whole catalog, never a part, coalesced as the Electron build's
 broadcaster coalesces it: a change while no timer runs is sent at once, every
 change restarts a 100 ms timer, and when the timer ends the entities as they
-are then are sent, if anything changed after the send made at once. It is
+are then are sent, if anything changed after the send made at once; a change
+after which the entities are what was last sent sends nothing. It is
 also sent, through the same coalescing, when a cluster frame records its
 frame id, as `main/cluster/set-frame-id-listener.injectable.ts` of the
-Electron build sends it. Each send logs `Catalog: sent <n> entities`.
+Electron build sends it. Each send logs `Catalog: sent <n> entities`. A
+`catalog:init` is also answered at once on the asking view's own queue,
+logged `Catalog: sent <n> entities to <view>` (research R7). So is a view
+whose queue closed while it stayed open, when it polls again with its
+session (`QueueEvent::Reopened`): what was sent while it had no queue is
+lost.
 
 ## `ClusterInfo`
 

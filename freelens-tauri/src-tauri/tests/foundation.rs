@@ -18,7 +18,6 @@ use freelens_tauri::foundation::download::Trust;
 use freelens_tauri::foundation::paths::{BuildKind, Environment};
 use freelens_tauri::foundation::{self, Setup};
 use freelens_tauri::messaging::{Channels, Log, Messaging, routes};
-use freelens_tauri::options::KubeconfigChoice;
 use freelens_tauri::stores::{Machine, StoreName, Stores};
 use http::{Method, Request, StatusCode, header};
 use rustls::pki_types::{CertificateDer, PrivateKeyDer, PrivatePkcs8KeyDer};
@@ -85,11 +84,8 @@ fn core_with(trust: Trust) -> Core {
     let data_dir = dir.0.join("data");
     fs::create_dir_all(&home).unwrap();
     let log: Log = Arc::new(|_| {});
-    let catalog = Catalog::load(
-        &KubeconfigChoice::File(
-            Path::new(env!("CARGO_MANIFEST_DIR")).join("tests/fixtures/three-contexts.yaml"),
-        ),
-        None,
+    let catalog = Catalog::from_kubeconfig_file(
+        &Path::new(env!("CARGO_MANIFEST_DIR")).join("tests/fixtures/three-contexts.yaml"),
     );
     let stores = Stores::load(
         &data_dir,
@@ -112,16 +108,11 @@ fn core_with(trust: Trust) -> Core {
         flatpak: None,
     };
     let mut channels = Channels::with_log(Arc::clone(&log));
-    let clusters = catalog
-        .entries
-        .iter()
-        .map(|entry| entry.id.clone())
-        .collect();
     foundation::register(
         &mut channels,
         Setup {
             env,
-            clusters,
+            catalog: catalog.clone(),
             stores: stores.clone(),
             templates_interval: Duration::from_millis(50),
             trust,
@@ -258,7 +249,7 @@ async fn the_main_window_s_local_storage_is_app_json() {
 #[tokio::test]
 async fn a_cluster_s_local_storage_is_its_own_file() {
     let core = core();
-    let id = core.catalog.entries[0].id.clone();
+    let id = core.catalog.cluster_ids()[0].clone();
     request(
         &core,
         "lens-local-storage:write",

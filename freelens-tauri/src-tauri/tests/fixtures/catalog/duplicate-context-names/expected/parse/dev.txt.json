@@ -1,0 +1,18 @@
+{
+  "contexts": [
+    {
+      "name": "context-a"
+    },
+    {
+      "name": "twin",
+      "error": "Error: No valid cluster object provided in kubeconfig for context 'twin'"
+    },
+    {
+      "name": "twin",
+      "error": "Error: No valid cluster object provided in kubeconfig for context 'twin'"
+    },
+    {
+      "name": "context-a"
+    }
+  ]
+}

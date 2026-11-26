@@ -17,7 +17,8 @@
 # The experimental build gets a data directory of its own in each run, so that
 # it never uses the user's (spec 007). With MEASURE_DATA_DIR set, each run
 # starts from a copy of that directory, as SC-006 of spec 007 measures startup
-# with the five stores; unset, the directory starts empty, as before.
+# with the five stores, `__RUN_DIR__` in its user store replaced with the run's
+# directory; unset, the directory holds only a user store that syncs nothing.
 #
 # usage: [MEASURE_DATA_DIR=<seed>] measure.sh <spike|electron|spike-cluster> <app bundle or dmg> <runs> <idle seconds> [kubeconfig]
 set -u
@@ -68,8 +69,16 @@ for run in $(seq 1 "$RUNS"); do
   if [[ $MODE != electron ]]; then
     if [[ -n ${MEASURE_DATA_DIR-} ]]; then
       ditto "$MEASURE_DATA_DIR" "$D/data"
+      # A seed names its own files under __RUN_DIR__, the run's directory
+      # (specs/008-main-catalog, research R12).
+      if [[ -f "$D/data/lens-user-store.json" ]]; then
+        perl -pi -e "s|__RUN_DIR__|$D|g" "$D/data/lens-user-store.json"
+      fi
     else
       mkdir -p "$D/data"
+      # No kubeconfig sync, so that no run reads the user's ~/.kube, as the
+      # Electron baseline does (specs/008-main-catalog, research R10).
+      printf '{"preferences":{"syncKubeconfigEntries":[]}}\n' >"$D/data/lens-user-store.json"
     fi
   fi
 

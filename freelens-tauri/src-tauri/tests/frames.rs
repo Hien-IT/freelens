@@ -14,7 +14,6 @@ use freelens_tauri::catalog::Catalog;
 use freelens_tauri::frames::{FrameEvent, Frames};
 use freelens_tauri::messaging::queues::IDLE_LIMIT;
 use freelens_tauri::messaging::{Log, MessageChannel, Messaging, routes};
-use freelens_tauri::options::KubeconfigChoice;
 use freelens_tauri::stores::{Machine, Stores};
 use freelens_tauri::{Checks, register_core};
 use http::{Method, Request, Response, StatusCode, header};
@@ -36,7 +35,7 @@ fn fixture() -> Arc<Fixture> {
     let sink = Arc::clone(&lines);
     let log: Log = Arc::new(move |line| sink.lock().unwrap().push(line.to_string()));
     let file = Path::new(env!("CARGO_MANIFEST_DIR")).join("tests/fixtures/three-contexts.yaml");
-    let catalog = Catalog::load(&KubeconfigChoice::File(file), None);
+    let catalog = Catalog::from_kubeconfig_file(&file);
     let stores = Stores::in_memory(Machine::current(), Arc::clone(&log));
     let core = register_core(Checks::default(), "0.1.0".into(), &catalog, &stores, &log).unwrap();
     let events = Arc::new(Mutex::new(Vec::new()));
@@ -54,7 +53,7 @@ fn fixture() -> Arc<Fixture> {
 
 impl Fixture {
     fn id(&self, index: usize) -> String {
-        self.catalog.entries[index].id.clone()
+        self.catalog.cluster_ids()[index].clone()
     }
 
     fn host(&self, index: usize) -> String {
@@ -122,13 +121,28 @@ fn json_of(response: &Response<Vec<u8>>) -> Value {
     serde_json::from_slice(response.body()).unwrap()
 }
 
+/// The channels of the messages a view got, without the catalog, which the
+/// core sends to every view when a frame records its id
+/// (`specs/008-main-catalog`, research R7).
 fn channels_of(messages: &Value) -> Vec<String> {
     messages
         .as_array()
         .unwrap()
         .iter()
         .map(|message| message["channel"].as_str().unwrap().to_string())
+        .filter(|channel| channel != "catalog:items")
         .collect()
+}
+
+/// The payload of the first message of `channel`.
+fn payload_of(messages: &Value, channel: &str) -> Value {
+    messages
+        .as_array()
+        .unwrap()
+        .iter()
+        .find(|message| message["channel"] == channel)
+        .map(|message| message["payload"].clone())
+        .unwrap_or(Value::Null)
 }
 
 const REFUSAL: &str = "cluster:set-frame-id is answered only for the sending frame's own cluster";
@@ -402,7 +416,7 @@ async fn send_to_reaches_one_frame_of_three_and_nothing_without_a_frame() {
 
     let one = f.poll(&f.host(1), "frame-1", 0).await;
     assert_eq!(channels_of(&one), ["test:ping"]);
-    assert_eq!(one[0]["payload"], "to one");
+    assert_eq!(payload_of(&one, "test:ping"), "to one");
     let (host_0, host_2) = (f.host(0), f.host(2));
     let (zero, two) = tokio::join!(f.poll(&host_0, "frame-0", 0), f.poll(&host_2, "frame-2", 0));
     assert!(channels_of(&zero).is_empty());
@@ -441,5 +455,5 @@ async fn send_to_visible_reaches_the_visible_frame_or_nothing() {
     let (zero, one) = tokio::join!(f.poll(&host_0, "frame-0", 0), f.poll(&host_1, "frame-1", 0));
     assert!(channels_of(&zero).is_empty());
     assert_eq!(channels_of(&one), ["test:ping"]);
-    assert_eq!(one[0]["payload"], "to the visible one");
+    assert_eq!(payload_of(&one, "test:ping"), "to the visible one");
 }

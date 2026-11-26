@@ -114,14 +114,11 @@ generic value rather than over kube's typed `Kubeconfig`:
 
 - the size limits, the byte order marks and a strict UTF-8 or UTF-16 decoder;
 - YAML through `serde-saphyr` (in `Cargo.lock` through kube) into a
-  `serde_json::Value`, with duplicate keys refused and merge keys expanded,
-  as js-yaml does, strict booleans, so that `yes` stays a string as in YAML
-  1.2, and no snippet in its errors: kubeconfig text holds credentials, so
-  no error of the parser may quote it;
-- the scalars that js-yaml's default schema resolves to something other than
-  a string where `serde-saphyr` gives a string, timestamps above all, are
-  marked as not strings, so that a name of `2024-01-01` fails the string
-  rule as it does in the Electron build;
+  `serde_json::Value`, with duplicate keys refused and `<<` kept as an
+  ordinary key, as js-yaml 5's default schema does (the fixtures show that
+  it does not expand merge keys), strict booleans, so that `yes` stays a
+  string as in YAML 1.2, and no snippet in its errors: kubeconfig text holds
+  credentials, so no error of the parser may quote it;
 - the Joi rules of the schema above, with the messages Joi gives for them
   (`"<path>" is required`, `"<path>" is not allowed to be empty`,
   `"<path>" must be a string`, `"<path>" must be of type object`,
@@ -131,6 +128,14 @@ generic value rather than over kube's typed `Kubeconfig`:
 The text of a YAML parse error is the core's own, after the Electron build's
 prefix `invalid YAML: `, with the line; js-yaml's reasons cannot be
 reproduced, and no view reads more than the whole string.
+
+**Limits**: js-yaml's default schema reads a plain scalar such as
+`2024-01-01` as a timestamp, which fails the string rule, while
+`serde-saphyr` gives a string and does not say whether a scalar was quoted,
+so the core cannot tell a plain timestamp from a quoted one. A context, a
+cluster or a user named with a plain timestamp is listed by the core and not
+by the Electron build; the fixture `core-only-timestamp-name` records the
+core's side.
 
 **Rationale**: the clusters a file gives must be the same in both builds
 (SC-001), including the cases where one bad entry empties a file. kube's
@@ -196,10 +201,9 @@ reaches the diff 1.0 to 1.1 seconds after the last write. An unlink is held
 for 150 ms, and an add of the same path within that time turns into a
 change. The broadcast after the diff is immediate (R7).
 
-**Decision**: the core watches with FSEvents through the `notify` crate
-(version 8, whose default features are FSEvents on macOS; Unverified until
-added), and uses its events only to wake a scan of the sync they concern.
-The scan, not the event, decides:
+**Decision**: the core watches with FSEvents through the `notify` crate, and
+uses its events only to wake a scan of the sync they concern. The scan, not
+the event, decides:
 
 - a file is read once its size, modification time and inode have stayed the
   same for 500 ms after its last change, checked every 100 ms;
@@ -213,6 +217,27 @@ The scan, not the event, decides:
 The events name canonical paths (`/private/var` for `/var`), so they are
 matched against the canonical paths of the syncs, and the paths the catalog
 uses stay the ones the settings name.
+
+**The crate** (Verified, `cargo tree` and the crate's source): `notify` 9.0.0,
+the current release when it was added, whose default feature
+`macos_fsevent` watches with FSEvents through `objc2-core-services`. Its
+stream is created with a latency of zero (`Config::fsevent_latency`) and the
+flags `FileEvents`, `NoDefer` and `WatchRoot`, so an event is delivered as
+soon as FSEvents has it, and the removal window above is not lengthened by a
+coalescing delay. It adds eight packages to `Cargo.lock`: `notify`,
+`notify-types`, `objc2-core-services`, `xxhash-rust`, and the Linux and BSD
+backends `inotify`, `inotify-sys`, `kqueue` and `kqueue-sys`, which are not
+compiled for macOS.
+
+**App Nap** (Verified, measurement and `strings` of the Electron framework):
+macOS naps an application whose windows are all hidden, and a napped
+process's timers fire late. In a measurement with the Tauri window behind
+others, the core's sends came 0.5 to 2 seconds after their time; the
+Electron build's did not move, and its `Electron Framework` carries the user
+default `NSAppSleepDisabled`. So the core opts out of App Nap at startup,
+with an activity of `NSProcessInfo` that keeps the process out of App Nap
+and still lets the system sleep when idle (`src/foundation/app_nap.rs`,
+through `objc2-foundation`, which `Cargo.lock` already held through Tauri).
 
 **Rationale**: SC-002 asks for no later than the Electron build. Half its
 stability time keeps the protection against a file read in the middle of a
@@ -289,10 +314,43 @@ a view that is not open has no queue, and every view sends `catalog:init`
 when it starts. A log line `Catalog: sent <n> entities` marks each send for
 the measurements of R12.
 
+Two differences, both found by the first measurement of SC-007, where the
+Tauri build took 111 ms from a view's request to the whole large catalog
+and the Electron build 19 ms. The Tauri build's page loads about 100 ms after
+the process starts, while the changes of startup (the first scan, the entries
+written to the cluster store) still restart the 100 ms timer, so the request
+waited for it to end; the Electron build's renderer starts seconds later,
+when the timer has long ended. So:
+
+- the view that sends `catalog:init` gets the catalog at once, on its own
+  queue, besides the coalesced send to every view; a view that has just
+  started has no catalog, and making it wait serves no other view;
+- a change after which the entities are what was last sent sends nothing,
+  so that a write of the store that changes no entity does not hold back a
+  send.
+
+A third difference, found by the measurement of SC-002: in two runs the main
+window's page stopped polling about 8 seconds after it loaded, while the
+window was not in front, and polled again only when it was brought there; in
+one of them it stopped for two minutes, so its queue closed and the catalogs
+sent meanwhile were lost (R14 of `specs/002-messaging-for-tauri/research.md`).
+The Electron build's renderer receives every send: Electron's default
+`backgroundThrottling` slows the timers of a hidden window's page and does
+not stop it, and the Electron build leaves that default. So:
+
+- the main window is built with `BackgroundThrottlingPolicy::Throttle`, the
+  WebKit policy (macOS 14 and later) that slows a hidden page without
+  stopping it, as Electron's default does;
+- a view whose queue closed all the same and that polls again with its
+  session, `QueueEvent::Reopened`, gets the catalog at once on its own queue,
+  logged `Catalog: sent <n> entities to <view>`; a reloaded page sends
+  `catalog:init` itself.
+
 **Size**: an entity of R2 is a few hundred bytes of JSON, so the large
 catalog's `catalog:items` is a few hundred kilobytes; at the rates of the
 channel list's "Answer times" that is under 10 ms over the Tauri build's
-channels (Unverified until SC-007 measures it).
+channels; the measurement of SC-007 saw 5 ms from the core's send to the
+page's mark for 504 entities.
 
 ## R8. The other channels of main-catalog
 
@@ -413,17 +471,26 @@ kubeconfig files:
   Electron build, the send of `catalog:items` from main, hooked through the
   inspector (its IPC to a view is under 1 ms at these sizes, by the channel
   list's "Answer times"); for the Tauri build, the spike page's mark, which
-  includes the channel. The Tauri figure is thus the stricter one. A change
+  includes the channel. The Tauri figure is thus the stricter one, and it
+  holds only while the window is in front: a page that WebKit stops (R7)
+  marks a catalog when it runs again. So the script also times the Tauri
+  build at the core's log line `Catalog: sent <n> entities`, the point the
+  Electron build is timed at, and both figures are recorded. A change
   of the sync setting is not timed: the input asks about the files, and
   neither build takes a setting from outside a view; the cargo tests cover it
   (FR-011).
-- **The catalog sent**: the main hook writes each `catalog:items` payload of
-  the Electron build to a file, and the core's launch option
-  `--catalog-dump=<path>` writes each catalog it sends, so that the script
-  compares them (SC-001) and searches them for credentials (SC-008). The
-  option is for measurements and tests, like `--data-dir`.
-- **SC-007**: the time from a view's `catalog:init` to the whole large
-  catalog, three times, by the same two marks.
+- **The catalog sent**: the main hook, installed with `--inspect-brk` before
+  the Electron build's own code runs, appends each `catalog:items` payload to
+  a file, and the core's launch option `--catalog-dump=<path>` appends each
+  catalog it sends, one JSON line each, so that the script compares them
+  (SC-001), checks every one of the rewrites (SC-003) and searches them for
+  credentials (SC-008). The option is for measurements and tests, like
+  `--data-dir`.
+- **SC-007**: the time from a view's first `catalog:init` to the whole large
+  catalog, three times: for the Electron build from main's receipt of the
+  request, hooked as above, to the send; for the Tauri build from the page's
+  mark `catalog-init`, posted just before the request, to its mark of the
+  whole catalog.
 - **SC-006**: `measure.sh spike` with `MEASURE_DATA_DIR` holding the five
   stores, the large catalog's files, and a user store whose syncs name them
   under the placeholder `__RUN_DIR__`, which `measure.sh` replaces with the
@@ -442,20 +509,41 @@ The figures go into `specs/baseline.md`.
 - `freelens-tauri/src-tauri/tests/fixtures/catalog/<case>/` holds the synced
   files of a case, the stores it starts from, and `expected/`: the entities
   the catalog sends, the cluster store after the diff, and the answers of
-  `parse-kubeconfig-text` for the case's texts.
+  `parse-kubeconfig-text` for the case's texts. A case whose `case.json` has
+  `channels` names the symbolic links to make, the paths, ids and visible
+  clusters to ask, and `expected/channels/` holds the answers of
+  `get-all-clusters`, `get-cluster-by-id`, `discover-kubeconfig-sync-kind`
+  and `add-kubeconfig-text`, and the clusters marked active after each
+  `cluster-visibility`; an unknown or empty id is written `null`.
 - A Vitest test of the Electron build,
   `main/catalog-sources/tauri-parity.test.ts`, feeds each case's files through
-  the Electron build's own `diffChangedKubeconfig` and cluster manager rules,
-  with the paths the watcher would report, and asserts `expected/`; with
-  `UPDATE_TAURI_PARITY=1` it writes them.
-- Cargo tests feed the same cases through the core and assert the same files.
+  the Electron build's own `diffChangedKubeconfig`, kubeconfig sync manager,
+  entity registry and cluster manager, with the paths the watcher would
+  report, and asserts `expected/`; with `UPDATE_TAURI_PARITY=1` it writes
+  them. For the channels it calls the Electron build's own handlers on the
+  case's real files. It mocks `os.homedir()`, which a Vitest worker cannot change through
+  `HOME`, and does the work of `setup-syncing-of-weblinks.injectable.ts`,
+  which the unit tests' container replaces with nothing.
+- `tests/catalog.rs` feeds the same cases through the core and asserts the
+  same files. Two comparisons are looser: a YAML parse error by its prefix
+  and line, and the cluster store without its order, which in the Electron
+  build follows the order its reads of the files end.
+- The inputs name ids as `<id:<file>:<context>>` and the expected files as
+  `<id>`, the root of a case as `<root>`, because a case runs in a new
+  directory each time and a cluster id is the MD5 of an absolute path. The
+  files a case generates, such as one of 2 MiB, are described in its
+  `case.json` rather than committed.
 - Cases: valid and invalid contexts, a context without `context`, invalid
-  YAML, empty text, duplicate keys, merge keys, `yes` and a timestamp as a
-  name, duplicate context names, UTF-16 LE and BE, invalid UTF-8, a file at
-  the size limit, store entries with a name, icon, short name, labels and
-  metrics, `null` icon and short name, a context with no store entry, and
-  the `file` label inside and outside the application's kubeconfig
-  directory.
+  YAML, empty text, duplicate keys, merge keys, `yes`, `true`, `~` and `on`
+  as names, duplicate context names, UTF-16 LE and BE, invalid UTF-8, files
+  at and under the size limit, store entries with a name, icon, short name,
+  labels and metrics, `null` icon and short name, contexts with no store
+  entry, the `file` label inside and outside the application's kubeconfig
+  directory, a file reached by two syncs, web links, the channels with files
+  that hold client certificates, keys and a cluster's certificate authority,
+  and the core-only timestamp name of R3. The cargo test searches every log
+  line and every answer of every case for the placeholder credentials, as
+  written and in base64 (SC-008).
 
 The watcher's own rules (ignore names, depth, symbolic links, the timing) are
 covered by cargo tests on a temporary directory and by the comparison of

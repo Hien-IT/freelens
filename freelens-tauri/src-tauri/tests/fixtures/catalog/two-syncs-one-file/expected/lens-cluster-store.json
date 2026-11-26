@@ -1,0 +1,29 @@
+[
+  {
+    "id": "<id>",
+    "contextName": "context-a",
+    "kubeConfigPath": "<root>/work/folder/config",
+    "preferences": {},
+    "metadata": {},
+    "accessibleNamespaces": [],
+    "labels": {}
+  },
+  {
+    "id": "<id>",
+    "contextName": "context-b",
+    "kubeConfigPath": "<root>/work/folder/config",
+    "preferences": {},
+    "metadata": {},
+    "accessibleNamespaces": [],
+    "labels": {}
+  },
+  {
+    "id": "<id>",
+    "contextName": "context-c",
+    "kubeConfigPath": "<root>/work/folder/other",
+    "preferences": {},
+    "metadata": {},
+    "accessibleNamespaces": [],
+    "labels": {}
+  }
+]
