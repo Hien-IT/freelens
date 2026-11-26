@@ -21,6 +21,10 @@ system's user database, else `$SHELL`, else `zsh`.
 - The shell runs in a new session (`setsid`) and process group, with the core's
   environment plus `ITERM_SHELL_INTEGRATION_INSTALLED=1`,
   `TERM=screen-256color-bce` and `VSCODE_SHELL_INTEGRATION=1`.
+- The core's environment is its process environment without `HTTPS_PROXY` and
+  `HTTP_PROXY`; the first of them that is not empty becomes `APP_HTTPS_PROXY`,
+  as the Electron build's `setup-proxy-env.injectable.ts` does before anything
+  runs (research R2).
 
 ## The result
 

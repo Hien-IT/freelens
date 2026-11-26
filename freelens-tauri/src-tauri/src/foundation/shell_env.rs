@@ -394,9 +394,21 @@ pub fn locale() -> String {
     "en-US".into()
 }
 
-/// The core's own environment.
+/// The core's own environment, without its own proxy.
 pub fn process_env() -> Env {
-    std::env::vars().collect()
+    without_proxy(std::env::vars().collect())
+}
+
+/// `setup-proxy-env.injectable.ts` of the Electron build: `HTTPS_PROXY`, else
+/// `HTTP_PROXY`, moves to `APP_HTTPS_PROXY` before anything runs, so a
+/// cluster's proxy comes only from the login shell or its settings.
+fn without_proxy(mut env: Env) -> Env {
+    let https = env.remove("HTTPS_PROXY").filter(|value| !value.is_empty());
+    let http = env.remove("HTTP_PROXY").filter(|value| !value.is_empty());
+    if let Some(proxy) = https.or(http) {
+        env.insert("APP_HTTPS_PROXY".into(), proxy);
+    }
+    env
 }
 
 struct Inner {
@@ -523,6 +535,36 @@ mod tests {
     const MARK: &str = "deadfoobarfoobeef";
     const COMMAND: &str =
         "printf '%s' deadfoobarfoobeef; /usr/bin/env -0; printf '%s' deadfoobarfoobeef";
+
+    #[test]
+    fn the_core_s_own_proxy_moves_to_app_https_proxy() {
+        let env = |pairs: &[(&str, &str)]| -> Env {
+            pairs
+                .iter()
+                .map(|(name, value)| (name.to_string(), value.to_string()))
+                .collect()
+        };
+        let moved = without_proxy(env(&[
+            ("HTTPS_PROXY", "http://s:1"),
+            ("HTTP_PROXY", "http://p:1"),
+            ("https_proxy", "http://lower:1"),
+        ]));
+        assert_eq!(
+            moved,
+            env(&[
+                ("APP_HTTPS_PROXY", "http://s:1"),
+                ("https_proxy", "http://lower:1"),
+            ])
+        );
+        assert_eq!(
+            without_proxy(env(&[("HTTPS_PROXY", ""), ("HTTP_PROXY", "http://p:1")])),
+            env(&[("APP_HTTPS_PROXY", "http://p:1")])
+        );
+        assert_eq!(
+            without_proxy(env(&[("HTTPS_PROXY", ""), ("APP_HTTPS_PROXY", "kept")])),
+            env(&[("APP_HTTPS_PROXY", "kept")])
+        );
+    }
 
     // pc/features/shell-sync/main/compute-unix-shell-environment.test.ts
 

@@ -79,17 +79,25 @@ opens it again. Repeat on the Electron build of `main`.
 
 ## 4. Proxies and credentials (FR-006, Story 1 edge cases)
 
-By hand, with made-up contexts in the run's kubeconfig:
+By hand, with made-up contexts in the run's kubeconfig and two test CONNECT
+proxies on `127.0.0.1` that log each tunnel. kind publishes the API server on
+`127.0.0.1` only, so the made-up contexts name it
+`https://freelens-profile-control-plane:<port>`: a name its certificate
+carries that resolves nowhere on the machine, which the proxies map to
+`127.0.0.1`. A request that goes direct cannot reach it.
 
-- an `httpsProxy` in the cluster's settings that points at a local CONNECT
-  proxy (any test proxy on `127.0.0.1`), for a context whose server names the
-  kind API server by the machine's LAN address: the proxy logs the tunnel in
-  both builds. Neither build sends a request for `localhost` or a loopback
-  address through a proxy, so the kind context as `kind` writes it goes direct;
+- an `httpsProxy` in the cluster's settings that points at one proxy: it logs
+  the tunnel in both builds. Neither build sends a request for `localhost` or a
+  loopback address through a proxy, so the kind context as `kind` writes it
+  goes direct with the same setting;
 - `proxy-url` in the kubeconfig and an `httpsProxy` setting together: both
   builds use the kubeconfig's;
-- an `HTTPS_PROXY` in the environment of `open -n --env`: both builds use it
-  when neither of the above is set; `NO_PROXY=127.0.0.1` makes both go direct.
+- `HTTPS_PROXY` exported by the login shell (a test script as the `shell`
+  setting): both builds use it when neither of the above is set, and
+  `NO_PROXY` naming the server makes both go direct;
+- `HTTPS_PROXY` in the application's own environment (`open -n --env`):
+  neither build uses it; both move it to `APP_HTTPS_PROXY` before the shell
+  sync (research R2).
 
 Record any difference in the pull request; research R2 gives the order the
 core follows and marks client-go's own Unverified.

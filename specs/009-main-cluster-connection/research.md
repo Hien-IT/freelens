@@ -101,6 +101,16 @@ proxy's environment is the main process's after the shell sync, so a proxy set
 in the shell's files reaches it, and the `httpsProxy` setting takes the place
 of `HTTPS_PROXY`.
 
+**Finding** (Verified by running both builds, quickstart section 4, against
+CONNECT proxies on `127.0.0.1` and the kind API server by a name only the
+proxies resolve): the kubeconfig's `proxy-url` wins over the `httpsProxy`
+setting; the setting is used for a server by name and not for `127.0.0.1`;
+`HTTPS_PROXY` exported by the login shell is used, and `NO_PROXY` naming the
+server sends it direct. `HTTPS_PROXY` in the application's own environment is
+not used: `main/start-main-application/runnables/setup-proxy-env.injectable.ts`
+moves `HTTPS_PROXY`, else `HTTP_PROXY`, to `APP_HTTPS_PROXY` before Electron is
+ready, so neither the shell sync nor freelens-k8s-proxy sees it.
+
 **Decision**:
 
 - One `kube::Client` per cluster, built on first use from
@@ -119,7 +129,9 @@ of `HTTPS_PROXY`.
   waits for that environment, up to the shell sync's limit, so a cluster
   clicked while the shell sync runs connects when it ends; the Electron build
   opens no window before it. Deciding without it would send the first
-  requests of a proxy set only in the shell's files direct.
+  requests of a proxy set only in the shell's files direct. The core's own
+  `HTTPS_PROXY`, else `HTTP_PROXY`, moves to `APP_HTTPS_PROXY` before the shell
+  sync, as `setup-proxy-env.injectable.ts` does (`foundation/shell_env.rs`).
 - A context with `exec` gets its credential from R3; the client is built with
   that credential in place of `exec` and built again when it renews.
 - The client is dropped on `ClusterChanged` and `ClusterRemoved` of the
@@ -212,7 +224,9 @@ timeout, and gives no process to kill on quit (FR-024).
   twice; for every other variable the main process's own value wins; `LANG`,
   when the shell has none, is the locale with `_` and `.UTF-8`, and `.UTF-8` is
   appended to one without it.
-- It runs in `onLoadOfApplication`, so the window opens after it (Inference,
+- It runs in `onLoadOfApplication`, so the window opens after it (Verified by
+  running it, quickstart section 8: with a shell that sleeps 40 s, the window
+  opened after 31.5 s, once the 30 s limit had ended the sync;
   `start-application.injectable.ts:20-24`). A failure is logged as
   `[SHELL-SYNC]: <error>`, kept, and sent once on `shell-sync-failed-channel`
   after the root frame has rendered; the renderer shows
